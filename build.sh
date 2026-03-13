@@ -45,10 +45,16 @@ if [ "$error" = true ]; then
     echo "(default args = --release --solvitaire)"
     exit 1
 else
-    cmake [-G "CodeBlocks - Unix Makefiles"] \
-    "-DCMAKE_BUILD_TYPE=${build^^}" \
+    # More portable way to capitalize build type
+    if [ "$build" == "debug" ]; then
+        build_type="Debug"
+    else
+        build_type="Release"
+    fi
+    cmake \
+    "-DCMAKE_BUILD_TYPE=$build_type" \
     "-Bcmake-build-$build" -H. 
-    cmake --build "cmake-build-$build" -- "$target"
+    cmake --build "cmake-build-$build" --target "$target"
     exit 0
 fi
 
