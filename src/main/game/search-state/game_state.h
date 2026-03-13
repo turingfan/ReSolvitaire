@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <list>
+#include <set>
 #include <string>
 #include <random>
 #include <functional>
@@ -40,9 +41,9 @@
 #include "../move.h"
 
 class game_state {
-    friend class hasher;
+    friend struct hasher;
     friend class global_cache;
-    friend class cached_game_state;
+    friend struct cached_game_state;
     friend class deal_parser;
     friend class state_printer;
     friend class test_helper;
