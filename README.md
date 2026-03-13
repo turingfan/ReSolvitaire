@@ -4,117 +4,55 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-## Install
+## Building and Running
 
-The easiest way to install (and run) Solvitaire is by using the supplied
-Docker image. For more information about installing Docker, head to 
-<https://www.docker.com/get-started>
+Solvitaire can be built natively using CMake and a C++ compiler that supports C++14. It also requires the Boost libraries.
 
-Currently instructions for installing/building outside of the docker image are not
-provided, but the required setup/dependencies should be clear from the docker file
-(they aren't complex). Please get in touch if you would like this documented
-properly, or pre-built binaries to be provided.
+### Prerequisites
 
-With Docker installed, simply run:
+- A C++ compiler (GCC 7+, Clang 5+, or MSVC 2017+)
+- CMake 3.10 or higher
+- Boost libraries (system, filesystem, program_options, unit_test_framework)
 
+On macOS (using Homebrew):
 ```
-$ ./docker-install.sh
+$ brew install cmake boost
 ```
 
-This command downloads a docker image containing an environment in which
-Solvitaire can be built and run, without the user needing to worry about having
-the correct dependencies/versions.
-
-It also adds a pre-made CMake build system and a built binary to your directory
-so you don't have to wait for an initial build to compile. Rather convenient!
-
-The downside to this approach is that the Docker image is unfortunately quite
-large, and pulling it may take a minute or two (although you only have to do
-this once!) If you don't wish to use docker, the steps contained in
-_Dockerfile_ should be a good guide to the required dependencies, although bear
-in mind that on older Linux systems the required versions of dependencies may
-not be available through _rpm_ / _deb_.
-
-(Note: on one system I had to run `sudo usermod -aG docker $USER`
-and then restart my machine before docker would allow me sufficient
-permissions. Just making a note of this here in case others encounter a similar
-problem)
-
-## Using the Docker image
-
-To use the docker image, simply run:
-
+On Ubuntu/Debian:
 ```
-$ ./enter-container.sh
+$ sudo apt-get install cmake libboost-all-dev
 ```
 
-This command will start the docker container and enter an interactive session
-within the container's filesystem. The files you'll see there are simply a
-mounted version of the root directory, so any changes you make in the
-container will be reflected in your filesystem, and vice versa. When
-you exit the interactive session the container will automatically be stopped.
+### Build
 
-If you don't wish to enter an interactive session, you can run:
+To build Solvitaire, you can use the provided `build.sh` script or run CMake commands manually.
 
-```
-$ ./enter-container.sh "command_to_be_run"
-```
-
-This will spin up a container, run the command, and tear the container down,
-with no noticeable overhead. Combining this with the fact that the repo's
-files are mounted in the Docker image, means that a user can edit
-Solvitaire's files on their local system using their own tools/editor, and
-then build/execute Solvitaire in the controlled Docker environment - the
-best of both worlds!
-
-For more information on Docker images, see
-<https://docs.docker.com/get-started/part2/#recap-and-cheat-sheet-optional>
-
-## Build
-
-If the above instructions have been followed, you should already have a
-built binary in the root directory. 
-
-To (re-)build Solvitaire within the container, simply run:
-
+Using `build.sh`:
 ```
 $ ./build.sh [--release|--debug] [--solvitaire|--unit-tests]
 (default args = "--release" "--solvitaire")
 ```
 
-If you wish to run a build from outside the container, run:
-
+Manually with CMake:
 ```
-$ ./enter-container.sh ./build.sh
-```
-
-For more build information and options, examine _build.sh_ and
-_CMakeLists.txt._
-
-## Run
-
-To run Solvitaire from within the container, simply run either:
-
-```
-$ ./solvitaire
-$ ./solvitaire-debug
-
-Or from outside the container:
-
-$ ./enter-container.sh "./solvitaire"
+$ cmake -B build -DCMAKE_BUILD_TYPE=Release
+$ cmake --build build
 ```
 
-and for the unit tests (note, these must be
-run inside src/test for the integration tests to pass):
+### Run
 
+The built binary will be located in the root directory (if using `build.sh`) or in the `build` directory (if manual).
+
+To run Solvitaire:
+```
+$ ./solvitaire --help
+```
+
+For unit tests:
 ```
 $ cd src/test
 $ ../../unit-tests
-$ ../../unit-tests-debug
-
-Or from outside the container:
-
-$ ./enter-container.sh "cd src/test; ../../unit-tests"
 ```
 
 to see what solvitaire can do, use the `--help` command:
@@ -145,7 +83,8 @@ for example, if you wish to generate a random deal (with seed 1) of the game Klo
 and attempt to solve it, run:
 
 ```
-$ ./enter-container.sh "./solvitaire --type klondike --random 1"
+$ ./solvitaire --type klondike --random 1
+```
   [info] Attempting to solve with seed: 1...
   Deal:
   --- Foundations ---------
@@ -186,10 +125,6 @@ to those who reach out over email (see below).
 
 If you have any problems getting these steps to work, don't hesitate to get in
 touch via <thecharlieblake@gmail.com>
-
-User [@galcohensius]( https://github.com/galcohensius ) has also provided a helpful
-cheat-sheet for Windows users to help get set up on Solvitaire, which can be found
-in [docs/windows_cheat_sheet]( docs/windows_cheat_sheet.md ).
 
 ## Contributors ✨
 

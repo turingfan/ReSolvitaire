@@ -33,5 +33,3 @@ matrix:
         # - os: linux
         #  env:
         #      - WHAT=buildproc
-services:
-    - docker
