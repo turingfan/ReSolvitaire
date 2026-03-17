@@ -61,8 +61,8 @@ This document logs the major changes implemented on the `testing-infrastructure`
 ---
 
 ## Summary of Current State
-Phase 1 (Level 1 - Rapid Regression Suite) is now fully complete. We have:
+Phase 1 (Level 1 - Rapid Regression Suite) is now fully complete and standardized. We have:
 1.  A standardized, round-trippable JSON deal format (`--reveal-hidden`).
 2.  A diverse 150-instance regression corpus covering 15 game types.
-3.  A verified baseline oracle for search metrics.
+3.  A verified baseline oracle with standardized **relative paths** for portable verification.
 4.  An automated CI harness integrated into the build system.

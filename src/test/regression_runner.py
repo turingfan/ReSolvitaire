@@ -48,9 +48,20 @@ def run_regression(solver_path, instances_dir, oracle_path):
 
             output = json.loads(result.stdout.strip())
             
+            # Standardize paths for comparison
+            # Calculate what the relative path from tests/ SHOULD be
+            tests_dir = os.path.dirname(os.path.dirname(os.path.abspath(instances_dir)))
+            expected_rel_path = os.path.relpath(instance_path, tests_dir)
+            
+            # The solver might output an absolute path if we passed one. 
+            # We normalize its output to be relative to the same tests_dir for comparison.
+            if "instance_name" in output and os.path.isabs(output["instance_name"]):
+                output["instance_name"] = os.path.relpath(output["instance_name"], tests_dir)
+
             # Comparison Logic
             diffs = []
             mapping = {
+                "instance_name": "instance_name",
                 "solution_type": "solution_type",
                 "states_searched": "states_searched",
                 "backtracks": "backtracks"
