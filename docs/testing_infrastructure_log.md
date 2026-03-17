@@ -49,11 +49,20 @@ This document logs the major changes implemented on the `testing-infrastructure`
 
 ---
 
-## 6. Next Steps: CI Harness (Step 1.4)
-**Status:** In Progress
-**Rationale:** Developing a Python-based regression runner that iterates through the corpus, compares current solver output with the `baseline_oracle.json`, and reports regressions in performance or correctness.
+## 6. CI Harness: Automated Regression Tests (Step 1.4)
+**Commit Stage 5:** `2e18b75`  
+**Date:** 2026-03-17 11:15:00 (approx)
+**Rationale:** Automated common tasks to ensure search stability and correctness across all 15 game types.
+**Changes:**
+- **Runner Script:** Created `src/test/regression_runner.py`. This script iterates through the `instances/` directory, runs the solver against each deal, and compares `solution_type`, `states_searched`, and `backtracks` with the values in `baseline_oracle.json`.
+- **CTest Integration:** Added `regression_level1` to `CMakeLists.txt`.
+- **Verification:** Ran `ctest -R regression_level1`. Result: **150/150 instances passed**.
 
 ---
 
 ## Summary of Current State
-Phase 1 Steps 1.1, 1.2, and 1.3 are complete. The project now has a robust, round-trippable JSON deal format, a diverse 150-instance corpus, and a verified baseline oracle. Work is shifting to the automated CI harness.
+Phase 1 (Level 1 - Rapid Regression Suite) is now fully complete. We have:
+1.  A standardized, round-trippable JSON deal format (`--reveal-hidden`).
+2.  A diverse 150-instance regression corpus covering 15 game types.
+3.  A verified baseline oracle for search metrics.
+4.  An automated CI harness integrated into the build system.
