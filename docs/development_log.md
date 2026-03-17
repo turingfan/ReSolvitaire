@@ -56,5 +56,24 @@ This document logs the major changes implemented on the `mac-dev` branch of the 
 
 ---
 
+## 6. Repository Cleanup: Finishing Deletions
+**Commit Stage 5:** `9c7b819`  
+**Date:** 2026-03-16 18:06:48 +0000  
+**Reason:** Completed the removal of legacy Docker and Windows-centric files that were missed in Stage 1 but identified as part of the repository modernization.  
+**Changes:**
+- Deleted `CMakeLists.txt.in`, `Dockerfile`, `docker-install.sh`, `docs/windows_cheat_sheet.md`, and `enter-container.sh`.
+- Updated `.gitignore` to include more robust build directory exclusions.
+
+---
+
+## 7. Documentation: Solvitaire Results Dataset Overview
+**Commit Stage 6:** `939a48b`  
+**Date:** 2026-03-17 09:33:00 +0000  
+**Reason:** Documenting the location and structure of the large Solvitaire results dataset used in the original paper.
+**Changes:**
+- Created `docs/solvitaire_results_overview.md` with dataset mapping and verification commands.
+
+---
+
 ## Summary of Current State
-The project now builds and passes all 133 unit tests natively on macOS using standard CMake tools. The repository is cleaner, better organized for IDE-based development, and free of obsolete deployment scripts.
+The project now builds and passes all 133 unit tests natively on macOS. The repository has been fully cleaned of legacy containerization infrastructure and platform-specific scripts. A comprehensive overview of experimental results has been integrated into the developer documentation.
