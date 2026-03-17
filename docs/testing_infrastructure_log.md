@@ -13,24 +13,23 @@ This document logs the major changes implemented on the `testing-infrastructure`
 
 ---
 
-## 2. Infrastructure: JSON Output Support (Step 1.1)
-**Commit Stage 1:** `a4597b8`  
-**Date:** 2026-03-17 10:00:00 (approx)
-**Reason:** To support machine-readable results for automated regression testing, a `--json` flag was added to the solver. This enables the CI harness to parse solver metrics (states searched, backtracks, etc.) directly.
+## 3. Infrastructure: Technical Fixes and RapidJSON Refactor
+**Commit Stage 2:** `8ef9d1f`  
+**Date:** 2026-03-17 10:15:00 (approx)
+**Reason:** Resolved critical issues where hidden cards in Klondike were masked as `##` (losing identity) and JSON foundations/cells/reserve were incorrectly exported as 2D arrays (violating the input schema).
 **Changes:**
-- **CLI Modification:** Added `--json` flag and `get_json_output()` getter to `command_line_helper`.
-- **Core Engine:** Modified `main.cpp` and `solve_game` to emit a structured JSON object containing test metrics when the flag is active.
-- **Output Suppression:** Suppressed standard INFO/DEBUG logging when `--json` is active to ensure the output stream remains valid JSON.
-- **Initial Corpus Curation:** Developed `select_instances.py` to curate 110 diverse, fast (<50ms) test instances from the historical Solvitaire paper dataset.
-- **Note on Hidden Cards:** Identified a limitation where face-down cards (masked as `##`) lost their identity in JSON exports, impacting round-trip solvability verification for games like Klondike.
+- **Full Transparency:** Implemented `--reveal-hidden` flag to export face-down cards using lowercase-suit convention (e.g., `10h`), enabling lossless JSON deal reconstruction.
+- **RapidJSON Refactor:** Replaced `Boost.PropertyTree` with direct `RapidJSON::Writer` calls in `json_helper.cpp`. This fixed empty array rendering (e.g., `[]` instead of `""`) and ensured 1D array dimensionality for foundations, cells, and reserve.
+- **Corpus Regeneration:** Regenerated the 110-instance corpus to include full card identity for all face-down cards.
+- **Verification:** Successfully performed a "round-trip" solve for a Klondike deal (loading a JSON exported with `--reveal-hidden`).
 
 ---
 
-## 3. Planning: Full JSON Deal Export/Import
-**Status:** Approved  
-**Rationale:** To resolve the "hidden card" issue, a strategy was approved to add a `--reveal-hidden` flag and use the lowercase-suit convention for face-down cards, permitting full state reconstruction from JSON.
+## 4. Corpus Expansion: Diverse Game Varieties
+**Status:** In Progress
+**Rationale:** Expanding the test suite to include Gaps, Black Hole, Golf, and Late-Binding solitaire to cover a broader range of rule behaviors and solver logic.
 
 ---
 
 ## Summary of Current State
-The `--json` flag is implemented and verified for open-information games (e.g., Eight Off, FreeCell). A 110-instance test corpus has been generated, though Klondike-style instances require regeneration once the `--reveal-hidden` logic is implemented. An implementation plan is in place for full deal transparency.
+The JSON pipeline is now robust and round-trippable. Technical fixes for hidden cards and dimensionality are complete. The regression suite is being expanded to ~150 instances across 15+ game types.
