@@ -227,26 +227,23 @@ add_executable(unit_tests ${sources_test} ${sources})
 target_link_libraries(unit_tests PRIVATE gtest_main ${Boost_LIBRARIES})
 
 enable_testing()
-add_test(NAME unit_tests
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/test"
-        COMMAND unit_tests)
 add_test(NAME trailing_space
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/test"
-        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/src/test/check_for_no_trailing_space_in_output.py"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_output_format.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--gametype" "klondike"
         "--deal" "${CMAKE_CURRENT_SOURCE_DIR}/resources/deal-presets/klondikeSM1.json"
 )
 add_test(NAME trailing_space_free_cell
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/test"
-        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/src/test/check_for_no_trailing_space_in_output.py"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_output_format.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--gametype" "free-cell"
-        "--deal" "${CMAKE_CURRENT_SOURCE_DIR}/src/test/resources/free_cell/fc-pro-3.json"
+        "--deal" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/free_cell/fc-pro-3.json"
 )
 add_test(NAME regression_level1
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/src/test/regression_runner.py"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level1/instances"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level1/baseline_oracle.json"
