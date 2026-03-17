@@ -1,0 +1,22 @@
+{
+  "tableau piles": {
+    "count": 4,
+    "build policy": "red-black",
+    "move built group": "whole-pile",
+    "spaces policy": "auto-reserve-then-waste"
+  },
+  "foundations": {
+    "initial cards": "one",
+    "base card": "random"
+  },
+  "stock": {
+    "size": 34,
+    "deal count": 3,
+    "redeal": true
+  },
+  "reserve": {
+    "size": 13,
+    "stacked": true
+  }
+}
+

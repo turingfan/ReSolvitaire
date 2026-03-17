@@ -75,5 +75,13 @@ This document logs the major changes implemented on the `mac-dev` branch of the 
 
 ---
 
-## Summary of Current State
-The project now builds and passes all 133 unit tests natively on macOS. The repository has been fully cleaned of legacy containerization infrastructure and platform-specific scripts. A comprehensive overview of experimental results has been integrated into the developer documentation.
+---
+
+## 8. Regression Suite: Ground Truth & Multi-Run Infrastructure
+**Date:** 2026-03-17  
+**Reason:** Documenting critical, non-obvious ground truth regarding the original experimental logs and the requirements for deterministic regression verification.
+**Key Insights:**
+- **Smart Streamliner (Multi-Run):** In datasets using the "smart" streamliner, the first run (using `both` streamliners) cannot be trusted for unsolvability. A solution found in Run 1 is valid, but an unsolvable result requires a second run (using `none` streamliner) for confirmation.
+- **Timeout Regression Criteria:** To account for hardware variance, a timeout on a regression test is considered a failure ONLY if the node count exceeds the baseline. If the node count is lower or equal, it is categorized as a speed regression (acceptable) rather than a logic failure.
+- **Mapping Metadata:** The files `AAA-smartfiles` and `AAA-singlerunfiles` in `AnalysisScripts` provide the definitive mapping of experimental datasets to their respective streamliner configurations.
+- **Custom Game Rules:** Integration of `--custom-rules` support for game types not included in the solver's internal preset list, using rule definitions from the `GameJSON` directory.

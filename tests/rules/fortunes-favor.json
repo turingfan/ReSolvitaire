@@ -1,0 +1,14 @@
+{
+  "tableau piles": {
+    "count": 12,
+    "build policy": "same-suit",
+    "spaces policy": "auto-waste-then-stock"
+  },
+  "foundations": {
+     "initial cards": "all"
+  },
+  "stock": {
+     "size": 36
+  }
+}
+

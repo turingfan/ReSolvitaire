@@ -1,0 +1,12 @@
+{
+  "tableau piles": {
+    "count": 10,
+    "diagonal deal": true,
+    "move built group": "yes",
+    "move built group policy": "same-suit"
+  },
+  "foundations": {
+    "only complete pile moves": true
+  }
+}
+

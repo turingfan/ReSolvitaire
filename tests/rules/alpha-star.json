@@ -1,0 +1,11 @@
+{
+  "tableau piles": {
+    "count": 12,
+    "build policy": "same-suit",
+    "move built group": "yes"
+  },
+  "foundations": {
+    "initial cards": "all"
+  }
+}
+

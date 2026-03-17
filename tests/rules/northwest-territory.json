@@ -1,0 +1,16 @@
+{
+  "tableau piles": {
+    "build policy": "red-black",
+    "move built group": "partial-if-card-above-buildable",
+    "spaces policy": "kings",
+    "diagonal deal": true,
+    "face up cards": "top"
+  },
+  "foundations": {
+    "removable": true
+  },
+  "reserve": {
+    "size": 16
+  }
+}
+

@@ -1,0 +1,50 @@
+{
+  "tableau piles": {
+    "count": 8,
+    "build policy": "any-suit",
+    "spaces policy": "any",
+    "diagonal deal": false,
+    "move built group": "no",
+    "move built group policy": "same-as-build",
+    "face up cards": "all"
+  },
+  "foundations": {
+    "present": true,
+    "initial cards": "none",
+    "base card": "A",
+    "removable": false,
+    "only complete pile moves": false
+  },
+  "hole": {
+    "present": false,
+    "base card": "AS",
+    "build loops": true
+  },
+  "cells": {
+    "count": 0,
+    "pre-filled": 0
+  },
+  "stock": {
+    "size": 0,
+    "deal type": "waste",
+    "deal count": 1,
+    "redeal": false
+  },
+  "reserve": {
+    "size": 0,
+    "stacked": false
+  },
+  "accordion": {
+    "size": 0,
+    "moves": [],
+    "build policies": []
+  },
+  "sequences": {
+    "count": 0,
+    "direction": "L",
+    "build policy": "same-suit",
+    "fixed suit": false
+  },
+  "max rank": 13,
+  "two decks": false
+}

@@ -1,0 +1,19 @@
+{
+  "tableau piles": {
+    "count": 0
+  },
+  "foundations": {
+    "initial cards": "all"
+  },
+  "cells": {
+    "count": 20,
+    "pre-filled": 20
+  },
+  "stock": {
+    "size": 28,
+    "deal type": "waste",
+    "deal count": 1,
+    "redeal": false
+  }
+}
+

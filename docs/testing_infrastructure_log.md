@@ -60,9 +60,12 @@ This document logs the major changes implemented on the `testing-infrastructure`
 
 ---
 
-## Summary of Current State
-Phase 1 (Level 1 - Rapid Regression Suite) is now fully complete and standardized. We have:
-1.  A standardized, round-trippable JSON deal format (`--reveal-hidden`).
-2.  A diverse 150-instance regression corpus covering 15 game types.
-3.  A verified baseline oracle with standardized **relative paths** for portable verification.
-4.  An automated CI harness integrated into the build system.
+### Step 1.5: Project Hierarchy Cleanup
+- **Objective**: Consolidate test data and separate orchestration scripts from source code.
+- **Changes**:
+    - Created root-level `scripts/` directory.
+    - Moved `regression_runner.py`, `generate_baseline.py`, and `check_output_format.py` (refactored to `argparse`) to `scripts/`.
+    - Consolidated `src/test/resources/` into `tests/resources/`.
+    - Updated `CMakeLists.txt` to reflect new paths.
+    - Verified all tests pass via `ctest`.
+- **Git Commit**: `8b45017`

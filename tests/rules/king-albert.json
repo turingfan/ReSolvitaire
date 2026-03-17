@@ -1,0 +1,15 @@
+
+{
+  "tableau piles": {
+    "count": 9,
+    "build policy": "red-black",
+    "diagonal deal": true
+  },
+  "foundations": {
+    "removable": true
+  },
+  "reserve": {
+    "size": 7
+  }
+}
+

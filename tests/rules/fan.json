@@ -1,0 +1,12 @@
+
+{
+  "tableau piles": {
+    "count": 18,
+    "build policy": "same-suit",
+    "spaces policy": "kings"
+  },
+  "foundations": {
+    "removable": true
+  }
+}
+

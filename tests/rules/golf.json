@@ -1,0 +1,19 @@
+{
+  "tableau piles": {
+    "count": 7,
+    "build policy": "no-build"
+  },
+  "foundations": {
+    "present": false
+  },
+  "stock": {
+    "size": 16,
+    "deal type": "hole"
+  },
+  "hole": {
+    "present": true,
+    "base card": "random",
+    "build loops": false
+  }
+}
+

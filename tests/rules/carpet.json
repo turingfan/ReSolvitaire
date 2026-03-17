@@ -1,0 +1,15 @@
+{
+  "tableau piles": {
+    "count": 0
+  },
+  "cells": {
+    "count": 20,
+    "pre-filled": 20
+  },
+  "stock": {
+    "size": 32,
+    "deal type": "waste",
+    "deal count": 1,
+    "redeal": false
+  }
+}

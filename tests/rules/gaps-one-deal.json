@@ -1,0 +1,15 @@
+{
+  "foundations": {
+    "present": false
+  },
+  "tableau piles": {
+    "count": 0
+  },
+  "sequences": {
+    "count": 4,
+    "direction": "L",
+    "build policy": "same-suit",
+    "fixed suit": false
+  }
+}
+

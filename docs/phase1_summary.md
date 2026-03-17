@@ -11,6 +11,7 @@ Phase 1 successfully established a robust, automated foundation for regression t
 2.  **Diverse Regression Corpus:** Curated 150 unique JSON instances covering 15 game varieties (Klondike, Free Cell, Gaps, Black Hole, Golf, etc.).
 3.  **Baseline Oracle:** Established a verified ground truth (`baseline_oracle.json`) containing search complexity metrics for the entire corpus. **Paths are standardized as relative to the `tests/` directory root.**
 4.  **Automated CI Harness:** Integrated a Python-based regression runner into the build system (`ctest -R regression_level1`).
+5.  **Project Hierarchy Refactor:** Separated orchestration scripts into `scripts/` and consolidated all test data under `tests/resources/` for a cleaner separation of concerns.
 
 ---
 

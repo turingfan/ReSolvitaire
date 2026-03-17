@@ -1,0 +1,10 @@
+{
+  "tableau piles": {
+    "count": 5,
+    "build policy": "red-black"
+  },
+  "cells": {
+    "count": 4
+  }
+}
+

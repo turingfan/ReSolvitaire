@@ -1,0 +1,11 @@
+{
+  "tableau piles": {
+    "build policy": "same-suit",
+    "spaces policy": "kings"
+  },
+  "cells": {
+    "count": 4,
+    "pre-filled": 4
+  }
+}
+
