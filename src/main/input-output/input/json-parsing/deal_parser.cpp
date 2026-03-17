@@ -116,7 +116,7 @@ string deal_parser::deal_schema_json() {
     },
     "cardarraywithempty": {
       "type": "array", "items": {
-        "anyOf": [{"$ref": "#/definitions/card"}, {"enum": ["AS"]}]
+        "anyOf": [{"$ref": "#/definitions/card"}, {"enum": ["AS", ""]}]
       }
     }
   },

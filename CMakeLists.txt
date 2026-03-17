@@ -245,15 +245,15 @@ add_test(NAME regression_level1
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
-        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level1/instances"
-        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level1/baseline_oracle.json"
+        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
 )
 add_test(NAME regression_level2
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level2"
-        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level2/baseline_oracle.json"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
         "--timeout" "60"
 )
 add_test(NAME regression_level3
@@ -261,7 +261,7 @@ add_test(NAME regression_level3
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level3"
-        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level3/baseline_oracle.json"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
         "--timeout" "120"
 )
 add_test(NAME regression_level4
@@ -269,7 +269,7 @@ add_test(NAME regression_level4
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level4"
-        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level4/baseline_oracle.json"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level4.json"
         "--timeout" "600"
 )
 add_test(NAME regression_level5
@@ -277,7 +277,7 @@ add_test(NAME regression_level5
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level5"
-        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level5/baseline_oracle.json"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level5.json"
         "--timeout" "1800"
 )
 

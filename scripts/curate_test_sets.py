@@ -6,10 +6,10 @@ import argparse
 import subprocess
 from pathlib import Path
 
-# Ground Truth Mapping Files
-AAA_BASE = "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/AnalysisScripts"
-AAA_SMART = ["AAA-smartfiles", "AAA-smartnotimefiles"]
-AAA_SINGLE = ["AAA-singlerunfiles", "AAA-singlerunnotimefiles"]
+# Defaults
+# Placeholder for the experimental data repository. 
+# Users can specify this via the --data-dir argument.
+DEFAULT_DATA_DIR = "./solvitaire-paper-v10-Feb2026"
 
 GAMES = [
     "accordion", "alpha-star", "american-canister", "bakers-game", "beleaguered-castle",
@@ -42,19 +42,18 @@ TARGET_SETS = {
 for k, v in TARGET_SETS.items():
     v['per_instance_target'] = v['total_target'] / (2 * len(GAMES))
 
-RESULTS_DIR = "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults"
-
-def load_aaa_sets():
+def load_aaa_sets(data_dir):
+    aaa_base = os.path.join(data_dir, "AnalysisScripts")
     smart_set = set()
     single_set = set()
-    for f in AAA_SMART:
-        path = os.path.join(AAA_BASE, f)
+    for f in ["AAA-smartfiles", "AAA-smartnotimefiles"]:
+        path = os.path.join(aaa_base, f)
         if os.path.exists(path):
             with open(path, 'r') as fd:
                 for line in fd:
                     smart_set.add(line.strip())
-    for f in AAA_SINGLE:
-        path = os.path.join(AAA_BASE, f)
+    for f in ["AAA-singlerunfiles", "AAA-singlerunnotimefiles"]:
+        path = os.path.join(aaa_base, f)
         if os.path.exists(path):
             with open(path, 'r') as fd:
                 for line in fd:
@@ -107,11 +106,11 @@ def get_row_metrics(row, is_smart):
     except:
         return None, None, None, None
 
-def find_best_instances(game, target_ms, smart_set, single_set):
+def find_best_instances(game, target_ms, smart_set, single_set, results_dir):
     best_winnable = None
     best_unwinnable = None
     
-    game_dir = Path(RESULTS_DIR) / game
+    game_dir = Path(results_dir) / game
     if not game_dir.exists():
         return None, None
         
@@ -148,7 +147,7 @@ def find_best_instances(game, target_ms, smart_set, single_set):
                         continue
                     
                     seed = int(row[0])
-                    inst_data = {'seed': seed, 'time': time_ms, 'removed': removed, 'csv': str(csv_file), 'row': row, 'states': states}
+                    inst_data = {'seed': seed, 'time': time_ms, 'removed': removed, 'csv': rel_csv, 'row': row, 'states': states}
                     
                     diff = abs(time_ms - target_ms) / target_ms if target_ms > 0 else 0
                     
@@ -188,9 +187,15 @@ def find_best_instances(game, target_ms, smart_set, single_set):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--set", choices=TARGET_SETS.keys(), required=True)
+    parser.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="Base directory for the experimental data repository.")
     args = parser.parse_args()
     
-    smart_set, single_set = load_aaa_sets()
+    results_dir = os.path.join(args.data_dir, "ExperimentalResults")
+    if not os.path.exists(results_dir):
+        print(f"Error: ExperimentalResults directory not found at {results_dir}")
+        return
+
+    smart_set, single_set = load_aaa_sets(args.data_dir)
     target_set = TARGET_SETS[args.set]
     target_ms = target_set['per_instance_target']
     
@@ -199,7 +204,7 @@ def main():
     results = {}
     for game in GAMES:
         print(f"Processing {game:30}...", end='\r', flush=True)
-        w, u = find_best_instances(game, target_ms, smart_set, single_set)
+        w, u = find_best_instances(game, target_ms, smart_set, single_set, results_dir)
         results[game] = {'winnable': w, 'unwinnable': u}
     
     print("\nSearch complete.")
@@ -214,6 +219,7 @@ def main():
     output_data = {
         'target_set': args.set,
         'target_per_instance_ms': target_ms,
+        'results_base_dir': results_dir,
         'instances': results
     }
     

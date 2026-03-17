@@ -1,13 +1,14 @@
 {
   "target_set": "5m",
   "target_per_instance_ms": 1851.851851851852,
+  "results_base_dir": "",
   "instances": {
     "accordion": {
       "winnable": {
         "seed": 7331,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/accordion/v0.08/accordion-none-1M-2hr25M-A-74T2GZ.csv.gz",
+        "csv": "accordion/v0.08/accordion-none-1M-2hr25M-A-74T2GZ.csv.gz",
         "row": [
           "7331",
           " solved",
@@ -36,7 +37,7 @@
         "seed": 379003,
         "time": 1854.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/alpha-star/v0.08/alpha-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "alpha-star/v0.08/alpha-star-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "379003",
           " solved",
@@ -69,7 +70,7 @@
         "seed": 8363153,
         "time": 78.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/alpha-star/v0.08/alpha-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "alpha-star/v0.08/alpha-star-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "8363153",
           " unsolvable",
@@ -104,7 +105,7 @@
         "seed": 3063,
         "time": 1839.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/american-canister/v0.08/american-canister-none-v0.08-10M-1hr50M-KKWC-A.csv.gz",
+        "csv": "american-canister/v0.08/american-canister-none-v0.08-10M-1hr50M-KKWC-A.csv.gz",
         "row": [
           "3063",
           " solved",
@@ -126,7 +127,7 @@
         "seed": 3649,
         "time": 1938.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/american-canister/v0.08/american-canister-none-v0.08-10M-1hr50M-KKWC-A.csv.gz",
+        "csv": "american-canister/v0.08/american-canister-none-v0.08-10M-1hr50M-KKWC-A.csv.gz",
         "row": [
           "3649",
           " unsolvable",
@@ -150,7 +151,7 @@
         "seed": 35821,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/bakers-game/v0.08/bakers-game-none-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "bakers-game/v0.08/bakers-game-none-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "35821",
           " solved",
@@ -172,7 +173,7 @@
         "seed": 418696,
         "time": 1651.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/bakers-game/v0.08/bakers-game-none-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "bakers-game/v0.08/bakers-game-none-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "418696",
           " unsolvable",
@@ -196,7 +197,7 @@
         "seed": 183,
         "time": 1513.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/beleaguered-castle/v0.08/beleaguered-castle-smart-v0.08-1M-4hr100M-A-qaZMfZ.csv.gz",
+        "csv": "beleaguered-castle/v0.08/beleaguered-castle-smart-v0.08-1M-4hr100M-A-qaZMfZ.csv.gz",
         "row": [
           "183",
           " unsolvable",
@@ -233,7 +234,7 @@
         "seed": 292,
         "time": 1802.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/beleaguered-castle/v0.08/beleaguered-castle-smart-v0.08-1M-4hr100M-A-qaZMfZ.csv.gz",
+        "csv": "beleaguered-castle/v0.08/beleaguered-castle-smart-v0.08-1M-4hr100M-A-qaZMfZ.csv.gz",
         "row": [
           "292",
           " unsolvable",
@@ -272,7 +273,7 @@
         "seed": 9131859,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/black-hole/v0.08/black-hole-smart-v0.08-10M-1hr50M-extra-B-U2D2jZ.csv.gz",
+        "csv": "black-hole/v0.08/black-hole-smart-v0.08-10M-1hr50M-extra-B-U2D2jZ.csv.gz",
         "row": [
           "9131859",
           " solved",
@@ -309,7 +310,7 @@
         "seed": 6895571,
         "time": 2011.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/black-hole/v0.08/black-hole-smart-v0.08-10M-1hr50M-extra-B-U2D2jZ.csv.gz",
+        "csv": "black-hole/v0.08/black-hole-smart-v0.08-10M-1hr50M-extra-B-U2D2jZ.csv.gz",
         "row": [
           "6895571",
           " unsolvable",
@@ -348,7 +349,7 @@
         "seed": 197312577,
         "time": 1966.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/british-canister/v0.08/british-canister-none-v0.08-1B-1hr50M-5ALI-solved+hard-B.csv.gz",
+        "csv": "british-canister/v0.08/british-canister-none-v0.08-1B-1hr50M-5ALI-solved+hard-B.csv.gz",
         "row": [
           "197312577",
           " solved",
@@ -370,7 +371,7 @@
         "seed": 326325767,
         "time": 1896.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/british-canister/v0.08/british-canister-none-v0.08-1B-1hr50M-5ALI-solved+hard-B.csv.gz",
+        "csv": "british-canister/v0.08/british-canister-none-v0.08-1B-1hr50M-5ALI-solved+hard-B.csv.gz",
         "row": [
           "326325767",
           " unsolvable",
@@ -394,7 +395,7 @@
         "seed": 1001263,
         "time": 1888.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/canfield/v0.10/canfield-smart-v0.10-4M-2hr100M-A-2mWWkZ.csv.gz",
+        "csv": "canfield/v0.10/canfield-smart-v0.10-4M-2hr100M-A-2mWWkZ.csv.gz",
         "row": [
           "1001263",
           " solved",
@@ -431,7 +432,7 @@
         "seed": 1001111,
         "time": 1877.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/canfield/v0.10/canfield-smart-v0.10-4M-2hr100M-A-2mWWkZ.csv.gz",
+        "csv": "canfield/v0.10/canfield-smart-v0.10-4M-2hr100M-A-2mWWkZ.csv.gz",
         "row": [
           "1001111",
           " unsolvable",
@@ -470,7 +471,7 @@
         "seed": 4000047,
         "time": 1944.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/canfield-strict/v0.10/canfield-strict-smart-v0.10-7M-2hr100M-A-OJOJRZ.csv.gz",
+        "csv": "canfield-strict/v0.10/canfield-strict-smart-v0.10-7M-2hr100M-A-OJOJRZ.csv.gz",
         "row": [
           "4000047",
           " unsolvable",
@@ -507,7 +508,7 @@
         "seed": 4000425,
         "time": 1846.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/canfield-strict/v0.10/canfield-strict-smart-v0.10-7M-2hr100M-A-OJOJRZ.csv.gz",
+        "csv": "canfield-strict/v0.10/canfield-strict-smart-v0.10-7M-2hr100M-A-OJOJRZ.csv.gz",
         "row": [
           "4000425",
           " unsolvable",
@@ -546,7 +547,7 @@
         "seed": 344200,
         "time": 1841.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/delta-star/v0.08/delta-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "delta-star/v0.08/delta-star-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "344200",
           " solved",
@@ -579,7 +580,7 @@
         "seed": 3605081,
         "time": 182.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/delta-star/v0.08/delta-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "delta-star/v0.08/delta-star-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "3605081",
           " unsolvable",
@@ -614,7 +615,7 @@
         "seed": 108,
         "time": 1793.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/east-haven/v0.08/east-haven-smart-v0.08-5k-2hr25M-A-X8FxgZ.csv.gz",
+        "csv": "east-haven/v0.08/east-haven-smart-v0.08-5k-2hr25M-A-X8FxgZ.csv.gz",
         "row": [
           "108",
           " solved",
@@ -651,7 +652,7 @@
         "seed": 374,
         "time": 1586.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/east-haven/v0.08/east-haven-smart-v0.08-5k-2hr25M-A-X8FxgZ.csv.gz",
+        "csv": "east-haven/v0.08/east-haven-smart-v0.08-5k-2hr25M-A-X8FxgZ.csv.gz",
         "row": [
           "374",
           " unsolvable",
@@ -690,7 +691,7 @@
         "seed": 193680,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/eight-off/v0.08/eight-off-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "eight-off/v0.08/eight-off-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "193680",
           " solved",
@@ -723,7 +724,7 @@
         "seed": 299870,
         "time": 2158.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/eight-off/v0.08/eight-off-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "eight-off/v0.08/eight-off-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "299870",
           " unsolvable",
@@ -758,7 +759,7 @@
         "seed": 186,
         "time": 1917.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fan/v0.08/fan-none-v0.08-1M-4hr100M-A-7ArqIZ.csv.gz",
+        "csv": "fan/v0.08/fan-none-v0.08-1M-4hr100M-A-7ArqIZ.csv.gz",
         "row": [
           "186",
           " solved",
@@ -784,7 +785,7 @@
         "seed": 193,
         "time": 1841.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fan/v0.08/fan-none-v0.08-1M-4hr100M-A-7ArqIZ.csv.gz",
+        "csv": "fan/v0.08/fan-none-v0.08-1M-4hr100M-A-7ArqIZ.csv.gz",
         "row": [
           "193",
           " unsolvable",
@@ -812,7 +813,7 @@
         "seed": 1000704,
         "time": 1841.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fore-cell/v0.08/fore-cell-smart-v0.08-10M-4hr100M-A-4PwfgZ.csv.gz",
+        "csv": "fore-cell/v0.08/fore-cell-smart-v0.08-10M-4hr100M-A-4PwfgZ.csv.gz",
         "row": [
           "1000704",
           " unsolvable",
@@ -849,7 +850,7 @@
         "seed": 1005728,
         "time": 2088.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fore-cell/v0.08/fore-cell-smart-v0.08-10M-4hr100M-A-4PwfgZ.csv.gz",
+        "csv": "fore-cell/v0.08/fore-cell-smart-v0.08-10M-4hr100M-A-4PwfgZ.csv.gz",
         "row": [
           "1005728",
           " unsolvable",
@@ -888,7 +889,7 @@
         "seed": 1390,
         "time": 1815.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fore-cell-same-suit/v0.08/fore-cell-same-suit-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "fore-cell-same-suit/v0.08/fore-cell-same-suit-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "1390",
           " solved",
@@ -921,7 +922,7 @@
         "seed": 7986,
         "time": 1580.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fore-cell-same-suit/v0.08/fore-cell-same-suit-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "fore-cell-same-suit/v0.08/fore-cell-same-suit-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "7986",
           " unsolvable",
@@ -956,7 +957,7 @@
         "seed": 6974509,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fortunes-favor/v0.08/fortunes-favor-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "fortunes-favor/v0.08/fortunes-favor-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "6974509",
           " solved",
@@ -989,7 +990,7 @@
         "seed": 79310374,
         "time": 1590.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fortunes-favor/v0.08/fortunes-favor-none-v0.08-1B-1hr50M-JYUy-unsolvable+hard-B.csv.gz",
+        "csv": "fortunes-favor/v0.08/fortunes-favor-none-v0.08-1B-1hr50M-JYUy-unsolvable+hard-B.csv.gz",
         "row": [
           "79310374",
           " unsolvable",
@@ -1013,7 +1014,7 @@
         "seed": 30586,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell/v0.08.1/free-cell-smart-v0.08.1-10M-30m25M-A.csv.gz",
+        "csv": "free-cell/v0.08.1/free-cell-smart-v0.08.1-10M-30m25M-A.csv.gz",
         "row": [
           "30586",
           " solved",
@@ -1046,7 +1047,7 @@
         "seed": 1767954,
         "time": 1773.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell/v0.08.1/free-cell-smart-v0.08.1-10M-30m25M-A.csv.gz",
+        "csv": "free-cell/v0.08.1/free-cell-smart-v0.08.1-10M-30m25M-A.csv.gz",
         "row": [
           "1767954",
           " unsolvable",
@@ -1081,7 +1082,7 @@
         "seed": 23061,
         "time": 1471.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-0-cell/v0.08.1/free-cell-0-cell-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "csv": "free-cell-0-cell/v0.08.1/free-cell-0-cell-smart-v0.08.1-1M-30m25M-A.csv.gz",
         "row": [
           "23061",
           " unsolvable",
@@ -1114,7 +1115,7 @@
         "seed": 1258,
         "time": 1433.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-0-cell/v0.08.1/free-cell-0-cell-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "csv": "free-cell-0-cell/v0.08.1/free-cell-0-cell-smart-v0.08.1-1M-30m25M-A.csv.gz",
         "row": [
           "1258",
           " unsolvable",
@@ -1149,7 +1150,7 @@
         "seed": 993,
         "time": 1796.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-1-cell/v0.08.1/free-cell-1-cell-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "csv": "free-cell-1-cell/v0.08.1/free-cell-1-cell-smart-v0.08.1-1M-30m25M-A.csv.gz",
         "row": [
           "993",
           " unsolvable",
@@ -1182,7 +1183,7 @@
         "seed": 1482,
         "time": 1973.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-1-cell/v0.08.1/free-cell-1-cell-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "csv": "free-cell-1-cell/v0.08.1/free-cell-1-cell-smart-v0.08.1-1M-30m25M-A.csv.gz",
         "row": [
           "1482",
           " unsolvable",
@@ -1217,7 +1218,7 @@
         "seed": 644,
         "time": 1822.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-2-cell/v0.08.1/free-cell-2-cell-smart-v0.08.1-1M-30m25M-A-zXK3dZ.csv.gz",
+        "csv": "free-cell-2-cell/v0.08.1/free-cell-2-cell-smart-v0.08.1-1M-30m25M-A-zXK3dZ.csv.gz",
         "row": [
           "644",
           " unsolvable",
@@ -1254,7 +1255,7 @@
         "seed": 1838,
         "time": 1695.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-2-cell/v0.08.1/free-cell-2-cell-smart-v0.08.1-1M-30m25M-A-zXK3dZ.csv.gz",
+        "csv": "free-cell-2-cell/v0.08.1/free-cell-2-cell-smart-v0.08.1-1M-30m25M-A-zXK3dZ.csv.gz",
         "row": [
           "1838",
           " unsolvable",
@@ -1293,7 +1294,7 @@
         "seed": 2544,
         "time": 1845.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-3-cell/v0.08.1/free-cell-3-cell-smart-v0.08.1-1M-30m25M-A-mHSu3Z.csv.gz",
+        "csv": "free-cell-3-cell/v0.08.1/free-cell-3-cell-smart-v0.08.1-1M-30m25M-A-mHSu3Z.csv.gz",
         "row": [
           "2544",
           " solved",
@@ -1330,7 +1331,7 @@
         "seed": 6836,
         "time": 1935.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-3-cell/v0.08.1/free-cell-3-cell-smart-v0.08.1-1M-30m25M-A-mHSu3Z.csv.gz",
+        "csv": "free-cell-3-cell/v0.08.1/free-cell-3-cell-smart-v0.08.1-1M-30m25M-A-mHSu3Z.csv.gz",
         "row": [
           "6836",
           " unsolvable",
@@ -1369,7 +1370,7 @@
         "seed": 860950,
         "time": 1244.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-4-pile/v0.08.1/free-cell-4-pile-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "csv": "free-cell-4-pile/v0.08.1/free-cell-4-pile-smart-v0.08.1-1M-30m25M-A.csv.gz",
         "row": [
           "860950",
           " unsolvable",
@@ -1402,7 +1403,7 @@
         "seed": 651423,
         "time": 1898.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-4-pile/v0.08.1/free-cell-4-pile-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "csv": "free-cell-4-pile/v0.08.1/free-cell-4-pile-smart-v0.08.1-1M-30m25M-A.csv.gz",
         "row": [
           "651423",
           " unsolvable",
@@ -1437,7 +1438,7 @@
         "seed": 183,
         "time": 1986.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-5-pile/v0.08.1/free-cell-5-pile-smart-v0.08.1-1M-30m25M-A-RrssJZ.csv.gz",
+        "csv": "free-cell-5-pile/v0.08.1/free-cell-5-pile-smart-v0.08.1-1M-30m25M-A-RrssJZ.csv.gz",
         "row": [
           "183",
           " unsolvable",
@@ -1474,7 +1475,7 @@
         "seed": 2014,
         "time": 1885.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-5-pile/v0.08.1/free-cell-5-pile-smart-v0.08.1-1M-30m25M-A-RrssJZ.csv.gz",
+        "csv": "free-cell-5-pile/v0.08.1/free-cell-5-pile-smart-v0.08.1-1M-30m25M-A-RrssJZ.csv.gz",
         "row": [
           "2014",
           " unsolvable",
@@ -1513,7 +1514,7 @@
         "seed": 29,
         "time": 1977.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-6-pile/v0.08.1/free-cell-6-pile-smart-v0.08.1-1M-30m25M-A-2QDdcZ.csv.gz",
+        "csv": "free-cell-6-pile/v0.08.1/free-cell-6-pile-smart-v0.08.1-1M-30m25M-A-2QDdcZ.csv.gz",
         "row": [
           "29",
           " unsolvable",
@@ -1550,7 +1551,7 @@
         "seed": 54,
         "time": 1755.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-6-pile/v0.08.1/free-cell-6-pile-smart-v0.08.1-1M-30m25M-A-2QDdcZ.csv.gz",
+        "csv": "free-cell-6-pile/v0.08.1/free-cell-6-pile-smart-v0.08.1-1M-30m25M-A-2QDdcZ.csv.gz",
         "row": [
           "54",
           " unsolvable",
@@ -1589,7 +1590,7 @@
         "seed": 3216,
         "time": 1821.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-7-pile/v0.08.1/free-cell-7-pile-smart-v0.08.1-1M-30m25M-A-L7tZPZ.csv.gz",
+        "csv": "free-cell-7-pile/v0.08.1/free-cell-7-pile-smart-v0.08.1-1M-30m25M-A-L7tZPZ.csv.gz",
         "row": [
           "3216",
           " solved",
@@ -1626,7 +1627,7 @@
         "seed": 5849,
         "time": 1627.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-7-pile/v0.08.1/free-cell-7-pile-smart-v0.08.1-1M-30m25M-A-L7tZPZ.csv.gz",
+        "csv": "free-cell-7-pile/v0.08.1/free-cell-7-pile-smart-v0.08.1-1M-30m25M-A-L7tZPZ.csv.gz",
         "row": [
           "5849",
           " unsolvable",
@@ -1665,7 +1666,7 @@
         "seed": 3073809,
         "time": 1766.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/gaps-basic-variant/v0.10/gaps-basic-variant-none-v0.10-6M-2hr100M-extra-B-SEP3LZ.csv.gz",
+        "csv": "gaps-basic-variant/v0.10/gaps-basic-variant-none-v0.10-6M-2hr100M-extra-B-SEP3LZ.csv.gz",
         "row": [
           "3073809",
           " solved",
@@ -1691,7 +1692,7 @@
         "seed": 4079651,
         "time": 1789.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/gaps-basic-variant/v0.10/gaps-basic-variant-none-v0.10-6M-2hr100M-extra-B-SEP3LZ.csv.gz",
+        "csv": "gaps-basic-variant/v0.10/gaps-basic-variant-none-v0.10-6M-2hr100M-extra-B-SEP3LZ.csv.gz",
         "row": [
           "4079651",
           " unsolvable",
@@ -1719,7 +1720,7 @@
         "seed": 4320,
         "time": 1862.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/gaps-one-deal/v0.08/gaps-one-deal-none-v0.08-5k-2hr100M-B-mp4FRZ.csv.gz",
+        "csv": "gaps-one-deal/v0.08/gaps-one-deal-none-v0.08-5k-2hr100M-B-mp4FRZ.csv.gz",
         "row": [
           "4320",
           " solved",
@@ -1745,7 +1746,7 @@
         "seed": 709,
         "time": 2032.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/gaps-one-deal/v0.08/gaps-one-deal-none-v0.08-100K-4hr100M-A-GCqPcZ.csv.gz",
+        "csv": "gaps-one-deal/v0.08/gaps-one-deal-none-v0.08-100K-4hr100M-A-GCqPcZ.csv.gz",
         "row": [
           "709",
           " unsolvable",
@@ -1773,7 +1774,7 @@
         "seed": 50,
         "time": 1817.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/golf/v0.10/golf-none-v0.10-1M-2hr100M-A-m6HjdZ.csv.gz",
+        "csv": "golf/v0.10/golf-none-v0.10-1M-2hr100M-A-m6HjdZ.csv.gz",
         "row": [
           "50",
           " solved",
@@ -1799,7 +1800,7 @@
         "seed": 33,
         "time": 1870.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/golf/v0.10/golf-none-v0.10-1M-2hr100M-A-m6HjdZ.csv.gz",
+        "csv": "golf/v0.10/golf-none-v0.10-1M-2hr100M-A-m6HjdZ.csv.gz",
         "row": [
           "33",
           " unsolvable",
@@ -1827,7 +1828,7 @@
         "seed": 1000786,
         "time": 1862.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/king-albert/v0.08.1/king-albert-2M-smart-A-5m.csv.gz",
+        "csv": "king-albert/v0.08.1/king-albert-2M-smart-A-5m.csv.gz",
         "row": [
           "1000786",
           " solved",
@@ -1860,7 +1861,7 @@
         "seed": 1001246,
         "time": 1865.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/king-albert/v0.08.1/king-albert-2M-smart-A-5m.csv.gz",
+        "csv": "king-albert/v0.08.1/king-albert-2M-smart-A-5m.csv.gz",
         "row": [
           "1001246",
           " unsolvable",
@@ -1895,7 +1896,7 @@
         "seed": 282763,
         "time": 1837.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike/cardabovebuildable/klondike-partial-piles-restricted-smart-cardabovebuildable-1M-14-2hr100M-extra-F-5BkApZ.csv.gz",
+        "csv": "klondike/cardabovebuildable/klondike-partial-piles-restricted-smart-cardabovebuildable-1M-14-2hr100M-extra-F-5BkApZ.csv.gz",
         "row": [
           "282763",
           " solved",
@@ -1932,7 +1933,7 @@
         "seed": 896246,
         "time": 1708.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike/cardabovebuildable/klondike-partial-piles-restricted-smart-cardabovebuildable-1M-14-2hr100M-extra-F-5BkApZ.csv.gz",
+        "csv": "klondike/cardabovebuildable/klondike-partial-piles-restricted-smart-cardabovebuildable-1M-14-2hr100M-extra-F-5BkApZ.csv.gz",
         "row": [
           "896246",
           " unsolvable",
@@ -1971,7 +1972,7 @@
         "seed": 669962,
         "time": 1969.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-1/v0.10.1/klondike-deal-1-smart-v0.10.1-1M-2hr100M-Bxac-lhh7zZ.csv.gz",
+        "csv": "klondike-deal-1/v0.10.1/klondike-deal-1-smart-v0.10.1-1M-2hr100M-Bxac-lhh7zZ.csv.gz",
         "row": [
           "669962",
           " unsolvable",
@@ -2008,7 +2009,7 @@
         "seed": 647312,
         "time": 1856.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-1/v0.10.1/klondike-deal-1-smart-v0.10.1-1M-2hr100M-Bxac-lhh7zZ.csv.gz",
+        "csv": "klondike-deal-1/v0.10.1/klondike-deal-1-smart-v0.10.1-1M-2hr100M-Bxac-lhh7zZ.csv.gz",
         "row": [
           "647312",
           " unsolvable",
@@ -2047,7 +2048,7 @@
         "seed": 357092,
         "time": 1850.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-1-noworryback/v0.10.1/klondike-deal-1-noworryback-smart-v0.10.1-1M-4hr100M-A-IiyS5Z.csv.gz",
+        "csv": "klondike-deal-1-noworryback/v0.10.1/klondike-deal-1-noworryback-smart-v0.10.1-1M-4hr100M-A-IiyS5Z.csv.gz",
         "row": [
           "357092",
           " solved",
@@ -2084,7 +2085,7 @@
         "seed": 321126,
         "time": 2088.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-1-noworryback/v0.10.1/klondike-deal-1-noworryback-smart-v0.10.1-1M-4hr100M-A-IiyS5Z.csv.gz",
+        "csv": "klondike-deal-1-noworryback/v0.10.1/klondike-deal-1-noworryback-smart-v0.10.1-1M-4hr100M-A-IiyS5Z.csv.gz",
         "row": [
           "321126",
           " unsolvable",
@@ -2123,7 +2124,7 @@
         "seed": 134600,
         "time": 1827.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-2/v0.10.1/klondike-deal-2-smart-v0.10.1-1M-4hr100M-A-0pIwzZ.csv.gz",
+        "csv": "klondike-deal-2/v0.10.1/klondike-deal-2-smart-v0.10.1-1M-4hr100M-A-0pIwzZ.csv.gz",
         "row": [
           "134600",
           " solved",
@@ -2160,7 +2161,7 @@
         "seed": 150593,
         "time": 1888.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-2/v0.10.1/klondike-deal-2-smart-v0.10.1-1M-4hr100M-A-0pIwzZ.csv.gz",
+        "csv": "klondike-deal-2/v0.10.1/klondike-deal-2-smart-v0.10.1-1M-4hr100M-A-0pIwzZ.csv.gz",
         "row": [
           "150593",
           " unsolvable",
@@ -2199,7 +2200,7 @@
         "seed": 512480,
         "time": 1853.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-2-noworryback/v0.10.1/klondike-deal-2-noworryback-smart-v0.10.1-1M-4hr100M-Bac-HcgZCZ.csv.gz",
+        "csv": "klondike-deal-2-noworryback/v0.10.1/klondike-deal-2-noworryback-smart-v0.10.1-1M-4hr100M-Bac-HcgZCZ.csv.gz",
         "row": [
           "512480",
           " solved",
@@ -2236,7 +2237,7 @@
         "seed": 691069,
         "time": 1961.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-2-noworryback/v0.10.1/klondike-deal-2-noworryback-smart-v0.10.1-1M-4hr100M-Bac-HcgZCZ.csv.gz",
+        "csv": "klondike-deal-2-noworryback/v0.10.1/klondike-deal-2-noworryback-smart-v0.10.1-1M-4hr100M-Bac-HcgZCZ.csv.gz",
         "row": [
           "691069",
           " unsolvable",
@@ -2275,7 +2276,7 @@
         "seed": 563991,
         "time": 2059.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-anyspace/v0.10.1/klondike-deal-3-anyspace-smart-v0.10.1-1M-4hr100M-A-o9AV0Z.csv.gz",
+        "csv": "klondike-deal-3-anyspace/v0.10.1/klondike-deal-3-anyspace-smart-v0.10.1-1M-4hr100M-A-o9AV0Z.csv.gz",
         "row": [
           "563991",
           " solved",
@@ -2312,7 +2313,7 @@
         "seed": 25069,
         "time": 2172.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-anyspace/v0.10.1/klondike-deal-3-anyspace-smart-v0.10.1-1M-4hr100M-A-o9AV0Z.csv.gz",
+        "csv": "klondike-deal-3-anyspace/v0.10.1/klondike-deal-3-anyspace-smart-v0.10.1-1M-4hr100M-A-o9AV0Z.csv.gz",
         "row": [
           "25069",
           " unsolvable",
@@ -2351,7 +2352,7 @@
         "seed": 205146,
         "time": 1850.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-anysuit/v0.10.1/klondike-deal-3-anysuit-smart-v0.10.1-1M-4hr100M-A-ztU2BZ.csv.gz",
+        "csv": "klondike-deal-3-anysuit/v0.10.1/klondike-deal-3-anysuit-smart-v0.10.1-1M-4hr100M-A-ztU2BZ.csv.gz",
         "row": [
           "205146",
           " solved",
@@ -2388,7 +2389,7 @@
         "seed": 362420,
         "time": 2030.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-anysuit/v0.10.1/klondike-deal-3-anysuit-smart-v0.10.1-1M-4hr100M-A-ztU2BZ.csv.gz",
+        "csv": "klondike-deal-3-anysuit/v0.10.1/klondike-deal-3-anysuit-smart-v0.10.1-1M-4hr100M-A-ztU2BZ.csv.gz",
         "row": [
           "362420",
           " unsolvable",
@@ -2427,7 +2428,7 @@
         "seed": 407112,
         "time": 1857.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-anysuitanyspace/v0.10.1/klondike-deal-3-anysuitanyspace-smart-v0.10.1-1M-4hr100M-A-zyK4yZ.csv.gz",
+        "csv": "klondike-deal-3-anysuitanyspace/v0.10.1/klondike-deal-3-anysuitanyspace-smart-v0.10.1-1M-4hr100M-A-zyK4yZ.csv.gz",
         "row": [
           "407112",
           " solved",
@@ -2453,7 +2454,7 @@
         "seed": 183494,
         "time": 1747.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-anysuitanyspace/v0.10.1/klondike-deal-3-anysuitanyspace-smart-v0.10.1-1M-4hr100M-A-zyK4yZ.csv.gz",
+        "csv": "klondike-deal-3-anysuitanyspace/v0.10.1/klondike-deal-3-anysuitanyspace-smart-v0.10.1-1M-4hr100M-A-zyK4yZ.csv.gz",
         "row": [
           "183494",
           " unsolvable",
@@ -2481,7 +2482,7 @@
         "seed": 1911,
         "time": 1856.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-anysuitnospace/v0.10.1/klondike-deal-3-anysuitnospace-smart-v0.10.1-1M-4hr100M-A-rMKLEZ.csv.gz",
+        "csv": "klondike-deal-3-anysuitnospace/v0.10.1/klondike-deal-3-anysuitnospace-smart-v0.10.1-1M-4hr100M-A-rMKLEZ.csv.gz",
         "row": [
           "1911",
           " solved",
@@ -2518,7 +2519,7 @@
         "seed": 4641,
         "time": 1894.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-anysuitnospace/v0.10.1/klondike-deal-3-anysuitnospace-smart-v0.10.1-1M-4hr100M-A-rMKLEZ.csv.gz",
+        "csv": "klondike-deal-3-anysuitnospace/v0.10.1/klondike-deal-3-anysuitnospace-smart-v0.10.1-1M-4hr100M-A-rMKLEZ.csv.gz",
         "row": [
           "4641",
           " unsolvable",
@@ -2557,7 +2558,7 @@
         "seed": 855075,
         "time": 2068.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-nospace/v0.10.1/klondike-deal-3-nospace-smart-v0.10.1-1M-4hr100M-Bag-0nryRZ.csv.gz",
+        "csv": "klondike-deal-3-nospace/v0.10.1/klondike-deal-3-nospace-smart-v0.10.1-1M-4hr100M-Bag-0nryRZ.csv.gz",
         "row": [
           "855075",
           " solved",
@@ -2594,7 +2595,7 @@
         "seed": 757232,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-nospace/v0.10.1/klondike-deal-3-nospace-smart-v0.10.1-1M-4hr100M-Bag-0nryRZ.csv.gz",
+        "csv": "klondike-deal-3-nospace/v0.10.1/klondike-deal-3-nospace-smart-v0.10.1-1M-4hr100M-Bag-0nryRZ.csv.gz",
         "row": [
           "757232",
           " unsolvable",
@@ -2633,7 +2634,7 @@
         "seed": 679864,
         "time": 1842.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-noworryback/v0.10.1/klondike-noworryback-smart-v0.10.1-1M-2hr100M-B-df06aZ.csv.gz",
+        "csv": "klondike-deal-3-noworryback/v0.10.1/klondike-noworryback-smart-v0.10.1-1M-2hr100M-B-df06aZ.csv.gz",
         "row": [
           "679864",
           " unsolvable",
@@ -2670,7 +2671,7 @@
         "seed": 263181,
         "time": 2082.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-noworryback/v0.10.1/klondike-noworryback-smart-v0.10.1-1M-2hr100M-A-x22FVZ.csv.gz",
+        "csv": "klondike-deal-3-noworryback/v0.10.1/klondike-noworryback-smart-v0.10.1-1M-2hr100M-A-x22FVZ.csv.gz",
         "row": [
           "263181",
           " unsolvable",
@@ -2709,7 +2710,7 @@
         "seed": 23331,
         "time": 1500.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuit/v0.10.1/klondike-deal-3-samesuit-smart-v0.10.1-1M-4hr100M-A-9C7zAZ.csv.gz",
+        "csv": "klondike-deal-3-samesuit/v0.10.1/klondike-deal-3-samesuit-smart-v0.10.1-1M-4hr100M-A-9C7zAZ.csv.gz",
         "row": [
           "23331",
           " solved",
@@ -2746,7 +2747,7 @@
         "seed": 648,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuit/v0.10.1/klondike-deal-3-samesuit-smart-v0.10.1-1M-4hr100M-A-9C7zAZ.csv.gz",
+        "csv": "klondike-deal-3-samesuit/v0.10.1/klondike-deal-3-samesuit-smart-v0.10.1-1M-4hr100M-A-9C7zAZ.csv.gz",
         "row": [
           "648",
           " unsolvable",
@@ -2785,7 +2786,7 @@
         "seed": 539479,
         "time": 1531.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitanyspace/v0.10.1/klondike-deal-3-samesuitanyspace-smart-v0.10.1-1M-4hr100M-A-ZcwbJZ.csv.gz",
+        "csv": "klondike-deal-3-samesuitanyspace/v0.10.1/klondike-deal-3-samesuitanyspace-smart-v0.10.1-1M-4hr100M-A-ZcwbJZ.csv.gz",
         "row": [
           "539479",
           " solved",
@@ -2811,7 +2812,7 @@
         "seed": 832359,
         "time": 1851.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitanyspace/v0.10.1/klondike-deal-3-samesuitanyspace-smart-v0.10.1-1M-4hr100M-A-ZcwbJZ.csv.gz",
+        "csv": "klondike-deal-3-samesuitanyspace/v0.10.1/klondike-deal-3-samesuitanyspace-smart-v0.10.1-1M-4hr100M-A-ZcwbJZ.csv.gz",
         "row": [
           "832359",
           " unsolvable",
@@ -2839,7 +2840,7 @@
         "seed": 23331,
         "time": 617.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitnospace/v0.10.1/klondike-deal-3-samesuitnospace-smart-v0.10.1-1M-4hr100M-A-EbFVKZ.csv.gz",
+        "csv": "klondike-deal-3-samesuitnospace/v0.10.1/klondike-deal-3-samesuitnospace-smart-v0.10.1-1M-4hr100M-A-EbFVKZ.csv.gz",
         "row": [
           "23331",
           " solved",
@@ -2865,7 +2866,7 @@
         "seed": 129698,
         "time": 1866.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitnospace/v0.10.1/klondike-deal-3-samesuitnospace-smart-v0.10.1-1M-4hr100M-A-EbFVKZ.csv.gz",
+        "csv": "klondike-deal-3-samesuitnospace/v0.10.1/klondike-deal-3-samesuitnospace-smart-v0.10.1-1M-4hr100M-A-EbFVKZ.csv.gz",
         "row": [
           "129698",
           " unsolvable",
@@ -2893,7 +2894,7 @@
         "seed": 794784,
         "time": 1823.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-4/v0.10.1/klondike-deal-4-smart-v0.10.1-1M-4hr100M-A-c7yOSZ.csv.gz",
+        "csv": "klondike-deal-4/v0.10.1/klondike-deal-4-smart-v0.10.1-1M-4hr100M-A-c7yOSZ.csv.gz",
         "row": [
           "794784",
           " solved",
@@ -2930,7 +2931,7 @@
         "seed": 191962,
         "time": 1864.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-4/v0.10.1/klondike-deal-4-smart-v0.10.1-1M-4hr100M-A-c7yOSZ.csv.gz",
+        "csv": "klondike-deal-4/v0.10.1/klondike-deal-4-smart-v0.10.1-1M-4hr100M-A-c7yOSZ.csv.gz",
         "row": [
           "191962",
           " unsolvable",
@@ -2969,7 +2970,7 @@
         "seed": 265336,
         "time": 1854.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-4-noworryback/v0.10.1/klondike-deal-4-noworryback-smart-v0.10.1-1M-4hr100M-A-n7x4gZ.csv.gz",
+        "csv": "klondike-deal-4-noworryback/v0.10.1/klondike-deal-4-noworryback-smart-v0.10.1-1M-4hr100M-A-n7x4gZ.csv.gz",
         "row": [
           "265336",
           " solved",
@@ -3006,7 +3007,7 @@
         "seed": 841236,
         "time": 1394.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-4-noworryback/v0.10.1/klondike-deal-4-noworryback-smart-v0.10.1-1M-4hr100M-A-n7x4gZ.csv.gz",
+        "csv": "klondike-deal-4-noworryback/v0.10.1/klondike-deal-4-noworryback-smart-v0.10.1-1M-4hr100M-A-n7x4gZ.csv.gz",
         "row": [
           "841236",
           " unsolvable",
@@ -3045,7 +3046,7 @@
         "seed": 89625,
         "time": 1804.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-5/v0.10.1/klondike-deal-5-smart-v0.10.1-1M-4hr100M-A-4nbQ3Z.csv.gz",
+        "csv": "klondike-deal-5/v0.10.1/klondike-deal-5-smart-v0.10.1-1M-4hr100M-A-4nbQ3Z.csv.gz",
         "row": [
           "89625",
           " solved",
@@ -3082,7 +3083,7 @@
         "seed": 913809,
         "time": 1791.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-5/v0.10.1/klondike-deal-5-smart-v0.10.1-1M-4hr100M-A-4nbQ3Z.csv.gz",
+        "csv": "klondike-deal-5/v0.10.1/klondike-deal-5-smart-v0.10.1-1M-4hr100M-A-4nbQ3Z.csv.gz",
         "row": [
           "913809",
           " unsolvable",
@@ -3121,7 +3122,7 @@
         "seed": 688868,
         "time": 1855.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-5-noworryback/v0.10.1/klondike-deal-5-noworryback-smart-v0.10.1-1M-4hr100M-A-DvHweZ.csv.gz",
+        "csv": "klondike-deal-5-noworryback/v0.10.1/klondike-deal-5-noworryback-smart-v0.10.1-1M-4hr100M-A-DvHweZ.csv.gz",
         "row": [
           "688868",
           " solved",
@@ -3158,7 +3159,7 @@
         "seed": 169276,
         "time": 2192.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-5-noworryback/v0.10.1/klondike-deal-5-noworryback-smart-v0.10.1-1M-4hr100M-A-DvHweZ.csv.gz",
+        "csv": "klondike-deal-5-noworryback/v0.10.1/klondike-deal-5-noworryback-smart-v0.10.1-1M-4hr100M-A-DvHweZ.csv.gz",
         "row": [
           "169276",
           " unsolvable",
@@ -3197,7 +3198,7 @@
         "seed": 661648,
         "time": 1816.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-6/v0.10.1/klondike-deal-6-smart-v0.10.1-1M-4hr100M-A-eV5oLZ.csv.gz",
+        "csv": "klondike-deal-6/v0.10.1/klondike-deal-6-smart-v0.10.1-1M-4hr100M-A-eV5oLZ.csv.gz",
         "row": [
           "661648",
           " solved",
@@ -3234,7 +3235,7 @@
         "seed": 672409,
         "time": 1689.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-6/v0.10.1/klondike-deal-6-smart-v0.10.1-1M-4hr100M-A-eV5oLZ.csv.gz",
+        "csv": "klondike-deal-6/v0.10.1/klondike-deal-6-smart-v0.10.1-1M-4hr100M-A-eV5oLZ.csv.gz",
         "row": [
           "672409",
           " unsolvable",
@@ -3273,7 +3274,7 @@
         "seed": 581412,
         "time": 1853.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-6-noworryback/v0.10.1/klondike-deal-6-noworryback-smart-v0.10.1-1M-4hr100M-A-arcE6Z.csv.gz",
+        "csv": "klondike-deal-6-noworryback/v0.10.1/klondike-deal-6-noworryback-smart-v0.10.1-1M-4hr100M-A-arcE6Z.csv.gz",
         "row": [
           "581412",
           " unsolvable",
@@ -3310,7 +3311,7 @@
         "seed": 915040,
         "time": 1445.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-6-noworryback/v0.10.1/klondike-deal-6-noworryback-smart-v0.10.1-1M-4hr100M-A-arcE6Z.csv.gz",
+        "csv": "klondike-deal-6-noworryback/v0.10.1/klondike-deal-6-noworryback-smart-v0.10.1-1M-4hr100M-A-arcE6Z.csv.gz",
         "row": [
           "915040",
           " unsolvable",
@@ -3349,7 +3350,7 @@
         "seed": 902402,
         "time": 1689.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-7/v0.10.1/klondike-deal-7-smart-v0.10.1-1M-4hr100M-A-IsQn6Z.csv.gz",
+        "csv": "klondike-deal-7/v0.10.1/klondike-deal-7-smart-v0.10.1-1M-4hr100M-A-IsQn6Z.csv.gz",
         "row": [
           "902402",
           " solved",
@@ -3386,7 +3387,7 @@
         "seed": 457766,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-7/v0.10.1/klondike-deal-7-smart-v0.10.1-1M-4hr100M-A-giSXnZ.csv.gz",
+        "csv": "klondike-deal-7/v0.10.1/klondike-deal-7-smart-v0.10.1-1M-4hr100M-A-giSXnZ.csv.gz",
         "row": [
           "457766",
           " unsolvable",
@@ -3425,7 +3426,7 @@
         "seed": 233842,
         "time": 1839.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-7-noworryback/v0.10.1/klondike-deal-7-noworryback-smart-v0.10.1-1M-4hr100M-A-hMFBNZ.csv.gz",
+        "csv": "klondike-deal-7-noworryback/v0.10.1/klondike-deal-7-noworryback-smart-v0.10.1-1M-4hr100M-A-hMFBNZ.csv.gz",
         "row": [
           "233842",
           " solved",
@@ -3462,7 +3463,7 @@
         "seed": 21864,
         "time": 1884.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-7-noworryback/v0.10.1/klondike-deal-7-noworryback-smart-v0.10.1-1M-4hr100M-A-hMFBNZ.csv.gz",
+        "csv": "klondike-deal-7-noworryback/v0.10.1/klondike-deal-7-noworryback-smart-v0.10.1-1M-4hr100M-A-hMFBNZ.csv.gz",
         "row": [
           "21864",
           " unsolvable",
@@ -3501,7 +3502,7 @@
         "seed": 1647,
         "time": 2029.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-8/v0.10.1/klondike-deal-8-smart-v0.10.1-1M-4hr100M-A-lWidMZ.csv.gz",
+        "csv": "klondike-deal-8/v0.10.1/klondike-deal-8-smart-v0.10.1-1M-4hr100M-A-lWidMZ.csv.gz",
         "row": [
           "1647",
           " solved",
@@ -3538,7 +3539,7 @@
         "seed": 648,
         "time": 1879.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-8/v0.10.1/klondike-deal-8-smart-v0.10.1-1M-4hr100M-A-lWidMZ.csv.gz",
+        "csv": "klondike-deal-8/v0.10.1/klondike-deal-8-smart-v0.10.1-1M-4hr100M-A-lWidMZ.csv.gz",
         "row": [
           "648",
           " unsolvable",
@@ -3577,7 +3578,7 @@
         "seed": 610693,
         "time": 1882.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-8-noworryback/v0.10.1/klondike-deal-8-noworryback-smart-v0.10.1-1M-4hr100M-A-rD5wAZ.csv.gz",
+        "csv": "klondike-deal-8-noworryback/v0.10.1/klondike-deal-8-noworryback-smart-v0.10.1-1M-4hr100M-A-rD5wAZ.csv.gz",
         "row": [
           "610693",
           " unsolvable",
@@ -3614,7 +3615,7 @@
         "seed": 619868,
         "time": 1984.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-8-noworryback/v0.10.1/klondike-deal-8-noworryback-smart-v0.10.1-1M-4hr100M-A-rD5wAZ.csv.gz",
+        "csv": "klondike-deal-8-noworryback/v0.10.1/klondike-deal-8-noworryback-smart-v0.10.1-1M-4hr100M-A-rD5wAZ.csv.gz",
         "row": [
           "619868",
           " unsolvable",
@@ -3653,7 +3654,7 @@
         "seed": 360491,
         "time": 1475.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-9/v0.10.1/klondike-deal-9-smart-v0.10.1-1M-4hr100M-A-hyiv4Z.csv.gz",
+        "csv": "klondike-deal-9/v0.10.1/klondike-deal-9-smart-v0.10.1-1M-4hr100M-A-hyiv4Z.csv.gz",
         "row": [
           "360491",
           " unsolvable",
@@ -3690,7 +3691,7 @@
         "seed": 166698,
         "time": 1855.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-9/v0.10.1/klondike-deal-9-smart-v0.10.1-1M-4hr100M-A-hyiv4Z.csv.gz",
+        "csv": "klondike-deal-9/v0.10.1/klondike-deal-9-smart-v0.10.1-1M-4hr100M-A-hyiv4Z.csv.gz",
         "row": [
           "166698",
           " unsolvable",
@@ -3729,7 +3730,7 @@
         "seed": 530129,
         "time": 1943.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-9-noworryback/v0.10.1/klondike-deal-9-noworryback-smart-v0.10.1-1M-4hr100M-A-2OFi4Z.csv.gz",
+        "csv": "klondike-deal-9-noworryback/v0.10.1/klondike-deal-9-noworryback-smart-v0.10.1-1M-4hr100M-A-2OFi4Z.csv.gz",
         "row": [
           "530129",
           " solved",
@@ -3766,7 +3767,7 @@
         "seed": 745806,
         "time": 1836.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-9-noworryback/v0.10.1/klondike-deal-9-noworryback-smart-v0.10.1-1M-4hr100M-A-2OFi4Z.csv.gz",
+        "csv": "klondike-deal-9-noworryback/v0.10.1/klondike-deal-9-noworryback-smart-v0.10.1-1M-4hr100M-A-2OFi4Z.csv.gz",
         "row": [
           "745806",
           " unsolvable",
@@ -3805,7 +3806,7 @@
         "seed": 919622,
         "time": 2097.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-10/v0.10.1/klondike-deal-10-smart-v0.10.1-1M-4hr100M-A-5NlYnZ.csv.gz",
+        "csv": "klondike-deal-10/v0.10.1/klondike-deal-10-smart-v0.10.1-1M-4hr100M-A-5NlYnZ.csv.gz",
         "row": [
           "919622",
           " unsolvable",
@@ -3842,7 +3843,7 @@
         "seed": 173114,
         "time": 1873.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-10/v0.10.1/klondike-deal-10-smart-v0.10.1-1M-4hr100M-A-5NlYnZ.csv.gz",
+        "csv": "klondike-deal-10/v0.10.1/klondike-deal-10-smart-v0.10.1-1M-4hr100M-A-5NlYnZ.csv.gz",
         "row": [
           "173114",
           " unsolvable",
@@ -3881,7 +3882,7 @@
         "seed": 366955,
         "time": 1904.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-10-noworryback/v0.10.1/klondike-deal-10-noworryback-smart-v0.10.1-1M-4hr100M-A-y8L72Z.csv.gz",
+        "csv": "klondike-deal-10-noworryback/v0.10.1/klondike-deal-10-noworryback-smart-v0.10.1-1M-4hr100M-A-y8L72Z.csv.gz",
         "row": [
           "366955",
           " solved",
@@ -3918,7 +3919,7 @@
         "seed": 403563,
         "time": 1884.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-10-noworryback/v0.10.1/klondike-deal-10-noworryback-smart-v0.10.1-1M-4hr100M-A-y8L72Z.csv.gz",
+        "csv": "klondike-deal-10-noworryback/v0.10.1/klondike-deal-10-noworryback-smart-v0.10.1-1M-4hr100M-A-y8L72Z.csv.gz",
         "row": [
           "403563",
           " unsolvable",
@@ -3957,7 +3958,7 @@
         "seed": 118925,
         "time": 1587.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-11/v0.10.1/klondike-deal-11-smart-v0.10.1-1M-4hr100M-A-oYKfqZ.csv.gz",
+        "csv": "klondike-deal-11/v0.10.1/klondike-deal-11-smart-v0.10.1-1M-4hr100M-A-oYKfqZ.csv.gz",
         "row": [
           "118925",
           " unsolvable",
@@ -3994,7 +3995,7 @@
         "seed": 314468,
         "time": 1853.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-11/v0.10.1/klondike-deal-11-smart-v0.10.1-1M-4hr100M-A-oYKfqZ.csv.gz",
+        "csv": "klondike-deal-11/v0.10.1/klondike-deal-11-smart-v0.10.1-1M-4hr100M-A-oYKfqZ.csv.gz",
         "row": [
           "314468",
           " unsolvable",
@@ -4033,7 +4034,7 @@
         "seed": 416287,
         "time": 1941.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-11-noworryback/v0.10.1/klondike-deal-11-noworryback-smart-v0.10.1-1M-4hr100M-A-fAqFxZ.csv.gz",
+        "csv": "klondike-deal-11-noworryback/v0.10.1/klondike-deal-11-noworryback-smart-v0.10.1-1M-4hr100M-A-fAqFxZ.csv.gz",
         "row": [
           "416287",
           " solved",
@@ -4070,7 +4071,7 @@
         "seed": 39353,
         "time": 1934.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-11-noworryback/v0.10.1/klondike-deal-11-noworryback-smart-v0.10.1-1M-4hr100M-A-fAqFxZ.csv.gz",
+        "csv": "klondike-deal-11-noworryback/v0.10.1/klondike-deal-11-noworryback-smart-v0.10.1-1M-4hr100M-A-fAqFxZ.csv.gz",
         "row": [
           "39353",
           " unsolvable",
@@ -4109,7 +4110,7 @@
         "seed": 816850,
         "time": 1447.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-12/v0.10.1/klondike-deal-12-smart-v0.10.1-1M-4hr100M-A-KxGHvZ.csv.gz",
+        "csv": "klondike-deal-12/v0.10.1/klondike-deal-12-smart-v0.10.1-1M-4hr100M-A-KxGHvZ.csv.gz",
         "row": [
           "816850",
           " unsolvable",
@@ -4146,7 +4147,7 @@
         "seed": 863842,
         "time": 1622.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-12/v0.10.1/klondike-deal-12-smart-v0.10.1-1M-4hr100M-A-KxGHvZ.csv.gz",
+        "csv": "klondike-deal-12/v0.10.1/klondike-deal-12-smart-v0.10.1-1M-4hr100M-A-KxGHvZ.csv.gz",
         "row": [
           "863842",
           " unsolvable",
@@ -4185,7 +4186,7 @@
         "seed": 42727,
         "time": 1689.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-12-noworryback/v0.10.1/klondike-deal-12-noworryback-smart-v0.10.1-1M-4hr100M-A-237XqZ.csv.gz",
+        "csv": "klondike-deal-12-noworryback/v0.10.1/klondike-deal-12-noworryback-smart-v0.10.1-1M-4hr100M-A-237XqZ.csv.gz",
         "row": [
           "42727",
           " unsolvable",
@@ -4222,7 +4223,7 @@
         "seed": 503552,
         "time": 2015.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-12-noworryback/v0.10.1/klondike-deal-12-noworryback-smart-v0.10.1-1M-4hr100M-A-237XqZ.csv.gz",
+        "csv": "klondike-deal-12-noworryback/v0.10.1/klondike-deal-12-noworryback-smart-v0.10.1-1M-4hr100M-A-237XqZ.csv.gz",
         "row": [
           "503552",
           " unsolvable",
@@ -4261,7 +4262,7 @@
         "seed": 704712,
         "time": 1901.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-13/v0.10.1/klondike-deal-13-smart-v0.10.1-1M-4hr100M-A-fUmNpZ.csv.gz",
+        "csv": "klondike-deal-13/v0.10.1/klondike-deal-13-smart-v0.10.1-1M-4hr100M-A-fUmNpZ.csv.gz",
         "row": [
           "704712",
           " unsolvable",
@@ -4298,7 +4299,7 @@
         "seed": 272200,
         "time": 1828.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-13/v0.10.1/klondike-deal-13-smart-v0.10.1-1M-4hr100M-A-fUmNpZ.csv.gz",
+        "csv": "klondike-deal-13/v0.10.1/klondike-deal-13-smart-v0.10.1-1M-4hr100M-A-fUmNpZ.csv.gz",
         "row": [
           "272200",
           " unsolvable",
@@ -4337,7 +4338,7 @@
         "seed": 459598,
         "time": 1493.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-13-noworryback/v0.10.1/klondike-deal-13-noworryback-smart-v0.10.1-1M-4hr100M-A-IGTczZ.csv.gz",
+        "csv": "klondike-deal-13-noworryback/v0.10.1/klondike-deal-13-noworryback-smart-v0.10.1-1M-4hr100M-A-IGTczZ.csv.gz",
         "row": [
           "459598",
           " unsolvable",
@@ -4374,7 +4375,7 @@
         "seed": 595794,
         "time": 1426.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-13-noworryback/v0.10.1/klondike-deal-13-noworryback-smart-v0.10.1-1M-4hr100M-A-IGTczZ.csv.gz",
+        "csv": "klondike-deal-13-noworryback/v0.10.1/klondike-deal-13-noworryback-smart-v0.10.1-1M-4hr100M-A-IGTczZ.csv.gz",
         "row": [
           "595794",
           " unsolvable",
@@ -4413,7 +4414,7 @@
         "seed": 76397,
         "time": 1473.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/late-binding-solitaire/v0.08/accordion-knuth-none-10M-2hr25M-A-qu62OZ.csv.gz",
+        "csv": "late-binding-solitaire/v0.08/accordion-knuth-none-10M-2hr25M-A-qu62OZ.csv.gz",
         "row": [
           "76397",
           " solved",
@@ -4439,7 +4440,7 @@
         "seed": 2350,
         "time": 1905.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/late-binding-solitaire/v0.08/accordion-knuth-none-10M-2hr25M-A-qu62OZ.csv.gz",
+        "csv": "late-binding-solitaire/v0.08/accordion-knuth-none-10M-2hr25M-A-qu62OZ.csv.gz",
         "row": [
           "2350",
           " unsolvable",
@@ -4467,7 +4468,7 @@
         "seed": 1800031,
         "time": 1585.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/mrs-mop/v0.08/mrs-mop-smart-v0.08-2M-1hr100M-A-xPa6vZ.csv.gz",
+        "csv": "mrs-mop/v0.08/mrs-mop-smart-v0.08-2M-1hr100M-A-xPa6vZ.csv.gz",
         "row": [
           "1800031",
           " solved",
@@ -4504,7 +4505,7 @@
         "seed": 1928386,
         "time": 1817.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/mrs-mop/v0.08.1/mrs-mop-both-v0.08.1-2M-2hr100M-extra-R-lovelace-jScImZ.csv.gz",
+        "csv": "mrs-mop/v0.08.1/mrs-mop-both-v0.08.1-2M-2hr100M-extra-R-lovelace-jScImZ.csv.gz",
         "row": [
           "1928386",
           " unsolvable",
@@ -4532,7 +4533,7 @@
         "seed": 267,
         "time": 1916.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/northwest-territory/v0.08.1/northwest-territory-partial-piles-restricted-smart-1M-2hr25M-A-D9j8cZ.csv.gz",
+        "csv": "northwest-territory/v0.08.1/northwest-territory-partial-piles-restricted-smart-1M-2hr25M-A-D9j8cZ.csv.gz",
         "row": [
           "267",
           " solved",
@@ -4569,7 +4570,7 @@
         "seed": 539,
         "time": 1816.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/northwest-territory/v0.08.1/northwest-territory-partial-piles-restricted-smart-1M-2hr25M-A-D9j8cZ.csv.gz",
+        "csv": "northwest-territory/v0.08.1/northwest-territory-partial-piles-restricted-smart-1M-2hr25M-A-D9j8cZ.csv.gz",
         "row": [
           "539",
           " unsolvable",
@@ -4608,7 +4609,7 @@
         "seed": 1162,
         "time": 1954.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/raglan/v0.08/raglan-smart-v0.08-1M-2hr100M-A-oU8JjZ.csv.gz",
+        "csv": "raglan/v0.08/raglan-smart-v0.08-1M-2hr100M-A-oU8JjZ.csv.gz",
         "row": [
           "1162",
           " unsolvable",
@@ -4645,7 +4646,7 @@
         "seed": 141,
         "time": 1954.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/raglan/v0.08/raglan-smart-v0.08-1M-2hr100M-A-oU8JjZ.csv.gz",
+        "csv": "raglan/v0.08/raglan-smart-v0.08-1M-2hr100M-A-oU8JjZ.csv.gz",
         "row": [
           "141",
           " unsolvable",
@@ -4684,7 +4685,7 @@
         "seed": 693,
         "time": 1812.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/seahaven-towers/v0.10.1/seahaven-towers-none-v0.10.1-10M-2hr100M-A-GaW6bZ.csv.gz",
+        "csv": "seahaven-towers/v0.10.1/seahaven-towers-none-v0.10.1-10M-2hr100M-A-GaW6bZ.csv.gz",
         "row": [
           "693",
           " solved",
@@ -4710,7 +4711,7 @@
         "seed": 226,
         "time": 1747.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/seahaven-towers/v0.10.1/seahaven-towers-none-v0.10.1-10M-2hr100M-A-GaW6bZ.csv.gz",
+        "csv": "seahaven-towers/v0.10.1/seahaven-towers-none-v0.10.1-10M-2hr100M-A-GaW6bZ.csv.gz",
         "row": [
           "226",
           " unsolvable",
@@ -4738,7 +4739,7 @@
         "seed": 9861,
         "time": 1458.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/siegecraft/v0.08.1/siegecraft-smart-1M-2hr25M-A-azFZiZ.csv.gz",
+        "csv": "siegecraft/v0.08.1/siegecraft-smart-1M-2hr25M-A-azFZiZ.csv.gz",
         "row": [
           "9861",
           " solved",
@@ -4775,7 +4776,7 @@
         "seed": 8797,
         "time": 1469.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/siegecraft/v0.08.1/siegecraft-smart-1M-2hr25M-A-azFZiZ.csv.gz",
+        "csv": "siegecraft/v0.08.1/siegecraft-smart-1M-2hr25M-A-azFZiZ.csv.gz",
         "row": [
           "8797",
           " unsolvable",
@@ -4814,7 +4815,7 @@
         "seed": 10075,
         "time": 1822.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/simple-simon/v0.08/simple-simon-smart-v0.08-1M-2hr100M-A-BKkncZ.csv.gz",
+        "csv": "simple-simon/v0.08/simple-simon-smart-v0.08-1M-2hr100M-A-BKkncZ.csv.gz",
         "row": [
           "10075",
           " solved",
@@ -4851,7 +4852,7 @@
         "seed": 16629,
         "time": 1502.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/simple-simon/v0.08/simple-simon-smart-v0.08-1M-2hr100M-A-BKkncZ.csv.gz",
+        "csv": "simple-simon/v0.08/simple-simon-smart-v0.08-1M-2hr100M-A-BKkncZ.csv.gz",
         "row": [
           "16629",
           " unsolvable",
@@ -4890,7 +4891,7 @@
         "seed": 1000122,
         "time": 1889.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/somerset/v0.08.1/somerset-2M-smart-A-5m.csv.gz",
+        "csv": "somerset/v0.08.1/somerset-2M-smart-A-5m.csv.gz",
         "row": [
           "1000122",
           " solved",
@@ -4923,7 +4924,7 @@
         "seed": 1000089,
         "time": 1904.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/somerset/v0.08.1/somerset-2M-smart-A-5m.csv.gz",
+        "csv": "somerset/v0.08.1/somerset-2M-smart-A-5m.csv.gz",
         "row": [
           "1000089",
           " unsolvable",
@@ -4958,7 +4959,7 @@
         "seed": 159893,
         "time": 1851.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spanish-patience/v0.08/spanish-patience-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "spanish-patience/v0.08/spanish-patience-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "159893",
           " solved",
@@ -4991,7 +4992,7 @@
         "seed": 383174,
         "time": 1571.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spanish-patience/v0.08/spanish-patience-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "spanish-patience/v0.08/spanish-patience-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "383174",
           " unsolvable",
@@ -5026,7 +5027,7 @@
         "seed": 2413,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spider/v0.08/spider-smart-v0.08-5k-2hr25M-A-1VHVdZ.csv.gz",
+        "csv": "spider/v0.08/spider-smart-v0.08-5k-2hr25M-A-1VHVdZ.csv.gz",
         "row": [
           "2413",
           " solved",
@@ -5066,7 +5067,7 @@
         "seed": 607,
         "time": 1853.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spiderette/v0.08/spiderette-smart-v0.08-1M-4hr100M-A-5QgbrZ.csv.gz",
+        "csv": "spiderette/v0.08/spiderette-smart-v0.08-1M-4hr100M-A-5QgbrZ.csv.gz",
         "row": [
           "607",
           " solved",
@@ -5103,7 +5104,7 @@
         "seed": 1948,
         "time": 2274.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spiderette/v0.08/spiderette-smart-v0.08-1M-4hr100M-A-5QgbrZ.csv.gz",
+        "csv": "spiderette/v0.08/spiderette-smart-v0.08-1M-4hr100M-A-5QgbrZ.csv.gz",
         "row": [
           "1948",
           " unsolvable",
@@ -5142,7 +5143,7 @@
         "seed": 614,
         "time": 2073.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/streets-and-alleys/v0.08/streets-and-alleys-smart-v0.08-1M-4hr100M-A-3lMfyZ.csv.gz",
+        "csv": "streets-and-alleys/v0.08/streets-and-alleys-smart-v0.08-1M-4hr100M-A-3lMfyZ.csv.gz",
         "row": [
           "614",
           " unsolvable",
@@ -5179,7 +5180,7 @@
         "seed": 18,
         "time": 1986.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/streets-and-alleys/v0.08/streets-and-alleys-smart-v0.08-1M-4hr100M-A-3lMfyZ.csv.gz",
+        "csv": "streets-and-alleys/v0.08/streets-and-alleys-smart-v0.08-1M-4hr100M-A-3lMfyZ.csv.gz",
         "row": [
           "18",
           " unsolvable",
@@ -5218,7 +5219,7 @@
         "seed": 1541,
         "time": 2141.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/stronghold/v0.08.1/stronghold-smart-1M-2hr25M-A-6Y7HtZ.csv.gz",
+        "csv": "stronghold/v0.08.1/stronghold-smart-1M-2hr25M-A-6Y7HtZ.csv.gz",
         "row": [
           "1541",
           " solved",
@@ -5255,7 +5256,7 @@
         "seed": 2314,
         "time": 1731.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/stronghold/v0.08.1/stronghold-smart-1M-2hr25M-A-6Y7HtZ.csv.gz",
+        "csv": "stronghold/v0.08.1/stronghold-smart-1M-2hr25M-A-6Y7HtZ.csv.gz",
         "row": [
           "2314",
           " unsolvable",
@@ -5294,7 +5295,7 @@
         "seed": 14924,
         "time": 1949.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/thirty/v0.08/thirty-smart-v0.08-10M-4hr100M-A-VnrZrZ.csv.gz",
+        "csv": "thirty/v0.08/thirty-smart-v0.08-10M-4hr100M-A-VnrZrZ.csv.gz",
         "row": [
           "14924",
           " unsolvable",
@@ -5331,7 +5332,7 @@
         "seed": 2198,
         "time": 1864.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/thirty/v0.08/thirty-smart-v0.08-10M-4hr100M-A-VnrZrZ.csv.gz",
+        "csv": "thirty/v0.08/thirty-smart-v0.08-10M-4hr100M-A-VnrZrZ.csv.gz",
         "row": [
           "2198",
           " unsolvable",
@@ -5370,7 +5371,7 @@
         "seed": 400,
         "time": 1695.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/thirtysix/v0.08/thirtysix-smart-1M-2hr100M-A-PO3VdZ.csv.gz",
+        "csv": "thirtysix/v0.08/thirtysix-smart-1M-2hr100M-A-PO3VdZ.csv.gz",
         "row": [
           "400",
           " solved",
@@ -5407,7 +5408,7 @@
         "seed": 48,
         "time": 1996.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/thirtysix/v0.08/thirtysix-smart-1M-2hr100M-A-PO3VdZ.csv.gz",
+        "csv": "thirtysix/v0.08/thirtysix-smart-1M-2hr100M-A-PO3VdZ.csv.gz",
         "row": [
           "48",
           " unsolvable",
@@ -5446,7 +5447,7 @@
         "seed": 270217,
         "time": 566.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/trigon/v0.08/trigon-none-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "trigon/v0.08/trigon-none-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "270217",
           " solved",
@@ -5468,7 +5469,7 @@
         "seed": 4282898,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/trigon/v0.08/trigon-none-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "trigon/v0.08/trigon-none-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "4282898",
           " unsolvable",
@@ -5492,7 +5493,7 @@
         "seed": 10849,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/will-o-the-wisp/v0.08/will-o-the-wisp-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "will-o-the-wisp/v0.08/will-o-the-wisp-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "10849",
           " solved",
@@ -5525,7 +5526,7 @@
         "seed": 50775,
         "time": 1592.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/will-o-the-wisp/v0.08/will-o-the-wisp-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "will-o-the-wisp/v0.08/will-o-the-wisp-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
           "50775",
           " unsolvable",
@@ -5560,7 +5561,7 @@
         "seed": 607932,
         "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/worm-hole/v0.08/worm-hole-none-v0.08-1M-4hr100M-E-Ty4VdZ.csv.gz",
+        "csv": "worm-hole/v0.08/worm-hole-none-v0.08-1M-4hr100M-E-Ty4VdZ.csv.gz",
         "row": [
           "607932",
           " solved",
@@ -5586,7 +5587,7 @@
         "seed": 522385,
         "time": 26.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/worm-hole/v0.08/worm-hole-none-v0.08-1M-4hr100M-E-Ty4VdZ.csv.gz",
+        "csv": "worm-hole/v0.08/worm-hole-none-v0.08-1M-4hr100M-E-Ty4VdZ.csv.gz",
         "row": [
           "522385",
           " unsolvable",

@@ -1,0 +1,11 @@
+Running Regression: 160 instances (Oracle: baseline_oracle.json)
+------------------------------------------------------------
+Progress: 25/160 (Pass: 25, Fail: 0)
+Progress: 50/160 (Pass: 50, Fail: 0)
+Progress: 75/160 (Pass: 75, Fail: 0)
+Progress: 100/160 (Pass: 100, Fail: 0)
+Progress: 125/160 (Pass: 125, Fail: 0)
+Progress: 150/160 (Pass: 150, Fail: 0)
+------------------------------------------------------------
+Final Report: Passed: 160/160
+Regression suite components verified successfully.

@@ -1,191 +1,108 @@
 import os
 import json
 import subprocess
+import argparse
 from pathlib import Path
 
 SOLVITAIRE_BIN = "cmake-build-release/bin/solvitaire"
 RESOURCES_ROOT = "tests/resources"
 RULES_ROOT = "tests/rules"
+ORACLES_ROOT = "tests/oracles"
 SETS = ["1m", "5m", "1h", "6h"]
 LEVEL_MAP = {"1m": "level2", "5m": "level3", "1h": "level4", "6h": "level5"}
 
-# Ground Truth Mapping Files
-AAA_BASE = "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/AnalysisScripts"
-AAA_SMART = ["AAA-smartfiles", "AAA-smartnotimefiles"]
-AAA_SINGLE = ["AAA-singlerunfiles", "AAA-singlerunnotimefiles"]
+# Placeholder for the experimental data repository.
+# Users can specify this via the --data-dir argument.
+DEFAULT_DATA_DIR = "./solvitaire-paper-v10-Feb2026"
 
-def load_aaa_sets():
-    smart_set = set()
-    single_set = set()
+def get_deal_json(game, seed, custom_rules=None):
+    if custom_rules:
+        cmd = [SOLVITAIRE_BIN, "--random", str(seed), "--custom-rules", custom_rules, "--deal-only", "--json", "--reveal-hidden"]
+    else:
+        cmd = [SOLVITAIRE_BIN, "--random", str(seed), "--type", game, "--deal-only", "--json", "--reveal-hidden"]
     
-    for f in AAA_SMART:
-        path = os.path.join(AAA_BASE, f)
-        if os.path.exists(path):
-            with open(path, 'r') as fd:
-                for line in fd:
-                    smart_set.add(line.strip())
-                    
-    for f in AAA_SINGLE:
-        path = os.path.join(AAA_BASE, f)
-        if os.path.exists(path):
-            with open(path, 'r') as fd:
-                for line in fd:
-                    single_set.add(line.strip())
-                    
-    return smart_set, single_set
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    return result.stdout
 
-def export_deals():
-    smart_set, single_set = load_aaa_sets()
+def export_set(set_name, data_dir):
+    json_path = f"curated_instances_{set_name}.json"
+    if not os.path.exists(json_path):
+        print(f"Skipping {set_name}: {json_path} not found")
+        return
+
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+
+    level = LEVEL_MAP[set_name]
+    output_dir = Path(RESOURCES_ROOT) / level
+    output_dir.mkdir(parents=True, exist_ok=True)
     
-    for set_name in SETS:
-        level = LEVEL_MAP[set_name]
-        json_file = f"curated_instances_{set_name}.json"
-        if not os.path.exists(json_file):
-            print(f"Skipping {json_file}, not found.")
-            continue
+    results_base = os.path.join(data_dir, "ExperimentalResults")
+
+    oracle = []
+    
+    instances = data['instances']
+    print(f"Processing {len(instances)} games for {set_name}")
+    for game, types in instances.items():
+        for status, inst in types.items():
+            if not inst: continue
             
-        with open(json_file, 'r') as f:
-            data = json.load(f)
-            
-        oracle = []
-        
-        for game, instances in data['instances'].items():
-            for outcome_key in ['winnable', 'unwinnable']:
-                inst = instances[outcome_key]
-                if inst is None:
-                    continue
-                
-                seed = inst['seed']
-                row = [s.strip() for s in inst['row']]
-                csv_path = inst['csv']
-                
-                # Normalize CSV path for AAA lookup
-                # Example: .../ExperimentalResults/game/vX.X/filename.csv.gz -> game/vX.X/filename
-                rel_csv = csv_path.split("ExperimentalResults/")[-1]
-                lookup_key = rel_csv.replace(".csv.gz", "").replace(".csv", "")
-                
-                # Determine "Smart" vs "Single" from Ground Truth Mapping
-                is_smart = lookup_key in smart_set
-                # If not in either, use column count as heuristic
-                if not is_smart and lookup_key not in single_set:
-                    is_smart = len(row) > 15 
-                    if is_smart:
-                        print(f"Heuristic fallback: {lookup_key} treated as SMART")
+            # Resolve custom rules if applicable
+            custom_rules = None
+            if game in ["accordion", "gaps-basic-variant", "gaps-one-deal"]:
+                rule_file = f"tests/rules/{game}.json"
+                if os.path.exists(rule_file):
+                    custom_rules = rule_file
 
-                streamliner = "none"
-                if is_smart:
-                    # Smart (Multi-run) Logic:
-                    # Run 1: Cols 1-11
-                    # Run 2: Cols 12-23 (if present)
-                    run1_outcome = row[1].lower()
-                    
-                    if "solved" in run1_outcome:
-                        # Run 1 solution is trusted
-                        streamliner = "both"
-                        time_ms = float(row[2])
-                        idx_states = 3
-                        idx_unique = 4
-                        idx_backtracks = 5
-                        idx_max_depth = 10
-                        final_outcome = "winnable"
-                    else:
-                        # Run 1 unsolvable or timeout -> Rerun (NONE) is ground truth
-                        streamliner = "none"
-                        if len(row) >= 24:
-                            # Run 2 metrics
-                            time_ms = float(row[13])
-                            idx_states = 14
-                            idx_unique = 15
-                            idx_backtracks = 16
-                            idx_max_depth = 21
-                            final_outcome = "winnable" if "solved" in row[23].lower() else "unsolvable"
-                        else:
-                            # Fallback if Run 2 is missing (unexpected for smart)
-                            time_ms = float(row[2])
-                            idx_states = 3
-                            idx_unique = 4
-                            idx_backtracks = 5
-                            idx_max_depth = 10
-                            final_outcome = "winnable" if "solved" in run1_outcome else "unsolvable"
-                else:
-                    # Single-run (NONE) Logic:
-                    if "-both-" in lookup_key:
-                        streamliner = "both"
-                    else:
-                        streamliner = "none"
-                        
-                    time_ms = float(row[2])
-                    idx_states = 3
-                    idx_unique = 4
-                    idx_backtracks = 5
-                    idx_max_depth = 10
-                    
-                    # Some single runs might have a solution even if Run 1 said unsolvable (if it's not a smart run)
-                    # but usually single runs are solved/unsolvable in Run 1.
-                    final_outcome = "winnable" if "solved" in row[1].lower() else "unsolvable"
+            deal_json = get_deal_json(game, inst['seed'], custom_rules)
+            if deal_json:
+                # ...
+                filename = f"{game}_{inst['seed']}_{status}.json"
+                with open(output_dir / filename, "w") as f:
+                    f.write(deal_json)
+                
+                # Determine streamliner
+                # The curated JSON now uses relative paths for 'csv'
+                csv_rel = inst['csv']
+                smart_files = ["AAA-smartfiles", "AAA-smartnotimefiles"]
+                is_smart = False
+                aaa_base = os.path.join(data_dir, "AnalysisScripts")
+                for f_name in smart_files:
+                    path = os.path.join(aaa_base, f_name)
+                    if os.path.exists(path):
+                        with open(path, 'r') as fd:
+                            if any(line.strip() in csv_rel for line in fd):
+                                is_smart = True
+                                break
+                
+                streamliner = "both" if is_smart else "none"
+                
+                oracle.append({
+                    "instance": f"resources/{level}/{filename}",
+                    "states_searched": inst['states'],
+                    "unique_states": int(inst['row'][9]) if len(inst['row']) > 9 else 0, # Best guess for unique states if not in row
+                    "backtracks": int(inst['row'][5]) if len(inst['row']) > 5 else 0,
+                    "max_depth": int(inst['row'][6]) if len(inst['row']) > 6 else 0,
+                    "solution_type": "solved" if status == "winnable" else "unsolvable",
+                    "baseline_time_ms": inst['time'],
+                    "streamliner": streamliner,
+                    "custom_rules": custom_rules
+                })
 
-                try:
-                    states = int(row[idx_states])
-                    unique = int(row[idx_unique])
-                    backtracks = int(row[idx_backtracks])
-                    max_depth = int(row[idx_max_depth])
-                except (ValueError, IndexError):
-                    print(f"Warning: Missing metrics for {game} seed {seed} in {csv_path}")
-                    continue
+    oracle_file = Path(ORACLES_ROOT) / f"{level}.json"
+    with open(oracle_file, "w") as f:
+        json.dump(oracle, f, indent=2)
+    print(f"Generated {oracle_file} ({len(oracle)} instances)")
 
-                # Deal Export
-                filename = f"{game}_{seed}_{final_outcome}.json"
-                rel_path = f"resources/{level}/{filename}"
-                abs_path = os.path.join(RESOURCES_ROOT, level, filename)
-                
-                if not os.path.exists(os.path.dirname(abs_path)):
-                    os.makedirs(os.path.dirname(abs_path), exist_ok=True)
-                
-                # Check for custom rules
-                custom_rules_path = os.path.join(RULES_ROOT, f"{game}.json")
-                use_custom_rules = os.path.exists(custom_rules_path)
-                
-                cmd = [
-                    SOLVITAIRE_BIN,
-                    "--deal-only",
-                    "--random", str(seed),
-                    "--reveal-hidden"
-                ]
-                if use_custom_rules:
-                    cmd.extend(["--custom-rules", custom_rules_path])
-                else:
-                    cmd.extend(["--type", game])
-                
-                try:
-                    res = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                    with open(abs_path, 'w') as df:
-                        df.write(res.stdout)
-                        
-                    oracle_entry = {
-                        "instance": rel_path,
-                        "states_searched": states,
-                        "unique_states": unique,
-                        "backtracks": backtracks,
-                        "max_depth": max_depth,
-                        "solution_type": final_outcome,
-                        "baseline_time_ms": time_ms,
-                        "streamliner": streamliner
-                    }
-                    if use_custom_rules:
-                        oracle_entry["custom_rules"] = os.path.join("tests/rules", f"{game}.json")
-                    else:
-                        oracle_entry["game_type"] = game
-                        
-                    oracle.append(oracle_entry)
-                except Exception as e:
-                    print(f"Failed to export {game} seed {seed}: {e}")
-                    
-        # Write oracle for this level
-        oracle_path = os.path.join("tests", level, "baseline_oracle.json")
-        os.makedirs(os.path.dirname(oracle_path), exist_ok=True)
-        with open(oracle_path, 'w') as f:
-            json.dump(oracle, f, indent=2)
-        print(f"Generated {oracle_path} ({len(oracle)} instances)")
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="Base directory for the experimental data repository.")
+    args = parser.parse_args()
+
+    for s in SETS:
+        export_set(s, args.data_dir)
 
 if __name__ == "__main__":
-    export_deals()
+    main()
