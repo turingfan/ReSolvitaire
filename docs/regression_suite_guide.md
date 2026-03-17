@@ -4,7 +4,7 @@ This guide provides instructions for maintaining and using the ReSolvitaire regr
 
 ## Suite Structure
 
-The regression suite is organized into levels based on target search times per instance:
+The regression suite is organized into levels based on target search times per dataset:
 
 | Level   | Target Time | Instances | Location                          | Oracle                          |
 |---------|-------------|-----------|-----------------------------------|---------------------------------|
@@ -36,7 +36,7 @@ Use `scripts/curate_test_sets.py` to identify interesting instances from large e
 ```bash
 python3 scripts/curate_test_sets.py --set 1m --data-dir /path/to/dataset
 ```
-This generates `curated_instances_1m.json` with relative paths to the source CSVs.
+This generates `tests/resources/curated_sets/curated_instances_1m.json` with relative paths to the source CSVs.
 
 ### 2. Export
 Use `scripts/export_test_deals.py` to generate the individual JSON deal files and the baseline oracle.

@@ -27,7 +27,7 @@ def get_deal_json(game, seed, custom_rules=None):
     return result.stdout
 
 def export_set(set_name, data_dir):
-    json_path = f"curated_instances_{set_name}.json"
+    json_path = f"tests/resources/curated_sets/curated_instances_{set_name}.json"
     if not os.path.exists(json_path):
         print(f"Skipping {set_name}: {json_path} not found")
         return

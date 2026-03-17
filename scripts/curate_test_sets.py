@@ -223,10 +223,12 @@ def main():
         'instances': results
     }
     
-    with open(f"curated_instances_{args.set}.json", "w") as f:
+    output_path = f"tests/resources/curated_sets/curated_instances_{args.set}.json"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, "w") as f:
         json.dump(output_data, f, indent=2)
     
-    print(f"Results saved to curated_instances_{args.set}.json")
+    print(f"Results saved to {output_path}")
 
 if __name__ == "__main__":
     main()
