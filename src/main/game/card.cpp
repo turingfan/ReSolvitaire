@@ -100,8 +100,8 @@ card::rank_t card::get_rank() const {
     return card_rank;
 }
 
-std::string card::to_string() const {
-    if (face_down) return "##";
+std::string card::to_string(bool reveal_hidden) const {
+    if (face_down && !reveal_hidden) return "##";
 
     string s;
     switch(card_rank) {
@@ -112,10 +112,10 @@ std::string card::to_string() const {
         default: s += std::to_string(card_rank);
     }
     switch(card_suit) {
-        case card::suit::Spades  : s += "S"; break;
-        case card::suit::Hearts  : s += "H"; break;
-        case card::suit::Clubs   : s += "C"; break;
-        case card::suit::Diamonds: s += "D"; break;
+        case card::suit::Spades  : s += face_down ? "s" : "S"; break;
+        case card::suit::Hearts  : s += face_down ? "h" : "H"; break;
+        case card::suit::Clubs   : s += face_down ? "c" : "C"; break;
+        case card::suit::Diamonds: s += face_down ? "d" : "D"; break;
     }
     return s;
 }

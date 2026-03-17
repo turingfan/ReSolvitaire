@@ -84,7 +84,7 @@ int main(int argc, const char* argv[]) {
 
     if (clh.get_deal_only()) {
         game_state gs(*rules, clh.get_random_deal(), game_state::streamliner_options::NONE);
-        json_helper::print_game_state_as_json(gs);
+        json_helper::print_game_state_as_json(gs, clh.get_reveal_hidden());
         return EXIT_SUCCESS;
     }
 

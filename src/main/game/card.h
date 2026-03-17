@@ -62,7 +62,7 @@ public:
     void turn_face_up();
     void turn_face_down();
 
-    std::string to_string() const;
+    std::string to_string(bool reveal_hidden = false) const;
 
 private:
     static suit_t suit_from_str(const char* c);

@@ -23,16 +23,15 @@
 
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 #include "json_helper.h"
 #include "../../../../../lib/rapidjson/stringbuffer.h"
+#include "../../../../../lib/rapidjson/writer.h"
 #include "../../output/log_helper.h"
 
 using namespace std;
 using namespace rapidjson;
-
-using boost::property_tree::ptree;
-using boost::property_tree::write_json;
 
 Document json_helper::get_file_json(const string& filename) {
     // Reads the file into a string
@@ -79,51 +78,114 @@ const string json_helper::schema_err_str(const SchemaValidator& validator) {
     return ret;
 }
 
-void json_helper::print_game_state_as_json(const game_state& gs) {
-    ptree pt;
-    if (!gs.tableau_piles.empty()) pt.add_child("tableau piles", piles_to_ptree(gs, gs.tableau_piles));
-    if (!gs.cells.empty()) pt.add_child("cells", piles_to_ptree(gs, gs.cells));
-    if (!gs.reserve.empty()) pt.add_child("reserve", piles_to_ptree(gs, gs.reserve));
-    if (!gs.foundations.empty()) pt.add_child("foundations", piles_to_ptree(gs, gs.foundations));
-    if (!gs.sequences.empty()) pt.add_child("sequences", piles_to_ptree(gs, gs.sequences));
-    if (!gs.accordion.empty()) pt.add_child("accordion", piles_to_ptree(gs, gs.accordion));
+void json_helper::print_game_state_as_json(const game_state& gs, bool reveal_hidden) {
+    StringBuffer sb;
+    Writer<StringBuffer> writer(sb);
+
+    writer.StartObject();
+
+    if (!gs.tableau_piles.empty()) {
+        writer.Key("tableau piles");
+        writer.StartArray();
+        for (auto pr : gs.tableau_piles) {
+            writer.StartArray();
+            const auto& p = gs.piles[pr];
+            for (pile::size_type i = p.size(); i-->0; ) {
+                writer.String(p[i].to_string(reveal_hidden).c_str());
+            }
+            writer.EndArray();
+        }
+        writer.EndArray();
+    }
+
+    if (!gs.foundations.empty()) {
+        writer.Key("foundations");
+        writer.StartArray();
+        for (auto pr : gs.foundations) {
+            const auto& p = gs.piles[pr];
+            for (pile::size_type i = p.size(); i-->0; ) {
+                writer.String(p[i].to_string(reveal_hidden).c_str());
+            }
+        }
+        writer.EndArray();
+    }
+
+    if (!gs.cells.empty()) {
+        writer.Key("cells");
+        writer.StartArray();
+        for (auto pr : gs.cells) {
+            const auto& p = gs.piles[pr];
+            for (pile::size_type i = p.size(); i-->0; ) {
+                writer.String(p[i].to_string(reveal_hidden).c_str());
+            }
+        }
+        writer.EndArray();
+    }
+
+    if (!gs.reserve.empty()) {
+        writer.Key("reserve");
+        writer.StartArray();
+        for (auto pr : gs.reserve) {
+            const auto& p = gs.piles[pr];
+            for (pile::size_type i = p.size(); i-->0; ) {
+                writer.String(p[i].to_string(reveal_hidden).c_str());
+            }
+        }
+        writer.EndArray();
+    }
+
+    if (!gs.sequences.empty()) {
+        writer.Key("sequences");
+        writer.StartArray();
+        for (auto pr : gs.sequences) {
+            writer.StartArray();
+            const auto& p = gs.piles[pr];
+            for (pile::size_type i = p.size(); i-->0; ) {
+                writer.String(p[i].to_string(reveal_hidden).c_str());
+            }
+            writer.EndArray();
+        }
+        writer.EndArray();
+    }
+
+    if (!gs.accordion.empty()) {
+        writer.Key("accordion");
+        writer.StartArray();
+        for (auto pr : gs.accordion) {
+            const auto& p = gs.piles[pr];
+            for (pile::size_type i = p.size(); i-->0; ) {
+                writer.String(p[i].to_string(reveal_hidden).c_str());
+            }
+        }
+        writer.EndArray();
+    }
+
     if (gs.rules.stock_size > 0) {
-        pt.add_child("stock", pile_to_ptree(gs.piles[gs.stock]));
+        writer.Key("stock");
+        writer.StartArray();
+        const auto& p_stock = gs.piles[gs.stock];
+        for (pile::size_type i = p_stock.size(); i-->0; ) {
+            writer.String(p_stock[i].to_string(reveal_hidden).c_str());
+        }
+        writer.EndArray();
+
         if (gs.rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
-            pt.add_child("waste", pile_to_ptree(gs.piles[gs.waste]));
+            writer.Key("waste");
+            writer.StartArray();
+            const auto& p_waste = gs.piles[gs.waste];
+            for (pile::size_type i = p_waste.size(); i-->0; ) {
+                writer.String(p_waste[i].to_string(reveal_hidden).c_str());
+            }
+            writer.EndArray();
         }
     }
-    if (gs.rules.hole) pt.add_child("hole", card_to_ptree(gs.piles[gs.hole][0]));
 
-    write_json (cout, pt);
-}
-
-ptree json_helper::piles_to_ptree(const game_state& gs, const std::list<pile::ref>& piles) {
-    ptree pt;
-    for (pile::ref pr : piles) {
-        pt.push_back(make_pair("", pile_to_ptree(gs.piles[pr])));
+    if (gs.rules.hole) {
+        writer.Key("hole");
+        writer.String(gs.piles[gs.hole][0].to_string(reveal_hidden).c_str());
     }
-    return pt;
-}
 
-ptree json_helper::piles_to_ptree(const game_state& gs, const std::vector<pile::ref>& piles) {
-    ptree pt;
-    for (pile::ref pr : piles) {
-        pt.push_back(make_pair("", pile_to_ptree(gs.piles[pr])));
-    }
-    return pt;
-}
+    writer.EndObject();
 
-ptree json_helper::pile_to_ptree(const pile& pile) {
-    ptree pt;
-    for (pile::size_type i = pile.size(); i-->0; ) {
-        pt.push_back(make_pair("", card_to_ptree(pile[i])));
-    }
-    return pt;
-}
-
-ptree json_helper::card_to_ptree(const card& card) {
-    ptree pt;
-    pt.put("", card.to_string());
-    return pt;
+    cout << sb.GetString() << endl;
 }
