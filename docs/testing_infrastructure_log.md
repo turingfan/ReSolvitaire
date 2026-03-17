@@ -37,11 +37,23 @@ This document logs the major changes implemented on the `testing-infrastructure`
 
 ---
 
-## 5. Baseline Ground Truth Generation (Step 1.3)
+## 5. Finalizing JSON Pipeline & Baseline (Step 1.3)
+**Commit Stage 4:** `8b51773`  
+**Date:** 2026-03-17 10:45:00 (approx)
+**Rationale:** Resolved schema validation conflicts for sparse arrays (Cells/Reserves) and gaps. Successfully established the regression ground truth.
+**Changes:**
+- **Schema Hardening:** Modified `deal_schema_json` in `deal_parser.cpp` to use `anyOf` and `enum: [""]`, allowing empty strings in cell, reserve, and accordion arrays. This permits a 1:1 mapping between JSON array indices and game state piles.
+- **Parser Robustness:** Updated `deal_parser.cpp` to skip `place_card` calls for empty strings, preventing `stoi` conversion errors.
+- **Baseline Secured:** Generated `tests/level1/baseline_oracle.json` containing the search metrics for all 150 instances.
+- **Verification:** Verified that all 150 instances can be reloaded and solved, producing results identical to the oracle.
+
+---
+
+## 6. Next Steps: CI Harness (Step 1.4)
 **Status:** In Progress
-**Rationale:** Executing the solver on the 150-instance corpus using the `--json` flag to establish the `baseline_oracle.json`. This serves as the ground truth for all future regression comparisons.
+**Rationale:** Developing a Python-based regression runner that iterates through the corpus, compares current solver output with the `baseline_oracle.json`, and reports regressions in performance or correctness.
 
 ---
 
 ## Summary of Current State
-Curating the Level 1 regression corpus is complete (150 instances across 15 game types). Technical fixes for JSON transparency are verified. Currently generating baseline results for the oracle.
+Phase 1 Steps 1.1, 1.2, and 1.3 are complete. The project now has a robust, round-trippable JSON deal format, a diverse 150-instance corpus, and a verified baseline oracle. Work is shifting to the automated CI harness.
