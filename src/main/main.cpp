@@ -22,6 +22,8 @@
 
 #include "version.h"
 #include "../../lib/rapidjson/document.h"
+#include "../../lib/rapidjson/writer.h"
+#include "../../lib/rapidjson/stringbuffer.h"
 #include "input-output/input/command_line_helper.h"
 #include "input-output/input/sol_preset_types.h"
 #include "input-output/input/json-parsing/json_helper.h"
@@ -43,7 +45,7 @@ typedef std::chrono::milliseconds millisec;
 const optional<sol_rules> gen_rules(command_line_helper&);
 void solve_random_game(int, const sol_rules&, command_line_helper&);
 void solve_input_files(vector<string>, const sol_rules&, command_line_helper&);
-void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc);
+void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name);
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
                                         optional<int> seed, optional<const Document&> in_doc);
@@ -134,9 +136,9 @@ const optional<sol_rules> gen_rules(command_line_helper& clh) {
 }
 
 void solve_random_game(int seed, const sol_rules& rules, command_line_helper& clh) {
-    if (!clh.get_classify())
+    if (!clh.get_classify() && !clh.get_json_output())
         LOG_INFO ("Attempting to solve with seed: " << seed << "...");
-    solve_game(rules, clh, seed, none);
+    solve_game(rules, clh, seed, none, "seed_" + to_string(seed));
 }
 
 void solve_input_files(const vector<string> input_files, const sol_rules& rules, command_line_helper& clh) {
@@ -145,8 +147,9 @@ void solve_input_files(const vector<string> input_files, const sol_rules& rules,
             // Reads in the input file to a json doc
             const Document in_doc = json_helper::get_file_json(input_file);
 
-            LOG_INFO ("Attempting to solve " << input_file << "...");
-            solve_game(rules, clh, none, in_doc);
+            if (!clh.get_json_output())
+                LOG_INFO ("Attempting to solve " << input_file << "...");
+            solve_game(rules, clh, none, in_doc, input_file);
 
         } catch (const runtime_error& error) {
             string errmsg = "Error parsing deal file: ";
@@ -156,7 +159,7 @@ void solve_input_files(const vector<string> input_files, const sol_rules& rules,
     }
 }
 
-void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc) {
+void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name) {
     typedef pair<solver, solver::result> solve_sol;
 
     bool smart = clh.get_streamliners() == command_line_helper::streamliner_opt::SMART;
@@ -180,7 +183,28 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
             ? solve_game(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc)
             : optional<solve_sol>();
 
-    if (clh.get_classify()) {
+    if (clh.get_json_output()) {
+        pair<solver, solver::result> s = run_again ? *streamliner_solution : solution;
+        StringBuffer sb;
+        Writer<StringBuffer> writer(sb);
+        writer.StartObject();
+        writer.Key("instance_name");
+        writer.String(instance_name.c_str());
+        writer.Key("solution_type");
+        writer.String(s.second.sol_type == solver::result::type::SOLVED ? "winnable" :
+                      s.second.sol_type == solver::result::type::UNSOLVABLE ? "unsolvable" :
+                      s.second.sol_type == solver::result::type::TIMEOUT ? "timeout" : "failed");
+        writer.Key("states_searched");
+        writer.Uint64(s.second.states_searched);
+        writer.Key("unique_states");
+        writer.Uint64(s.second.unique_states_searched);
+        writer.Key("backtracks");
+        writer.Uint64(s.second.backtracks);
+        writer.Key("max_depth");
+        writer.Uint64(s.second.max_depth);
+        writer.EndObject();
+        cout << sb.GetString() << endl;
+    } else if (clh.get_classify()) {
         if (seed) cout << *seed;
         solver::print_result_csv(solution.second);
         if (smart) {

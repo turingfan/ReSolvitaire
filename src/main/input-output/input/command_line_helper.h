@@ -49,6 +49,7 @@ public:
     uint64_t get_cache_capacity();
     std::string get_describe_game_rules();
     uint64_t get_timeout();
+    bool get_json_output();
     bool get_version();
     static game_state::streamliner_options convert_streamliners(streamliner_opt);
 
@@ -83,6 +84,7 @@ private:
     streamliner_opt streamliners;
     uint64_t cache_capacity;
     uint64_t timeout;
+    bool json_output;
 };
 
 #endif //SOLVITAIRE_COMMAND_LINE_HELPER_H

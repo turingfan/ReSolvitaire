@@ -79,7 +79,8 @@ command_line_helper::command_line_helper()
                           "supplied solitaire game. Must supply "
                           "either 'random', 'benchmark', 'solvability' or list of deals to be "
                           "solved.")
-            ("deal-only", "outputs the starting deal for a given game type & random seed as json");
+            ("deal-only", "outputs the starting deal for a given game type & random seed as json")
+            ("json", "outputs the result of the search as a machine-readable JSON object");
 
     po::options_description hidden_options("Hidden options");
     hidden_options.add_options()
@@ -189,6 +190,8 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
     }
 
     benchmark = (vm.count("benchmark") != 0);
+
+    json_output = (vm.count("json") != 0);
 
     // Handle logic error scenarios
     return assess_errors();
@@ -334,6 +337,10 @@ string command_line_helper::get_describe_game_rules() {
 
 bool command_line_helper::get_benchmark() {
     return benchmark;
+}
+
+bool command_line_helper::get_json_output() {
+    return json_output;
 }
 
 bool command_line_helper::get_version() {
