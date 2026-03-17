@@ -85,3 +85,22 @@ This document logs the major changes implemented on the `mac-dev` branch of the 
 - **Timeout Regression Criteria:** To account for hardware variance, a timeout on a regression test is considered a failure ONLY if the node count exceeds the baseline. If the node count is lower or equal, it is categorized as a speed regression (acceptable) rather than a logic failure.
 - **Mapping Metadata:** The files `AAA-smartfiles` and `AAA-singlerunfiles` in `AnalysisScripts` provide the definitive mapping of experimental datasets to their respective streamliner configurations.
 - **Custom Game Rules:** Integration of `--custom-rules` support for game types not included in the solver's internal preset list, using rule definitions from the `GameJSON` directory.
+
+---
+
+## 9. Regression Expansion: Curation Refinement & Performance Outliers
+**Date:** 2026-03-17  
+**Reason:** Addressed significant performance issues and miscategorizations in the expanded regression suites (Level 2-5).
+**Issues Identified:**
+- **Search Outliers:** Certain instances (e.g., `beleaguered-castle`) were selected for 1-minute targets but took hundreds of millions of nodes, causing "out of control" test runs on modern hardware.
+- **Curation Inefficiency:** The initial curation script was excessively slow due to searching for exact time matches across thousands of gzipped logs.
+- **Ambiguous Outcome:** Some selected instances were "timed out" in the original logs, leading to non-deterministic verification results.
+
+**Steps Taken:**
+- **Optimized Scanning:** Rewrote `curate_test_sets.py` to use "good enough" matching (e.g., within 5% of target) and early termination. This reduced curation time from ~1.5 hours to <5 minutes.
+- **Strict Filtering:** Implemented a `5x` target time limit and excluded all instances without determined results (solutions or unsolvable proofs).
+- **Ground Truth Logic:** Refined the "smart" (multi-run) streamliner logic:
+    - **Trust Run 1 Solution:** If found.
+    - **Fallback to Run 2:** If Run 1 is unsolvable or times out.
+    - **Total Time Tracking:** Curation now calculates the *final* proof time for smart runs, ensuring they fit within the intended target levels.
+- **Level 2 & 3 Verification:** Successfully verified 320 instances (Levels 2 & 3) with a 100% pass rate.

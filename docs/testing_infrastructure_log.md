@@ -69,3 +69,15 @@ This document logs the major changes implemented on the `testing-infrastructure`
     - Updated `CMakeLists.txt` to reflect new paths.
     - Verified all tests pass via `ctest`.
 - **Git Commit**: `8b45017`
+
+---
+
+## 7. Scaling Regression: Detour and Data Refinement
+**Date:** 2026-03-17  
+**Rationale:** Scaled the regression suite from 150 instances to multiple levels (1m, 5m target windows).
+**Changes:**
+- **Targeted Levels:** Created `tests/resources/level2` (1m) and `tests/resources/level3` (5m).
+- **Curation Fixes:** Updated `curate_test_sets.py` with strict `AAA-*` ground truth lookups to ensure correct streamliner mapping (`both` vs `none`).
+- **Outlier Mitigation:** Enforced a `5x` per-instance time threshold to skip "search-heavy" games for rapid levels, ensuring the suite remains truly "rapid".
+- **Verification Progress:** Completed full verification of Levels 1, 2, and 3. Oracles now include `streamliner` and `custom_rules` metadata for deterministic orchestration.
+- **Process Robustness:** Enhanced `regression_runner.py` with explicit output redirection and `pkill` logic to manage runaway solver threads.

@@ -3,6 +3,7 @@ import gzip
 import csv
 import json
 import argparse
+import subprocess
 from pathlib import Path
 
 # Ground Truth Mapping Files
@@ -61,35 +62,50 @@ def load_aaa_sets():
     return smart_set, single_set
 
 def get_row_metrics(row, is_smart):
-    """Returns (total_time_ms, outcome, removed, states)"""
+    """Returns (total_time_ms, outcome, removed, states) or (None, None, None, None) on timeout/error"""
     row = [s.strip() for s in row]
-    if is_smart:
-        run1_outcome = row[1].lower()
-        if "solved" in run1_outcome:
-            # Run 1 solution is the ground truth
-            return float(row[2]), "solved", int(row[7]), int(row[3])
-        else:
-            # Run 1 didn't solve (unsolvable or timeout)
-            # Check for Run 2 (starts at index 12)
+    try:
+        if is_smart:
+            run1_outcome = row[1].lower()
+            if "solved" in run1_outcome:
+                return float(row[2]), "solved", int(row[7]), int(row[3])
+            
+            # If run 1 timed out, we skip
+            if "timeout" in run1_outcome:
+                return None, None, None, None
+            
+            # Run 1 didn't solve (unsolvable). Check for Run 2.
             if len(row) >= 24:
-                # Column 13 is Run 2 time
-                # Column 23 is Run 2 final outcome
-                # But wait, overall result might be in col 23 or 12?
-                # Actually, according to export script logic:
-                # If Run 1 was not solved, we use Run 2 metrics.
+                r2_outcome_str = row[23].lower()
+                if "timeout" in r2_outcome_str:
+                    return None, None, None, None
+                
                 r2_time = float(row[13])
-                r2_outcome = "solved" if "solved" in row[23].lower() else "unsolvable"
+                r2_outcome = "solved" if "solved" in r2_outcome_str else "unsolvable"
                 r2_removed = int(row[18])
                 r2_states = int(row[14])
                 return r2_time, r2_outcome, r2_removed, r2_states
             else:
-                # No run 2? Use Run 1 but it's likely a timeout/unsolvable
-                outcome = "solved" if "solved" in run1_outcome else "unsolvable"
-                return float(row[2]), outcome, int(row[7]), int(row[3])
-    else:
-        # Single run
-        outcome = "solved" if "solved" in row[1].lower() or (len(row) > 12 and "solved" in row[12].lower()) else "unsolvable"
-        return float(row[2]), outcome, int(row[7]), int(row[3])
+                # No run 2, and run 1 was unsolvable.
+                return float(row[2]), "unsolvable", int(row[7]), int(row[3])
+        else:
+            # Single run
+            outcome_str = row[1].lower()
+            if "timeout" in outcome_str:
+                return None, None, None, None
+            
+            # Check col 12 if col 1 overall result exists
+            if len(row) > 12:
+                overall = row[12].lower()
+                if "timeout" in overall:
+                    return None, None, None, None
+                outcome = "solved" if "solved" in overall or "solved" in outcome_str else "unsolvable"
+            else:
+                outcome = "solved" if "solved" in outcome_str else "unsolvable"
+            
+            return float(row[2]), outcome, int(row[7]), int(row[3])
+    except:
+        return None, None, None, None
 
 def find_best_instances(game, target_ms, smart_set, single_set):
     best_winnable = None
@@ -101,51 +117,70 @@ def find_best_instances(game, target_ms, smart_set, single_set):
         
     csv_files = list(game_dir.rglob("*.csv.gz"))
     
+    # x5 time restriction
+    max_time_ms = 5 * target_ms
+    
+    row_count = 0
+    
     for csv_file in csv_files:
         rel_csv = str(csv_file).split("ExperimentalResults/")[-1]
         lookup_key = rel_csv.replace(".csv.gz", "").replace(".csv", "")
-        
         is_smart = lookup_key in smart_set
-        if not is_smart and lookup_key not in single_set:
-            # Heuristic fallback if not in AAA files
-            # But we'll try to be strict if possible
-            pass
-
+        
         try:
             with gzip.open(csv_file, 'rt') as f:
-                reader = csv.reader(f)
-                for row in reader:
-                    if not row or not row[0].isdigit():
+                # Use plain line-by-line reading for speed
+                for line in f:
+                    if not line or not line[0].isdigit():
                         continue
                     
-                    # If not in AAA files, check column count as fallback
+                    row = line.split(',')
+                    row_count += 1
+                    
+                    # Heuristic fallback if not in AAA files
                     if lookup_key not in smart_set and lookup_key not in single_set:
                         is_row_smart = len(row) > 15
                     else:
                         is_row_smart = is_smart
                         
-                    try:
-                        time_ms, outcome, removed, states = get_row_metrics(row, is_row_smart)
-                        seed = int(row[0])
-                        
-                        inst_data = {'seed': seed, 'time': time_ms, 'removed': removed, 'csv': str(csv_file), 'row': row, 'states': states}
-                        
-                        if outcome == "solved":
-                            if best_winnable is None or abs(time_ms - target_ms) < abs(best_winnable['time'] - target_ms):
-                                best_winnable = inst_data
-                            elif abs(time_ms - target_ms) == abs(best_winnable['time'] - target_ms):
-                                if removed < best_winnable['removed']:
-                                    best_winnable = inst_data
-                        elif outcome == "unsolvable":
-                            if best_unwinnable is None or abs(time_ms - target_ms) < abs(best_unwinnable['time'] - target_ms):
-                                best_unwinnable = inst_data
-                            elif abs(time_ms - target_ms) == abs(best_unwinnable['time'] - target_ms):
-                                if removed < best_unwinnable['removed']:
-                                    best_unwinnable = inst_data
-                    except (ValueError, IndexError):
+                    time_ms, outcome, removed, states = get_row_metrics(row, is_row_smart)
+                    if time_ms is None or time_ms > max_time_ms:
                         continue
+                    
+                    seed = int(row[0])
+                    inst_data = {'seed': seed, 'time': time_ms, 'removed': removed, 'csv': str(csv_file), 'row': row, 'states': states}
+                    
+                    diff = abs(time_ms - target_ms) / target_ms if target_ms > 0 else 0
+                    
+                    # Selection and Early Termination Logic
+                    if outcome == "solved":
+                        if best_winnable is None or diff < abs(best_winnable['time'] - target_ms) / target_ms:
+                            best_winnable = inst_data
+                        
+                        # Stop immediately if very close
+                        if diff <= 0.05:
+                            # We found a "good enough" winnable, but we still need an unwinnable.
+                            pass
+                    elif outcome == "unsolvable":
+                        if best_unwinnable is None or diff < abs(best_unwinnable['time'] - target_ms) / target_ms:
+                            best_unwinnable = inst_data
+                        
+                        if diff <= 0.05:
+                            pass
+
+                    # Progress-based Early Termination
+                    if best_winnable and best_unwinnable:
+                        w_diff = abs(best_winnable['time'] - target_ms) / target_ms
+                        u_diff = abs(best_unwinnable['time'] - target_ms) / target_ms
+                        
+                        if w_diff <= 0.05 and u_diff <= 0.05:
+                            return best_winnable, best_unwinnable
+                        if row_count > 1000 and w_diff <= 0.10 and u_diff <= 0.10:
+                            return best_winnable, best_unwinnable
+                        if row_count > 2500 and w_diff <= 0.25 and u_diff <= 0.25:
+                            return best_winnable, best_unwinnable
+
         except Exception as e:
-            print(f"Error reading {csv_file}: {e}")
             continue
             
     return best_winnable, best_unwinnable
@@ -156,19 +191,25 @@ def main():
     args = parser.parse_args()
     
     smart_set, single_set = load_aaa_sets()
-    
     target_set = TARGET_SETS[args.set]
     target_ms = target_set['per_instance_target']
     
-    print(f"Searching for set {args.set} (Target per instance: {target_ms:.2f}ms)")
+    print(f"Searching for set {args.set} (Target: {target_ms:.2f}ms, Max: {target_ms*5:.2f}ms)")
     
     results = {}
     for game in GAMES:
-        print(f"Processing {game}...", end='\r')
+        print(f"Processing {game:30}...", end='\r', flush=True)
         w, u = find_best_instances(game, target_ms, smart_set, single_set)
         results[game] = {'winnable': w, 'unwinnable': u}
     
     print("\nSearch complete.")
+    
+    # Summary of gaps
+    missing_w = [g for g, r in results.items() if r['winnable'] is None]
+    missing_u = [g for g, r in results.items() if r['unwinnable'] is None]
+    
+    if missing_w: print(f"Missing winnable for: {', '.join(missing_w)}")
+    if missing_u: print(f"Missing unwinnable for: {', '.join(missing_u)}")
     
     output_data = {
         'target_set': args.set,

@@ -6,7 +6,7 @@ from pathlib import Path
 SOLVITAIRE_BIN = "cmake-build-release/bin/solvitaire"
 RESOURCES_ROOT = "tests/resources"
 RULES_ROOT = "tests/rules"
-SETS = ["1m", "5m", "1h", "6h"]
+SETS = ["1m", "5m"]
 LEVEL_MAP = {"1m": "level2", "5m": "level3", "1h": "level4", "6h": "level5"}
 
 # Ground Truth Mapping Files
