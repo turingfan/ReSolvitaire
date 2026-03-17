@@ -244,6 +244,13 @@ add_test(NAME trailing_space_free_cell
         "--gametype" "free-cell"
         "--deal" "${CMAKE_CURRENT_SOURCE_DIR}/src/test/resources/free_cell/fc-pro-3.json"
 )
+add_test(NAME regression_level1
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/src/test/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire>"
+        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level1/instances"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/level1/baseline_oracle.json"
+)
 
 ###############################################################################
 ## packaging ##################################################################
