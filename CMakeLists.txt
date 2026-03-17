@@ -232,7 +232,7 @@ add_test(NAME trailing_space
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_output_format.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--gametype" "klondike"
-        "--deal" "${CMAKE_CURRENT_SOURCE_DIR}/resources/deal-presets/klondikeSM1.json"
+        "--deal" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/unit_tests/deal-presets/klondikeSM1.json"
 )
 add_test(NAME trailing_space_free_cell
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

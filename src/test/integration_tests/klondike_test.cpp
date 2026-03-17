@@ -27,7 +27,7 @@
 
 typedef test_helper th;
 
-const static std::string path = "resources/klondike/";
+const static std::string path = "tests/resources/unit_tests/klondike/";
 const static std::string type = "-test-klondike";
 
 TEST(Klondike, SimpleSolvable) {

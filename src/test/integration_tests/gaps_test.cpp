@@ -27,7 +27,7 @@
 
 typedef test_helper th;
 
-const static std::string path = "resources/gaps/";
+const static std::string path = "tests/resources/unit_tests/gaps/";
 const static std::string type = "-test-gaps";
 
 TEST(Gaps, SimpleSolvable) {

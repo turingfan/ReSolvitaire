@@ -27,7 +27,7 @@
 
 typedef test_helper th;
 
-const static std::string path = "resources/spanish_patience/";
+const static std::string path = "tests/resources/unit_tests/spanish_patience/";
 const static std::string type = "-test-spanish-patience";
 
 TEST(SpanishPatience, SimpleSolvable) {

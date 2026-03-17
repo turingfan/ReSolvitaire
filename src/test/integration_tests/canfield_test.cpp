@@ -34,7 +34,7 @@ typedef test_helper th;
 typedef game_state::streamliner_options so;
 typedef std::initializer_list<std::initializer_list<std::string>> string_il;
 
-const static std::string path = "resources/canfield/";
+const static std::string path = "tests/resources/unit_tests/canfield/";
 const static std::string type = "-test-canfield";
 
 TEST(Canfield, SimpleSolvable) {

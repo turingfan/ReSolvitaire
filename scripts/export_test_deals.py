@@ -80,7 +80,7 @@ def export_set(set_name, data_dir):
                 streamliner = "both" if is_smart else "none"
                 
                 oracle.append({
-                    "instance": f"resources/{level}/{filename}",
+                    "instance": f"tests/resources/{level}/{filename}",
                     "states_searched": inst['states'],
                     "unique_states": int(inst['row'][9]) if len(inst['row']) > 9 else 0, # Best guess for unique states if not in row
                     "backtracks": int(inst['row'][5]) if len(inst['row']) > 5 else 0,

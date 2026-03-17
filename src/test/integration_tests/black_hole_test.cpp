@@ -27,7 +27,7 @@
 
 typedef test_helper th;
 
-const static std::string path = "resources/black_hole/";
+const static std::string path = "tests/resources/unit_tests/black_hole/";
 const static std::string type = "-test-black-hole";
 
 TEST(BlackHole, SimpleSolvable) {

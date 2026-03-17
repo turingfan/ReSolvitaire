@@ -27,7 +27,7 @@
 
 typedef test_helper th;
 
-const static std::string path = "resources/somerset/";
+const static std::string path = "tests/resources/unit_tests/somerset/";
 const static std::string type = "-test-somerset";
 
 TEST(Somerset, SimpleSolvable) {

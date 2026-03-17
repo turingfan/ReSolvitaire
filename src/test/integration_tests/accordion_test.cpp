@@ -27,7 +27,7 @@
 
 typedef test_helper th;
 
-const static std::string path = "resources/accordion/";
+const static std::string path = "tests/resources/unit_tests/accordion/";
 const static std::string type = "-test-accordion";
 
 TEST(Accordion, SimpleSolvable) {

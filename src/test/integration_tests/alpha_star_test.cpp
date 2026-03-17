@@ -27,7 +27,7 @@
 
 typedef test_helper th;
 
-const static std::string path = "resources/alpha_star/";
+const static std::string path = "tests/resources/unit_tests/alpha_star/";
 const static std::string type = "-test-alpha-star";
 
 TEST(AlphaStar, SimpleSolvable) {
