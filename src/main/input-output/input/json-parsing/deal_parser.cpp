@@ -108,14 +108,15 @@ string deal_parser::deal_schema_json() {
 
   "definitions": {
     "card": {"type": "string", "pattern": "^(([0-9]|1[0-3]|a|A|j|J|q|Q|k|K)(c|C|d|D|h|H|s|S))$"},
-    "cardarray": {"type": "array", "items": {"$ref": "#/definitions/card"}},
+    "cardarray": {
+      "type": "array", "items": {"$ref": "#/definitions/card"}
+    },
+    "cardoremp": {
+      "oneOf": [{"$ref": "#/definitions/card"}, {"enum": [""]}]
+    },
     "cardarraywithempty": {
-      "type": "array",
-      "items": {
-        "oneOf":[
-          {"$ref": "#/definitions/card"},
-          {"type": "string","enum": [""]}
-        ]
+      "type": "array", "items": {
+        "anyOf": [{"$ref": "#/definitions/card"}, {"enum": ["AS"]}]
       }
     }
   },
@@ -126,14 +127,21 @@ string deal_parser::deal_schema_json() {
       "type": "array", "items": {"$ref": "#/definitions/cardarray"}
     },
     "foundations": {"$ref": "#/definitions/cardarray"},
+    "cells": {
+      "type": "array", "items": {"$ref": "#/definitions/cardoremp"}
+    },
     "sequences": {
       "type": "array", "items": {"$ref": "#/definitions/cardarraywithempty"}
     },
     "hole": {"$ref": "#/definitions/card"},
     "stock": {"$ref": "#/definitions/cardarray"},
     "waste": {"$ref": "#/definitions/cardarray"},
-    "reserve": {"$ref": "#/definitions/cardarray"},
-    "accordion": {"$ref": "#/definitions/cardarray"}
+    "reserve": {
+      "type": "array", "items": {"$ref": "#/definitions/cardoremp"}
+    },
+    "accordion": {
+      "type": "array", "items": {"$ref": "#/definitions/cardoremp"}
+    }
 
   }, "additionalProperties": false
 }
@@ -188,7 +196,10 @@ void deal_parser::parse_cells(game_state &gs, const Document& doc) {
 
             auto json_card = p.first;
             assert(json_card->IsString());
-            gs.place_card(*p.second, card(json_card->GetString()));
+            string card_str = json_card->GetString();
+            if (!card_str.empty()) {
+                gs.place_card(*p.second, card(card_str.c_str()));
+            }
         }
     }
 }
@@ -228,9 +239,11 @@ void deal_parser::parse_reserve(game_state &gs, const Document& doc) {
     // but a stacked reserve as a single multiple-card pile
     for (pile::ref i = 0; i < json_card_arr.Size(); i++) {
         assert(json_card_arr[i].IsString());
+        string card_str = json_card_arr[i].GetString();
+        if (card_str.empty()) continue;
         pile::ref pr = gs.original_reserve[0];
         if (!gs.rules.reserve_stacked) pr += i;
-        gs.place_card(pr, card(json_card_arr[i].GetString()));
+        gs.place_card(pr, card(card_str.c_str()));
     }
 }
 
@@ -272,8 +285,10 @@ void deal_parser::parse_accordion(game_state &gs, const Document& doc) {
     auto acc_it = begin(gs.accordion);
     for (pile::ref i = 0; i < json_card_arr.Size(); i++, acc_it++) {
         assert(json_card_arr[i].IsString());
+        string card_str = json_card_arr[i].GetString();
+        if (card_str.empty()) continue;
         pile::ref pr = *acc_it;
-        gs.place_card(pr, card(json_card_arr[i].GetString()));
+        gs.place_card(pr, card(card_str.c_str()));
     }
 }
 

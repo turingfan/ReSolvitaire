@@ -115,9 +115,8 @@ void json_helper::print_game_state_as_json(const game_state& gs, bool reveal_hid
         writer.StartArray();
         for (auto pr : gs.cells) {
             const auto& p = gs.piles[pr];
-            for (pile::size_type i = p.size(); i-->0; ) {
-                writer.String(p[i].to_string(reveal_hidden).c_str());
-            }
+            if (p.empty()) writer.String("");
+            else writer.String(p.top_card().to_string(reveal_hidden).c_str());
         }
         writer.EndArray();
     }
@@ -125,10 +124,16 @@ void json_helper::print_game_state_as_json(const game_state& gs, bool reveal_hid
     if (!gs.reserve.empty()) {
         writer.Key("reserve");
         writer.StartArray();
-        for (auto pr : gs.reserve) {
-            const auto& p = gs.piles[pr];
+        if (gs.rules.reserve_stacked) {
+            const auto& p = gs.piles[gs.reserve.front()];
             for (pile::size_type i = p.size(); i-->0; ) {
                 writer.String(p[i].to_string(reveal_hidden).c_str());
+            }
+        } else {
+            for (auto pr : gs.reserve) {
+                const auto& p = gs.piles[pr];
+                if (p.empty()) writer.String("");
+                else writer.String(p.top_card().to_string(reveal_hidden).c_str());
             }
         }
         writer.EndArray();
@@ -153,9 +158,8 @@ void json_helper::print_game_state_as_json(const game_state& gs, bool reveal_hid
         writer.StartArray();
         for (auto pr : gs.accordion) {
             const auto& p = gs.piles[pr];
-            for (pile::size_type i = p.size(); i-->0; ) {
-                writer.String(p[i].to_string(reveal_hidden).c_str());
-            }
+            if (p.empty()) writer.String("");
+            else writer.String(p.top_card().to_string(reveal_hidden).c_str());
         }
         writer.EndArray();
     }
