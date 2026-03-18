@@ -4,6 +4,7 @@ import csv
 import json
 import argparse
 import subprocess
+import multiprocessing
 from pathlib import Path
 
 # Defaults
@@ -186,6 +187,12 @@ def find_best_instances(game, target_ms, smart_set, single_set, results_dir):
             
     return best_winnable, best_unwinnable
 
+def process_game(args):
+    game, target_ms, smart_set, single_set, results_dir = args
+    print(f"Processing {game:30}...")
+    w, u = find_best_instances(game, target_ms, smart_set, single_set, results_dir)
+    return game, w, u
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--set", choices=TARGET_SETS.keys(), required=True)
@@ -203,11 +210,13 @@ def main():
     
     print(f"Searching for set {args.set} (Target: {target_ms:.2f}ms, Max: {target_ms*5:.2f}ms)")
     
+    tasks = [(g, target_ms, smart_set, single_set, results_dir) for g in GAMES]
+    
+    num_procs = min(multiprocessing.cpu_count(), 8)
     results = {}
-    for game in GAMES:
-        print(f"Processing {game:30}...", end='\r', flush=True)
-        w, u = find_best_instances(game, target_ms, smart_set, single_set, results_dir)
-        results[game] = {'winnable': w, 'unwinnable': u}
+    with multiprocessing.Pool(processes=num_procs) as pool:
+        for game, w, u in pool.imap_unordered(process_game, tasks):
+            results[game] = {'winnable': w, 'unwinnable': u}
     
     print("\nSearch complete.")
     
