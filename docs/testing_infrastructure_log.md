@@ -81,3 +81,22 @@ This document logs the major changes implemented on the `testing-infrastructure`
 - **Outlier Mitigation:** Enforced a `5x` per-instance time threshold to skip "search-heavy" games for rapid levels, ensuring the suite remains truly "rapid".
 - **Verification Progress:** Completed full verification of Levels 1, 2, and 3. Oracles now include `streamliner` and `custom_rules` metadata for deterministic orchestration.
 - **Process Robustness:** Enhanced `regression_runner.py` with explicit output redirection and `pkill` logic to manage runaway solver threads.
+
+---
+
+## 8. Restoration: Testing Infrastructure Recovery and Verification
+**Date:** 2026-03-18  
+**Commit:** `efbd4f4`
+**Rationale:** Recovered from a regression in the testing scripts that caused incorrect streamliner ground-truth detection and node count mismatches in Level 2 and 3 tests.
+**Changes:**
+- **Script Recovery**: Restored advanced "smart streamliner" logic and simplified falling back to "Single-run (NONE)" ground truth in `export_test_deals.py` (backported from `9fbc1e1`).
+- **Terminology Normalization**: Implemented `normalize_outcome` in `regression_runner.py` to transparently match solver-specific terminology (`winnable`/`unwinnable`) with baseline oracles (`solved`/`unsolvable`).
+- **Path Calibration**: Re-aligned `curate_test_sets.py` and `export_test_deals.py` with the root-level `tests/resources/` and `tests/oracles/` hierarchy.
+- **Oracle Regeneration**: Re-curated and re-exported the Level 2 and Level 3 regression suites (160 instances each) using the corrected ground-truth mapping.
+- **Level 1 Path Fix**: Corrected `CMakeLists.txt` to point to the valid `fc-pro-3.json` path, restoring `ctest` Level 1 functionality.
+- **Final Verification**: 
+    - **Level 1 Rapid**: **150/150 Passed** 
+    - **Level 2 (1m Target)**: **160/160 Passed** 
+    - **Level 3 (5m Target)**: **160/160 Passed** 
+
+All regression levels are now active, accurate, and passing 100%. 
