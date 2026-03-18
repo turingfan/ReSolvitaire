@@ -7,8 +7,6 @@ import subprocess
 from pathlib import Path
 
 # Defaults
-# Placeholder for the experimental data repository. 
-# Users can specify this via the --data-dir argument.
 DEFAULT_DATA_DIR = "./solvitaire-paper-v10-Feb2026"
 
 GAMES = [
@@ -46,13 +44,17 @@ def load_aaa_sets(data_dir):
     aaa_base = os.path.join(data_dir, "AnalysisScripts")
     smart_set = set()
     single_set = set()
-    for f in ["AAA-smartfiles", "AAA-smartnotimefiles"]:
+    
+    smart_files = ["AAA-smartfiles", "AAA-smartnotimefiles"]
+    single_files = ["AAA-singlerunfiles", "AAA-singlerunnotimefiles"]
+    
+    for f in smart_files:
         path = os.path.join(aaa_base, f)
         if os.path.exists(path):
             with open(path, 'r') as fd:
                 for line in fd:
                     smart_set.add(line.strip())
-    for f in ["AAA-singlerunfiles", "AAA-singlerunnotimefiles"]:
+    for f in single_files:
         path = os.path.join(aaa_base, f)
         if os.path.exists(path):
             with open(path, 'r') as fd:
@@ -147,7 +149,7 @@ def find_best_instances(game, target_ms, smart_set, single_set, results_dir):
                         continue
                     
                     seed = int(row[0])
-                    inst_data = {'seed': seed, 'time': time_ms, 'removed': removed, 'csv': rel_csv, 'row': row, 'states': states}
+                    inst_data = {'seed': seed, 'time': time_ms, 'removed': removed, 'csv': str(csv_file), 'row': row, 'states': states}
                     
                     diff = abs(time_ms - target_ms) / target_ms if target_ms > 0 else 0
                     
@@ -219,7 +221,6 @@ def main():
     output_data = {
         'target_set': args.set,
         'target_per_instance_ms': target_ms,
-        'results_base_dir': results_dir,
         'instances': results
     }
     

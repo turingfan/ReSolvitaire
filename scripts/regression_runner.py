@@ -31,9 +31,20 @@ def run_regression(solver_path, instances_dir, oracle_path, timeout=30, verbose=
                 oracle[basename] = entry
 
     instances = sorted([f for f in os.listdir(instances_dir) if f.endswith(".json")])
-    total = len(instances)
+    total = len(oracle)
     failed = 0
     passed = 0
+
+    def normalize_outcome(outcome):
+        mapping = {
+            "winnable": "solved",
+            "unwinnable": "unsolvable",
+            "solved": "solved",
+            "unsolvable": "unsolvable",
+            "timeout": "timeout",
+            "unknown": "unknown"
+        }
+        return mapping.get(outcome, outcome)
 
     print(f"Running Regression: {total} instances (Oracle: {os.path.basename(oracle_path)})", flush=True)
     print("-" * 60, flush=True)
@@ -87,8 +98,8 @@ def run_regression(solver_path, instances_dir, oracle_path, timeout=30, verbose=
                 
             output = json.loads(output_text)
             
-            actual_outcome = output.get("solution_type")
-            expected_outcome = baseline.get("solution_type")
+            actual_outcome = normalize_outcome(output.get("solution_type"))
+            expected_outcome = normalize_outcome(baseline.get("solution_type"))
             actual_nodes = int(output.get("states_searched", 0))
             expected_nodes = int(baseline.get("states_searched", 0))
             
