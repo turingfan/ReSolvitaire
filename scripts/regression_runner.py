@@ -117,12 +117,7 @@ def run_regression(solver_path, instances_dir, oracle_path, timeout=30, verbose=
                     diffs.append(f"outcome: {actual_outcome} (expected {expected_outcome})")
                 
                 if actual_nodes != expected_nodes:
-                    if actual_nodes > expected_nodes:
-                        diffs.append(f"states_searched: {actual_nodes} > {expected_nodes} (FAILURE: More nodes than baseline)")
-                    else:
-                        if verbose: print(f"[OK/LESS] {filename} (Nodes: {actual_nodes} < baseline {expected_nodes})", flush=True)
-                        passed += 1
-                        continue
+                    diffs.append(f"states_searched: {actual_nodes} (expected {expected_nodes})")
 
             if diffs:
                 print(f"[FAIL] {filename} (streamliner: {streamliner})", flush=True)
