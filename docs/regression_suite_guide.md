@@ -8,7 +8,7 @@ The regression suite is organized into levels based on target search times per d
 
 | Level   | Target Time | Instances | Location                          | Oracle                          |
 |---------|-------------|-----------|-----------------------------------|---------------------------------|
-| Level 1 | Rapid       | ~20       | `tests/resources/level1`          | `tests/oracles/level1.json`     |
+| Level 1 | Rapid       | 150       | `tests/resources/level1`          | `tests/oracles/level1.json`     |
 | Level 2 | 1 minute    | 160       | `tests/resources/level2`          | `tests/oracles/level2.json`     |
 | Level 3 | 5 minutes   | 160       | `tests/resources/level3`          | `tests/oracles/level3.json`     |
 | Level 4 | 1 hour      | 160       | `tests/resources/level4`          | `tests/oracles/level4.json`     |

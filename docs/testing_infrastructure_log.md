@@ -100,3 +100,15 @@ This document logs the major changes implemented on the `testing-infrastructure`
     - **Level 3 (5m Target)**: **160/160 Passed** 
 
 All regression levels are now active, accurate, and passing 100%. 
+
+---
+
+## 9. Scaling: Level 4 and 5 Expansion
+**Date:** 2026-03-18  
+**Commit:** `55db611`
+**Rationale:** Scaled the regression suite to cover long-running instances (1 hour and 6 hour targets) to detect regressions in deep search logic.
+**Changes:**
+- **Performance Optimization**: Parallelized `curate_test_sets.py` using `multiprocessing` to handle massive dataset scanning on multi-core systems.
+- **Suite Expansion**: Generated Level 4 (1h target, 160 instances) and Level 5 (6h target, 161 instances).
+- **Comprehensive Coverage**: The full regression suite now comprises 791 verified instances across 5 complexity levels.
+- **Verification Setup**: Added `regression_level4` and `regression_level5` targets to `CMakeLists.txt` with increased timeouts (600s and 1800s respectively).
