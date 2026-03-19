@@ -54,46 +54,21 @@ Once merged, Level 1 oracles could be regenerated from seeds for full consistenc
 
 ---
 
-## 2. Level 2 Oracle Has 10 Incorrect "Unsolvable" Entries
+## 2. Level 2 Oracle Had 10 Incorrect "Unsolvable" Entries (FIXED)
 
 **Affected file:** `tests/oracles/level2.json`
 
 **Detected:** 2026-03-19 (first visible after fixing the broken CTest invocation)
 
-### Description
+### Root Cause
 
-Ten instances in the Level 2 oracle are marked `solution_type: "unsolvable"` (or
-`"unwinnable"`) but the current solver resolves them as `"winnable"`. All ten are in the
-`klondike-deal-N`, `free-cell-4-pile`, or `thirty` game families:
-
-| Instance | Oracle | Solver |
-|----------|--------|--------|
-| `klondike-deal-1_700004_unwinnable.json` | unsolvable | winnable |
-| `klondike-deal-1-noworryback_188733_unwinnable.json` | unsolvable | winnable |
-| `klondike-deal-11_806981_unwinnable.json` | unsolvable | winnable |
-| `klondike-deal-11-noworryback_903394_unwinnable.json` | unsolvable | winnable |
-| `klondike-deal-12_695016_unwinnable.json` | unsolvable | winnable |
-| `klondike-deal-12-noworryback_819657_unwinnable.json` | unsolvable | winnable |
-| `klondike-deal-13_729723_unwinnable.json` | unsolvable | winnable |
-| `klondike-deal-13-noworryback_72032_unwinnable.json` | unsolvable | winnable |
-| `free-cell-4-pile_664642_unwinnable.json` | unsolvable | winnable |
-| `thirty_7194_unwinnable.json` | unsolvable | winnable |
-
-### Suspected Cause
-
-The oracle data was curated from an older experimental dataset (Solvitaire v0.08.1).
-These particular instances likely experienced a memout or a solver version difference that
-caused incorrect "unsolvable" classifications. The memout filter in `export_test_deals.py`
-uses `states_removed_from_cache > 0` to detect cache evictions, but the original dataset's
-column mapping may have been mis-identified for these game types.
-
-### Impact
-
-These 10 instances cause Level 2 CTest to fail (150/160 pass). They do not indicate a
-solver regression — the solver result is correct.
+All 10 instances are smart-run experiments where Run 1 (with streamliners) returned
+"unsolvable" and Run 2 (without streamliners) returned "solved" — i.e., the ground
+truth is "winnable". The bug in `export_test_deals.py` (the duplicate outcome block
+at lines 119–126, now fixed) unconditionally overwrote `final_outcome` with Run 1's
+result, discarding the correct Run 2 outcome.
 
 ### Fix
 
-Re-curate the Level 2 oracle by re-running the affected seeds through the current solver
-and updating the oracle entries, or by excluding these instances if the original data
-cannot be trusted for these game types.
+The `export_test_deals.py` bug was fixed in commit `10c233c`. Regenerating the Level 2
+oracle with the fixed script corrects all 10 entries.
