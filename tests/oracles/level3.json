@@ -1,102 +1,25 @@
 [
   {
-    "instance": "resources/level3/accordion_7331_winnable.json",
-    "states_searched": 934281,
-    "unique_states": 343534,
-    "backtracks": 934230,
-    "max_depth": 51,
+    "instance": "resources/level3/british-canister_197312577_winnable.json",
+    "states_searched": 990267,
+    "unique_states": 313218,
+    "backtracks": 990179,
+    "max_depth": 115,
     "solution_type": "solved",
-    "baseline_time_ms": 1852.0,
+    "baseline_time_ms": 1966.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/accordion.json"
+    "custom_rules": "tests/rules/british-canister.json"
   },
   {
-    "instance": "resources/level3/alpha-star_379003_winnable.json",
-    "states_searched": 246836,
-    "unique_states": 73365,
-    "backtracks": 173822,
-    "max_depth": 73014,
-    "solution_type": "solved",
-    "baseline_time_ms": 1854.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/alpha-star.json"
-  },
-  {
-    "instance": "resources/level3/alpha-star_8363153_unwinnable.json",
-    "states_searched": 16148,
-    "unique_states": 4267,
-    "backtracks": 16147,
-    "max_depth": 19,
+    "instance": "resources/level3/british-canister_326325767_unwinnable.json",
+    "states_searched": 951112,
+    "unique_states": 273875,
+    "backtracks": 951111,
+    "max_depth": 109,
     "solution_type": "unsolvable",
-    "baseline_time_ms": 78.0,
+    "baseline_time_ms": 1896.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/alpha-star.json"
-  },
-  {
-    "instance": "resources/level3/american-canister_3063_winnable.json",
-    "states_searched": 190776,
-    "unique_states": 75090,
-    "backtracks": 124331,
-    "max_depth": 66445,
-    "solution_type": "solved",
-    "baseline_time_ms": 1839.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/american-canister.json"
-  },
-  {
-    "instance": "resources/level3/american-canister_3649_unwinnable.json",
-    "states_searched": 404367,
-    "unique_states": 69883,
-    "backtracks": 404366,
-    "max_depth": 2462,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1938.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/american-canister.json"
-  },
-  {
-    "instance": "resources/level3/bakers-game_35821_winnable.json",
-    "states_searched": 329067,
-    "unique_states": 94258,
-    "backtracks": 237231,
-    "max_depth": 91836,
-    "solution_type": "solved",
-    "baseline_time_ms": 1852.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/bakers-game.json"
-  },
-  {
-    "instance": "resources/level3/bakers-game_418696_unwinnable.json",
-    "states_searched": 352191,
-    "unique_states": 124711,
-    "backtracks": 352190,
-    "max_depth": 684,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1651.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/bakers-game.json"
-  },
-  {
-    "instance": "resources/level3/beleaguered-castle_183_unwinnable.json",
-    "states_searched": 949689,
-    "unique_states": 312818,
-    "backtracks": 722987,
-    "max_depth": 226702,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1513.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/beleaguered-castle.json"
-  },
-  {
-    "instance": "resources/level3/beleaguered-castle_292_unwinnable.json",
-    "states_searched": 1354464,
-    "unique_states": 348845,
-    "backtracks": 1354463,
-    "max_depth": 7248,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1802.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/beleaguered-castle.json"
+    "custom_rules": "tests/rules/british-canister.json"
   },
   {
     "instance": "resources/level3/black-hole_9131859_winnable.json",
@@ -121,28 +44,6 @@
     "custom_rules": "tests/rules/black-hole.json"
   },
   {
-    "instance": "resources/level3/british-canister_197312577_winnable.json",
-    "states_searched": 990267,
-    "unique_states": 313218,
-    "backtracks": 990179,
-    "max_depth": 115,
-    "solution_type": "solved",
-    "baseline_time_ms": 1966.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/british-canister.json"
-  },
-  {
-    "instance": "resources/level3/british-canister_326325767_unwinnable.json",
-    "states_searched": 951112,
-    "unique_states": 273875,
-    "backtracks": 951111,
-    "max_depth": 109,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1896.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/british-canister.json"
-  },
-  {
     "instance": "resources/level3/canfield_1001263_winnable.json",
     "states_searched": 721273,
     "unique_states": 355215,
@@ -165,12 +66,34 @@
     "custom_rules": "tests/rules/canfield.json"
   },
   {
-    "instance": "resources/level3/canfield-strict_4000047_unwinnable.json",
+    "instance": "resources/level3/american-canister_3063_winnable.json",
+    "states_searched": 190776,
+    "unique_states": 75090,
+    "backtracks": 124331,
+    "max_depth": 66445,
+    "solution_type": "solved",
+    "baseline_time_ms": 1839.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/american-canister.json"
+  },
+  {
+    "instance": "resources/level3/american-canister_3649_unwinnable.json",
+    "states_searched": 404367,
+    "unique_states": 69883,
+    "backtracks": 404366,
+    "max_depth": 2462,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 1938.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/american-canister.json"
+  },
+  {
+    "instance": "resources/level3/canfield-strict_4000047_winnable.json",
     "states_searched": 836758,
     "unique_states": 385098,
     "backtracks": 836685,
     "max_depth": 73,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1944.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/canfield-strict.json"
@@ -187,70 +110,26 @@
     "custom_rules": "tests/rules/canfield-strict.json"
   },
   {
-    "instance": "resources/level3/delta-star_344200_winnable.json",
-    "states_searched": 435072,
-    "unique_states": 128753,
-    "backtracks": 309256,
-    "max_depth": 125816,
+    "instance": "resources/level3/beleaguered-castle_183_winnable.json",
+    "states_searched": 949689,
+    "unique_states": 312818,
+    "backtracks": 722987,
+    "max_depth": 226702,
     "solution_type": "solved",
-    "baseline_time_ms": 1841.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/delta-star.json"
-  },
-  {
-    "instance": "resources/level3/delta-star_3605081_unwinnable.json",
-    "states_searched": 45414,
-    "unique_states": 21120,
-    "backtracks": 45413,
-    "max_depth": 54,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 182.0,
+    "baseline_time_ms": 1513.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/delta-star.json"
+    "custom_rules": "tests/rules/beleaguered-castle.json"
   },
   {
-    "instance": "resources/level3/east-haven_108_winnable.json",
-    "states_searched": 1021778,
-    "unique_states": 273783,
-    "backtracks": 1021355,
-    "max_depth": 653,
-    "solution_type": "solved",
-    "baseline_time_ms": 1793.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/east-haven.json"
-  },
-  {
-    "instance": "resources/level3/east-haven_374_unwinnable.json",
-    "states_searched": 724501,
-    "unique_states": 223091,
-    "backtracks": 724500,
-    "max_depth": 1565,
+    "instance": "resources/level3/beleaguered-castle_292_unwinnable.json",
+    "states_searched": 1354464,
+    "unique_states": 348845,
+    "backtracks": 1354463,
+    "max_depth": 7248,
     "solution_type": "unsolvable",
-    "baseline_time_ms": 1586.0,
+    "baseline_time_ms": 1802.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/east-haven.json"
-  },
-  {
-    "instance": "resources/level3/eight-off_193680_winnable.json",
-    "states_searched": 505264,
-    "unique_states": 105179,
-    "backtracks": 505124,
-    "max_depth": 1742,
-    "solution_type": "solved",
-    "baseline_time_ms": 1852.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/eight-off.json"
-  },
-  {
-    "instance": "resources/level3/eight-off_299870_unwinnable.json",
-    "states_searched": 728302,
-    "unique_states": 285578,
-    "backtracks": 728301,
-    "max_depth": 650,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 2158.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/eight-off.json"
+    "custom_rules": "tests/rules/beleaguered-castle.json"
   },
   {
     "instance": "resources/level3/fan_186_winnable.json",
@@ -275,12 +154,34 @@
     "custom_rules": "tests/rules/fan.json"
   },
   {
-    "instance": "resources/level3/fore-cell_1000704_unwinnable.json",
+    "instance": "resources/level3/east-haven_108_winnable.json",
+    "states_searched": 1021778,
+    "unique_states": 273783,
+    "backtracks": 1021355,
+    "max_depth": 653,
+    "solution_type": "solved",
+    "baseline_time_ms": 1793.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/east-haven.json"
+  },
+  {
+    "instance": "resources/level3/east-haven_374_unwinnable.json",
+    "states_searched": 724501,
+    "unique_states": 223091,
+    "backtracks": 724500,
+    "max_depth": 1565,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 1586.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/east-haven.json"
+  },
+  {
+    "instance": "resources/level3/fore-cell_1000704_winnable.json",
     "states_searched": 866371,
     "unique_states": 271817,
     "backtracks": 865566,
     "max_depth": 2216,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1841.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/fore-cell.json"
@@ -319,56 +220,12 @@
     "custom_rules": "tests/rules/fore-cell-same-suit.json"
   },
   {
-    "instance": "resources/level3/fortunes-favor_6974509_winnable.json",
-    "states_searched": 450906,
-    "unique_states": 295609,
-    "backtracks": 450810,
-    "max_depth": 96,
-    "solution_type": "solved",
-    "baseline_time_ms": 1852.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/fortunes-favor.json"
-  },
-  {
-    "instance": "resources/level3/fortunes-favor_79310374_unwinnable.json",
-    "states_searched": 454764,
-    "unique_states": 316688,
-    "backtracks": 454763,
-    "max_depth": 33,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1590.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/fortunes-favor.json"
-  },
-  {
-    "instance": "resources/level3/free-cell_30586_winnable.json",
-    "states_searched": 443992,
-    "unique_states": 167654,
-    "backtracks": 442046,
-    "max_depth": 15829,
-    "solution_type": "solved",
-    "baseline_time_ms": 1852.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/free-cell.json"
-  },
-  {
-    "instance": "resources/level3/free-cell_1767954_unwinnable.json",
-    "states_searched": 324931,
-    "unique_states": 132397,
-    "backtracks": 324930,
-    "max_depth": 456,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1773.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/free-cell.json"
-  },
-  {
-    "instance": "resources/level3/free-cell-0-cell_23061_unwinnable.json",
+    "instance": "resources/level3/free-cell-0-cell_23061_winnable.json",
     "states_searched": 547474,
     "unique_states": 198653,
     "backtracks": 544591,
     "max_depth": 6008,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1471.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/free-cell-0-cell.json"
@@ -385,12 +242,12 @@
     "custom_rules": "tests/rules/free-cell-0-cell.json"
   },
   {
-    "instance": "resources/level3/free-cell-1-cell_993_unwinnable.json",
+    "instance": "resources/level3/free-cell-1-cell_993_winnable.json",
     "states_searched": 774886,
     "unique_states": 241835,
     "backtracks": 766023,
     "max_depth": 19615,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1796.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/free-cell-1-cell.json"
@@ -407,12 +264,12 @@
     "custom_rules": "tests/rules/free-cell-1-cell.json"
   },
   {
-    "instance": "resources/level3/free-cell-2-cell_644_unwinnable.json",
+    "instance": "resources/level3/free-cell-2-cell_644_winnable.json",
     "states_searched": 856052,
     "unique_states": 273670,
     "backtracks": 852322,
     "max_depth": 4077,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1822.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/free-cell-2-cell.json"
@@ -451,34 +308,34 @@
     "custom_rules": "tests/rules/free-cell-3-cell.json"
   },
   {
-    "instance": "resources/level3/free-cell-4-pile_860950_unwinnable.json",
-    "states_searched": 784732,
-    "unique_states": 274276,
-    "backtracks": 784362,
-    "max_depth": 2970,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1244.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/free-cell-4-pile.json"
+    "instance": "resources/level3/eight-off_193680_winnable.json",
+    "states_searched": 505264,
+    "unique_states": 105179,
+    "backtracks": 505124,
+    "max_depth": 1742,
+    "solution_type": "solved",
+    "baseline_time_ms": 1852.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/eight-off.json"
   },
   {
-    "instance": "resources/level3/free-cell-4-pile_651423_unwinnable.json",
-    "states_searched": 1128577,
-    "unique_states": 332214,
-    "backtracks": 1128576,
-    "max_depth": 3919,
+    "instance": "resources/level3/eight-off_299870_unwinnable.json",
+    "states_searched": 728302,
+    "unique_states": 285578,
+    "backtracks": 728301,
+    "max_depth": 650,
     "solution_type": "unsolvable",
-    "baseline_time_ms": 1898.0,
+    "baseline_time_ms": 2158.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/free-cell-4-pile.json"
+    "custom_rules": "tests/rules/eight-off.json"
   },
   {
-    "instance": "resources/level3/free-cell-5-pile_183_unwinnable.json",
+    "instance": "resources/level3/free-cell-5-pile_183_winnable.json",
     "states_searched": 1280398,
     "unique_states": 375446,
     "backtracks": 1279996,
     "max_depth": 7551,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1986.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/free-cell-5-pile.json"
@@ -495,12 +352,12 @@
     "custom_rules": "tests/rules/free-cell-5-pile.json"
   },
   {
-    "instance": "resources/level3/free-cell-6-pile_29_unwinnable.json",
+    "instance": "resources/level3/free-cell-6-pile_29_winnable.json",
     "states_searched": 1014669,
     "unique_states": 392083,
     "backtracks": 944718,
     "max_depth": 69951,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1977.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/free-cell-6-pile.json"
@@ -649,12 +506,12 @@
     "custom_rules": "tests/rules/klondike.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-1_669962_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-1_669962_winnable.json",
     "states_searched": 525668,
     "unique_states": 157152,
     "backtracks": 525577,
     "max_depth": 91,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1969.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-1.json"
@@ -847,12 +704,12 @@
     "custom_rules": "tests/rules/klondike-deal-3-nospace.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-3-noworryback_679864_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-3-noworryback_679864_winnable.json",
     "states_searched": 16366,
     "unique_states": 1775,
     "backtracks": 16278,
     "max_depth": 88,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1842.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-3-noworryback.json"
@@ -869,26 +726,26 @@
     "custom_rules": "tests/rules/klondike-deal-3-noworryback.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-3-samesuit_23331_winnable.json",
-    "states_searched": 1505735,
-    "unique_states": 1041030,
-    "backtracks": 1505670,
-    "max_depth": 65,
+    "instance": "resources/level3/bakers-game_35821_winnable.json",
+    "states_searched": 329067,
+    "unique_states": 94258,
+    "backtracks": 237231,
+    "max_depth": 91836,
     "solution_type": "solved",
-    "baseline_time_ms": 1500.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/klondike-deal-3-samesuit.json"
-  },
-  {
-    "instance": "resources/level3/klondike-deal-3-samesuit_648_unwinnable.json",
-    "states_searched": 1368302,
-    "unique_states": 805949,
-    "backtracks": 1368301,
-    "max_depth": 48,
-    "solution_type": "unsolvable",
     "baseline_time_ms": 1852.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/klondike-deal-3-samesuit.json"
+    "custom_rules": "tests/rules/bakers-game.json"
+  },
+  {
+    "instance": "resources/level3/bakers-game_418696_unwinnable.json",
+    "states_searched": 352191,
+    "unique_states": 124711,
+    "backtracks": 352190,
+    "max_depth": 684,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 1651.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/bakers-game.json"
   },
   {
     "instance": "resources/level3/klondike-deal-3-samesuitanyspace_539479_winnable.json",
@@ -913,26 +770,26 @@
     "custom_rules": "tests/rules/klondike-deal-3-samesuitanyspace.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-3-samesuitnospace_23331_winnable.json",
-    "states_searched": 676892,
-    "unique_states": 486174,
-    "backtracks": 676827,
+    "instance": "resources/level3/klondike-deal-3-samesuit_23331_winnable.json",
+    "states_searched": 1505735,
+    "unique_states": 1041030,
+    "backtracks": 1505670,
     "max_depth": 65,
     "solution_type": "solved",
-    "baseline_time_ms": 617.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/klondike-deal-3-samesuitnospace.json"
+    "baseline_time_ms": 1500.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/klondike-deal-3-samesuit.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-3-samesuitnospace_129698_unwinnable.json",
-    "states_searched": 2008193,
-    "unique_states": 1412988,
-    "backtracks": 2008192,
-    "max_depth": 50,
+    "instance": "resources/level3/klondike-deal-3-samesuit_648_unwinnable.json",
+    "states_searched": 1368302,
+    "unique_states": 805949,
+    "backtracks": 1368301,
+    "max_depth": 48,
     "solution_type": "unsolvable",
-    "baseline_time_ms": 1866.0,
+    "baseline_time_ms": 1852.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/klondike-deal-3-samesuitnospace.json"
+    "custom_rules": "tests/rules/klondike-deal-3-samesuit.json"
   },
   {
     "instance": "resources/level3/klondike-deal-4_794784_winnable.json",
@@ -1045,12 +902,12 @@
     "custom_rules": "tests/rules/klondike-deal-6.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-6-noworryback_581412_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-6-noworryback_581412_winnable.json",
     "states_searched": 733924,
     "unique_states": 152217,
     "backtracks": 733841,
     "max_depth": 83,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1853.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-6-noworryback.json"
@@ -1067,26 +924,26 @@
     "custom_rules": "tests/rules/klondike-deal-6-noworryback.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-7_902402_winnable.json",
-    "states_searched": 598087,
-    "unique_states": 213223,
-    "backtracks": 597998,
-    "max_depth": 89,
+    "instance": "resources/level3/klondike-deal-3-samesuitnospace_23331_winnable.json",
+    "states_searched": 676892,
+    "unique_states": 486174,
+    "backtracks": 676827,
+    "max_depth": 65,
     "solution_type": "solved",
-    "baseline_time_ms": 1689.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/klondike-deal-7.json"
+    "baseline_time_ms": 617.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/klondike-deal-3-samesuitnospace.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-7_457766_unwinnable.json",
-    "states_searched": 705247,
-    "unique_states": 236325,
-    "backtracks": 705246,
-    "max_depth": 53,
+    "instance": "resources/level3/klondike-deal-3-samesuitnospace_129698_unwinnable.json",
+    "states_searched": 2008193,
+    "unique_states": 1412988,
+    "backtracks": 2008192,
+    "max_depth": 50,
     "solution_type": "unsolvable",
-    "baseline_time_ms": 1852.0,
+    "baseline_time_ms": 1866.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/klondike-deal-7.json"
+    "custom_rules": "tests/rules/klondike-deal-3-samesuitnospace.json"
   },
   {
     "instance": "resources/level3/klondike-deal-7-noworryback_233842_winnable.json",
@@ -1133,12 +990,12 @@
     "custom_rules": "tests/rules/klondike-deal-8.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-8-noworryback_610693_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-8-noworryback_610693_winnable.json",
     "states_searched": 592898,
     "unique_states": 167330,
     "backtracks": 592804,
     "max_depth": 94,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1882.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-8-noworryback.json"
@@ -1155,12 +1012,12 @@
     "custom_rules": "tests/rules/klondike-deal-8-noworryback.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-9_360491_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-9_360491_winnable.json",
     "states_searched": 500692,
     "unique_states": 109423,
     "backtracks": 500595,
     "max_depth": 97,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1475.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-9.json"
@@ -1199,12 +1056,12 @@
     "custom_rules": "tests/rules/klondike-deal-9-noworryback.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-10_919622_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-10_919622_winnable.json",
     "states_searched": 663891,
     "unique_states": 193380,
     "backtracks": 663785,
     "max_depth": 106,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 2097.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-10.json"
@@ -1243,12 +1100,12 @@
     "custom_rules": "tests/rules/klondike-deal-10-noworryback.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-11_118925_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-11_118925_winnable.json",
     "states_searched": 557662,
     "unique_states": 115952,
     "backtracks": 557520,
     "max_depth": 142,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1587.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-11.json"
@@ -1287,12 +1144,12 @@
     "custom_rules": "tests/rules/klondike-deal-11-noworryback.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-12_816850_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-12_816850_winnable.json",
     "states_searched": 536648,
     "unique_states": 105444,
     "backtracks": 536546,
     "max_depth": 102,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1447.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-12.json"
@@ -1309,12 +1166,12 @@
     "custom_rules": "tests/rules/klondike-deal-12.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-12-noworryback_42727_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-12-noworryback_42727_winnable.json",
     "states_searched": 660977,
     "unique_states": 161704,
     "backtracks": 660883,
     "max_depth": 94,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1689.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-12-noworryback.json"
@@ -1331,12 +1188,12 @@
     "custom_rules": "tests/rules/klondike-deal-12-noworryback.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-13_704712_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-13_704712_winnable.json",
     "states_searched": 645309,
     "unique_states": 186126,
     "backtracks": 645216,
     "max_depth": 93,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1901.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-13.json"
@@ -1353,12 +1210,12 @@
     "custom_rules": "tests/rules/klondike-deal-13.json"
   },
   {
-    "instance": "resources/level3/klondike-deal-13-noworryback_459598_unwinnable.json",
+    "instance": "resources/level3/klondike-deal-13-noworryback_459598_winnable.json",
     "states_searched": 539032,
     "unique_states": 128191,
     "backtracks": 538947,
     "max_depth": 85,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1493.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/klondike-deal-13-noworryback.json"
@@ -1375,26 +1232,26 @@
     "custom_rules": "tests/rules/klondike-deal-13-noworryback.json"
   },
   {
-    "instance": "resources/level3/late-binding-solitaire_76397_winnable.json",
-    "states_searched": 1923438,
-    "unique_states": 414175,
-    "backtracks": 1923421,
-    "max_depth": 17,
+    "instance": "resources/level3/klondike-deal-7_902402_winnable.json",
+    "states_searched": 598087,
+    "unique_states": 213223,
+    "backtracks": 597998,
+    "max_depth": 89,
     "solution_type": "solved",
-    "baseline_time_ms": 1473.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/late-binding-solitaire.json"
+    "baseline_time_ms": 1689.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/klondike-deal-7.json"
   },
   {
-    "instance": "resources/level3/late-binding-solitaire_2350_unwinnable.json",
-    "states_searched": 2410890,
-    "unique_states": 540684,
-    "backtracks": 2410889,
-    "max_depth": 16,
+    "instance": "resources/level3/klondike-deal-7_457766_unwinnable.json",
+    "states_searched": 705247,
+    "unique_states": 236325,
+    "backtracks": 705246,
+    "max_depth": 53,
     "solution_type": "unsolvable",
-    "baseline_time_ms": 1905.0,
+    "baseline_time_ms": 1852.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/late-binding-solitaire.json"
+    "custom_rules": "tests/rules/klondike-deal-7.json"
   },
   {
     "instance": "resources/level3/mrs-mop_1800031_winnable.json",
@@ -1441,12 +1298,12 @@
     "custom_rules": "tests/rules/northwest-territory.json"
   },
   {
-    "instance": "resources/level3/raglan_1162_unwinnable.json",
+    "instance": "resources/level3/raglan_1162_winnable.json",
     "states_searched": 778818,
     "unique_states": 293626,
     "backtracks": 576710,
     "max_depth": 202108,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1954.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/raglan.json"
@@ -1507,6 +1364,28 @@
     "custom_rules": "tests/rules/siegecraft.json"
   },
   {
+    "instance": "resources/level3/late-binding-solitaire_76397_winnable.json",
+    "states_searched": 1923438,
+    "unique_states": 414175,
+    "backtracks": 1923421,
+    "max_depth": 17,
+    "solution_type": "solved",
+    "baseline_time_ms": 1473.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/late-binding-solitaire.json"
+  },
+  {
+    "instance": "resources/level3/late-binding-solitaire_2350_unwinnable.json",
+    "states_searched": 2410890,
+    "unique_states": 540684,
+    "backtracks": 2410889,
+    "max_depth": 16,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 1905.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/late-binding-solitaire.json"
+  },
+  {
     "instance": "resources/level3/simple-simon_10075_winnable.json",
     "states_searched": 752544,
     "unique_states": 233578,
@@ -1551,28 +1430,6 @@
     "custom_rules": "tests/rules/somerset.json"
   },
   {
-    "instance": "resources/level3/spanish-patience_159893_winnable.json",
-    "states_searched": 440662,
-    "unique_states": 106580,
-    "backtracks": 334318,
-    "max_depth": 106344,
-    "solution_type": "solved",
-    "baseline_time_ms": 1851.0,
-    "streamliner": "both",
-    "custom_rules": "tests/rules/spanish-patience.json"
-  },
-  {
-    "instance": "resources/level3/spanish-patience_383174_unwinnable.json",
-    "states_searched": 442150,
-    "unique_states": 77538,
-    "backtracks": 442149,
-    "max_depth": 3178,
-    "solution_type": "unsolvable",
-    "baseline_time_ms": 1571.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/spanish-patience.json"
-  },
-  {
     "instance": "resources/level3/spider_2413_winnable.json",
     "states_searched": 745001,
     "unique_states": 250927,
@@ -1606,12 +1463,12 @@
     "custom_rules": "tests/rules/spiderette.json"
   },
   {
-    "instance": "resources/level3/streets-and-alleys_614_unwinnable.json",
+    "instance": "resources/level3/streets-and-alleys_614_winnable.json",
     "states_searched": 1293937,
     "unique_states": 282903,
     "backtracks": 1274591,
     "max_depth": 19346,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 2073.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/streets-and-alleys.json"
@@ -1650,12 +1507,12 @@
     "custom_rules": "tests/rules/stronghold.json"
   },
   {
-    "instance": "resources/level3/thirty_14924_unwinnable.json",
+    "instance": "resources/level3/thirty_14924_winnable.json",
     "states_searched": 1261988,
     "unique_states": 315514,
     "backtracks": 1067347,
     "max_depth": 194641,
-    "solution_type": "unsolvable",
+    "solution_type": "solved",
     "baseline_time_ms": 1949.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/thirty.json"
@@ -1694,26 +1551,37 @@
     "custom_rules": "tests/rules/thirtysix.json"
   },
   {
-    "instance": "resources/level3/trigon_270217_winnable.json",
-    "states_searched": 98022,
-    "unique_states": 29457,
-    "backtracks": 97941,
-    "max_depth": 81,
+    "instance": "resources/level3/spanish-patience_159893_winnable.json",
+    "states_searched": 440662,
+    "unique_states": 106580,
+    "backtracks": 334318,
+    "max_depth": 106344,
     "solution_type": "solved",
-    "baseline_time_ms": 566.0,
-    "streamliner": "none",
-    "custom_rules": "tests/rules/trigon.json"
+    "baseline_time_ms": 1851.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/spanish-patience.json"
   },
   {
-    "instance": "resources/level3/trigon_4282898_unwinnable.json",
-    "states_searched": 269354,
-    "unique_states": 53137,
-    "backtracks": 269353,
-    "max_depth": 28,
+    "instance": "resources/level3/spanish-patience_383174_unwinnable.json",
+    "states_searched": 442150,
+    "unique_states": 77538,
+    "backtracks": 442149,
+    "max_depth": 3178,
     "solution_type": "unsolvable",
+    "baseline_time_ms": 1571.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/spanish-patience.json"
+  },
+  {
+    "instance": "resources/level3/accordion_7331_winnable.json",
+    "states_searched": 934281,
+    "unique_states": 343534,
+    "backtracks": 934230,
+    "max_depth": 51,
+    "solution_type": "solved",
     "baseline_time_ms": 1852.0,
     "streamliner": "none",
-    "custom_rules": "tests/rules/trigon.json"
+    "custom_rules": "tests/rules/accordion.json"
   },
   {
     "instance": "resources/level3/will-o-the-wisp_10849_winnable.json",
@@ -1738,6 +1606,28 @@
     "custom_rules": "tests/rules/will-o-the-wisp.json"
   },
   {
+    "instance": "resources/level3/free-cell_30586_winnable.json",
+    "states_searched": 443992,
+    "unique_states": 167654,
+    "backtracks": 442046,
+    "max_depth": 15829,
+    "solution_type": "solved",
+    "baseline_time_ms": 1852.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/free-cell.json"
+  },
+  {
+    "instance": "resources/level3/free-cell_1767954_unwinnable.json",
+    "states_searched": 324931,
+    "unique_states": 132397,
+    "backtracks": 324930,
+    "max_depth": 456,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 1773.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/free-cell.json"
+  },
+  {
     "instance": "resources/level3/worm-hole_607932_winnable.json",
     "states_searched": 1066902,
     "unique_states": 466182,
@@ -1758,5 +1648,115 @@
     "baseline_time_ms": 26.0,
     "streamliner": "none",
     "custom_rules": "tests/rules/worm-hole.json"
+  },
+  {
+    "instance": "resources/level3/fortunes-favor_6974509_winnable.json",
+    "states_searched": 450906,
+    "unique_states": 295609,
+    "backtracks": 450810,
+    "max_depth": 96,
+    "solution_type": "solved",
+    "baseline_time_ms": 1852.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/fortunes-favor.json"
+  },
+  {
+    "instance": "resources/level3/fortunes-favor_79310374_unwinnable.json",
+    "states_searched": 454764,
+    "unique_states": 316688,
+    "backtracks": 454763,
+    "max_depth": 33,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 1590.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/fortunes-favor.json"
+  },
+  {
+    "instance": "resources/level3/alpha-star_379003_winnable.json",
+    "states_searched": 246836,
+    "unique_states": 73365,
+    "backtracks": 173822,
+    "max_depth": 73014,
+    "solution_type": "solved",
+    "baseline_time_ms": 1854.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/alpha-star.json"
+  },
+  {
+    "instance": "resources/level3/alpha-star_8363153_unwinnable.json",
+    "states_searched": 16148,
+    "unique_states": 4267,
+    "backtracks": 16147,
+    "max_depth": 19,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 78.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/alpha-star.json"
+  },
+  {
+    "instance": "resources/level3/delta-star_344200_winnable.json",
+    "states_searched": 435072,
+    "unique_states": 128753,
+    "backtracks": 309256,
+    "max_depth": 125816,
+    "solution_type": "solved",
+    "baseline_time_ms": 1841.0,
+    "streamliner": "both",
+    "custom_rules": "tests/rules/delta-star.json"
+  },
+  {
+    "instance": "resources/level3/delta-star_3605081_unwinnable.json",
+    "states_searched": 45414,
+    "unique_states": 21120,
+    "backtracks": 45413,
+    "max_depth": 54,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 182.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/delta-star.json"
+  },
+  {
+    "instance": "resources/level3/trigon_270217_winnable.json",
+    "states_searched": 98022,
+    "unique_states": 29457,
+    "backtracks": 97941,
+    "max_depth": 81,
+    "solution_type": "solved",
+    "baseline_time_ms": 566.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/trigon.json"
+  },
+  {
+    "instance": "resources/level3/trigon_4282898_unwinnable.json",
+    "states_searched": 269354,
+    "unique_states": 53137,
+    "backtracks": 269353,
+    "max_depth": 28,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 1852.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/trigon.json"
+  },
+  {
+    "instance": "resources/level3/free-cell-4-pile_860950_winnable.json",
+    "states_searched": 784732,
+    "unique_states": 274276,
+    "backtracks": 784362,
+    "max_depth": 2970,
+    "solution_type": "solved",
+    "baseline_time_ms": 1244.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/free-cell-4-pile.json"
+  },
+  {
+    "instance": "resources/level3/free-cell-4-pile_651423_unwinnable.json",
+    "states_searched": 1128577,
+    "unique_states": 332214,
+    "backtracks": 1128576,
+    "max_depth": 3919,
+    "solution_type": "unsolvable",
+    "baseline_time_ms": 1898.0,
+    "streamliner": "none",
+    "custom_rules": "tests/rules/free-cell-4-pile.json"
   }
 ]

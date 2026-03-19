@@ -173,3 +173,50 @@ Three further level 5 instances had the same problem (`siegecraft` 32 158, `spid
   161 to **157 instances** (4 memout entries removed).
 - **Verification:** Level 1 (150/150), Level 2 (160/160), Level 3 (160/160) confirmed
   still passing. Level 4/5 ready for manual verification.
+
+---
+
+## 12. Level 1 Oracle: Per-Instance Streamliner and Ground-Truth Alignment
+**Date:** 2026-03-19
+**Commits:** `c46b44f`
+**Rationale:** Level 1 oracle was generated with `--streamliners none` for all instances.
+The experimental ground truth used `--streamliners both` for winnable instances in
+smart-run games (free-cell, free-cell-4-pile, klondike, klondike-deal-1,
+spanish-patience), producing 17 state-count mismatches between the oracle and the paper.
+All 150 outcomes were correct throughout.
+
+**Investigation:** Confirmed that running the JSON instance files with the correct
+streamliner (`--streamliners both`) reproduces the ground-truth node counts exactly —
+the JSON round-trip bug does not affect these instances at this streamliner setting.
+
+**Fix:**
+- `scripts/generate_baseline.py` rewritten with proper CLI arguments (no more hardcoded
+  paths) and a `--data-dir` option that reads the AAA index files to determine the
+  correct streamliner per instance.
+- Oracle entries now include `"streamliner"` and `"game_type"` fields, consistent with
+  the levels 2–5 oracle format.
+- **Result:** 150/150 instances match ground truth exactly (outcome + states_searched).
+  Level 1 regression passes 150/150.
+
+---
+
+## 13. Integrated Oracle Generation and Full Re-Curation
+**Date:** 2026-03-19
+**Commits:** `f468c87`
+**Rationale:** Oracle generation was a separate manual step (`export_test_deals.py`)
+that could fall out of sync with the curated instances. After curation, the oracle had
+to be regenerated explicitly — an easy step to miss.
+
+**Fix:**
+- `curate_test_sets.py`: oracle generation integrated directly. After selecting
+  instances, the script now writes `tests/oracles/level{2,3,4,5}.json` immediately,
+  in the same run. The `export_test_deals.py` script is retained as a standalone tool
+  but is no longer part of the normal workflow.
+- All four curation sets re-run (`1m`, `5m`, `1h`, `6h`) to produce fresh oracles
+  with the integrated pipeline. Level 5 now has **160 instances** (was 157): memout
+  filtering at curation time means no post-hoc removal is needed, so three additional
+  clean instances are now included.
+- `tests/resources/level2/` … `level5/` (637 JSON instance files) removed — levels 2–5
+  are seed-based and do not need on-disk deal files.
+- **Verification:** Level 1 (150/150), Level 2 (160/160), Level 3 (160/160) confirmed
+  passing.

@@ -86,9 +86,9 @@ private:
     streamliner_opt streamliners;
     uint64_t cache_capacity;
     uint64_t timeout;
-    bool json_output;
-    bool reveal_hidden;
-    bool debug;
+    bool json_output = false;
+    bool reveal_hidden = false;
+    bool debug = false;
 };
 
 #endif //SOLVITAIRE_COMMAND_LINE_HELPER_H

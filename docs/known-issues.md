@@ -4,8 +4,8 @@
 
 **Affected file:** `src/main/input-output/input/json-parsing/json_helper.cpp`
 
-**Present in:** Both ReSolvitaire (`testing-infrastructure` branch) and the original
-upstream Solvitaire (`master` branch).
+**Status:** Fixed in `claude/quizzical-darwin`; present in `testing-infrastructure` and
+upstream Solvitaire `master`.
 
 ### Description
 
@@ -27,26 +27,27 @@ in a different internal arrangement, leading to:
 - Run from seed: **112 275** states searched
 - Run from exported JSON: **112 266** states searched (9 fewer)
 
-### Workaround (applied in this branch)
+### Workaround (applied for levels 2–5)
 
-The Level 2–5 regression runner now invokes the solver with `--random <seed>` directly,
+The Level 2–5 regression runner invokes the solver with `--random <seed>` directly,
 bypassing JSON serialisation entirely. The oracle values were generated from seed-based
-runs in the original experimental dataset, so this makes the comparison consistent.
+runs in the original experimental dataset, making the comparison consistent.
 
-### Proper Fix
+Level 1 uses JSON instance files, but testing showed the bug does not affect those
+instances at the streamliners used (all Level 1 outcomes and node counts match the
+experimental ground truth exactly).
 
-In `json_helper::print_game_state_as_json`, change:
+### Fix (in `claude/quizzical-darwin`)
+
+In `json_helper::print_game_state_as_json`, line 90:
 
 ```cpp
 // BUGGY — iterates the reordered list
 for (auto pr : gs.tableau_piles) {
-```
 
-to:
-
-```cpp
 // CORRECT — iterates the original fixed order, matching what the parser expects
 for (auto pr : gs.original_tableau_piles) {
 ```
 
-This should be fixed in upstream Solvitaire first, then mirrored here.
+This one-line change is applied in the `claude/quizzical-darwin` branch and should be
+merged to `testing-infrastructure` via the pending PR.

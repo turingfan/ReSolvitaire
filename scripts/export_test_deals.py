@@ -1,3 +1,11 @@
+"""Export JSON deal files and oracle JSONs from curated test sets.
+
+NOTE: Oracle generation for levels 2-5 is now integrated into
+curate_test_sets.py and runs automatically at the end of curation.
+This script is retained for standalone re-generation of oracles and
+JSON deal files, but should not normally be needed for oracle creation.
+"""
+
 import os
 import json
 import subprocess
@@ -110,20 +118,20 @@ def export_deals(data_dir):
                             idx_max_depth = 21
                             final_outcome = "winnable" if "solved" in row[23].lower() else "unsolvable"
                         else:
-                            # Fallback if Run 2 is missing (unexpected for smart)
+                            # Fallback if Run 2 is missing (unexpected for smart):
+                            # use run 1 metrics; outcome from run1_outcome below
                             time_ms = float(row[2])
                             idx_states = 3
                             idx_unique = 4
                             idx_backtracks = 5
                             idx_max_depth = 10
-                    # Determine definitive outcome
-                    if "solved" in run1_outcome:
-                        final_outcome = "winnable"
-                    elif "unsolvable" in run1_outcome:
-                        final_outcome = "unwinnable"
-                    else:
-                        print(f"Warning: Non-definitive outcome for {game} seed {seed}: {run1_outcome}")
-                        continue
+                            if "solved" in run1_outcome:
+                                final_outcome = "winnable"
+                            elif "unsolvable" in run1_outcome:
+                                final_outcome = "unwinnable"
+                            else:
+                                print(f"Warning: Non-definitive outcome for {game} seed {seed}: {run1_outcome}")
+                                continue
                 else:
                     # Single-run (NONE) Logic:
                     if "-both-" in lookup_key:
