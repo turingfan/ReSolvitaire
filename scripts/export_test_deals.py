@@ -1,3 +1,11 @@
+"""Export JSON deal files and oracle JSONs from curated test sets.
+
+NOTE: Oracle generation for levels 2-5 is now integrated into
+curate_test_sets.py and runs automatically at the end of curation.
+This script is retained for standalone re-generation of oracles and
+JSON deal files, but should not normally be needed for oracle creation.
+"""
+
 import os
 import json
 import subprocess
