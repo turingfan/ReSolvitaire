@@ -70,33 +70,48 @@ def get_row_metrics(row, is_smart):
         if is_smart:
             run1_outcome = row[1].lower()
             if "solved" in run1_outcome:
-                return float(row[2]), "solved", int(row[7]), int(row[3])
-            
+                removed = int(row[7])
+                # Skip if cache was exhausted (memout) — results are unreliable
+                if removed > 0:
+                    return None, None, None, None
+                return float(row[2]), "solved", removed, int(row[3])
+
             # If run 1 is non-definitive, we skip
             if any(x in run1_outcome for x in ["timeout", "limit", "interrupted"]):
                 return None, None, None, None
-            
+
             # Run 1 didn't solve (unsolvable). Check for Run 2.
             if len(row) >= 24:
                 r2_outcome_str = row[23].lower()
                 # If run 2 is non-definitive, we skip
                 if any(x in r2_outcome_str for x in ["timeout", "limit", "interrupted"]):
                     return None, None, None, None
-                
+
                 r2_time = float(row[13])
                 r2_outcome = "solved" if "solved" in r2_outcome_str else "unsolvable"
                 r2_removed = int(row[18])
                 r2_states = int(row[14])
+                # Skip if cache was exhausted (memout) — results are unreliable
+                if r2_removed > 0:
+                    return None, None, None, None
                 return r2_time, r2_outcome, r2_removed, r2_states
             else:
                 # No run 2, and run 1 was unsolvable.
-                return float(row[2]), "unsolvable", int(row[7]), int(row[3])
+                removed = int(row[7])
+                if removed > 0:
+                    return None, None, None, None
+                return float(row[2]), "unsolvable", removed, int(row[3])
         else:
             # Single run
             outcome_str = row[1].lower()
             if any(x in outcome_str for x in ["timeout", "limit", "interrupted"]):
                 return None, None, None, None
-            
+
+            removed = int(row[7])
+            # Skip if cache was exhausted (memout) — results are unreliable
+            if removed > 0:
+                return None, None, None, None
+
             # Check col 12 if col 1 overall result exists
             if len(row) > 12:
                 overall = row[12].lower()
@@ -105,8 +120,8 @@ def get_row_metrics(row, is_smart):
                 outcome = "solved" if "solved" in overall or "solved" in outcome_str else "unsolvable"
             else:
                 outcome = "solved" if "solved" in outcome_str else "unsolvable"
-            
-            return float(row[2]), outcome, int(row[7]), int(row[3])
+
+            return float(row[2]), outcome, removed, int(row[3])
     except:
         return None, None, None, None
 

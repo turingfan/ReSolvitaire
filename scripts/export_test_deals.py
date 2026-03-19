@@ -56,7 +56,15 @@ def export_deals(data_dir):
                 inst = instances[outcome_key]
                 if inst is None:
                     continue
-                
+
+                # Skip instances whose original run exhausted the cache
+                # (states_removed_from_cache > 0).  Such runs may have missed
+                # states and produced incorrect unsolvable verdicts (memout).
+                if inst.get('removed', 0) > 0:
+                    print(f"Skipping {game} seed {inst['seed']} ({outcome_key}): "
+                          f"removed={inst['removed']} (memout/cache exhaustion)")
+                    continue
+
                 seed = inst['seed']
                 row = [s.strip() for s in inst['row']]
                 csv_path = inst['csv']
