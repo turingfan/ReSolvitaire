@@ -72,14 +72,15 @@ def get_row_metrics(row, is_smart):
             if "solved" in run1_outcome:
                 return float(row[2]), "solved", int(row[7]), int(row[3])
             
-            # If run 1 timed out, we skip
-            if "timeout" in run1_outcome:
+            # If run 1 is non-definitive, we skip
+            if any(x in run1_outcome for x in ["timeout", "limit", "interrupted"]):
                 return None, None, None, None
             
             # Run 1 didn't solve (unsolvable). Check for Run 2.
             if len(row) >= 24:
                 r2_outcome_str = row[23].lower()
-                if "timeout" in r2_outcome_str:
+                # If run 2 is non-definitive, we skip
+                if any(x in r2_outcome_str for x in ["timeout", "limit", "interrupted"]):
                     return None, None, None, None
                 
                 r2_time = float(row[13])
@@ -93,13 +94,13 @@ def get_row_metrics(row, is_smart):
         else:
             # Single run
             outcome_str = row[1].lower()
-            if "timeout" in outcome_str:
+            if any(x in outcome_str for x in ["timeout", "limit", "interrupted"]):
                 return None, None, None, None
             
             # Check col 12 if col 1 overall result exists
             if len(row) > 12:
                 overall = row[12].lower()
-                if "timeout" in overall:
+                if any(x in overall for x in ["timeout", "limit", "interrupted"]):
                     return None, None, None, None
                 outcome = "solved" if "solved" in overall or "solved" in outcome_str else "unsolvable"
             else:

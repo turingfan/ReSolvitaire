@@ -108,7 +108,14 @@ def export_deals(data_dir):
                             idx_unique = 4
                             idx_backtracks = 5
                             idx_max_depth = 10
-                            final_outcome = "winnable" if "solved" in run1_outcome else "unsolvable"
+                    # Determine definitive outcome
+                    if "solved" in run1_outcome:
+                        final_outcome = "winnable"
+                    elif "unsolvable" in overall_outcome:
+                        final_outcome = "unwinnable"
+                    else:
+                        print(f"Warning: Non-definitive outcome for {game} seed {seed}: {overall_outcome}")
+                        continue
                 else:
                     # Single-run (NONE) Logic:
                     if "-both-" in lookup_key:
@@ -122,9 +129,14 @@ def export_deals(data_dir):
                     idx_backtracks = 5
                     idx_max_depth = 10
                     
-                    # Some single runs might have a solution even if Run 1 said unsolvable (if it's not a smart run)
-                    # but usually single runs are solved/unsolvable in Run 1.
-                    final_outcome = "winnable" if "solved" in row[1].lower() else "unsolvable"
+                    outcome_str = row[1].lower()
+                    if "solved" in outcome_str:
+                        final_outcome = "winnable"
+                    elif "unsolvable" in outcome_str:
+                        final_outcome = "unwinnable"
+                    else:
+                        print(f"Warning: Non-definitive outcome for {game} seed {seed}: {outcome_str}")
+                        continue
 
                 try:
                     states = int(row[idx_states])
