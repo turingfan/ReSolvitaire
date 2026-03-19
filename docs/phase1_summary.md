@@ -45,5 +45,5 @@ Phase 1 successfully established a robust, automated foundation for regression t
 
 ## Verification Status
 - **Corpus Coverage:** 150/150 instances verified.
-- **Round-Trip Status:** All instances can be exported via `--deal-only` and reloaded via `--json` with identical results.
+- **Round-Trip Status:** All instances can be exported via `--deal-only` and reloaded via `--json` with identical *outcomes* (solved/unsolvable). Note: a known bug in `json_helper.cpp` means the `states_searched` count may differ by a small amount between a seed-based run and a JSON-reload run when pile-symmetry reordering is active. See `docs/known-issues.md` §1 for details and the planned fix.
 - **Regression Pass:** `100% tests passed` in current `testing-infrastructure` branch.
