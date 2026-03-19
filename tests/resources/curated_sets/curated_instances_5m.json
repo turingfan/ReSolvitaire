@@ -2,269 +2,70 @@
   "target_set": "5m",
   "target_per_instance_ms": 1851.851851851852,
   "instances": {
-    "accordion": {
+    "british-canister": {
       "winnable": {
-        "seed": 7331,
-        "time": 1852.0,
+        "seed": 197312577,
+        "time": 1966.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/accordion/v0.08/accordion-none-1M-2hr25M-A-74T2GZ.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/british-canister/v0.08/british-canister-none-v0.08-1B-1hr50M-5ALI-solved+hard-B.csv.gz",
         "row": [
-          "7331",
+          "197312577",
           " solved",
-          " 1852",
-          " 934281",
-          " 343534",
-          " 934230",
+          " 1966",
+          " 990267",
+          " 313218",
+          " 990179",
+          " 70948",
           " 0",
-          " 0",
-          " 343534",
+          " 242270",
           " 393241",
-          " 51",
-          " 51",
-          " solved",
-          " 2.22",
-          " 2.12",
-          " 0.08",
-          " 104904\n"
-        ],
-        "states": 934281
-      },
-      "unwinnable": null
-    },
-    "alpha-star": {
-      "winnable": {
-        "seed": 379003,
-        "time": 1854.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/alpha-star/v0.08/alpha-star-smart-v0.08-10M-1hr50M-A.csv.gz",
-        "row": [
-          "379003",
-          " solved",
-          " 1854",
-          " 246836",
-          " 73365",
-          " 173822",
-          " 48",
-          " 0",
-          " 73317",
-          " 98317",
-          " 73014",
-          " 73014",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
+          " 115",
+          " 88",
           " solved\n"
         ],
-        "states": 246836
+        "states": 990267,
+        "oracle": {
+          "time_ms": 1966.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 990267,
+          "unique_states": 313218,
+          "backtracks": 990179,
+          "max_depth": 115,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
-        "seed": 8363153,
-        "time": 78.0,
+        "seed": 326325767,
+        "time": 1896.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/alpha-star/v0.08/alpha-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/british-canister/v0.08/british-canister-none-v0.08-1B-1hr50M-5ALI-solved+hard-B.csv.gz",
         "row": [
-          "8363153",
+          "326325767",
           " unsolvable",
-          " 81",
-          " 16148",
-          " 4267",
-          " 16147",
-          " 1000",
+          " 1896",
+          " 951112",
+          " 273875",
+          " 951111",
+          " 30259",
           " 0",
-          " 3267",
-          " 6151",
-          " 19",
-          " 0",
-          " unsolvable",
-          " 78",
-          " 16148",
-          " 4267",
-          " 16147",
-          " 1000",
-          " 0",
-          " 3267",
-          " 6151",
-          " 19",
+          " 243616",
+          " 393241",
+          " 109",
           " 0",
           " unsolvable\n"
         ],
-        "states": 16148
-      }
-    },
-    "american-canister": {
-      "winnable": {
-        "seed": 3063,
-        "time": 1839.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/american-canister/v0.08/american-canister-none-v0.08-10M-1hr50M-KKWC-A.csv.gz",
-        "row": [
-          "3063",
-          " solved",
-          " 1839",
-          " 190776",
-          " 75090",
-          " 124331",
-          " 86",
-          " 0",
-          " 75004",
-          " 98317",
-          " 66445",
-          " 66445",
-          " solved\n"
-        ],
-        "states": 190776
-      },
-      "unwinnable": {
-        "seed": 3649,
-        "time": 1938.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/american-canister/v0.08/american-canister-none-v0.08-10M-1hr50M-KKWC-A.csv.gz",
-        "row": [
-          "3649",
-          " unsolvable",
-          " 1938",
-          " 404367",
-          " 69883",
-          " 404366",
-          " 65",
-          " 0",
-          " 69818",
-          " 98317",
-          " 2462",
-          " 0",
-          " unsolvable\n"
-        ],
-        "states": 404367
-      }
-    },
-    "bakers-game": {
-      "winnable": {
-        "seed": 35821,
-        "time": 1852.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/bakers-game/v0.08/bakers-game-none-v0.08-10M-1hr50M-A.csv.gz",
-        "row": [
-          "35821",
-          " solved",
-          " 1852",
-          " 329067",
-          " 94258",
-          " 237231",
-          " 167",
-          " 0",
-          " 94091",
-          " 98317",
-          " 91836",
-          " 91836",
-          " solved\n"
-        ],
-        "states": 329067
-      },
-      "unwinnable": {
-        "seed": 418696,
-        "time": 1651.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/bakers-game/v0.08/bakers-game-none-v0.08-10M-1hr50M-A.csv.gz",
-        "row": [
-          "418696",
-          " unsolvable",
-          " 1651",
-          " 352191",
-          " 124711",
-          " 352190",
-          " 3711",
-          " 0",
-          " 121000",
-          " 196613",
-          " 684",
-          " 0",
-          " unsolvable\n"
-        ],
-        "states": 352191
-      }
-    },
-    "beleaguered-castle": {
-      "winnable": {
-        "seed": 183,
-        "time": 1513.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/beleaguered-castle/v0.08/beleaguered-castle-smart-v0.08-1M-4hr100M-A-qaZMfZ.csv.gz",
-        "row": [
-          "183",
-          " unsolvable",
-          " 6",
-          " 4031",
-          " 1108",
-          " 4030",
-          " 133",
-          " 0",
-          " 975",
-          " 1543",
-          " 57",
-          " 0",
-          " solved",
-          " 1513",
-          " 949689",
-          " 312818",
-          " 722987",
-          " 65",
-          " 0",
-          " 312753",
-          " 393241",
-          " 226702",
-          " 226702",
-          " solved",
-          " 1.86",
-          " 1.78",
-          " 0.07",
-          " 149888\n"
-        ],
-        "states": 949689
-      },
-      "unwinnable": {
-        "seed": 292,
-        "time": 1802.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/beleaguered-castle/v0.08/beleaguered-castle-smart-v0.08-1M-4hr100M-A-qaZMfZ.csv.gz",
-        "row": [
-          "292",
-          " unsolvable",
-          " 25",
-          " 18779",
-          " 5983",
-          " 18778",
-          " 2808",
-          " 0",
-          " 3175",
-          " 6151",
-          " 230",
-          " 0",
-          " unsolvable",
-          " 1802",
-          " 1354464",
-          " 348845",
-          " 1354463",
-          " 111448",
-          " 0",
-          " 237397",
-          " 393241",
-          " 7248",
-          " 0",
-          " unsolvable",
-          " 2.01",
-          " 1.96",
-          " 0.05",
-          " 83728\n"
-        ],
-        "states": 1354464
+        "states": 951112,
+        "oracle": {
+          "time_ms": 1896.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 951112,
+          "unique_states": 273875,
+          "backtracks": 951111,
+          "max_depth": 109,
+          "streamliner": "none"
+        }
       }
     },
     "black-hole": {
@@ -303,7 +104,17 @@
           " 0.09",
           " 113068\n"
         ],
-        "states": 538228
+        "states": 538228,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 538228,
+          "unique_states": 347760,
+          "backtracks": 538177,
+          "max_depth": 51,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 6895571,
@@ -340,53 +151,17 @@
           " 0.12",
           " 179124\n"
         ],
-        "states": 614421
-      }
-    },
-    "british-canister": {
-      "winnable": {
-        "seed": 197312577,
-        "time": 1966.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/british-canister/v0.08/british-canister-none-v0.08-1B-1hr50M-5ALI-solved+hard-B.csv.gz",
-        "row": [
-          "197312577",
-          " solved",
-          " 1966",
-          " 990267",
-          " 313218",
-          " 990179",
-          " 70948",
-          " 0",
-          " 242270",
-          " 393241",
-          " 115",
-          " 88",
-          " solved\n"
-        ],
-        "states": 990267
-      },
-      "unwinnable": {
-        "seed": 326325767,
-        "time": 1896.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/british-canister/v0.08/british-canister-none-v0.08-1B-1hr50M-5ALI-solved+hard-B.csv.gz",
-        "row": [
-          "326325767",
-          " unsolvable",
-          " 1896",
-          " 951112",
-          " 273875",
-          " 951111",
-          " 30259",
-          " 0",
-          " 243616",
-          " 393241",
-          " 109",
-          " 0",
-          " unsolvable\n"
-        ],
-        "states": 951112
+        "states": 614421,
+        "oracle": {
+          "time_ms": 2011.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 614421,
+          "unique_states": 389290,
+          "backtracks": 614420,
+          "max_depth": 49,
+          "streamliner": "none"
+        }
       }
     },
     "canfield": {
@@ -425,7 +200,17 @@
           " 0.04",
           " 73024\n"
         ],
-        "states": 721273
+        "states": 721273,
+        "oracle": {
+          "time_ms": 1888.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 721273,
+          "unique_states": 355215,
+          "backtracks": 721190,
+          "max_depth": 83,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 1001111,
@@ -462,7 +247,83 @@
           " 0.05",
           " 58556\n"
         ],
-        "states": 380870
+        "states": 380870,
+        "oracle": {
+          "time_ms": 1877.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 380870,
+          "unique_states": 163254,
+          "backtracks": 380869,
+          "max_depth": 25,
+          "streamliner": "none"
+        }
+      }
+    },
+    "american-canister": {
+      "winnable": {
+        "seed": 3063,
+        "time": 1839.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/american-canister/v0.08/american-canister-none-v0.08-10M-1hr50M-KKWC-A.csv.gz",
+        "row": [
+          "3063",
+          " solved",
+          " 1839",
+          " 190776",
+          " 75090",
+          " 124331",
+          " 86",
+          " 0",
+          " 75004",
+          " 98317",
+          " 66445",
+          " 66445",
+          " solved\n"
+        ],
+        "states": 190776,
+        "oracle": {
+          "time_ms": 1839.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 190776,
+          "unique_states": 75090,
+          "backtracks": 124331,
+          "max_depth": 66445,
+          "streamliner": "none"
+        }
+      },
+      "unwinnable": {
+        "seed": 3649,
+        "time": 1938.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/american-canister/v0.08/american-canister-none-v0.08-10M-1hr50M-KKWC-A.csv.gz",
+        "row": [
+          "3649",
+          " unsolvable",
+          " 1938",
+          " 404367",
+          " 69883",
+          " 404366",
+          " 65",
+          " 0",
+          " 69818",
+          " 98317",
+          " 2462",
+          " 0",
+          " unsolvable\n"
+        ],
+        "states": 404367,
+        "oracle": {
+          "time_ms": 1938.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 404367,
+          "unique_states": 69883,
+          "backtracks": 404366,
+          "max_depth": 2462,
+          "streamliner": "none"
+        }
       }
     },
     "canfield-strict": {
@@ -501,7 +362,17 @@
           " 0.12",
           " 149640\n"
         ],
-        "states": 836758
+        "states": 836758,
+        "oracle": {
+          "time_ms": 1944.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 836758,
+          "unique_states": 385098,
+          "backtracks": 836685,
+          "max_depth": 73,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 4000425,
@@ -538,75 +409,187 @@
           " 0.04",
           " 80392\n"
         ],
-        "states": 690899
+        "states": 690899,
+        "oracle": {
+          "time_ms": 1846.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 690899,
+          "unique_states": 369707,
+          "backtracks": 690898,
+          "max_depth": 36,
+          "streamliner": "none"
+        }
       }
     },
-    "delta-star": {
+    "beleaguered-castle": {
       "winnable": {
-        "seed": 344200,
-        "time": 1841.0,
+        "seed": 183,
+        "time": 1513.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/delta-star/v0.08/delta-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/beleaguered-castle/v0.08/beleaguered-castle-smart-v0.08-1M-4hr100M-A-qaZMfZ.csv.gz",
         "row": [
-          "344200",
-          " solved",
-          " 1841",
-          " 435072",
-          " 128753",
-          " 309256",
-          " 49",
+          "183",
+          " unsolvable",
+          " 6",
+          " 4031",
+          " 1108",
+          " 4030",
+          " 133",
           " 0",
-          " 128704",
-          " 196613",
-          " 125816",
-          " 125816",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " solved\n"
+          " 975",
+          " 1543",
+          " 57",
+          " 0",
+          " solved",
+          " 1513",
+          " 949689",
+          " 312818",
+          " 722987",
+          " 65",
+          " 0",
+          " 312753",
+          " 393241",
+          " 226702",
+          " 226702",
+          " solved",
+          " 1.86",
+          " 1.78",
+          " 0.07",
+          " 149888\n"
         ],
-        "states": 435072
+        "states": 949689,
+        "oracle": {
+          "time_ms": 1513.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 949689,
+          "unique_states": 312818,
+          "backtracks": 722987,
+          "max_depth": 226702,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
-        "seed": 3605081,
-        "time": 182.0,
+        "seed": 292,
+        "time": 1802.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/delta-star/v0.08/delta-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/beleaguered-castle/v0.08/beleaguered-castle-smart-v0.08-1M-4hr100M-A-qaZMfZ.csv.gz",
         "row": [
-          "3605081",
+          "292",
           " unsolvable",
-          " 185",
-          " 45414",
-          " 21120",
-          " 45413",
-          " 6056",
+          " 25",
+          " 18779",
+          " 5983",
+          " 18778",
+          " 2808",
           " 0",
-          " 15064",
-          " 24593",
-          " 54",
+          " 3175",
+          " 6151",
+          " 230",
           " 0",
           " unsolvable",
-          " 182",
-          " 45414",
-          " 21120",
-          " 45413",
-          " 6056",
+          " 1802",
+          " 1354464",
+          " 348845",
+          " 1354463",
+          " 111448",
           " 0",
-          " 15064",
-          " 24593",
-          " 54",
+          " 237397",
+          " 393241",
+          " 7248",
           " 0",
-          " unsolvable\n"
+          " unsolvable",
+          " 2.01",
+          " 1.96",
+          " 0.05",
+          " 83728\n"
         ],
-        "states": 45414
+        "states": 1354464,
+        "oracle": {
+          "time_ms": 1802.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1354464,
+          "unique_states": 348845,
+          "backtracks": 1354463,
+          "max_depth": 7248,
+          "streamliner": "none"
+        }
+      }
+    },
+    "fan": {
+      "winnable": {
+        "seed": 186,
+        "time": 1917.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fan/v0.08/fan-none-v0.08-1M-4hr100M-A-7ArqIZ.csv.gz",
+        "row": [
+          "186",
+          " solved",
+          " 1917",
+          " 996049",
+          " 522448",
+          " 995971",
+          " 359455",
+          " 0",
+          " 162993",
+          " 196613",
+          " 78",
+          " 78",
+          " solved",
+          " 2.03",
+          " 2.00",
+          " 0.03",
+          " 58700\n"
+        ],
+        "states": 996049,
+        "oracle": {
+          "time_ms": 1917.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 996049,
+          "unique_states": 522448,
+          "backtracks": 995971,
+          "max_depth": 78,
+          "streamliner": "none"
+        }
+      },
+      "unwinnable": {
+        "seed": 193,
+        "time": 1841.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fan/v0.08/fan-none-v0.08-1M-4hr100M-A-7ArqIZ.csv.gz",
+        "row": [
+          "193",
+          " unsolvable",
+          " 1841",
+          " 810718",
+          " 347735",
+          " 810717",
+          " 190923",
+          " 0",
+          " 156812",
+          " 196613",
+          " 41",
+          " 0",
+          " unsolvable",
+          " 1.95",
+          " 1.92",
+          " 0.03",
+          " 56580\n"
+        ],
+        "states": 810718,
+        "oracle": {
+          "time_ms": 1841.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 810718,
+          "unique_states": 347735,
+          "backtracks": 810717,
+          "max_depth": 41,
+          "streamliner": "none"
+        }
       }
     },
     "east-haven": {
@@ -645,7 +628,17 @@
           " 0.03",
           " 62420\n"
         ],
-        "states": 1021778
+        "states": 1021778,
+        "oracle": {
+          "time_ms": 1793.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1021778,
+          "unique_states": 273783,
+          "backtracks": 1021355,
+          "max_depth": 653,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 374,
@@ -682,129 +675,17 @@
           " 0.04",
           " 80156\n"
         ],
-        "states": 724501
-      }
-    },
-    "eight-off": {
-      "winnable": {
-        "seed": 193680,
-        "time": 1852.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/eight-off/v0.08/eight-off-smart-v0.08-10M-1hr50M-A.csv.gz",
-        "row": [
-          "193680",
-          " solved",
-          " 1852",
-          " 505264",
-          " 105179",
-          " 505124",
-          " 10956",
-          " 0",
-          " 94223",
-          " 98317",
-          " 1742",
-          " 140",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " solved\n"
-        ],
-        "states": 505264
-      },
-      "unwinnable": {
-        "seed": 299870,
-        "time": 2158.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/eight-off/v0.08/eight-off-smart-v0.08-10M-1hr50M-A.csv.gz",
-        "row": [
-          "299870",
-          " unsolvable",
-          " 2123",
-          " 728302",
-          " 285578",
-          " 728301",
-          " 176613",
-          " 0",
-          " 108965",
-          " 196613",
-          " 650",
-          " 0",
-          " unsolvable",
-          " 2158",
-          " 728302",
-          " 285578",
-          " 728301",
-          " 176613",
-          " 0",
-          " 108965",
-          " 196613",
-          " 650",
-          " 0",
-          " unsolvable\n"
-        ],
-        "states": 728302
-      }
-    },
-    "fan": {
-      "winnable": {
-        "seed": 186,
-        "time": 1917.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fan/v0.08/fan-none-v0.08-1M-4hr100M-A-7ArqIZ.csv.gz",
-        "row": [
-          "186",
-          " solved",
-          " 1917",
-          " 996049",
-          " 522448",
-          " 995971",
-          " 359455",
-          " 0",
-          " 162993",
-          " 196613",
-          " 78",
-          " 78",
-          " solved",
-          " 2.03",
-          " 2.00",
-          " 0.03",
-          " 58700\n"
-        ],
-        "states": 996049
-      },
-      "unwinnable": {
-        "seed": 193,
-        "time": 1841.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fan/v0.08/fan-none-v0.08-1M-4hr100M-A-7ArqIZ.csv.gz",
-        "row": [
-          "193",
-          " unsolvable",
-          " 1841",
-          " 810718",
-          " 347735",
-          " 810717",
-          " 190923",
-          " 0",
-          " 156812",
-          " 196613",
-          " 41",
-          " 0",
-          " unsolvable",
-          " 1.95",
-          " 1.92",
-          " 0.03",
-          " 56580\n"
-        ],
-        "states": 810718
+        "states": 724501,
+        "oracle": {
+          "time_ms": 1586.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 724501,
+          "unique_states": 223091,
+          "backtracks": 724500,
+          "max_depth": 1565,
+          "streamliner": "none"
+        }
       }
     },
     "fore-cell": {
@@ -843,7 +724,17 @@
           " 0.06",
           " 95948\n"
         ],
-        "states": 866371
+        "states": 866371,
+        "oracle": {
+          "time_ms": 1841.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 866371,
+          "unique_states": 271817,
+          "backtracks": 865566,
+          "max_depth": 2216,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 1005728,
@@ -880,7 +771,17 @@
           " 0.06",
           " 108208\n"
         ],
-        "states": 1016251
+        "states": 1016251,
+        "oracle": {
+          "time_ms": 2088.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1016251,
+          "unique_states": 335225,
+          "backtracks": 1016250,
+          "max_depth": 1509,
+          "streamliner": "none"
+        }
       }
     },
     "fore-cell-same-suit": {
@@ -915,7 +816,17 @@
           " ",
           " solved\n"
         ],
-        "states": 526770
+        "states": 526770,
+        "oracle": {
+          "time_ms": 1815.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 526770,
+          "unique_states": 139816,
+          "backtracks": 526636,
+          "max_depth": 505,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 7986,
@@ -948,132 +859,17 @@
           " 0",
           " unsolvable\n"
         ],
-        "states": 636199
-      }
-    },
-    "fortunes-favor": {
-      "winnable": {
-        "seed": 6974509,
-        "time": 1852.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fortunes-favor/v0.08/fortunes-favor-smart-v0.08-10M-1hr50M-A.csv.gz",
-        "row": [
-          "6974509",
-          " solved",
-          " 1852",
-          " 450906",
-          " 295609",
-          " 450810",
-          " 159513",
-          " 0",
-          " 136096",
-          " 196613",
-          " 96",
-          " 96",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " solved\n"
-        ],
-        "states": 450906
-      },
-      "unwinnable": {
-        "seed": 79310374,
-        "time": 1590.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fortunes-favor/v0.08/fortunes-favor-none-v0.08-1B-1hr50M-JYUy-unsolvable+hard-B.csv.gz",
-        "row": [
-          "79310374",
-          " unsolvable",
-          " 1590",
-          " 454764",
-          " 316688",
-          " 454763",
-          " 213008",
-          " 0",
-          " 103680",
-          " 196613",
-          " 33",
-          " 0",
-          " unsolvable\n"
-        ],
-        "states": 454764
-      }
-    },
-    "free-cell": {
-      "winnable": {
-        "seed": 30586,
-        "time": 1852.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell/v0.08.1/free-cell-smart-v0.08.1-10M-30m25M-A.csv.gz",
-        "row": [
-          "30586",
-          " solved",
-          " 1852",
-          " 443992",
-          " 167654",
-          " 442046",
-          " 64785",
-          " 0",
-          " 102869",
-          " 196613",
-          " 15829",
-          " 1946",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " solved\n"
-        ],
-        "states": 443992
-      },
-      "unwinnable": {
-        "seed": 1767954,
-        "time": 1773.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell/v0.08.1/free-cell-smart-v0.08.1-10M-30m25M-A.csv.gz",
-        "row": [
-          "1767954",
-          " unsolvable",
-          " 530",
-          " 106071",
-          " 43350",
-          " 106070",
-          " 7583",
-          " 0",
-          " 35767",
-          " 49157",
-          " 132",
-          " 0",
-          " unsolvable",
-          " 1773",
-          " 324931",
-          " 132397",
-          " 324930",
-          " 1390",
-          " 0",
-          " 131007",
-          " 196613",
-          " 456",
-          " 0",
-          " unsolvable\n"
-        ],
-        "states": 324931
+        "states": 636199,
+        "oracle": {
+          "time_ms": 1580.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 636199,
+          "unique_states": 279550,
+          "backtracks": 636198,
+          "max_depth": 510,
+          "streamliner": "none"
+        }
       }
     },
     "free-cell-0-cell": {
@@ -1108,7 +904,17 @@
           " 2883",
           " solved\n"
         ],
-        "states": 547474
+        "states": 547474,
+        "oracle": {
+          "time_ms": 1471.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 547474,
+          "unique_states": 198653,
+          "backtracks": 544591,
+          "max_depth": 6008,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 1258,
@@ -1141,7 +947,17 @@
           " 0",
           " unsolvable\n"
         ],
-        "states": 603345
+        "states": 603345,
+        "oracle": {
+          "time_ms": 1433.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 603345,
+          "unique_states": 234992,
+          "backtracks": 603344,
+          "max_depth": 2364,
+          "streamliner": "none"
+        }
       }
     },
     "free-cell-1-cell": {
@@ -1176,7 +992,17 @@
           " 8863",
           " solved\n"
         ],
-        "states": 774886
+        "states": 774886,
+        "oracle": {
+          "time_ms": 1796.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 774886,
+          "unique_states": 241835,
+          "backtracks": 766023,
+          "max_depth": 19615,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 1482,
@@ -1209,7 +1035,17 @@
           " 0",
           " unsolvable\n"
         ],
-        "states": 857229
+        "states": 857229,
+        "oracle": {
+          "time_ms": 1973.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 857229,
+          "unique_states": 277095,
+          "backtracks": 857228,
+          "max_depth": 2215,
+          "streamliner": "none"
+        }
       }
     },
     "free-cell-2-cell": {
@@ -1248,7 +1084,17 @@
           " 0.05",
           " 97492\n"
         ],
-        "states": 856052
+        "states": 856052,
+        "oracle": {
+          "time_ms": 1822.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 856052,
+          "unique_states": 273670,
+          "backtracks": 852322,
+          "max_depth": 4077,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 1838,
@@ -1285,7 +1131,17 @@
           " 0.05",
           " 84852\n"
         ],
-        "states": 861043
+        "states": 861043,
+        "oracle": {
+          "time_ms": 1695.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 861043,
+          "unique_states": 226919,
+          "backtracks": 861042,
+          "max_depth": 9151,
+          "streamliner": "none"
+        }
       }
     },
     "free-cell-3-cell": {
@@ -1324,7 +1180,17 @@
           " 0.10",
           " 80064\n"
         ],
-        "states": 788780
+        "states": 788780,
+        "oracle": {
+          "time_ms": 1845.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 788780,
+          "unique_states": 289316,
+          "backtracks": 783244,
+          "max_depth": 6659,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 6836,
@@ -1361,75 +1227,105 @@
           " 0.07",
           " 131400\n"
         ],
-        "states": 820437
+        "states": 820437,
+        "oracle": {
+          "time_ms": 1935.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 820437,
+          "unique_states": 371873,
+          "backtracks": 820436,
+          "max_depth": 753,
+          "streamliner": "none"
+        }
       }
     },
-    "free-cell-4-pile": {
+    "eight-off": {
       "winnable": {
-        "seed": 860950,
-        "time": 1244.0,
+        "seed": 193680,
+        "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-4-pile/v0.08.1/free-cell-4-pile-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/eight-off/v0.08/eight-off-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
-          "860950",
-          " unsolvable",
-          " 1",
-          " 795",
-          " 473",
-          " 794",
-          " 89",
-          " 0",
-          " 384",
-          " 389",
-          " 43",
-          " 0",
+          "193680",
           " solved",
-          " 1244",
-          " 784732",
-          " 274276",
-          " 784362",
-          " 49093",
+          " 1852",
+          " 505264",
+          " 105179",
+          " 505124",
+          " 10956",
           " 0",
-          " 225183",
-          " 393241",
-          " 2970",
-          " 370",
+          " 94223",
+          " 98317",
+          " 1742",
+          " 140",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
           " solved\n"
         ],
-        "states": 784732
+        "states": 505264,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 505264,
+          "unique_states": 105179,
+          "backtracks": 505124,
+          "max_depth": 1742,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
-        "seed": 651423,
-        "time": 1898.0,
+        "seed": 299870,
+        "time": 2158.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-4-pile/v0.08.1/free-cell-4-pile-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/eight-off/v0.08/eight-off-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
-          "651423",
+          "299870",
           " unsolvable",
-          " 62",
-          " 34050",
-          " 12541",
-          " 34049",
-          " 1593",
+          " 2123",
+          " 728302",
+          " 285578",
+          " 728301",
+          " 176613",
           " 0",
-          " 10948",
-          " 12289",
-          " 330",
+          " 108965",
+          " 196613",
+          " 650",
           " 0",
           " unsolvable",
-          " 1898",
-          " 1128577",
-          " 332214",
-          " 1128576",
-          " 2120",
+          " 2158",
+          " 728302",
+          " 285578",
+          " 728301",
+          " 176613",
           " 0",
-          " 330094",
-          " 393241",
-          " 3919",
+          " 108965",
+          " 196613",
+          " 650",
           " 0",
           " unsolvable\n"
         ],
-        "states": 1128577
+        "states": 728302,
+        "oracle": {
+          "time_ms": 2158.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 728302,
+          "unique_states": 285578,
+          "backtracks": 728301,
+          "max_depth": 650,
+          "streamliner": "none"
+        }
       }
     },
     "free-cell-5-pile": {
@@ -1468,7 +1364,17 @@
           " 0.06",
           " 112668\n"
         ],
-        "states": 1280398
+        "states": 1280398,
+        "oracle": {
+          "time_ms": 1986.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1280398,
+          "unique_states": 375446,
+          "backtracks": 1279996,
+          "max_depth": 7551,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 2014,
@@ -1505,7 +1411,17 @@
           " 0.06",
           " 123460\n"
         ],
-        "states": 1121345
+        "states": 1121345,
+        "oracle": {
+          "time_ms": 1885.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1121345,
+          "unique_states": 399713,
+          "backtracks": 1121344,
+          "max_depth": 12015,
+          "streamliner": "none"
+        }
       }
     },
     "free-cell-6-pile": {
@@ -1544,7 +1460,17 @@
           " 0.06",
           " 137804\n"
         ],
-        "states": 1014669
+        "states": 1014669,
+        "oracle": {
+          "time_ms": 1977.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1014669,
+          "unique_states": 392083,
+          "backtracks": 944718,
+          "max_depth": 69951,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 54,
@@ -1581,7 +1507,17 @@
           " 0.06",
           " 113676\n"
         ],
-        "states": 792669
+        "states": 792669,
+        "oracle": {
+          "time_ms": 1755.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 792669,
+          "unique_states": 349815,
+          "backtracks": 792668,
+          "max_depth": 463,
+          "streamliner": "none"
+        }
       }
     },
     "free-cell-7-pile": {
@@ -1620,7 +1556,17 @@
           " 0.07",
           " 127268\n"
         ],
-        "states": 722144
+        "states": 722144,
+        "oracle": {
+          "time_ms": 1821.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 722144,
+          "unique_states": 258136,
+          "backtracks": 544340,
+          "max_depth": 177804,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 5849,
@@ -1657,7 +1603,17 @@
           " 0.05",
           " 97236\n"
         ],
-        "states": 784920
+        "states": 784920,
+        "oracle": {
+          "time_ms": 1627.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 784920,
+          "unique_states": 293298,
+          "backtracks": 784919,
+          "max_depth": 1695,
+          "streamliner": "none"
+        }
       }
     },
     "gaps-basic-variant": {
@@ -1685,7 +1641,17 @@
           " 0.03",
           " 53648\n"
         ],
-        "states": 435223
+        "states": 435223,
+        "oracle": {
+          "time_ms": 1766.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 435223,
+          "unique_states": 156454,
+          "backtracks": 435103,
+          "max_depth": 120,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 4079651,
@@ -1711,7 +1677,17 @@
           " 0.03",
           " 50500\n"
         ],
-        "states": 419243
+        "states": 419243,
+        "oracle": {
+          "time_ms": 1789.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 419243,
+          "unique_states": 146990,
+          "backtracks": 419242,
+          "max_depth": 90,
+          "streamliner": "none"
+        }
       }
     },
     "gaps-one-deal": {
@@ -1739,7 +1715,17 @@
           " 0.05",
           " 85916\n"
         ],
-        "states": 523024
+        "states": 523024,
+        "oracle": {
+          "time_ms": 1862.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 523024,
+          "unique_states": 248646,
+          "backtracks": 522912,
+          "max_depth": 514,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 709,
@@ -1765,7 +1751,17 @@
           " 0.05",
           " 99924\n"
         ],
-        "states": 560558
+        "states": 560558,
+        "oracle": {
+          "time_ms": 2032.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 560558,
+          "unique_states": 293262,
+          "backtracks": 560557,
+          "max_depth": 572,
+          "streamliner": "none"
+        }
       }
     },
     "golf": {
@@ -1793,7 +1789,17 @@
           " 0.10",
           " 158540\n"
         ],
-        "states": 852346
+        "states": 852346,
+        "oracle": {
+          "time_ms": 1817.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 852346,
+          "unique_states": 498175,
+          "backtracks": 852295,
+          "max_depth": 51,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 33,
@@ -1819,7 +1825,17 @@
           " 0.15",
           " 244776\n"
         ],
-        "states": 1326556
+        "states": 1326556,
+        "oracle": {
+          "time_ms": 1870.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1326556,
+          "unique_states": 783306,
+          "backtracks": 1326555,
+          "max_depth": 48,
+          "streamliner": "none"
+        }
       }
     },
     "king-albert": {
@@ -1854,7 +1870,17 @@
           " ",
           " solved\n"
         ],
-        "states": 172321
+        "states": 172321,
+        "oracle": {
+          "time_ms": 1862.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 172321,
+          "unique_states": 70975,
+          "backtracks": 172076,
+          "max_depth": 874,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 1001246,
@@ -1887,7 +1913,17 @@
           " 0",
           " unsolvable\n"
         ],
-        "states": 257335
+        "states": 257335,
+        "oracle": {
+          "time_ms": 1865.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 257335,
+          "unique_states": 61110,
+          "backtracks": 257334,
+          "max_depth": 305,
+          "streamliner": "none"
+        }
       }
     },
     "klondike": {
@@ -1926,7 +1962,17 @@
           " 0.02",
           " 52624\n"
         ],
-        "states": 690226
+        "states": 690226,
+        "oracle": {
+          "time_ms": 1837.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 690226,
+          "unique_states": 308739,
+          "backtracks": 690135,
+          "max_depth": 91,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 896246,
@@ -1963,7 +2009,17 @@
           " 0.03",
           " 73012\n"
         ],
-        "states": 546072
+        "states": 546072,
+        "oracle": {
+          "time_ms": 1708.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 546072,
+          "unique_states": 175448,
+          "backtracks": 546071,
+          "max_depth": 43,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-1": {
@@ -2002,7 +2058,17 @@
           " 0.03",
           " 60596\n"
         ],
-        "states": 525668
+        "states": 525668,
+        "oracle": {
+          "time_ms": 1969.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 525668,
+          "unique_states": 157152,
+          "backtracks": 525577,
+          "max_depth": 91,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 647312,
@@ -2039,7 +2105,17 @@
           " 0.03",
           " 45600\n"
         ],
-        "states": 437697
+        "states": 437697,
+        "oracle": {
+          "time_ms": 1856.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 437697,
+          "unique_states": 106727,
+          "backtracks": 437696,
+          "max_depth": 26,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-1-noworryback": {
@@ -2078,7 +2154,17 @@
           " 0.02",
           " 24776\n"
         ],
-        "states": 386515
+        "states": 386515,
+        "oracle": {
+          "time_ms": 1850.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 386515,
+          "unique_states": 102491,
+          "backtracks": 386433,
+          "max_depth": 82,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 321126,
@@ -2115,7 +2201,17 @@
           " 0.02",
           " 33700\n"
         ],
-        "states": 568764
+        "states": 568764,
+        "oracle": {
+          "time_ms": 2088.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 568764,
+          "unique_states": 184609,
+          "backtracks": 568763,
+          "max_depth": 61,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-2": {
@@ -2154,7 +2250,17 @@
           " 0.01",
           " 26812\n"
         ],
-        "states": 305011
+        "states": 305011,
+        "oracle": {
+          "time_ms": 1827.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 305011,
+          "unique_states": 83931,
+          "backtracks": 304914,
+          "max_depth": 97,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 150593,
@@ -2191,7 +2297,17 @@
           " 0.03",
           " 44368\n"
         ],
-        "states": 330162
+        "states": 330162,
+        "oracle": {
+          "time_ms": 1888.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 330162,
+          "unique_states": 108871,
+          "backtracks": 330161,
+          "max_depth": 28,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-2-noworryback": {
@@ -2230,7 +2346,17 @@
           " 0.03",
           " 46148\n"
         ],
-        "states": 577404
+        "states": 577404,
+        "oracle": {
+          "time_ms": 1853.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 577404,
+          "unique_states": 153559,
+          "backtracks": 577316,
+          "max_depth": 88,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 691069,
@@ -2267,7 +2393,17 @@
           " 0.04",
           " 71908\n"
         ],
-        "states": 713054
+        "states": 713054,
+        "oracle": {
+          "time_ms": 1961.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 713054,
+          "unique_states": 234551,
+          "backtracks": 713053,
+          "max_depth": 47,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-3-anyspace": {
@@ -2306,7 +2442,17 @@
           " 0.03",
           " 61400\n"
         ],
-        "states": 691562
+        "states": 691562,
+        "oracle": {
+          "time_ms": 2059.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 691562,
+          "unique_states": 260146,
+          "backtracks": 691078,
+          "max_depth": 484,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 25069,
@@ -2343,7 +2489,17 @@
           " 0.04",
           " 93856\n"
         ],
-        "states": 881448
+        "states": 881448,
+        "oracle": {
+          "time_ms": 2172.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 881448,
+          "unique_states": 362907,
+          "backtracks": 881447,
+          "max_depth": 27,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-3-anysuit": {
@@ -2382,7 +2538,17 @@
           " 0.02",
           " 30648\n"
         ],
-        "states": 1212092
+        "states": 1212092,
+        "oracle": {
+          "time_ms": 1850.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1212092,
+          "unique_states": 277805,
+          "backtracks": 1211986,
+          "max_depth": 191,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 362420,
@@ -2419,7 +2585,17 @@
           " 0.05",
           " 67632\n"
         ],
-        "states": 1044382
+        "states": 1044382,
+        "oracle": {
+          "time_ms": 2030.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1044382,
+          "unique_states": 307190,
+          "backtracks": 1044381,
+          "max_depth": 75,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-3-anysuitanyspace": {
@@ -2447,7 +2623,17 @@
           " 0.07",
           " 133504\n"
         ],
-        "states": 908600
+        "states": 908600,
+        "oracle": {
+          "time_ms": 1857.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 908600,
+          "unique_states": 190899,
+          "backtracks": 745457,
+          "max_depth": 163143,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 183494,
@@ -2473,7 +2659,17 @@
           " 0.03",
           " 83100\n"
         ],
-        "states": 477298
+        "states": 477298,
+        "oracle": {
+          "time_ms": 1747.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 477298,
+          "unique_states": 297363,
+          "backtracks": 477297,
+          "max_depth": 17,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-3-anysuitnospace": {
@@ -2512,7 +2708,17 @@
           " 0.04",
           " 47196\n"
         ],
-        "states": 469643
+        "states": 469643,
+        "oracle": {
+          "time_ms": 1856.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 469643,
+          "unique_states": 208480,
+          "backtracks": 469551,
+          "max_depth": 92,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 4641,
@@ -2549,7 +2755,17 @@
           " 0.03",
           " 50636\n"
         ],
-        "states": 426297
+        "states": 426297,
+        "oracle": {
+          "time_ms": 1894.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 426297,
+          "unique_states": 190222,
+          "backtracks": 426296,
+          "max_depth": 18,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-3-nospace": {
@@ -2588,7 +2804,17 @@
           " 0.04",
           " 63560\n"
         ],
-        "states": 713011
+        "states": 713011,
+        "oracle": {
+          "time_ms": 2068.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 713011,
+          "unique_states": 348966,
+          "backtracks": 712936,
+          "max_depth": 75,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 757232,
@@ -2625,7 +2851,17 @@
           " 0.07",
           " 68564\n"
         ],
-        "states": 717504
+        "states": 717504,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 717504,
+          "unique_states": 266827,
+          "backtracks": 717503,
+          "max_depth": 29,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-3-noworryback": {
@@ -2664,7 +2900,17 @@
           " 3.05",
           " 4918532\n"
         ],
-        "states": 16366
+        "states": 16366,
+        "oracle": {
+          "time_ms": 1842.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 16366,
+          "unique_states": 1775,
+          "backtracks": 16278,
+          "max_depth": 88,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 263181,
@@ -2701,7 +2947,157 @@
           " 0.03",
           " 51780\n"
         ],
-        "states": 432107
+        "states": 432107,
+        "oracle": {
+          "time_ms": 2082.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 432107,
+          "unique_states": 173013,
+          "backtracks": 432106,
+          "max_depth": 41,
+          "streamliner": "none"
+        }
+      }
+    },
+    "bakers-game": {
+      "winnable": {
+        "seed": 35821,
+        "time": 1852.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/bakers-game/v0.08/bakers-game-none-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "35821",
+          " solved",
+          " 1852",
+          " 329067",
+          " 94258",
+          " 237231",
+          " 167",
+          " 0",
+          " 94091",
+          " 98317",
+          " 91836",
+          " 91836",
+          " solved\n"
+        ],
+        "states": 329067,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 329067,
+          "unique_states": 94258,
+          "backtracks": 237231,
+          "max_depth": 91836,
+          "streamliner": "none"
+        }
+      },
+      "unwinnable": {
+        "seed": 418696,
+        "time": 1651.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/bakers-game/v0.08/bakers-game-none-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "418696",
+          " unsolvable",
+          " 1651",
+          " 352191",
+          " 124711",
+          " 352190",
+          " 3711",
+          " 0",
+          " 121000",
+          " 196613",
+          " 684",
+          " 0",
+          " unsolvable\n"
+        ],
+        "states": 352191,
+        "oracle": {
+          "time_ms": 1651.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 352191,
+          "unique_states": 124711,
+          "backtracks": 352190,
+          "max_depth": 684,
+          "streamliner": "none"
+        }
+      }
+    },
+    "klondike-deal-3-samesuitanyspace": {
+      "winnable": {
+        "seed": 539479,
+        "time": 1531.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitanyspace/v0.10.1/klondike-deal-3-samesuitanyspace-smart-v0.10.1-1M-4hr100M-A-ZcwbJZ.csv.gz",
+        "row": [
+          "539479",
+          " solved",
+          " 1531",
+          " 607683",
+          " 187324",
+          " 607514",
+          " 14997",
+          " 0",
+          " 172327",
+          " 196613",
+          " 169",
+          " 169",
+          " solved",
+          " 1.66",
+          " 1.62",
+          " 0.03",
+          " 59556\n"
+        ],
+        "states": 607683,
+        "oracle": {
+          "time_ms": 1531.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 607683,
+          "unique_states": 187324,
+          "backtracks": 607514,
+          "max_depth": 169,
+          "streamliner": "none"
+        }
+      },
+      "unwinnable": {
+        "seed": 832359,
+        "time": 1851.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitanyspace/v0.10.1/klondike-deal-3-samesuitanyspace-smart-v0.10.1-1M-4hr100M-A-ZcwbJZ.csv.gz",
+        "row": [
+          "832359",
+          " unsolvable",
+          " 1851",
+          " 891511",
+          " 385065",
+          " 891510",
+          " 185386",
+          " 0",
+          " 199679",
+          " 393241",
+          " 50",
+          " 0",
+          " unsolvable",
+          " 2.02",
+          " 1.97",
+          " 0.04",
+          " 70484\n"
+        ],
+        "states": 891511,
+        "oracle": {
+          "time_ms": 1851.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 891511,
+          "unique_states": 385065,
+          "backtracks": 891510,
+          "max_depth": 50,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-3-samesuit": {
@@ -2740,7 +3136,17 @@
           " 0.07",
           " 40920\n"
         ],
-        "states": 1505735
+        "states": 1505735,
+        "oracle": {
+          "time_ms": 1500.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1505735,
+          "unique_states": 1041030,
+          "backtracks": 1505670,
+          "max_depth": 65,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 648,
@@ -2777,115 +3183,17 @@
           " 0.03",
           " 79132\n"
         ],
-        "states": 1368302
-      }
-    },
-    "klondike-deal-3-samesuitanyspace": {
-      "winnable": {
-        "seed": 539479,
-        "time": 1531.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitanyspace/v0.10.1/klondike-deal-3-samesuitanyspace-smart-v0.10.1-1M-4hr100M-A-ZcwbJZ.csv.gz",
-        "row": [
-          "539479",
-          " solved",
-          " 1531",
-          " 607683",
-          " 187324",
-          " 607514",
-          " 14997",
-          " 0",
-          " 172327",
-          " 196613",
-          " 169",
-          " 169",
-          " solved",
-          " 1.66",
-          " 1.62",
-          " 0.03",
-          " 59556\n"
-        ],
-        "states": 607683
-      },
-      "unwinnable": {
-        "seed": 832359,
-        "time": 1851.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitanyspace/v0.10.1/klondike-deal-3-samesuitanyspace-smart-v0.10.1-1M-4hr100M-A-ZcwbJZ.csv.gz",
-        "row": [
-          "832359",
-          " unsolvable",
-          " 1851",
-          " 891511",
-          " 385065",
-          " 891510",
-          " 185386",
-          " 0",
-          " 199679",
-          " 393241",
-          " 50",
-          " 0",
-          " unsolvable",
-          " 2.02",
-          " 1.97",
-          " 0.04",
-          " 70484\n"
-        ],
-        "states": 891511
-      }
-    },
-    "klondike-deal-3-samesuitnospace": {
-      "winnable": {
-        "seed": 23331,
-        "time": 617.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitnospace/v0.10.1/klondike-deal-3-samesuitnospace-smart-v0.10.1-1M-4hr100M-A-EbFVKZ.csv.gz",
-        "row": [
-          "23331",
-          " solved",
-          " 617",
-          " 676892",
-          " 486174",
-          " 676827",
-          " 433437",
-          " 0",
-          " 52737",
-          " 98317",
-          " 65",
-          " 65",
-          " solved",
-          " 0.65",
-          " 0.64",
-          " 0.00",
-          " 19788\n"
-        ],
-        "states": 676892
-      },
-      "unwinnable": {
-        "seed": 129698,
-        "time": 1866.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitnospace/v0.10.1/klondike-deal-3-samesuitnospace-smart-v0.10.1-1M-4hr100M-A-EbFVKZ.csv.gz",
-        "row": [
-          "129698",
-          " unsolvable",
-          " 1866",
-          " 2008193",
-          " 1412988",
-          " 2008192",
-          " 1255662",
-          " 0",
-          " 157326",
-          " 196613",
-          " 50",
-          " 0",
-          " unsolvable",
-          " 1.98",
-          " 1.96",
-          " 0.02",
-          " 54012\n"
-        ],
-        "states": 2008193
+        "states": 1368302,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1368302,
+          "unique_states": 805949,
+          "backtracks": 1368301,
+          "max_depth": 48,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-4": {
@@ -2924,7 +3232,17 @@
           " 0.02",
           " 36984\n"
         ],
-        "states": 742994
+        "states": 742994,
+        "oracle": {
+          "time_ms": 1823.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 742994,
+          "unique_states": 249785,
+          "backtracks": 742901,
+          "max_depth": 93,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 191962,
@@ -2961,7 +3279,17 @@
           " 0.04",
           " 75352\n"
         ],
-        "states": 676312
+        "states": 676312,
+        "oracle": {
+          "time_ms": 1864.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 676312,
+          "unique_states": 208792,
+          "backtracks": 676311,
+          "max_depth": 36,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-4-noworryback": {
@@ -3000,7 +3328,17 @@
           " 0.02",
           " 50312\n"
         ],
-        "states": 609863
+        "states": 609863,
+        "oracle": {
+          "time_ms": 1854.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 609863,
+          "unique_states": 251231,
+          "backtracks": 609767,
+          "max_depth": 96,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 841236,
@@ -3037,7 +3375,17 @@
           " 0.02",
           " 54528\n"
         ],
-        "states": 571455
+        "states": 571455,
+        "oracle": {
+          "time_ms": 1394.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 571455,
+          "unique_states": 196374,
+          "backtracks": 571454,
+          "max_depth": 54,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-5": {
@@ -3076,7 +3424,17 @@
           " 0.03",
           " 44624\n"
         ],
-        "states": 763434
+        "states": 763434,
+        "oracle": {
+          "time_ms": 1804.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 763434,
+          "unique_states": 314287,
+          "backtracks": 763349,
+          "max_depth": 85,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 913809,
@@ -3113,7 +3471,17 @@
           " 0.03",
           " 39112\n"
         ],
-        "states": 303652
+        "states": 303652,
+        "oracle": {
+          "time_ms": 1791.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 303652,
+          "unique_states": 110750,
+          "backtracks": 303651,
+          "max_depth": 46,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-5-noworryback": {
@@ -3152,7 +3520,17 @@
           " 0.03",
           " 49516\n"
         ],
-        "states": 603544
+        "states": 603544,
+        "oracle": {
+          "time_ms": 1855.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 603544,
+          "unique_states": 210925,
+          "backtracks": 603452,
+          "max_depth": 92,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 169276,
@@ -3189,7 +3567,17 @@
           " 0.04",
           " 72656\n"
         ],
-        "states": 823630
+        "states": 823630,
+        "oracle": {
+          "time_ms": 2192.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 823630,
+          "unique_states": 238251,
+          "backtracks": 823629,
+          "max_depth": 48,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-6": {
@@ -3228,7 +3616,17 @@
           " 0.02",
           " 50156\n"
         ],
-        "states": 568561
+        "states": 568561,
+        "oracle": {
+          "time_ms": 1816.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 568561,
+          "unique_states": 174854,
+          "backtracks": 568475,
+          "max_depth": 86,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 672409,
@@ -3265,7 +3663,17 @@
           " 0.03",
           " 63508\n"
         ],
-        "states": 537509
+        "states": 537509,
+        "oracle": {
+          "time_ms": 1689.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 537509,
+          "unique_states": 185533,
+          "backtracks": 537508,
+          "max_depth": 50,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-6-noworryback": {
@@ -3304,7 +3712,17 @@
           " 0.02",
           " 47528\n"
         ],
-        "states": 733924
+        "states": 733924,
+        "oracle": {
+          "time_ms": 1853.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 733924,
+          "unique_states": 152217,
+          "backtracks": 733841,
+          "max_depth": 83,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 915040,
@@ -3341,83 +3759,91 @@
           " 0.03",
           " 51760\n"
         ],
-        "states": 531217
+        "states": 531217,
+        "oracle": {
+          "time_ms": 1445.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 531217,
+          "unique_states": 178458,
+          "backtracks": 531216,
+          "max_depth": 48,
+          "streamliner": "none"
+        }
       }
     },
-    "klondike-deal-7": {
+    "klondike-deal-3-samesuitnospace": {
       "winnable": {
-        "seed": 902402,
-        "time": 1689.0,
+        "seed": 23331,
+        "time": 617.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-7/v0.10.1/klondike-deal-7-smart-v0.10.1-1M-4hr100M-A-IsQn6Z.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitnospace/v0.10.1/klondike-deal-3-samesuitnospace-smart-v0.10.1-1M-4hr100M-A-EbFVKZ.csv.gz",
         "row": [
-          "902402",
+          "23331",
           " solved",
-          " 1689",
-          " 598087",
-          " 213223",
-          " 597998",
-          " 84070",
+          " 617",
+          " 676892",
+          " 486174",
+          " 676827",
+          " 433437",
           " 0",
-          " 129153",
-          " 196613",
-          " 89",
-          " 89",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
+          " 52737",
+          " 98317",
+          " 65",
+          " 65",
           " solved",
-          " 1.78",
-          " 1.76",
-          " 0.02",
-          " 46356\n"
+          " 0.65",
+          " 0.64",
+          " 0.00",
+          " 19788\n"
         ],
-        "states": 598087
+        "states": 676892,
+        "oracle": {
+          "time_ms": 617.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 676892,
+          "unique_states": 486174,
+          "backtracks": 676827,
+          "max_depth": 65,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
-        "seed": 457766,
-        "time": 1852.0,
+        "seed": 129698,
+        "time": 1866.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-7/v0.10.1/klondike-deal-7-smart-v0.10.1-1M-4hr100M-A-giSXnZ.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-3-samesuitnospace/v0.10.1/klondike-deal-3-samesuitnospace-smart-v0.10.1-1M-4hr100M-A-EbFVKZ.csv.gz",
         "row": [
-          "457766",
+          "129698",
           " unsolvable",
-          " 494",
-          " 201454",
-          " 94842",
-          " 201453",
-          " 52731",
+          " 1866",
+          " 2008193",
+          " 1412988",
+          " 2008192",
+          " 1255662",
           " 0",
-          " 42111",
-          " 49157",
-          " 46",
-          " 0",
-          " unsolvable",
-          " 1852",
-          " 705247",
-          " 236325",
-          " 705246",
-          " 76568",
-          " 0",
-          " 159757",
+          " 157326",
           " 196613",
-          " 53",
+          " 50",
           " 0",
           " unsolvable",
-          " 2.49",
-          " 2.46",
-          " 0.03",
-          " 61204\n"
+          " 1.98",
+          " 1.96",
+          " 0.02",
+          " 54012\n"
         ],
-        "states": 705247
+        "states": 2008193,
+        "oracle": {
+          "time_ms": 1866.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 2008193,
+          "unique_states": 1412988,
+          "backtracks": 2008192,
+          "max_depth": 50,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-7-noworryback": {
@@ -3456,7 +3882,17 @@
           " 0.02",
           " 53212\n"
         ],
-        "states": 628860
+        "states": 628860,
+        "oracle": {
+          "time_ms": 1839.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 628860,
+          "unique_states": 238558,
+          "backtracks": 628765,
+          "max_depth": 95,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 21864,
@@ -3493,7 +3929,17 @@
           " 0.03",
           " 62916\n"
         ],
-        "states": 779800
+        "states": 779800,
+        "oracle": {
+          "time_ms": 1884.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 779800,
+          "unique_states": 223854,
+          "backtracks": 779799,
+          "max_depth": 54,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-8": {
@@ -3532,7 +3978,17 @@
           " 0.02",
           " 47540\n"
         ],
-        "states": 871637
+        "states": 871637,
+        "oracle": {
+          "time_ms": 2029.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 871637,
+          "unique_states": 346241,
+          "backtracks": 871549,
+          "max_depth": 88,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 648,
@@ -3569,7 +4025,17 @@
           " 0.12",
           " 58024\n"
         ],
-        "states": 669434
+        "states": 669434,
+        "oracle": {
+          "time_ms": 1879.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 669434,
+          "unique_states": 214507,
+          "backtracks": 669433,
+          "max_depth": 70,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-8-noworryback": {
@@ -3608,7 +4074,17 @@
           " 0.11",
           " 60160\n"
         ],
-        "states": 592898
+        "states": 592898,
+        "oracle": {
+          "time_ms": 1882.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 592898,
+          "unique_states": 167330,
+          "backtracks": 592804,
+          "max_depth": 94,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 619868,
@@ -3645,7 +4121,17 @@
           " 0.04",
           " 70504\n"
         ],
-        "states": 740954
+        "states": 740954,
+        "oracle": {
+          "time_ms": 1984.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 740954,
+          "unique_states": 220658,
+          "backtracks": 740953,
+          "max_depth": 48,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-9": {
@@ -3684,7 +4170,17 @@
           " 0.08",
           " 41632\n"
         ],
-        "states": 500692
+        "states": 500692,
+        "oracle": {
+          "time_ms": 1475.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 500692,
+          "unique_states": 109423,
+          "backtracks": 500595,
+          "max_depth": 97,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 166698,
@@ -3721,7 +4217,17 @@
           " 0.03",
           " 55756\n"
         ],
-        "states": 845932
+        "states": 845932,
+        "oracle": {
+          "time_ms": 1855.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 845932,
+          "unique_states": 279170,
+          "backtracks": 845931,
+          "max_depth": 67,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-9-noworryback": {
@@ -3760,7 +4266,17 @@
           " 0.02",
           " 48848\n"
         ],
-        "states": 775560
+        "states": 775560,
+        "oracle": {
+          "time_ms": 1943.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 775560,
+          "unique_states": 303189,
+          "backtracks": 775467,
+          "max_depth": 93,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 745806,
@@ -3797,7 +4313,17 @@
           " 0.05",
           " 67808\n"
         ],
-        "states": 818054
+        "states": 818054,
+        "oracle": {
+          "time_ms": 1836.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 818054,
+          "unique_states": 343448,
+          "backtracks": 818053,
+          "max_depth": 70,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-10": {
@@ -3836,7 +4362,17 @@
           " 0.04",
           " 81236\n"
         ],
-        "states": 663891
+        "states": 663891,
+        "oracle": {
+          "time_ms": 2097.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 663891,
+          "unique_states": 193380,
+          "backtracks": 663785,
+          "max_depth": 106,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 173114,
@@ -3873,7 +4409,17 @@
           " 0.02",
           " 50924\n"
         ],
-        "states": 727554
+        "states": 727554,
+        "oracle": {
+          "time_ms": 1873.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 727554,
+          "unique_states": 147944,
+          "backtracks": 727553,
+          "max_depth": 77,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-10-noworryback": {
@@ -3912,7 +4458,17 @@
           " 0.03",
           " 53584\n"
         ],
-        "states": 665731
+        "states": 665731,
+        "oracle": {
+          "time_ms": 1904.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 665731,
+          "unique_states": 267751,
+          "backtracks": 665628,
+          "max_depth": 103,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 403563,
@@ -3949,7 +4505,17 @@
           " 0.03",
           " 70656\n"
         ],
-        "states": 720850
+        "states": 720850,
+        "oracle": {
+          "time_ms": 1884.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 720850,
+          "unique_states": 240639,
+          "backtracks": 720849,
+          "max_depth": 66,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-11": {
@@ -3988,7 +4554,17 @@
           " 0.09",
           " 36664\n"
         ],
-        "states": 557662
+        "states": 557662,
+        "oracle": {
+          "time_ms": 1587.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 557662,
+          "unique_states": 115952,
+          "backtracks": 557520,
+          "max_depth": 142,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 314468,
@@ -4025,7 +4601,17 @@
           " 0.05",
           " 63652\n"
         ],
-        "states": 658317
+        "states": 658317,
+        "oracle": {
+          "time_ms": 1853.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 658317,
+          "unique_states": 221741,
+          "backtracks": 658316,
+          "max_depth": 72,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-11-noworryback": {
@@ -4064,7 +4650,17 @@
           " 0.03",
           " 48200\n"
         ],
-        "states": 756178
+        "states": 756178,
+        "oracle": {
+          "time_ms": 1941.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 756178,
+          "unique_states": 276072,
+          "backtracks": 756081,
+          "max_depth": 97,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 39353,
@@ -4101,7 +4697,17 @@
           " 0.03",
           " 56644\n"
         ],
-        "states": 714022
+        "states": 714022,
+        "oracle": {
+          "time_ms": 1934.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 714022,
+          "unique_states": 171796,
+          "backtracks": 714021,
+          "max_depth": 48,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-12": {
@@ -4140,7 +4746,17 @@
           " 0.02",
           " 37544\n"
         ],
-        "states": 536648
+        "states": 536648,
+        "oracle": {
+          "time_ms": 1447.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 536648,
+          "unique_states": 105444,
+          "backtracks": 536546,
+          "max_depth": 102,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 863842,
@@ -4177,7 +4793,17 @@
           " 0.11",
           " 57444\n"
         ],
-        "states": 570791
+        "states": 570791,
+        "oracle": {
+          "time_ms": 1622.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 570791,
+          "unique_states": 157776,
+          "backtracks": 570790,
+          "max_depth": 32,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-12-noworryback": {
@@ -4216,7 +4842,17 @@
           " 0.15",
           " 60352\n"
         ],
-        "states": 660977
+        "states": 660977,
+        "oracle": {
+          "time_ms": 1689.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 660977,
+          "unique_states": 161704,
+          "backtracks": 660883,
+          "max_depth": 94,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 503552,
@@ -4253,7 +4889,17 @@
           " 0.03",
           " 59152\n"
         ],
-        "states": 783418
+        "states": 783418,
+        "oracle": {
+          "time_ms": 2015.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 783418,
+          "unique_states": 158240,
+          "backtracks": 783417,
+          "max_depth": 66,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-13": {
@@ -4292,7 +4938,17 @@
           " 0.03",
           " 58044\n"
         ],
-        "states": 645309
+        "states": 645309,
+        "oracle": {
+          "time_ms": 1901.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 645309,
+          "unique_states": 186126,
+          "backtracks": 645216,
+          "max_depth": 93,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 272200,
@@ -4329,7 +4985,17 @@
           " 0.13",
           " 60528\n"
         ],
-        "states": 638172
+        "states": 638172,
+        "oracle": {
+          "time_ms": 1828.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 638172,
+          "unique_states": 208169,
+          "backtracks": 638171,
+          "max_depth": 48,
+          "streamliner": "none"
+        }
       }
     },
     "klondike-deal-13-noworryback": {
@@ -4368,7 +5034,17 @@
           " 0.10",
           " 42324\n"
         ],
-        "states": 539032
+        "states": 539032,
+        "oracle": {
+          "time_ms": 1493.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 539032,
+          "unique_states": 128191,
+          "backtracks": 538947,
+          "max_depth": 85,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 595794,
@@ -4405,61 +5081,113 @@
           " 0.03",
           " 51984\n"
         ],
-        "states": 543363
+        "states": 543363,
+        "oracle": {
+          "time_ms": 1426.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 543363,
+          "unique_states": 141892,
+          "backtracks": 543362,
+          "max_depth": 46,
+          "streamliner": "none"
+        }
       }
     },
-    "late-binding-solitaire": {
+    "klondike-deal-7": {
       "winnable": {
-        "seed": 76397,
-        "time": 1473.0,
+        "seed": 902402,
+        "time": 1689.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/late-binding-solitaire/v0.08/accordion-knuth-none-10M-2hr25M-A-qu62OZ.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-7/v0.10.1/klondike-deal-7-smart-v0.10.1-1M-4hr100M-A-IsQn6Z.csv.gz",
         "row": [
-          "76397",
+          "902402",
           " solved",
-          " 1473",
-          " 1923438",
-          " 414175",
-          " 1923421",
+          " 1689",
+          " 598087",
+          " 213223",
+          " 597998",
+          " 84070",
           " 0",
-          " 0",
-          " 414175",
-          " 786433",
-          " 17",
-          " 17",
+          " 129153",
+          " 196613",
+          " 89",
+          " 89",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
           " solved",
-          " 1.77",
-          " 1.70",
-          " 0.06",
-          " 130796\n"
+          " 1.78",
+          " 1.76",
+          " 0.02",
+          " 46356\n"
         ],
-        "states": 1923438
+        "states": 598087,
+        "oracle": {
+          "time_ms": 1689.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 598087,
+          "unique_states": 213223,
+          "backtracks": 597998,
+          "max_depth": 89,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
-        "seed": 2350,
-        "time": 1905.0,
+        "seed": 457766,
+        "time": 1852.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/late-binding-solitaire/v0.08/accordion-knuth-none-10M-2hr25M-A-qu62OZ.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/klondike-deal-7/v0.10.1/klondike-deal-7-smart-v0.10.1-1M-4hr100M-A-giSXnZ.csv.gz",
         "row": [
-          "2350",
+          "457766",
           " unsolvable",
-          " 1905",
-          " 2410890",
-          " 540684",
-          " 2410889",
+          " 494",
+          " 201454",
+          " 94842",
+          " 201453",
+          " 52731",
           " 0",
-          " 0",
-          " 540684",
-          " 786433",
-          " 16",
+          " 42111",
+          " 49157",
+          " 46",
           " 0",
           " unsolvable",
-          " 2.32",
-          " 2.24",
-          " 0.07",
-          " 166440\n"
+          " 1852",
+          " 705247",
+          " 236325",
+          " 705246",
+          " 76568",
+          " 0",
+          " 159757",
+          " 196613",
+          " 53",
+          " 0",
+          " unsolvable",
+          " 2.49",
+          " 2.46",
+          " 0.03",
+          " 61204\n"
         ],
-        "states": 2410890
+        "states": 705247,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 705247,
+          "unique_states": 236325,
+          "backtracks": 705246,
+          "max_depth": 53,
+          "streamliner": "none"
+        }
       }
     },
     "mrs-mop": {
@@ -4498,7 +5226,17 @@
           " 0.03",
           " 81092\n"
         ],
-        "states": 620880
+        "states": 620880,
+        "oracle": {
+          "time_ms": 1585.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 620880,
+          "unique_states": 111273,
+          "backtracks": 533749,
+          "max_depth": 87131,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 1928386,
@@ -4524,7 +5262,17 @@
           " 0.17",
           " 18420\n"
         ],
-        "states": 296857
+        "states": 296857,
+        "oracle": {
+          "time_ms": 1817.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 296857,
+          "unique_states": 39637,
+          "backtracks": 296856,
+          "max_depth": 219,
+          "streamliner": "both"
+        }
       }
     },
     "northwest-territory": {
@@ -4563,7 +5311,17 @@
           " 0.01",
           " 24912\n"
         ],
-        "states": 322292
+        "states": 322292,
+        "oracle": {
+          "time_ms": 1916.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 322292,
+          "unique_states": 90005,
+          "backtracks": 322188,
+          "max_depth": 104,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 539,
@@ -4600,7 +5358,17 @@
           " 0.02",
           " 32508\n"
         ],
-        "states": 329451
+        "states": 329451,
+        "oracle": {
+          "time_ms": 1816.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 329451,
+          "unique_states": 90440,
+          "backtracks": 329450,
+          "max_depth": 37,
+          "streamliner": "none"
+        }
       }
     },
     "raglan": {
@@ -4639,7 +5407,17 @@
           " 0.06",
           " 147032\n"
         ],
-        "states": 778818
+        "states": 778818,
+        "oracle": {
+          "time_ms": 1954.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 778818,
+          "unique_states": 293626,
+          "backtracks": 576710,
+          "max_depth": 202108,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 141,
@@ -4676,7 +5454,17 @@
           " 0.05",
           " 90812\n"
         ],
-        "states": 828155
+        "states": 828155,
+        "oracle": {
+          "time_ms": 1954.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 828155,
+          "unique_states": 234447,
+          "backtracks": 828154,
+          "max_depth": 538,
+          "streamliner": "none"
+        }
       }
     },
     "seahaven-towers": {
@@ -4704,7 +5492,17 @@
           " 0.04",
           " 62832\n"
         ],
-        "states": 1426410
+        "states": 1426410,
+        "oracle": {
+          "time_ms": 1812.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1426410,
+          "unique_states": 662263,
+          "backtracks": 1426173,
+          "max_depth": 653,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 226,
@@ -4730,7 +5528,17 @@
           " 0.02",
           " 60712\n"
         ],
-        "states": 1505312
+        "states": 1505312,
+        "oracle": {
+          "time_ms": 1747.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1505312,
+          "unique_states": 832081,
+          "backtracks": 1505311,
+          "max_depth": 836,
+          "streamliner": "none"
+        }
       }
     },
     "siegecraft": {
@@ -4769,7 +5577,17 @@
           " 0.03",
           " 50736\n"
         ],
-        "states": 1107564
+        "states": 1107564,
+        "oracle": {
+          "time_ms": 1458.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1107564,
+          "unique_states": 237653,
+          "backtracks": 1107243,
+          "max_depth": 6496,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 8797,
@@ -4806,7 +5624,91 @@
           " 0.03",
           " 74536\n"
         ],
-        "states": 952561
+        "states": 952561,
+        "oracle": {
+          "time_ms": 1469.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 952561,
+          "unique_states": 229513,
+          "backtracks": 952560,
+          "max_depth": 3951,
+          "streamliner": "none"
+        }
+      }
+    },
+    "late-binding-solitaire": {
+      "winnable": {
+        "seed": 76397,
+        "time": 1473.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/late-binding-solitaire/v0.08/accordion-knuth-none-10M-2hr25M-A-qu62OZ.csv.gz",
+        "row": [
+          "76397",
+          " solved",
+          " 1473",
+          " 1923438",
+          " 414175",
+          " 1923421",
+          " 0",
+          " 0",
+          " 414175",
+          " 786433",
+          " 17",
+          " 17",
+          " solved",
+          " 1.77",
+          " 1.70",
+          " 0.06",
+          " 130796\n"
+        ],
+        "states": 1923438,
+        "oracle": {
+          "time_ms": 1473.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1923438,
+          "unique_states": 414175,
+          "backtracks": 1923421,
+          "max_depth": 17,
+          "streamliner": "none"
+        }
+      },
+      "unwinnable": {
+        "seed": 2350,
+        "time": 1905.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/late-binding-solitaire/v0.08/accordion-knuth-none-10M-2hr25M-A-qu62OZ.csv.gz",
+        "row": [
+          "2350",
+          " unsolvable",
+          " 1905",
+          " 2410890",
+          " 540684",
+          " 2410889",
+          " 0",
+          " 0",
+          " 540684",
+          " 786433",
+          " 16",
+          " 0",
+          " unsolvable",
+          " 2.32",
+          " 2.24",
+          " 0.07",
+          " 166440\n"
+        ],
+        "states": 2410890,
+        "oracle": {
+          "time_ms": 1905.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 2410890,
+          "unique_states": 540684,
+          "backtracks": 2410889,
+          "max_depth": 16,
+          "streamliner": "none"
+        }
       }
     },
     "simple-simon": {
@@ -4845,7 +5747,17 @@
           " 0.08",
           " 170308\n"
         ],
-        "states": 752544
+        "states": 752544,
+        "oracle": {
+          "time_ms": 1822.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 752544,
+          "unique_states": 233578,
+          "backtracks": 522600,
+          "max_depth": 229944,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 16629,
@@ -4882,7 +5794,17 @@
           " 0.03",
           " 63092\n"
         ],
-        "states": 796350
+        "states": 796350,
+        "oracle": {
+          "time_ms": 1502.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 796350,
+          "unique_states": 177807,
+          "backtracks": 796349,
+          "max_depth": 761,
+          "streamliner": "none"
+        }
       }
     },
     "somerset": {
@@ -4917,7 +5839,17 @@
           " ",
           " solved\n"
         ],
-        "states": 114273
+        "states": 114273,
+        "oracle": {
+          "time_ms": 1889.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 114273,
+          "unique_states": 40423,
+          "backtracks": 112945,
+          "max_depth": 1328,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 1000089,
@@ -4950,75 +5882,17 @@
           " 0",
           " unsolvable\n"
         ],
-        "states": 144036
-      }
-    },
-    "spanish-patience": {
-      "winnable": {
-        "seed": 159893,
-        "time": 1851.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spanish-patience/v0.08/spanish-patience-smart-v0.08-10M-1hr50M-A.csv.gz",
-        "row": [
-          "159893",
-          " solved",
-          " 1851",
-          " 440662",
-          " 106580",
-          " 334318",
-          " 52",
-          " 0",
-          " 106528",
-          " 196613",
-          " 106344",
-          " 106344",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " solved\n"
-        ],
-        "states": 440662
-      },
-      "unwinnable": {
-        "seed": 383174,
-        "time": 1571.0,
-        "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spanish-patience/v0.08/spanish-patience-smart-v0.08-10M-1hr50M-A.csv.gz",
-        "row": [
-          "383174",
-          " unsolvable",
-          " 105",
-          " 34883",
-          " 6884",
-          " 34882",
-          " 3824",
-          " 0",
-          " 3060",
-          " 3079",
-          " 83",
-          " 0",
-          " unsolvable",
-          " 1571",
-          " 442150",
-          " 77538",
-          " 442149",
-          " 30109",
-          " 0",
-          " 47429",
-          " 49157",
-          " 3178",
-          " 0",
-          " unsolvable\n"
-        ],
-        "states": 442150
+        "states": 144036,
+        "oracle": {
+          "time_ms": 1904.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 144036,
+          "unique_states": 39756,
+          "backtracks": 144035,
+          "max_depth": 517,
+          "streamliner": "none"
+        }
       }
     },
     "spider": {
@@ -5057,7 +5931,17 @@
           " 0.10",
           " 160828\n"
         ],
-        "states": 745001
+        "states": 745001,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 745001,
+          "unique_states": 250927,
+          "backtracks": 519313,
+          "max_depth": 225688,
+          "streamliner": "both"
+        }
       },
       "unwinnable": null
     },
@@ -5097,7 +5981,17 @@
           " 0.07",
           " 112448\n"
         ],
-        "states": 1127738
+        "states": 1127738,
+        "oracle": {
+          "time_ms": 1853.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1127738,
+          "unique_states": 340017,
+          "backtracks": 1127306,
+          "max_depth": 5491,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 1948,
@@ -5134,7 +6028,17 @@
           " 0.08",
           " 145116\n"
         ],
-        "states": 1364569
+        "states": 1364569,
+        "oracle": {
+          "time_ms": 2274.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1364569,
+          "unique_states": 421488,
+          "backtracks": 1364568,
+          "max_depth": 966,
+          "streamliner": "none"
+        }
       }
     },
     "streets-and-alleys": {
@@ -5173,7 +6077,17 @@
           " 0.05",
           " 101588\n"
         ],
-        "states": 1293937
+        "states": 1293937,
+        "oracle": {
+          "time_ms": 2073.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1293937,
+          "unique_states": 282903,
+          "backtracks": 1274591,
+          "max_depth": 19346,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 18,
@@ -5210,7 +6124,17 @@
           " 0.05",
           " 95188\n"
         ],
-        "states": 1280072
+        "states": 1280072,
+        "oracle": {
+          "time_ms": 1986.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1280072,
+          "unique_states": 262143,
+          "backtracks": 1280071,
+          "max_depth": 1294,
+          "streamliner": "none"
+        }
       }
     },
     "stronghold": {
@@ -5249,7 +6173,17 @@
           " 0.12",
           " 86276\n"
         ],
-        "states": 1255936
+        "states": 1255936,
+        "oracle": {
+          "time_ms": 2141.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1255936,
+          "unique_states": 240182,
+          "backtracks": 1237457,
+          "max_depth": 22982,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 2314,
@@ -5286,7 +6220,17 @@
           " 0.04",
           " 79580\n"
         ],
-        "states": 1075983
+        "states": 1075983,
+        "oracle": {
+          "time_ms": 1731.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1075983,
+          "unique_states": 241991,
+          "backtracks": 1075982,
+          "max_depth": 13553,
+          "streamliner": "none"
+        }
       }
     },
     "thirty": {
@@ -5325,7 +6269,17 @@
           " 0.08",
           " 159356\n"
         ],
-        "states": 1261988
+        "states": 1261988,
+        "oracle": {
+          "time_ms": 1949.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1261988,
+          "unique_states": 315514,
+          "backtracks": 1067347,
+          "max_depth": 194641,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 2198,
@@ -5362,7 +6316,17 @@
           " 0.10",
           " 55840\n"
         ],
-        "states": 1286098
+        "states": 1286098,
+        "oracle": {
+          "time_ms": 1864.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1286098,
+          "unique_states": 174348,
+          "backtracks": 1286097,
+          "max_depth": 7921,
+          "streamliner": "none"
+        }
       }
     },
     "thirtysix": {
@@ -5401,7 +6365,17 @@
           " 0.02",
           " 38400\n"
         ],
-        "states": 863571
+        "states": 863571,
+        "oracle": {
+          "time_ms": 1695.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 863571,
+          "unique_states": 101510,
+          "backtracks": 859346,
+          "max_depth": 4225,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 48,
@@ -5438,54 +6412,145 @@
           " 0.03",
           " 66540\n"
         ],
-        "states": 1338341
+        "states": 1338341,
+        "oracle": {
+          "time_ms": 1996.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1338341,
+          "unique_states": 379042,
+          "backtracks": 1338340,
+          "max_depth": 364,
+          "streamliner": "none"
+        }
       }
     },
-    "trigon": {
+    "spanish-patience": {
       "winnable": {
-        "seed": 270217,
-        "time": 566.0,
+        "seed": 159893,
+        "time": 1851.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/trigon/v0.08/trigon-none-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spanish-patience/v0.08/spanish-patience-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
-          "270217",
+          "159893",
           " solved",
-          " 566",
-          " 98022",
-          " 29457",
-          " 97941",
-          " 12796",
+          " 1851",
+          " 440662",
+          " 106580",
+          " 334318",
+          " 52",
           " 0",
-          " 16661",
-          " 24593",
-          " 81",
-          " 81",
+          " 106528",
+          " 196613",
+          " 106344",
+          " 106344",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
           " solved\n"
         ],
-        "states": 98022
+        "states": 440662,
+        "oracle": {
+          "time_ms": 1851.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 440662,
+          "unique_states": 106580,
+          "backtracks": 334318,
+          "max_depth": 106344,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
-        "seed": 4282898,
-        "time": 1852.0,
+        "seed": 383174,
+        "time": 1571.0,
         "removed": 0,
-        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/trigon/v0.08/trigon-none-v0.08-10M-1hr50M-A.csv.gz",
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/spanish-patience/v0.08/spanish-patience-smart-v0.08-10M-1hr50M-A.csv.gz",
         "row": [
-          "4282898",
+          "383174",
           " unsolvable",
-          " 1852",
-          " 269354",
-          " 53137",
-          " 269353",
-          " 6481",
+          " 105",
+          " 34883",
+          " 6884",
+          " 34882",
+          " 3824",
           " 0",
-          " 46656",
+          " 3060",
+          " 3079",
+          " 83",
+          " 0",
+          " unsolvable",
+          " 1571",
+          " 442150",
+          " 77538",
+          " 442149",
+          " 30109",
+          " 0",
+          " 47429",
           " 49157",
-          " 28",
+          " 3178",
           " 0",
           " unsolvable\n"
         ],
-        "states": 269354
+        "states": 442150,
+        "oracle": {
+          "time_ms": 1571.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 442150,
+          "unique_states": 77538,
+          "backtracks": 442149,
+          "max_depth": 3178,
+          "streamliner": "none"
+        }
       }
+    },
+    "accordion": {
+      "winnable": {
+        "seed": 7331,
+        "time": 1852.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/accordion/v0.08/accordion-none-1M-2hr25M-A-74T2GZ.csv.gz",
+        "row": [
+          "7331",
+          " solved",
+          " 1852",
+          " 934281",
+          " 343534",
+          " 934230",
+          " 0",
+          " 0",
+          " 343534",
+          " 393241",
+          " 51",
+          " 51",
+          " solved",
+          " 2.22",
+          " 2.12",
+          " 0.08",
+          " 104904\n"
+        ],
+        "states": 934281,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 934281,
+          "unique_states": 343534,
+          "backtracks": 934230,
+          "max_depth": 51,
+          "streamliner": "none"
+        }
+      },
+      "unwinnable": null
     },
     "will-o-the-wisp": {
       "winnable": {
@@ -5519,7 +6584,17 @@
           " ",
           " solved\n"
         ],
-        "states": 375176
+        "states": 375176,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 375176,
+          "unique_states": 178691,
+          "backtracks": 199844,
+          "max_depth": 175332,
+          "streamliner": "both"
+        }
       },
       "unwinnable": {
         "seed": 50775,
@@ -5552,7 +6627,105 @@
           " 0",
           " unsolvable\n"
         ],
-        "states": 296545
+        "states": 296545,
+        "oracle": {
+          "time_ms": 1592.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 296545,
+          "unique_states": 153643,
+          "backtracks": 296544,
+          "max_depth": 133,
+          "streamliner": "none"
+        }
+      }
+    },
+    "free-cell": {
+      "winnable": {
+        "seed": 30586,
+        "time": 1852.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell/v0.08.1/free-cell-smart-v0.08.1-10M-30m25M-A.csv.gz",
+        "row": [
+          "30586",
+          " solved",
+          " 1852",
+          " 443992",
+          " 167654",
+          " 442046",
+          " 64785",
+          " 0",
+          " 102869",
+          " 196613",
+          " 15829",
+          " 1946",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " solved\n"
+        ],
+        "states": 443992,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 443992,
+          "unique_states": 167654,
+          "backtracks": 442046,
+          "max_depth": 15829,
+          "streamliner": "both"
+        }
+      },
+      "unwinnable": {
+        "seed": 1767954,
+        "time": 1773.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell/v0.08.1/free-cell-smart-v0.08.1-10M-30m25M-A.csv.gz",
+        "row": [
+          "1767954",
+          " unsolvable",
+          " 530",
+          " 106071",
+          " 43350",
+          " 106070",
+          " 7583",
+          " 0",
+          " 35767",
+          " 49157",
+          " 132",
+          " 0",
+          " unsolvable",
+          " 1773",
+          " 324931",
+          " 132397",
+          " 324930",
+          " 1390",
+          " 0",
+          " 131007",
+          " 196613",
+          " 456",
+          " 0",
+          " unsolvable\n"
+        ],
+        "states": 324931,
+        "oracle": {
+          "time_ms": 1773.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 324931,
+          "unique_states": 132397,
+          "backtracks": 324930,
+          "max_depth": 456,
+          "streamliner": "none"
+        }
       }
     },
     "worm-hole": {
@@ -5580,7 +6753,17 @@
           " 0.08",
           " 154100\n"
         ],
-        "states": 1066902
+        "states": 1066902,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 1066902,
+          "unique_states": 466182,
+          "backtracks": 1066846,
+          "max_depth": 58,
+          "streamliner": "none"
+        }
       },
       "unwinnable": {
         "seed": 522385,
@@ -5606,7 +6789,424 @@
           " 0.00",
           " 3568\n"
         ],
-        "states": 9037
+        "states": 9037,
+        "oracle": {
+          "time_ms": 26.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 9037,
+          "unique_states": 3658,
+          "backtracks": 9036,
+          "max_depth": 14,
+          "streamliner": "none"
+        }
+      }
+    },
+    "fortunes-favor": {
+      "winnable": {
+        "seed": 6974509,
+        "time": 1852.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fortunes-favor/v0.08/fortunes-favor-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "6974509",
+          " solved",
+          " 1852",
+          " 450906",
+          " 295609",
+          " 450810",
+          " 159513",
+          " 0",
+          " 136096",
+          " 196613",
+          " 96",
+          " 96",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " solved\n"
+        ],
+        "states": 450906,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 450906,
+          "unique_states": 295609,
+          "backtracks": 450810,
+          "max_depth": 96,
+          "streamliner": "both"
+        }
+      },
+      "unwinnable": {
+        "seed": 79310374,
+        "time": 1590.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/fortunes-favor/v0.08/fortunes-favor-none-v0.08-1B-1hr50M-JYUy-unsolvable+hard-B.csv.gz",
+        "row": [
+          "79310374",
+          " unsolvable",
+          " 1590",
+          " 454764",
+          " 316688",
+          " 454763",
+          " 213008",
+          " 0",
+          " 103680",
+          " 196613",
+          " 33",
+          " 0",
+          " unsolvable\n"
+        ],
+        "states": 454764,
+        "oracle": {
+          "time_ms": 1590.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 454764,
+          "unique_states": 316688,
+          "backtracks": 454763,
+          "max_depth": 33,
+          "streamliner": "none"
+        }
+      }
+    },
+    "alpha-star": {
+      "winnable": {
+        "seed": 379003,
+        "time": 1854.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/alpha-star/v0.08/alpha-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "379003",
+          " solved",
+          " 1854",
+          " 246836",
+          " 73365",
+          " 173822",
+          " 48",
+          " 0",
+          " 73317",
+          " 98317",
+          " 73014",
+          " 73014",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " solved\n"
+        ],
+        "states": 246836,
+        "oracle": {
+          "time_ms": 1854.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 246836,
+          "unique_states": 73365,
+          "backtracks": 173822,
+          "max_depth": 73014,
+          "streamliner": "both"
+        }
+      },
+      "unwinnable": {
+        "seed": 8363153,
+        "time": 78.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/alpha-star/v0.08/alpha-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "8363153",
+          " unsolvable",
+          " 81",
+          " 16148",
+          " 4267",
+          " 16147",
+          " 1000",
+          " 0",
+          " 3267",
+          " 6151",
+          " 19",
+          " 0",
+          " unsolvable",
+          " 78",
+          " 16148",
+          " 4267",
+          " 16147",
+          " 1000",
+          " 0",
+          " 3267",
+          " 6151",
+          " 19",
+          " 0",
+          " unsolvable\n"
+        ],
+        "states": 16148,
+        "oracle": {
+          "time_ms": 78.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 16148,
+          "unique_states": 4267,
+          "backtracks": 16147,
+          "max_depth": 19,
+          "streamliner": "none"
+        }
+      }
+    },
+    "delta-star": {
+      "winnable": {
+        "seed": 344200,
+        "time": 1841.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/delta-star/v0.08/delta-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "344200",
+          " solved",
+          " 1841",
+          " 435072",
+          " 128753",
+          " 309256",
+          " 49",
+          " 0",
+          " 128704",
+          " 196613",
+          " 125816",
+          " 125816",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " solved\n"
+        ],
+        "states": 435072,
+        "oracle": {
+          "time_ms": 1841.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 435072,
+          "unique_states": 128753,
+          "backtracks": 309256,
+          "max_depth": 125816,
+          "streamliner": "both"
+        }
+      },
+      "unwinnable": {
+        "seed": 3605081,
+        "time": 182.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/delta-star/v0.08/delta-star-smart-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "3605081",
+          " unsolvable",
+          " 185",
+          " 45414",
+          " 21120",
+          " 45413",
+          " 6056",
+          " 0",
+          " 15064",
+          " 24593",
+          " 54",
+          " 0",
+          " unsolvable",
+          " 182",
+          " 45414",
+          " 21120",
+          " 45413",
+          " 6056",
+          " 0",
+          " 15064",
+          " 24593",
+          " 54",
+          " 0",
+          " unsolvable\n"
+        ],
+        "states": 45414,
+        "oracle": {
+          "time_ms": 182.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 45414,
+          "unique_states": 21120,
+          "backtracks": 45413,
+          "max_depth": 54,
+          "streamliner": "none"
+        }
+      }
+    },
+    "trigon": {
+      "winnable": {
+        "seed": 270217,
+        "time": 566.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/trigon/v0.08/trigon-none-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "270217",
+          " solved",
+          " 566",
+          " 98022",
+          " 29457",
+          " 97941",
+          " 12796",
+          " 0",
+          " 16661",
+          " 24593",
+          " 81",
+          " 81",
+          " solved\n"
+        ],
+        "states": 98022,
+        "oracle": {
+          "time_ms": 566.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 98022,
+          "unique_states": 29457,
+          "backtracks": 97941,
+          "max_depth": 81,
+          "streamliner": "none"
+        }
+      },
+      "unwinnable": {
+        "seed": 4282898,
+        "time": 1852.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/trigon/v0.08/trigon-none-v0.08-10M-1hr50M-A.csv.gz",
+        "row": [
+          "4282898",
+          " unsolvable",
+          " 1852",
+          " 269354",
+          " 53137",
+          " 269353",
+          " 6481",
+          " 0",
+          " 46656",
+          " 49157",
+          " 28",
+          " 0",
+          " unsolvable\n"
+        ],
+        "states": 269354,
+        "oracle": {
+          "time_ms": 1852.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 269354,
+          "unique_states": 53137,
+          "backtracks": 269353,
+          "max_depth": 28,
+          "streamliner": "none"
+        }
+      }
+    },
+    "free-cell-4-pile": {
+      "winnable": {
+        "seed": 860950,
+        "time": 1244.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-4-pile/v0.08.1/free-cell-4-pile-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "row": [
+          "860950",
+          " unsolvable",
+          " 1",
+          " 795",
+          " 473",
+          " 794",
+          " 89",
+          " 0",
+          " 384",
+          " 389",
+          " 43",
+          " 0",
+          " solved",
+          " 1244",
+          " 784732",
+          " 274276",
+          " 784362",
+          " 49093",
+          " 0",
+          " 225183",
+          " 393241",
+          " 2970",
+          " 370",
+          " solved\n"
+        ],
+        "states": 784732,
+        "oracle": {
+          "time_ms": 1244.0,
+          "outcome": "solved",
+          "removed": 0,
+          "states_searched": 784732,
+          "unique_states": 274276,
+          "backtracks": 784362,
+          "max_depth": 2970,
+          "streamliner": "none"
+        }
+      },
+      "unwinnable": {
+        "seed": 651423,
+        "time": 1898.0,
+        "removed": 0,
+        "csv": "/Users/ipg/Research/ReSolvitaire-project/03-Large-Datasets/solvitaire-paper-v10-Feb2026/ExperimentalResults/free-cell-4-pile/v0.08.1/free-cell-4-pile-smart-v0.08.1-1M-30m25M-A.csv.gz",
+        "row": [
+          "651423",
+          " unsolvable",
+          " 62",
+          " 34050",
+          " 12541",
+          " 34049",
+          " 1593",
+          " 0",
+          " 10948",
+          " 12289",
+          " 330",
+          " 0",
+          " unsolvable",
+          " 1898",
+          " 1128577",
+          " 332214",
+          " 1128576",
+          " 2120",
+          " 0",
+          " 330094",
+          " 393241",
+          " 3919",
+          " 0",
+          " unsolvable\n"
+        ],
+        "states": 1128577,
+        "oracle": {
+          "time_ms": 1898.0,
+          "outcome": "unsolvable",
+          "removed": 0,
+          "states_searched": 1128577,
+          "unique_states": 332214,
+          "backtracks": 1128576,
+          "max_depth": 3919,
+          "streamliner": "none"
+        }
       }
     }
   }
