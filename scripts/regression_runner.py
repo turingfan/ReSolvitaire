@@ -30,8 +30,10 @@ def run_regression(solver_path, instances_dir, oracle_path, timeout=30, verbose=
                 basename = os.path.basename(inst_path)
                 oracle[basename] = entry
 
-    instances = sorted([f for f in os.listdir(instances_dir) if f.endswith(".json")])
-    total = len(oracle)
+    # Use oracle keys as the authoritative list of instances (so the runner
+    # works even when the on-disk JSON instance files have been removed).
+    instance_filenames = sorted(oracle.keys())
+    total = len(instance_filenames)
     failed = 0
     passed = 0
 
@@ -49,23 +51,30 @@ def run_regression(solver_path, instances_dir, oracle_path, timeout=30, verbose=
     print(f"Running Regression: {total} instances (Oracle: {os.path.basename(oracle_path)})", flush=True)
     print("-" * 60, flush=True)
 
-    for filename in instances:
+    for filename in instance_filenames:
         instance_path = os.path.join(instances_dir, filename)
-        
-        if filename not in oracle:
-            continue
-
         baseline = oracle[filename]
-        
+
         baseline_time_ms = baseline.get("baseline_time_ms", 30000)
         instance_timeout_ms = max(int(2 * baseline_time_ms), 2000)
-        
-        cmd = [
-            solver_path, instance_path, 
-            "--json", 
-            "--timeout", str(instance_timeout_ms)
-        ]
-        
+
+        # Levels 2-5 oracles have 'baseline_time_ms' and store oracle values from
+        # seed-based runs.  Use --random <seed> to avoid the JSON round-trip bug
+        # (json_helper serialises gs.tableau_piles instead of gs.original_tableau_piles,
+        # causing subtly different node counts — see docs/known-issues.md).
+        # Level 1 oracles lack 'baseline_time_ms'; they were generated from JSON files
+        # so we continue to pass the JSON file path for consistency.
+        use_seed = "baseline_time_ms" in baseline
+        if use_seed:
+            parts = filename.replace('.json', '').rsplit('_', 2)
+            if len(parts) != 3 or not parts[1].lstrip('-').isdigit():
+                print(f"[WARN] {filename}: cannot extract seed from filename, skipping", flush=True)
+                continue
+            seed = parts[1]
+            cmd = [solver_path, "--random", seed, "--json", "--timeout", str(instance_timeout_ms)]
+        else:
+            cmd = [solver_path, instance_path, "--json", "--timeout", str(instance_timeout_ms)]
+
         if "custom_rules" in baseline:
             cmd.extend(["--custom-rules", baseline["custom_rules"]])
         elif "game_type" in baseline:
@@ -76,7 +85,7 @@ def run_regression(solver_path, instances_dir, oracle_path, timeout=30, verbose=
             else:
                 game_type = filename.split("_")[0]
             cmd.extend(["--type", game_type])
-        
+
         streamliner = baseline.get("streamliner", "none")
         cmd.extend(["--streamliners", streamliner])
             
