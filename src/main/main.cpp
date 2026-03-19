@@ -178,7 +178,7 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
     bool run_again = smart && solution.second.sol_type != solver::result::type::SOLVED;
     cout.flush();
     if (run_again)
-        if (!clh.get_classify()) cout << "Unsolvable using streamliner. Running again...\n";
+        if (!clh.get_classify() && !clh.get_json_output()) cout << "Unsolvable using streamliner. Running again...\n";
     optional<solve_sol> streamliner_solution = run_again
             ? solve_game(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc)
             : optional<solve_sol>();

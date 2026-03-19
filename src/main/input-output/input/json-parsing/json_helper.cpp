@@ -84,10 +84,10 @@ void json_helper::print_game_state_as_json(const game_state& gs, bool reveal_hid
 
     writer.StartObject();
 
-    if (!gs.tableau_piles.empty()) {
+    if (!gs.original_tableau_piles.empty()) {
         writer.Key("tableau piles");
         writer.StartArray();
-        for (auto pr : gs.tableau_piles) {
+        for (auto pr : gs.original_tableau_piles) {
             writer.StartArray();
             const auto& p = gs.piles[pr];
             for (pile::size_type i = p.size(); i-->0; ) {

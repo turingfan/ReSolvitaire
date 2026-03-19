@@ -10,7 +10,9 @@ def run_regression(solver_path, instances_dir, oracle_path, timeout=30, verbose=
     if not os.path.exists(solver_path):
         print(f"Error: Solver not found at {solver_path}")
         return 1
-    if not os.path.exists(instances_dir):
+    # instances_dir is only needed for Level 1 (JSON-file-based) runs.
+    # Levels 2-5 use --random <seed> and do not need files on disk.
+    if instances_dir and not os.path.exists(instances_dir):
         print(f"Error: Instances directory not found at {instances_dir}")
         return 1
     if not os.path.exists(oracle_path):
@@ -171,7 +173,9 @@ def run_regression(solver_path, instances_dir, oracle_path, timeout=30, verbose=
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solvitaire Regression Runner")
     parser.add_argument("--exe", required=True, help="Path to solvitaire executable")
-    parser.add_argument("--instances", required=True, help="Path to instances directory")
+    parser.add_argument("--instances", default="",
+                        help="Path to instances directory (required for Level 1 JSON-based runs; "
+                             "omit for Levels 2-5 which use seed-based invocation)")
     parser.add_argument("--oracle", required=True, help="Path to baseline oracle JSON")
     parser.add_argument("--verbose", action="store_true", help="Print all pass messages")
     parser.add_argument("--max-instance-timeout-ms", type=int, default=120000,

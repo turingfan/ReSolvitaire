@@ -227,6 +227,14 @@ add_executable(unit_tests ${sources_test} ${sources})
 target_link_libraries(unit_tests PRIVATE gtest_main ${Boost_LIBRARIES})
 
 enable_testing()
+
+# Run the GoogleTest suite.  Working directory is the project root so that
+# integration tests can resolve paths like "tests/resources/unit_tests/…"
+add_test(NAME unit_tests
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "$<TARGET_FILE:unit_tests>"
+)
+
 add_test(NAME trailing_space
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_output_format.py"
@@ -239,7 +247,7 @@ add_test(NAME trailing_space_free_cell
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_output_format.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--gametype" "free-cell"
-        "--deal" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/free_cell/fc-pro-3.json"
+        "--deal" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/unit_tests/free_cell/fc-pro-3.json"
 )
 add_test(NAME regression_level1
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -248,37 +256,35 @@ add_test(NAME regression_level1
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
 )
+# Levels 2-5 use seed-based invocation (no JSON instance files on disk).
+# --instances is omitted; --max-instance-timeout-ms caps each run.
 add_test(NAME regression_level2
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
-        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level2"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
-        "--timeout" "60"
+        "--max-instance-timeout-ms" "60000"
 )
 add_test(NAME regression_level3
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
-        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level3"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
-        "--timeout" "120"
+        "--max-instance-timeout-ms" "120000"
 )
 add_test(NAME regression_level4
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
-        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level4"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level4.json"
-        "--timeout" "600"
+        "--max-instance-timeout-ms" "600000"
 )
 add_test(NAME regression_level5
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire>"
-        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level5"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level5.json"
-        "--timeout" "1800"
+        "--max-instance-timeout-ms" "1800000"
 )
 
 ###############################################################################
