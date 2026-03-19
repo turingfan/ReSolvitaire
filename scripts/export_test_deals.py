@@ -119,10 +119,10 @@ def export_deals(data_dir):
                     # Determine definitive outcome
                     if "solved" in run1_outcome:
                         final_outcome = "winnable"
-                    elif "unsolvable" in overall_outcome:
+                    elif "unsolvable" in run1_outcome:
                         final_outcome = "unwinnable"
                     else:
-                        print(f"Warning: Non-definitive outcome for {game} seed {seed}: {overall_outcome}")
+                        print(f"Warning: Non-definitive outcome for {game} seed {seed}: {run1_outcome}")
                         continue
                 else:
                     # Single-run (NONE) Logic:
