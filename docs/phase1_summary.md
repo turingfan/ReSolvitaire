@@ -45,5 +45,6 @@ Phase 1 successfully established a robust, automated foundation for regression t
 
 ## Verification Status
 - **Corpus Coverage:** 150/150 instances verified.
-- **Round-Trip Status:** All instances can be exported via `--deal-only` and reloaded via `--json` with identical *outcomes* (solved/unsolvable). Note: a known bug in `json_helper.cpp` means the `states_searched` count may differ by a small amount between a seed-based run and a JSON-reload run when pile-symmetry reordering is active. See `docs/known-issues.md` §1 for details and the planned fix.
-- **Regression Pass:** `100% tests passed` in current `testing-infrastructure` branch.
+- **Ground-Truth Alignment:** All 150 Level 1 oracle entries match the original experimental dataset exactly (both outcome and `states_searched`), using the correct per-instance streamliner (`both` for 46 smart-run winnable instances, `none` for the remaining 104).
+- **Round-Trip Status:** All instances can be exported via `--deal-only` and reloaded via `--json` with identical *outcomes* (solved/unsolvable). A known bug in `json_helper.cpp` means `states_searched` may differ slightly between a seed-based run and a JSON-reload run when pile-symmetry reordering is active — but this does not affect the Level 1 regression results. See `docs/known-issues.md` §1 for details; the fix is in `claude/quizzical-darwin`.
+- **Regression Pass:** `100% tests passed` (150/150) in current `testing-infrastructure` branch.
