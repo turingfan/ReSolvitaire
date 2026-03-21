@@ -219,7 +219,7 @@ lru_cache::lru_cache(const game_state& gs, uint64_t max_num_items_)
         : max_num_items(max_num_items_), cache(get_init_tuple(gs)), states_removed_from_cache(0) {
 }
 
-pair<item_list::iterator, bool> lru_cache::insert(const game_state& gs) {
+pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const game_state& gs) {
     pair<item_list::iterator, bool> p = cache.push_front(cached_game_state(gs));
 
     if(!p.second){                              /* duplicate item */
@@ -244,6 +244,10 @@ pair<item_list::iterator, bool> lru_cache::insert(const game_state& gs) {
     return p;
 }
 
+bool lru_cache::insert(const game_state& gs) {
+    return insert_with_iterator(gs).second;
+}
+
 bool lru_cache::contains(const game_state& gs) const {
     return cache.get<1>().count(cached_game_state(gs)) > 0;
 }
@@ -252,12 +256,16 @@ void lru_cache::clear() {
     cache.clear();
 }
 
-item_list::size_type lru_cache::size() const {
+uint64_t lru_cache::size() const {
+    return static_cast<uint64_t>(cache.size());
+}
+
+item_list::size_type lru_cache::cached_size() const {
     return cache.size();
 }
 
-item_list::size_type lru_cache::bucket_count() const {
-    return cache.get<1>().bucket_count();
+uint64_t lru_cache::bucket_count() const {
+    return static_cast<uint64_t>(cache.get<1>().bucket_count());
 }
 
 void lru_cache::set_non_live(item_list::iterator state_iter) {

@@ -56,8 +56,8 @@ void sigint_handler(int i) {
     sigint = i == 1 ? true : true;
 }
 
-solver::solver(const game_state& gs, uint64_t cache_capacity)
-        : cache(lru_cache(gs, cache_capacity))
+solver::solver(const game_state& gs, cache_interface& c)
+        : cache(c)
         , init_state(gs)
         , state(gs)
         , frontier()
@@ -119,7 +119,8 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
         } else {
             try {
                 // Caches the current state
-                pair<lru_cache::item_list::iterator, bool> insert_res = cache.insert(state);
+                auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);
+                pair<lru_cache::item_list::iterator, bool> insert_res = lru_cache_ref.insert_with_iterator(state);
                 current_node->cache_state = insert_res.first;
                 bool is_new_state = insert_res.second;
 
@@ -177,7 +178,10 @@ bool solver::revert_to_last_node_with_children(optional<lru_cache::item_list::it
         return true;
 
     // Turns the 'live' bit false on the state we are backtracking out of
-    if (cur_state) cache.set_non_live(*cur_state);
+    if (cur_state) {
+        auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);
+        lru_cache_ref.set_non_live(*cur_state);
+    }
 
     state.undo_move(current_node->mv);
     res.depth--;

@@ -29,13 +29,14 @@
 #include <atomic>
 #include <chrono>
 
+#include "../game/cache_interface.h"
 #include "../game/global_cache.h"
 #include "../game/sol_rules.h"
 #include "../input-output/input/command_line_helper.h"
 
 class solver {
 public:
-    lru_cache cache;
+    cache_interface& cache;
 
     struct node {
         node(move) noexcept;
@@ -53,14 +54,14 @@ public:
         uint64_t backtracks;
         uint64_t dominance_moves;
         uint64_t states_removed_from_cache;
-        lru_cache::item_list::size_type cache_size;
-        lru_cache::item_list::size_type cache_bucket_count;
+        uint64_t cache_size;
+        uint64_t cache_bucket_count;
         uint64_t max_depth;
         uint64_t depth;
         std::chrono::milliseconds time;
     };
 
-    explicit solver(const game_state&, uint64_t);
+    explicit solver(const game_state&, cache_interface&);
 
     result run(boost::optional<std::chrono::milliseconds> = boost::none);
 

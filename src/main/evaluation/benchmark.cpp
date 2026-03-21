@@ -27,6 +27,7 @@
 
 #include "benchmark.h"
 #include "../game/search-state/game_state.h"
+#include "../game/global_cache.h"
 #include "../solver/solver.h"
 
 using namespace std;
@@ -47,7 +48,8 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
 
     for(int seed = 1; seed <= 1000; seed++) {
         game_state gs(rules, seed, streamliners);
-        solver sol(gs, cache_capacity);
+        lru_cache cache(gs, cache_capacity);
+        solver sol(gs, cache);
 
         auto start = chrono::steady_clock::now();
         solver::result result = sol.run();

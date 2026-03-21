@@ -29,6 +29,7 @@
 #include "input-output/input/json-parsing/json_helper.h"
 #include "input-output/input/json-parsing/rules_parser.h"
 #include "input-output/output/log_helper.h"
+#include "game/global_cache.h"
 #include "solver/solver.h"
 #include "evaluation/solvability_calc.h"
 #include "evaluation/benchmark.h"
@@ -236,7 +237,8 @@ pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout
                                         game_state::streamliner_options str_opts,
                                         optional<int> seed, optional<const Document&> in_doc) {
     game_state gs = seed ? game_state(rules, *seed, str_opts) : game_state(rules, *in_doc, str_opts);
-    solver sol(gs, cache_capacity);
+    lru_cache cache(gs, cache_capacity);
+    solver sol(gs, cache);
     solver::result res = sol.run(std::chrono::milliseconds(timeout));
     return make_pair(sol, res);
 }

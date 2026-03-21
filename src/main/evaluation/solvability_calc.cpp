@@ -27,6 +27,7 @@
 
 #include "solvability_calc.h"
 #include "../solver/solver.h"
+#include "../game/global_cache.h"
 #include "binomial_ci.h"
 
 using namespace std;
@@ -171,7 +172,8 @@ solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec ti
                                                           uint64_t cache_capacity,
                                                           game_state::streamliner_options stream_opt) {
     game_state gs(rules, seed, stream_opt);
-    solver sol(gs, cache_capacity);
+    lru_cache cache(gs, cache_capacity);
+    solver sol(gs, cache);
 
     return seed_result(seed, sol.run(boost::optional<std::chrono::milliseconds>(timeout)));
 }

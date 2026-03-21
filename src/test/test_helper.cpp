@@ -25,6 +25,7 @@
 
 #include "test_helper.h"
 #include "../main/game/search-state/game_state.h"
+#include "../main/game/global_cache.h"
 #include "../main/solver/solver.h"
 #include "../main/input-output/input/json-parsing/json_helper.h"
 #include "../main/input-output/input/json-parsing/rules_parser.h"
@@ -45,7 +46,8 @@ bool test_helper::is_solvable(const std::string& input_file, const std::string& 
     const sol_rules rules = rules_parser::from_preset(preset_type);
 
     game_state gs(rules, in_doc, sos::NONE);
-    solver sol(gs, 1000000);
+    lru_cache cache(gs, 1000000);
+    solver sol(gs, cache);
 
     return sol.run().sol_type == solver::result::type::SOLVED;
 }
@@ -68,7 +70,8 @@ void test_helper::run_foundations_dominance_test(sol_rules::build_policy policy,
             {"4D","3D","2D","AD"}
     });
 
-    solver sol(gs, 1000000);
+    lru_cache cache(gs, 1000000);
+    solver sol(gs, cache);
     sol.run();
 
     auto frontier = sol.get_frontier();
