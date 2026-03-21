@@ -43,6 +43,7 @@ This plan replaces Solvitaire's Boost.MultiIndex LRU cache with a flat open-addr
 
 1. Build and run all existing tests to confirm green baseline
 2. Create a benchmark script that records solver results for a fixed set of test instances:
+   - Use `--timeout 60000` (1 minute per instance) to prevent long-running tests
    - Run `--type free-cell --random 1 --classify` through `--random 100`
    - Run `--type klondike-deal-1 --random 1 --classify` through `--random 20`
    - Run `--type black-hole --random 1 --classify` through `--random 100`
