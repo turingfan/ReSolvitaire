@@ -30,6 +30,7 @@
 #include "input-output/input/json-parsing/rules_parser.h"
 #include "input-output/output/log_helper.h"
 #include "game/global_cache.h"
+#include "game/zobrist.h"
 #include "solver/solver.h"
 #include "evaluation/solvability_calc.h"
 #include "evaluation/benchmark.h"
@@ -54,6 +55,9 @@ void print_version();
 
 // Decides what to do given supplied command-line options
 int main(int argc, const char* argv[]) {
+
+    // Initialize Zobrist hash tables
+    zobrist_hash::init();
 
     // Parses the command-line options
     command_line_helper clh;

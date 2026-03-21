@@ -47,12 +47,15 @@ set(sources_game
         src/main/game/pile.h
         src/main/game/global_cache.cpp
         src/main/game/global_cache.h
+        src/main/game/cache_interface.h
         src/main/game/sol_rules.cpp
         src/main/game/search-state/game_state.legal_moves.cpp
         src/main/game/search-state/game_state.dominance_moves.cpp
         src/main/game/search-state/game_state.pile_order.cpp
         src/main/game/move.cpp
         src/main/game/move.h
+        src/main/game/zobrist.h
+        src/main/game/zobrist.cpp
 )
 
 set(sources_solver

@@ -138,12 +138,21 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
         piles.emplace_back();
         sequences.push_back(static_cast<pile::ref>(piles.size() - 1));
     }
+
+    // Initialize Zobrist hash structures
+    per_pile_hash.resize(piles.size(), 0);
+    zobrist_hash_value = 0;
 }
 
 // Constructs an initial game state from a JSON doc
 game_state::game_state(const sol_rules& s_rules, const Document& doc, streamliner_options s_opts)
         : game_state(s_rules, s_opts) {
     deal_parser::parse(*this, doc);
+    // Compute Zobrist hash from initial state (placeholder - will be incremental in future)
+    zobrist_hash_value = 0;
+    for (size_t i = 0; i < piles.size(); ++i) {
+        per_pile_hash[i] = 0;
+    }
 }
 
 // Constructs an initial game state from a seed
@@ -286,6 +295,11 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
     if (piles_sz != rules.max_rank * (rules.two_decks ? 8:4)) {
         throw runtime_error("Error: incorrect number of cards in starting piles");
     }
+    // Compute Zobrist hash from initial state (placeholder - will be incremental in future)
+    zobrist_hash_value = 0;
+    for (size_t i = 0; i < piles.size(); ++i) {
+        per_pile_hash[i] = 0;
+    }
 }
 
 game_state::game_state(const sol_rules& s_rules,
@@ -304,9 +318,14 @@ game_state::game_state(const sol_rules& s_rules,
         for (auto f : foundations) {
             if (!piles[f].empty()) {
                 foundations_base = piles[f].top_card().get_rank();
-                return;
+                break;
             }
         }
+    }
+    // Compute Zobrist hash from initial state (placeholder - will be incremental in future)
+    zobrist_hash_value = 0;
+    for (size_t i = 0; i < piles.size(); ++i) {
+        per_pile_hash[i] = 0;
     }
 }
 
@@ -649,6 +668,30 @@ void game_state::check_face_down_consistent() const {
 }
 #endif
 
+////////////////////////
+// ZOBRIST HASHING    //
+////////////////////////
+
+bool game_state::is_interchangeable_pile(pile::ref pr) const {
+    // Tableau, cells, and unstacked reserve piles are interchangeable
+    // (can be reordered without changing game semantics)
+    for (auto t : tableau_piles) {
+        if (t == pr) return true;
+    }
+    for (auto c : cells) {
+        if (c == pr) return true;
+    }
+    if (rules.reserve_stacked) {
+        // If reserve is stacked, it's not interchangeable
+        return false;
+    } else {
+        // If reserve is not stacked, each pile is interchangeable
+        for (auto r : reserve) {
+            if (r == pr) return true;
+        }
+    }
+    return false;
+}
 
 ////////////////////////
 // INSPECT GAME STATE //

@@ -39,6 +39,7 @@
 #include "../pile.h"
 #include "../sol_rules.h"
 #include "../move.h"
+#include "../zobrist.h"
 
 class game_state {
     friend struct hasher;
@@ -161,11 +162,20 @@ private:
     bool dominance_blocks_foundation_move(pile::ref);
     card::rank_t foundation_base_convert(card::rank_t) const;
 
+    /* Helper methods */
+
+    bool is_interchangeable_pile(pile::ref) const;
+
     /* Game rules */
 
     const sol_rules rules;
     streamliner_options stream_opts;
     card::rank_t foundations_base;
+
+    /* Zobrist hashing */
+
+    uint64_t zobrist_hash_value;
+    std::vector<uint64_t> per_pile_hash;
 
     /* Pile references */
 
