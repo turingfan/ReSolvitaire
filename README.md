@@ -30,6 +30,28 @@ Unlike the original master branch, this branch is fully configured for native co
     ```
     The binaries will be located in `build/bin/`.
 
+## Linux Reference Build (using Apple Container CLI)
+
+If you have Apple's [native container framework](https://github.com/apple/container) installed (available as `/usr/local/bin/container`), you can build a stable Linux reference binary directly on your Mac.
+
+### Build Steps
+1.  **Ensure container system is running**:
+    ```bash
+    container system start
+    ```
+2.  **Run the build script**:
+    ```bash
+    ./scripts/build-linux-reference.sh
+    ```
+    This script will build an Ubuntu-based image and extract a **statically-linked Linux binary** to `bin/linux/solvitaire-linux`.
+
+### Cross-Architecture (x86_64)
+To build a reference binary for standard x86 servers, you can pass the platform flag to the build command inside the script:
+```bash
+container build --platform linux/amd64 ...
+```
+
+---
 ### Static Linking Note
 This build is configured to link **Boost statically** on macOS. This means the resulting `solvitaire` binary is more portable and does not require Boost to be installed at runtime on the target machine.
 
