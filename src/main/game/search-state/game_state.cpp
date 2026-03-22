@@ -141,6 +141,8 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
 
     // Initialize Zobrist hash structures
     per_pile_hash.resize(piles.size(), 0);
+    zobrist_xor = 0;
+    zobrist_sum = 0;
     zobrist_hash_value = 0;
 }
 
@@ -148,11 +150,6 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
 game_state::game_state(const sol_rules& s_rules, const Document& doc, streamliner_options s_opts)
         : game_state(s_rules, s_opts) {
     deal_parser::parse(*this, doc);
-    // Compute Zobrist hash from initial state (placeholder - will be incremental in future)
-    zobrist_hash_value = 0;
-    for (size_t i = 0; i < piles.size(); ++i) {
-        per_pile_hash[i] = 0;
-    }
 }
 
 // Constructs an initial game state from a seed
@@ -295,11 +292,6 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
     if (piles_sz != rules.max_rank * (rules.two_decks ? 8:4)) {
         throw runtime_error("Error: incorrect number of cards in starting piles");
     }
-    // Compute Zobrist hash from initial state (placeholder - will be incremental in future)
-    zobrist_hash_value = 0;
-    for (size_t i = 0; i < piles.size(); ++i) {
-        per_pile_hash[i] = 0;
-    }
 }
 
 game_state::game_state(const sol_rules& s_rules,
@@ -321,11 +313,6 @@ game_state::game_state(const sol_rules& s_rules,
                 break;
             }
         }
-    }
-    // Compute Zobrist hash from initial state (placeholder - will be incremental in future)
-    zobrist_hash_value = 0;
-    for (size_t i = 0; i < piles.size(); ++i) {
-        per_pile_hash[i] = 0;
     }
 }
 
@@ -629,6 +616,7 @@ void game_state::undo_accordion_move(move m) {
 // Places a card on a pile and if it is on a tableau, cell or reserve pile,
 // reorders the pile refs so that the largest pile is first
 void game_state::place_card(pile::ref pr, card c) {
+    update_hash_place(pr, c);
     piles[pr].place(c);
 
 #ifndef NO_PILE_SYMMETRY
@@ -642,6 +630,7 @@ void game_state::place_card(pile::ref pr, card c) {
 // Same as above but for taking cards
 card game_state::take_card(pile::ref pr) {
     card c = piles[pr].take();
+    update_hash_take(pr, c);
 #ifndef NO_PILE_SYMMETRY
     // If the stock deals to the tableau piles, there is no pile symmetry
     if (rules.stock_size == 0 || rules.stock_deal_t != sdt::TABLEAU_PILES) {
@@ -673,24 +662,81 @@ void game_state::check_face_down_consistent() const {
 ////////////////////////
 
 bool game_state::is_interchangeable_pile(pile::ref pr) const {
-    // Tableau, cells, and unstacked reserve piles are interchangeable
-    // (can be reordered without changing game semantics)
-    for (auto t : tableau_piles) {
-        if (t == pr) return true;
-    }
-    for (auto c : cells) {
-        if (c == pr) return true;
-    }
-    if (rules.reserve_stacked) {
-        // If reserve is stacked, it's not interchangeable
-        return false;
-    } else {
-        // If reserve is not stacked, each pile is interchangeable
-        for (auto r : reserve) {
-            if (r == pr) return true;
-        }
+    for (auto t : tableau_piles) if (t == pr) return true;
+    for (auto c : cells) if (c == pr) return true;
+    if (!rules.reserve_stacked) {
+        for (auto r : reserve) if (r == pr) return true;
     }
     return false;
+}
+
+zobrist_hash::pile_role game_state::get_pile_role(pile::ref pr) const {
+    if (rules.hole && pr == hole) return zobrist_hash::pile_role::HOLE;
+    for (auto f : foundations) if (f == pr) return zobrist_hash::pile_role::FOUNDATION;
+    for (auto c : cells) if (c == pr) return zobrist_hash::pile_role::CELL;
+    if (rules.stock_size > 0 && pr == stock) return zobrist_hash::pile_role::STOCK;
+    if (rules.stock_deal_t == sdt::WASTE && pr == waste) return zobrist_hash::pile_role::WASTE;
+    for (auto r : reserve) if (r == pr) return zobrist_hash::pile_role::RESERVE;
+    return zobrist_hash::pile_role::TABLEAU;  // covers tableau, sequences, accordion
+}
+
+void game_state::update_hash_place(pile::ref pr, card c) {
+    // Called BEFORE piles[pr].place(c); position = current pile size (pile_vec index)
+    uint8_t pos = piles[pr].size();
+    auto cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+    auto role = get_pile_role(pr);
+    uint64_t key = zobrist_hash::key(cid, role, pos);
+
+    uint64_t old_pile = per_pile_hash[pr];
+    per_pile_hash[pr] ^= key;
+    uint64_t new_pile = per_pile_hash[pr];
+
+    if (is_interchangeable_pile(pr)) {
+        zobrist_sum += new_pile - old_pile;
+    } else {
+        zobrist_xor ^= old_pile ^ new_pile;
+    }
+    zobrist_hash_value = zobrist_xor ^ zobrist_sum;
+}
+
+void game_state::update_hash_take(pile::ref pr, card c) {
+    // Called AFTER piles[pr].take(); position = new pile size = pile_vec index of removed card
+    uint8_t pos = piles[pr].size();
+    auto cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+    auto role = get_pile_role(pr);
+    uint64_t key = zobrist_hash::key(cid, role, pos);
+
+    uint64_t old_pile = per_pile_hash[pr];
+    per_pile_hash[pr] ^= key;
+    uint64_t new_pile = per_pile_hash[pr];
+
+    if (is_interchangeable_pile(pr)) {
+        zobrist_sum += new_pile - old_pile;
+    } else {
+        zobrist_xor ^= old_pile ^ new_pile;
+    }
+    zobrist_hash_value = zobrist_xor ^ zobrist_sum;
+}
+
+void game_state::compute_hash_from_scratch() {
+    for (auto& h : per_pile_hash) h = 0;
+    zobrist_xor = 0;
+    zobrist_sum = 0;
+
+    for (pile::ref pr = 0; pr < static_cast<pile::ref>(piles.size()); ++pr) {
+        auto role = get_pile_role(pr);
+        const auto& pv = piles[pr].pile_vec;
+        for (uint8_t pos = 0; pos < static_cast<uint8_t>(pv.size()); ++pos) {
+            auto cid = zobrist_hash::card_id(pv[pos].get_suit(), pv[pos].get_rank());
+            per_pile_hash[pr] ^= zobrist_hash::key(cid, role, pos);
+        }
+        if (is_interchangeable_pile(pr)) {
+            zobrist_sum += per_pile_hash[pr];
+        } else {
+            zobrist_xor ^= per_pile_hash[pr];
+        }
+    }
+    zobrist_hash_value = zobrist_xor ^ zobrist_sum;
 }
 
 ////////////////////////

@@ -77,6 +77,8 @@ public:
 
     bool is_solved() const;
     const std::vector<pile>& get_data() const;
+    uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
+    void compute_hash_from_scratch();
 
     /* Printing */
 
@@ -165,6 +167,9 @@ private:
     /* Helper methods */
 
     bool is_interchangeable_pile(pile::ref) const;
+    zobrist_hash::pile_role get_pile_role(pile::ref) const;
+    void update_hash_place(pile::ref pr, card c);
+    void update_hash_take(pile::ref pr, card c);
 
     /* Game rules */
 
@@ -174,7 +179,9 @@ private:
 
     /* Zobrist hashing */
 
-    uint64_t zobrist_hash_value;
+    uint64_t zobrist_xor;          // XOR of non-interchangeable per-pile hashes
+    uint64_t zobrist_sum;          // SUM (mod 2^64) of interchangeable per-pile hashes
+    uint64_t zobrist_hash_value;   // = zobrist_xor ^ zobrist_sum
     std::vector<uint64_t> per_pile_hash;
 
     /* Pile references */
