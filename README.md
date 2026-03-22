@@ -1,3 +1,53 @@
+# Solvitaire: Reference Branch (`solvitaire-reference`)
+
+> [!IMPORTANT]
+> This branch (`solvitaire-reference`) is a stable, reference version of the original Solvitaire solver. It has been patched to support native compilation on modern macOS (Apple Silicon) and includes static linking for key dependencies (Boost) to ensure portability.
+
+## Purpose
+This branch serves as a fixed "Reference Version" for benchmarking against newer versions of the solver. It is based on the `upstream/master` (the original codebase) with minimal necessary patches for compilation on modern systems.
+
+## Native Build Instructions (macOS & Linux)
+
+Unlike the original master branch, this branch is fully configured for native compilation without Docker.
+
+### Prerequisites
+*   **CMake** (3.10+)
+*   **Boost** (1.53+) - Specifically `boost-program-options`. On macOS: `brew install boost`
+
+### Build Steps
+1.  **Create build directory**:
+    ```bash
+    mkdir -p build && cd build
+    ```
+2.  **Configure with CMake**:
+    ```bash
+    # For a performance-optimized release build
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+    ```
+3.  **Compile**:
+    ```bash
+    make -j$(sysctl -n hw.ncpu || nproc)
+    ```
+    The binaries will be located in `build/bin/`.
+
+### Static Linking Note
+This build is configured to link **Boost statically** on macOS. This means the resulting `solvitaire` binary is more portable and does not require Boost to be installed at runtime on the target machine.
+
+## Running Benchmarks
+To verify the build, you can run the unit tests:
+```bash
+./build/bin/unit_tests
+```
+
+To run the solver:
+```bash
+./build/bin/solvitaire --help
+```
+
+---
+
+*Original README content follows:*
+
 # Solvitaire: A general solver for perfect-information solitaire games
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html) [![GitHub release](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=0.10.2)](https://github.com/thecharlesblake/Solvitaire/releases/tag/v0.10/2)
 [![DOI](https://zenodo.org/badge/103662666.svg)](https://zenodo.org/badge/latestdoi/103662666)<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
