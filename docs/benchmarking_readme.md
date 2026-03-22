@@ -61,10 +61,9 @@ python3 scripts/compare_benchmarks.py \
 
 - `--baseline-exe`: Path to the control or `master` build.
 - `--current-exe`: Path to the experimental or current working build.
-- `--candle-exe`: (Optional) Path to the executable used to measure the Standard Candle. Defaults to `--baseline-exe`.
 - `--out-report`: (Optional) The output JSON filename. Defaults to `benchmark_report.json`.
 - `--reference-exe <path>`: (Recommended) The path to the stable reference binary. If omitted, HNF defaults to `1.0` and results are not hardware-normalized.
-- `--calibration-workload <path>`: (Optional) Path to the JSON file used for calibration. Defaults to `tests/oracles/calibration.json`.
+- `--calibration-workload <path>`: (Optional) Path to the JSON file used for calibration. Defaults to `tests/oracles/level1.json` (multi-second baseline).
 - `--`: Separates orchestrator arguments from the arguments that will be forwarded to the C++ benchmark engine.
 
 ### Example
@@ -141,7 +140,7 @@ python3 scripts/compare_benchmarks.py \
 ### Command Line Flags
 
 - `--reference-exe <path>`: (Recommended) The path to the stable reference binary. If omitted, HNF defaults to `1.0` and results are not hardware-normalized.
-- `--calibration-workload <path>`: (Optional) Path to the JSON file used for calibration. Defaults to `tests/oracles/calibration.json`.
+- `--calibration-workload <path>`: (Optional) Path to the JSON file used for calibration. Defaults to `tests/oracles/level1.json` which provides a robust multi-second baseline (~2 seconds on modern hardware).
 
 ---
 
@@ -180,3 +179,10 @@ Verdict: Current build is FASTER by 0.82%
 ```
 
 A comprehensive `benchmark_report.json` file is also created, making this suite exceptionally easy to hook into CI pipelines.
+
+---
+
+## Known Issues / Future Work
+
+- **Boost Dependency:** The C++ executable currently relies on `boost/program_options` for parsing command-line arguments. This introduces a heavy external dependency. Future work should consider migrating to a lightweight, header-only argument parser (like `cxxopts` or `argparse`) to reduce build times and simplify cross-platform compilation of the Reference Solver.
+- **Python Memory Overhead:** The `compare_benchmarks.py` orchestrator currently pipes the C++ engine's `stdout` to a temporary file on disk, but then reads the entire file back into memory (`output = tmp.read()`) to find the valid JSON chunk. This introduces unneeded disk I/O while still holding the full string in memory. Future iterations can parse `subprocess.PIPE` iteratively or use a streaming JSON parser in Python to genuinely save RAM.
