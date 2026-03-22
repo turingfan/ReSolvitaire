@@ -2,6 +2,7 @@
 #define SOLVITAIRE_CACHE_INTERFACE_H
 
 #include <cstdint>
+#include "sol_rules.h"
 
 class game_state;
 
@@ -20,5 +21,14 @@ public:
     virtual uint64_t get_states_removed_from_cache() const = 0;
     virtual uint64_t bucket_count() const = 0;
 };
+
+// Helper function to determine if a game should use the new cache (compact_state + descriptor zobrist)
+// vs the old cache (lru_cache with cached_game_state).
+// The new cache is only used for single-deck games with no special sequence or accordion mechanics.
+inline bool use_new_cache(const sol_rules& rules) {
+    return !rules.two_decks
+        && rules.sequence_count == 0
+        && rules.accordion_size == 0;
+}
 
 #endif

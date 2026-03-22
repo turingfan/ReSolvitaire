@@ -40,6 +40,8 @@
 #include "../sol_rules.h"
 #include "../move.h"
 #include "../zobrist.h"
+#include "../compact_state.h"
+#include "../parent_table.h"
 
 class game_state {
     friend struct hasher;
@@ -78,7 +80,8 @@ public:
     bool is_solved() const;
     const std::vector<pile>& get_data() const;
     uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
-    void compute_hash_from_scratch();
+    const compact_state& get_payload() const { return payload; }
+    void compute_hash_from_scratch();  // For testing: recompute hash from payload
 
     /* Printing */
 
@@ -166,23 +169,41 @@ private:
 
     /* Helper methods */
 
-    bool is_interchangeable_pile(pile::ref) const;
-    zobrist_hash::pile_role get_pile_role(pile::ref) const;
-    void update_hash_place(pile::ref pr, card c);
-    void update_hash_take(pile::ref pr, card c);
-
     /* Game rules */
 
     const sol_rules rules;
     streamliner_options stream_opts;
     card::rank_t foundations_base;
 
-    /* Zobrist hashing */
+    /* Descriptor-aligned Zobrist hash and payload */
+    uint64_t zobrist_hash_value;
+    compact_state payload;
 
-    uint64_t zobrist_xor;          // XOR of non-interchangeable per-pile hashes
-    uint64_t zobrist_sum;          // SUM (mod 2^64) of interchangeable per-pile hashes
-    uint64_t zobrist_hash_value;   // = zobrist_xor ^ zobrist_sum
-    std::vector<uint64_t> per_pile_hash;
+    void init_payload_and_hash();  // Called at end of constructors
+
+    // Undo record for incremental descriptor/hash updates
+    struct zobrist_undo {
+        uint8_t card_id;               // Primary moved card
+        uint8_t old_desc;              // Its old descriptor
+        uint8_t revealed_card_id;      // 255 = none
+        uint8_t from_found_suit;       // 255 = source not foundation
+        uint8_t old_from_found_rank;   // Old source foundation rank
+        uint8_t to_found_suit;         // 255 = dest not foundation
+        uint8_t old_to_found_rank;     // Old dest foundation rank
+        uint8_t old_hole_top;          // 255 = dest not hole
+        uint8_t old_waste_ptr;         // 255 = waste ptr didn't change
+        uint8_t sat_count;             // stock_to_all_tableau card count (0 otherwise)
+    };
+    std::vector<zobrist_undo> zobrist_undo_stack;
+
+    // Descriptor update helpers
+    void update_card_descriptor(uint8_t cid, uint8_t new_desc);
+    void update_foundation_in_hash(uint8_t suit, uint8_t new_rank);
+    void update_waste_ptr_in_hash(uint8_t new_ptr);
+    void update_hole_top_in_hash(uint8_t new_cid);
+    uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
+    bool is_foundation_pile(pile::ref pr) const;
+    uint8_t get_foundation_suit(pile::ref pr) const;
 
     /* Pile references */
 

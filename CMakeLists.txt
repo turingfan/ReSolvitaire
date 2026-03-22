@@ -56,6 +56,10 @@ set(sources_game
         src/main/game/move.h
         src/main/game/zobrist.h
         src/main/game/zobrist.cpp
+        src/main/game/compact_state.h
+        src/main/game/compact_state.cpp
+        src/main/game/parent_table.h
+        src/main/game/parent_table.cpp
 )
 
 set(sources_solver
