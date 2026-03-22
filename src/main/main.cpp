@@ -84,8 +84,12 @@ int main(int argc, const char* argv[]) {
     }
 
     // Generates the rules of the solitaire from the game type
-    const optional<sol_rules> rules = gen_rules(clh);
-    if (!rules) return EXIT_FAILURE;
+    // Skip if we are doing a benchmark-json which handles rules per instance
+    optional<sol_rules> rules;
+    if (clh.get_benchmark_json().empty()) {
+        rules = gen_rules(clh);
+        if (!rules) return EXIT_FAILURE;
+    }
 
     if (clh.get_deal_only()) {
         game_state gs(*rules, clh.get_random_deal(), game_state::streamliner_options::NONE);
@@ -99,13 +103,20 @@ int main(int argc, const char* argv[]) {
         solv_c.calculate_solvability_percentage(clh.get_timeout(), clh.get_solvability(), clh.get_cores(),
                                                 clh.get_streamliners(), clh.get_resume());
     }
-        // If a random deal seed has been supplied, solves it
-    else if (clh.get_random_deal() != -1) {
-        solve_random_game(clh.get_random_deal(), *rules, clh);
-    }
     // If the benchmark option has been supplied, generates it
-    else if (clh.get_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state());
+    if (!clh.get_benchmark_json().empty()) {
+        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup());
+        return EXIT_SUCCESS;
+    }
+
+    if (clh.get_benchmark() || clh.get_is_benchmark()) {
+        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup());
+        return EXIT_SUCCESS;
+    }
+    
+    // If a random deal seed has been supplied, solves it
+    if (clh.get_random_deal() != -1) {
+        solve_random_game(clh.get_random_deal(), *rules, clh);
     }
     // Otherwise there are supplied input files which should be solved
     else {
