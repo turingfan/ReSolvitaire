@@ -127,6 +127,13 @@ source_group("Test/Helper" FILES ${sources_test_helper})
 ## Rapid JSON setup ###########################################################
 ###############################################################################
 
+include_directories(src/main/game)
+include_directories(src/main/game/search-state)
+include_directories(src/main/solver)
+include_directories(src/main/evaluation)
+include_directories(src/main/input-output/input)
+include_directories(src/main/input-output/input/json-parsing)
+include_directories(src/main/input-output/output)
 include_directories(lib/rapidjson)
 
 ###############################################################################

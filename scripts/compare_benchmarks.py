@@ -62,16 +62,26 @@ def get_json_payload(exe_path, extra_args):
             print(f"Exception during benchmark execution: {str(e)}")
             sys.exit(1)
 
-def measure_standard_candle(candle_exe):
-    # Hardcoded simple workload for the standard candle: Klondike, seeds 1 to 5, 5 iterations
-    args = ["--type", "klondike", "--benchmark-seeds", "1", "5", "--benchmark-iterations", "3", "--benchmark-warmup", "1"]    
-    payload = get_json_payload(candle_exe, args)
-    # Using median for more robust candle measurement
-    # The candle measurement should always return an aggregate, not a list of instances
-    if isinstance(payload, list):
-        print("Error: Standard candle executable returned a list of instances. It should return aggregate stats.")
+def measure_standard_candle(reference_exe, calibration_workload):
+    """Measures the Hardware Normalization Factor (HNF) using a reference solver on a fixed workload."""
+    if not reference_exe:
+        print("\033[93mWARNING: No --reference-exe provided. Hardware Normalization Scores will not be representative.\033[0m")
+        return 1.0
+    
+    if not os.path.exists(calibration_workload):
+        print(f"\033[91mError: Calibration workload not found: {calibration_workload}\033[0m")
         sys.exit(1)
-    return payload["aggregate_stats"]["median_time_us"]
+
+    args = ["--benchmark-json", calibration_workload, "--benchmark-iterations", "1"]
+    payload = get_json_payload(reference_exe, args)
+    
+    # Extract median time from the calibration run
+    if isinstance(payload, list):
+        # Use median of medians across the calibration set
+        medians = [inst["median_time_us"] for inst in payload]
+        return calculate_median(medians)
+    else:
+        return payload["aggregate_stats"]["median_time_us"]
 
 def get_git_hash():
     try:
@@ -91,16 +101,15 @@ def calculate_median(data):
         return (sorted_data[n // 2 - 1] + sorted_data[n // 2]) / 2.0
 
 def main():
-    parser = argparse.ArgumentParser(description="ReSolvitaire Python Orchestrator: Streaming JSON & Median Statistics")
-    parser.add_argument("--baseline-exe", required=True, help="Path to the baseline baseline/master executable")
+    parser = argparse.ArgumentParser(description="ReSolvitaire Python Orchestrator: Hardware Normalization & Median Statistics")
+    parser.add_argument("--baseline-exe", required=True, help="Path to the baseline/master executable")
     parser.add_argument("--current-exe", required=True, help="Path to the current working executable to test")
-    parser.add_argument("--candle-exe", default=None, help="Path to the executable to measure the standard candle. Defaults to baseline-exe.")
+    parser.add_argument("--reference-exe", default=None, help="Path to a stable, older reference solver for hardware normalization")
+    parser.add_argument("--calibration-workload", default="tests/oracles/calibration.json", help="Path to the fixed regression JSON used for system calibration")
     parser.add_argument("--out-report", default="benchmark_report.json", help="Path to save the JSON diagnostic report")
     parser.add_argument("benchmark_args", nargs=argparse.REMAINDER, help="Arguments to pass through to the solvitaire benchmark engine")
     
     args = parser.parse_args()
-    
-    candle_exe = args.candle_exe if args.candle_exe else args.baseline_exe
     
     if not os.path.isfile(args.baseline_exe):
         print(f"Baseline executable not found: {args.baseline_exe}")
@@ -110,10 +119,14 @@ def main():
         print(f"Current executable not found: {args.current_exe}")
         sys.exit(1)
         
-    print(f"--- ReSolvitaire Orchestrator (Streaming & Median-Based) ---")
-    print(f"Measuring standard candle using {candle_exe} ...")
-    candle_median_us = measure_standard_candle(candle_exe)
-    print(f"Standard candle measured (median): {candle_median_us:.2f} us\n")
+    print(f"--- ReSolvitaire Orchestrator (Hardware Normalization) ---")
+    print(f"Establishing hardware normalization factor using {args.reference_exe or 'NONE'} ...")
+    hnf = measure_standard_candle(args.reference_exe, args.calibration_workload)
+    
+    if args.reference_exe:
+        print(f"Hardware Normalization Factor (HNF) established: {hnf:.2f} us\n")
+    else:
+        print(f"Normalization Factor (HNF) defaulted to 1.0 (No normalization active)\n")
     
     forward_args = args.benchmark_args
     if forward_args and forward_args[0] == "--":
@@ -161,7 +174,7 @@ def main():
                 "date": datetime.datetime.now().isoformat(),
                 "machine_id": platform.node(),
                 "git_hash": get_git_hash(),
-                "standard_candle_median_us": candle_median_us,
+                "hardware_normalization_factor_us": hnf,
                 "mode": "paired-instances"
             },
             "benchmark_workload": " ".join(forward_args),
@@ -176,7 +189,11 @@ def main():
         print(f"Workload: {' '.join(forward_args)}")
         print(f"Total instances matched: {len(combined_results)}\n")
         
-        print(f"--- Median Ratios (Across all instances) ---")
+        print(f"--- Hardware Normalized ---")
+        print(f"Reference Solver HNF:        {hnf:.2f} us")
+        print(f"Baseline Median Ratio:       {median_speedup:.4f}x (Relative to reference HNF if provided)")
+        
+        print(f"\n--- Median Ratios (Across all instances) ---")
         color = "\033[91m" if median_speedup > 1.05 else ("\033[92m" if median_speedup < 0.95 else "")
         reset = "\033[0m"
         print(f"Median Time Ratio: {color}{median_speedup:.4f}x{reset} (Values > 1.0 indicate regression)")
@@ -184,7 +201,6 @@ def main():
         n_color = "\033[92m" if median_node_ratio < 0.99 else ("\033[91m" if median_node_ratio > 1.01 else "")
         print(f"Median Node Ratio: {n_color}{median_node_ratio:.4f}x{reset}\n")
 
-        # Details of top 5 or some sample? 
         if combined_results:
             print(f"--- Sample Instances ---")
             for r in combined_results[:5]:
@@ -199,15 +215,15 @@ def main():
         current_val = current_stats["median_time_us"]
         
         speedup_ratio = current_val / baseline_val if baseline_val > 0 else 1.0
-        normalized_sys_score = current_val / candle_median_us if candle_median_us > 0 else 0.0
-        baseline_normalized_score = baseline_val / candle_median_us if candle_median_us > 0 else 0.0
+        normalized_sys_score = current_val / hnf if hnf > 0 else 0.0
+        baseline_normalized_score = baseline_val / hnf if hnf > 0 else 0.0
 
         report = {
             "metadata": {
                 "date": datetime.datetime.now().isoformat(),
                 "machine_id": platform.node(),
                 "git_hash": get_git_hash(),
-                "standard_candle_median_us": candle_median_us,
+                "hardware_normalization_factor_us": hnf,
                 "mode": "aggregate-median"
             },
             "benchmark_workload": " ".join(forward_args),
@@ -243,7 +259,7 @@ def main():
         print(f"Current NPS:  {current_stats['nodes_per_second']:.2f} nodes/sec\n")
         
         print(f"--- Hardware Normalized ---")
-        print(f"Standard Candle (Median):    {candle_median_us:.2f} us")
+        print(f"Reference Solver HNF:        {hnf:.2f} us")
         print(f"Baseline Normalized Score:   {baseline_normalized_score:.4f}")
         print(f"Current Normalized Score:    {normalized_sys_score:.4f}\n")
         
