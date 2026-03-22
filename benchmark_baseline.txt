@@ -4,7 +4,7 @@ Timeout: 60 seconds per instance
 ========================================
 
 free-cell results:
-Seed,Outcome,StatesSearched,Time(ms)
+Seed, Outcome, Time(ms), StatesSearched, UniqueStatesSearched, Backtracks, DominanceMoves, StatesRemovedFromCache, CacheSize, CacheBucketCount, MaxDepth, FinalDepth, OverallResult
 1, solved, 79, 86992, 31696, 58539, 45, 0, 31651, 49157, 28453, 28453, solved
 2, solved, 3738, 3765881, 1171762, 2653859, 46, 0, 1171716, 1572869, 1112022, 1112022, solved
 3, solved, 60, 60838, 29581, 49636, 106, 0, 29475, 49157, 11202, 11202, solved
@@ -107,7 +107,7 @@ Seed,Outcome,StatesSearched,Time(ms)
 100, solved, 106, 138700, 53865, 85470, 40, 0, 53825, 98317, 53230, 53230, solved
 
 klondike-deal-1 results:
-Seed,Outcome,StatesSearched,Time(ms)
+Seed, Outcome, Time(ms), StatesSearched, UniqueStatesSearched, Backtracks, DominanceMoves, StatesRemovedFromCache, CacheSize, CacheBucketCount, MaxDepth, FinalDepth, OverallResult
 1, unsolvable, 112, 83095, 19195, 83094, 7, 0, 19188, 24593, 22, 0, unsolvable
 2, solved, 0, 221, 132, 133, 40, 0, 92, 97, 88, 88, solved
 3, solved, 10, 8390, 2579, 8302, 183, 0, 2396, 3079, 88, 88, solved
@@ -130,7 +130,7 @@ Seed,Outcome,StatesSearched,Time(ms)
 20, solved, 0, 86, 76, 10, 35, 0, 41, 53, 76, 76, solved
 
 black-hole results:
-Seed,Outcome,StatesSearched,Time(ms)
+Seed, Outcome, Time(ms), StatesSearched, UniqueStatesSearched, Backtracks, DominanceMoves, StatesRemovedFromCache, CacheSize, CacheBucketCount, MaxDepth, FinalDepth, OverallResult
 1, solved, 7, 9367, 6263, 9316, 0, 0, 6263, 12289, 51, 51, solved
 2, unsolvable, 1976, 2128384, 1271363, 2128383, 0, 0, 1271363, 1572869, 50, 0, unsolvable
 3, solved, 1, 1411, 1095, 1360, 0, 0, 1095, 1543, 51, 51, solved
@@ -233,7 +233,7 @@ Seed,Outcome,StatesSearched,Time(ms)
 100, unsolvable, 4, 5343, 2670, 5342, 0, 0, 2670, 3079, 19, 0, unsolvable
 
 bakers-game results:
-Seed,Outcome,StatesSearched,Time(ms)
+Seed, Outcome, Time(ms), StatesSearched, UniqueStatesSearched, Backtracks, DominanceMoves, StatesRemovedFromCache, CacheSize, CacheBucketCount, MaxDepth, FinalDepth, OverallResult
 1, solved, 426, 581617, 183823, 401612, 54, 0, 183769, 196613, 180005, 180005, solved
 2, solved, 33, 45970, 13628, 34192, 80, 0, 13548, 24593, 11778, 11778, solved
 3, solved, 13, 16805, 6884, 10532, 83, 0, 6801, 12289, 6273, 6273, solved
@@ -336,7 +336,7 @@ Seed,Outcome,StatesSearched,Time(ms)
 100, solved, 98, 124174, 41021, 90397, 384, 0, 40637, 49157, 33777, 33777, solved
 
 spanish-patience results:
-Seed,Outcome,StatesSearched,Time(ms)
+Seed, Outcome, Time(ms), StatesSearched, UniqueStatesSearched, Backtracks, DominanceMoves, StatesRemovedFromCache, CacheSize, CacheBucketCount, MaxDepth, FinalDepth, OverallResult
 1, solved, 1409, 1388859, 511358, 877609, 45, 0, 511313, 786433, 511250, 511250, solved
 2, solved, 292, 396579, 118160, 278419, 37, 0, 118123, 196613, 118160, 118160, solved
 3, solved, 27756, 27048272, 6977766, 20070628, 40, 0, 6977726, 12582917, 6977644, 6977644, solved
