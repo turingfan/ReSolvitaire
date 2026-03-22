@@ -63,7 +63,7 @@ def get_json_payload(exe_path, extra_args):
             sys.exit(1)
 
 def measure_standard_candle(reference_exe, calibration_workload):
-    """Measures the Hardware Normalization Factor (HNF) using a reference solver on a fixed workload."""
+    """Measures the Hardware Normalization Factor (HNF) by summing the median times of all instances in a fixed workload."""
     if not reference_exe:
         print("\033[93mWARNING: No --reference-exe provided. Hardware Normalization Scores will not be representative.\033[0m")
         return 1.0
@@ -72,15 +72,18 @@ def measure_standard_candle(reference_exe, calibration_workload):
         print(f"\033[91mError: Calibration workload not found: {calibration_workload}\033[0m")
         sys.exit(1)
 
-    args = ["--benchmark-json", calibration_workload, "--benchmark-iterations", "1"]
+    # We run the calibration workload with multiple iterations for stability 
+    # Use 3 iterations for the reference solver to minimize noise in the HNF baseline.
+    args = ["--benchmark-json", calibration_workload, "--benchmark-iterations", "3"]
     payload = get_json_payload(reference_exe, args)
     
-    # Extract median time from the calibration run
+    # The HNF should represent the 'Total Calibration Time' across all instances in the set.
     if isinstance(payload, list):
-        # Use median of medians across the calibration set
-        medians = [inst["median_time_us"] for inst in payload]
-        return calculate_median(medians)
+        # Sum the median times of each instance. Summing provides a much larger, more stable scalar baseline.
+        total_us = sum(inst["median_time_us"] for inst in payload)
+        return total_us
     else:
+        # Fallback for old single-object aggregate format
         return payload["aggregate_stats"]["median_time_us"]
 
 def get_git_hash():
@@ -105,7 +108,7 @@ def main():
     parser.add_argument("--baseline-exe", required=True, help="Path to the baseline/master executable")
     parser.add_argument("--current-exe", required=True, help="Path to the current working executable to test")
     parser.add_argument("--reference-exe", default=None, help="Path to a stable, older reference solver for hardware normalization")
-    parser.add_argument("--calibration-workload", default="tests/oracles/calibration.json", help="Path to the fixed regression JSON used for system calibration")
+    parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for system calibration")
     parser.add_argument("--out-report", default="benchmark_report.json", help="Path to save the JSON diagnostic report")
     parser.add_argument("benchmark_args", nargs=argparse.REMAINDER, help="Arguments to pass through to the solvitaire benchmark engine")
     
