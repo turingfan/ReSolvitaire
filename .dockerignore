@@ -1,0 +1,7 @@
+build/
+build-mac/
+linux-build/
+cmake-build-*/
+.git/
+.idea/
+bin/
