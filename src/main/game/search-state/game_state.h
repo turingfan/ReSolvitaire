@@ -54,7 +54,7 @@ public:
     /* Constructors */
 
     // Creates a game state representation from a JSON doc
-    game_state(const sol_rules&, const rapidjson::Document&, streamliner_options);
+    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options);
     // Does the same from a seed
     game_state(const sol_rules&, int seed, streamliner_options);
     // Does the same but with an initialiser list (useful for testing)

@@ -31,7 +31,7 @@
 
 class benchmark {
 public:
-    static void run(const sol_rules &rules, uint64_t, game_state::streamliner_options);
+    static void run(const sol_rules &rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, std::pair<int, int> seeds, int iterations, bool warmup);
 };
 
 

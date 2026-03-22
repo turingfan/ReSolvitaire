@@ -94,13 +94,15 @@ int main(int argc, const char* argv[]) {
         solv_c.calculate_solvability_percentage(clh.get_timeout(), clh.get_solvability(), clh.get_cores(),
                                                 clh.get_streamliners(), clh.get_resume());
     }
-        // If a random deal seed has been supplied, solves it
-    else if (clh.get_random_deal() != -1) {
-        solve_random_game(clh.get_random_deal(), *rules, clh);
-    }
     // If the benchmark option has been supplied, generates it
-    else if (clh.get_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state());
+    if (clh.get_benchmark() || clh.get_is_benchmark()) {
+        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup());
+        return EXIT_SUCCESS;
+    }
+    
+    // If a random deal seed has been supplied, solves it
+    if (clh.get_random_deal() != -1) {
+        solve_random_game(clh.get_random_deal(), *rules, clh);
     }
     // Otherwise there are supplied input files which should be solved
     else {

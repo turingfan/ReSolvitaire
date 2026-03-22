@@ -79,6 +79,9 @@ command_line_helper::command_line_helper()
                           "supplied solitaire game. Must supply "
                           "either 'random', 'benchmark', 'solvability' or list of deals to be "
                           "solved.")
+            ("benchmark-seeds", po::value<vector<int>>()->multitoken(), "supply start and end seeds for benchmarking")
+            ("benchmark-iterations", po::value<int>()->default_value(1), "iterations per seed")
+            ("benchmark-warmup", po::value<bool>()->default_value(true), "run warmup pass before benchmarking")
             ("deal-only", "outputs the starting deal for a given game type & random seed as json")
             ("json", "outputs the result of the search as a machine-readable JSON object")
             ("reveal-hidden", "reveals identity of face-down cards in JSON output (e.g. 'ah' instead of '##')")
@@ -193,7 +196,35 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
 
     benchmark = (vm.count("benchmark") != 0);
 
-    json_output = (vm.count("json") != 0);
+    if (vm.count("benchmark-seeds")) {
+        auto seeds = vm["benchmark-seeds"].as<vector<int>>();
+        if (seeds.size() >= 2) {
+            benchmark_seeds = {seeds[0], seeds[1]};
+        } else if (seeds.size() == 1) {
+            benchmark_seeds = {seeds[0], seeds[0]};
+        }
+        is_benchmark = true;
+    }
+
+    if (benchmark && !is_benchmark) {
+        benchmark_seeds = {1, 100};
+        is_benchmark = true;
+    }
+
+    if (vm.count("benchmark-iterations")) {
+        benchmark_iterations = vm["benchmark-iterations"].as<int>();
+    }
+
+    if (vm.count("benchmark-warmup")) {
+        benchmark_warmup = vm["benchmark-warmup"].as<bool>();
+    }
+
+    if (is_benchmark) {
+        json_output = true;
+    } else {
+        json_output = (vm.count("json") != 0);
+    }
+
     reveal_hidden = (vm.count("reveal-hidden") != 0);
     debug = (vm.count("debug") != 0);
 
@@ -218,7 +249,7 @@ bool command_line_helper::assess_errors() {
 
     // The user must either supply input files, a random seed, or ask for the
     // solvability percentage, or benchmark
-    int opt_count = (random_deal != -1) + !input_files.empty() + (solvability > 0) + benchmark;
+    int opt_count = (random_deal != -1) + !input_files.empty() + (solvability > 0) + is_benchmark;
 
     if (opt_count > 1) {
         print_too_many_opts_error();
@@ -341,6 +372,25 @@ string command_line_helper::get_describe_game_rules() {
 
 bool command_line_helper::get_benchmark() {
     return benchmark;
+}
+
+std::pair<int, int> command_line_helper::get_benchmark_seeds() const {
+    if (benchmark_seeds.first > benchmark_seeds.second) {
+        return {benchmark_seeds.second, benchmark_seeds.first};
+    }
+    return benchmark_seeds;
+}
+
+int command_line_helper::get_benchmark_iterations() const {
+    return benchmark_iterations;
+}
+
+bool command_line_helper::get_benchmark_warmup() const {
+    return benchmark_warmup;
+}
+
+bool command_line_helper::get_is_benchmark() const {
+    return is_benchmark;
 }
 
 bool command_line_helper::get_json_output() const {
