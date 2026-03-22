@@ -34,6 +34,7 @@
 
 #include "../game/sol_rules.h" // Keep this for sol_rules
 #include "../game/search-state/game_state.h" // Keep this for game_state
+#include "../game/global_cache.h"
 #include "../solver/solver.h"
 #include "../input-output/input/json-parsing/rules_parser.h"
 #include "../input-output/input/json-parsing/deal_parser.h"
@@ -69,7 +70,8 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
 
         for (int i = 0; i < iterations + (warmup ? 1 : 0); ++i) {
             game_state gs(rules, (int)seed, str_opts);
-            solver sol(gs, cache_capacity);
+            lru_cache cache(gs, cache_capacity);
+            solver sol(gs, cache);
 
             auto start = chrono::high_resolution_clock::now();
             solver::result res = sol.run();
@@ -253,7 +255,8 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
                 continue; 
             }
 
-            solver sol(*gs, cache_capacity);
+            lru_cache cache(*gs, cache_capacity);
+            solver sol(*gs, cache);
             auto start = chrono::high_resolution_clock::now();
             solver::result res = sol.run();
             auto end = chrono::high_resolution_clock::now();
