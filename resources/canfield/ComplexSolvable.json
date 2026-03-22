@@ -1,0 +1,10 @@
+{
+  "foundations": ["2C"],
+  "tableau piles": [
+    ["3D"],
+    ["3H"],
+    ["3S"]
+  ],
+  "reserve": ["AC","2S","3C"],
+  "stock": ["AH","2H","AD","AS","2D"]
+}

@@ -13,8 +13,14 @@ check_ipo_supported(RESULT supported OUTPUT error)
 ###############################################################################
 ## source files ###############################################################
 ###############################################################################
-
 set(main src/main/main.cpp)
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
 set(sources src/main/input-output/input/command_line_helper.cpp
         src/main/input-output/input/command_line_helper.h
         src/main/input-output/output/log_helper.h
@@ -137,15 +143,15 @@ endif()
 ## compile options ############################################################
 ###############################################################################
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -DBOOST_LOG_DYN_LINK \
--lboost_system -pthread -pedantic -Wall -Wextra \
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -DBOOST_LOG_DYN_LINK \
+-pthread -pedantic -Wall -Wextra \
 -Wcast-align -Wcast-qual -Wformat=2 -Winit-self \
--Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept \
--Wno-old-style-cast -Woverloaded-virtual -Wredundant-decls -Wno-shadow \
--Wstrict-null-sentinel -Werror")
+-Wmissing-declarations -Wmissing-include-dirs -Wno-old-style-cast \
+-Woverloaded-virtual -Wredundant-decls -Wno-shadow \
+-Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O -fno-inline -fno-inline-functions -g -Wl,-O1") # uncomment for profiling
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -flto -s -DNDEBUG -Wl,-O1") # uncomment otherwise
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -flto -DNDEBUG") 
+
 
 ###############################################################################
 ## target definitions #########################################################

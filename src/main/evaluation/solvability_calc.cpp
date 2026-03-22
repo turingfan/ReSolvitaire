@@ -23,14 +23,13 @@
 #include <future>
 #include <iomanip>
 #include <iostream>
-#include <omp.h>
+
 
 #include "solvability_calc.h"
 #include "../solver/solver.h"
 #include "binomial_ci.h"
 
 using namespace std;
-using boost::optional;
 
 typedef command_line_helper::streamliner_opt cmd_sos;
 typedef game_state::streamliner_options sos;
@@ -118,7 +117,7 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
         sc->seeds_in_progress.insert(my_seed);
         sc->results_mutex.unlock();
 
-        optional<seed_result> stream_res, no_stream_res, final_res;
+        boost::optional<seed_result> stream_res, no_stream_res, final_res;
 
         if (sc->stream_opt == cmd_sos::SMART) {
             stream_res = solve_seed(my_seed, (sc->timeout/10), sc->rules, sc->cache_capacity, sos::BOTH);
@@ -174,7 +173,7 @@ solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec ti
     game_state gs(rules, seed, stream_opt);
     solver sol(gs, cache_capacity);
 
-    return seed_result(seed, sol.run(optional<std::chrono::milliseconds>(timeout)));
+    return seed_result(seed, sol.run(boost::optional<std::chrono::milliseconds>(timeout)));
 }
 
 
