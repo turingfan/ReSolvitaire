@@ -240,9 +240,16 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
                 string deal_content((istreambuf_iterator<char>(deal_file)), (istreambuf_iterator<char>()));
                 rapidjson::Document deal_doc;
                 deal_doc.Parse(deal_content.c_str());
+                if (deal_doc.HasParseError()) {
+                    throw runtime_error("JSON parse error");
+                }
                 // Use Document for from-file constructor
                 gs = unique_ptr<game_state>(new game_state(rules, deal_doc, str_opts));
+            } catch (const exception& e) {
+                cerr << "Error evaluating instance " << full_path << ": " << e.what() << endl;
+                continue; 
             } catch (...) {
+                cerr << "Unknown error evaluating instance " << full_path << endl;
                 continue; 
             }
 
