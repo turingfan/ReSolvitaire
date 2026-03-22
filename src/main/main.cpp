@@ -79,8 +79,12 @@ int main(int argc, const char* argv[]) {
     }
 
     // Generates the rules of the solitaire from the game type
-    const optional<sol_rules> rules = gen_rules(clh);
-    if (!rules) return EXIT_FAILURE;
+    // Skip if we are doing a benchmark-json which handles rules per instance
+    optional<sol_rules> rules;
+    if (clh.get_benchmark_json().empty()) {
+        rules = gen_rules(clh);
+        if (!rules) return EXIT_FAILURE;
+    }
 
     if (clh.get_deal_only()) {
         game_state gs(*rules, clh.get_random_deal(), game_state::streamliner_options::NONE);
@@ -95,6 +99,11 @@ int main(int argc, const char* argv[]) {
                                                 clh.get_streamliners(), clh.get_resume());
     }
     // If the benchmark option has been supplied, generates it
+    if (!clh.get_benchmark_json().empty()) {
+        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup());
+        return EXIT_SUCCESS;
+    }
+
     if (clh.get_benchmark() || clh.get_is_benchmark()) {
         benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup());
         return EXIT_SUCCESS;

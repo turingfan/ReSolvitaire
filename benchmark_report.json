@@ -1,0 +1,3056 @@
+{
+    "metadata": {
+        "date": "2026-03-22T10:35:04.744408",
+        "machine_id": "MCWD704HG9LV",
+        "git_hash": "bb022fae6a8ec1b75b6d7a54bf80d178b368f67b",
+        "standard_candle_median_us": 18323.0,
+        "mode": "paired-instances"
+    },
+    "benchmark_workload": "--benchmark-json tests/oracles/level2.json --benchmark-iterations 1 --benchmark-warmup 0",
+    "results": [
+        {
+            "name": "american-canister_6993035_winnable.json",
+            "baseline": {
+                "instance": "american-canister_6993035_winnable.json",
+                "median_time_us": 120546.0,
+                "mean_time_us": 120546.0,
+                "median_nodes": 134033.0,
+                "mean_nodes": 134033.0
+            },
+            "current": {
+                "instance": "american-canister_6993035_winnable.json",
+                "median_time_us": 120000.0,
+                "mean_time_us": 120000.0,
+                "median_nodes": 134033.0,
+                "mean_nodes": 134033.0
+            },
+            "speedup_ratio": 0.9954706087302773,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "american-canister_1332_unwinnable.json",
+            "baseline": {
+                "instance": "american-canister_1332_unwinnable.json",
+                "median_time_us": 65405.0,
+                "mean_time_us": 65405.0,
+                "median_nodes": 65560.0,
+                "mean_nodes": 65560.0
+            },
+            "current": {
+                "instance": "american-canister_1332_unwinnable.json",
+                "median_time_us": 60844.0,
+                "mean_time_us": 60844.0,
+                "median_nodes": 65560.0,
+                "mean_nodes": 65560.0
+            },
+            "speedup_ratio": 0.9302652702392783,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "canfield_1000237_winnable.json",
+            "baseline": {
+                "instance": "canfield_1000237_winnable.json",
+                "median_time_us": 120642.0,
+                "mean_time_us": 120642.0,
+                "median_nodes": 129328.0,
+                "mean_nodes": 129328.0
+            },
+            "current": {
+                "instance": "canfield_1000237_winnable.json",
+                "median_time_us": 125222.0,
+                "mean_time_us": 125222.0,
+                "median_nodes": 129328.0,
+                "mean_nodes": 129328.0
+            },
+            "speedup_ratio": 1.0379635616120422,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "canfield_1000225_unwinnable.json",
+            "baseline": {
+                "instance": "canfield_1000225_unwinnable.json",
+                "median_time_us": 154018.0,
+                "mean_time_us": 154018.0,
+                "median_nodes": 133412.0,
+                "mean_nodes": 133412.0
+            },
+            "current": {
+                "instance": "canfield_1000225_unwinnable.json",
+                "median_time_us": 156691.0,
+                "mean_time_us": 156691.0,
+                "median_nodes": 133412.0,
+                "mean_nodes": 133412.0
+            },
+            "speedup_ratio": 1.0173551143372852,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "canfield-strict_4000550_winnable.json",
+            "baseline": {
+                "instance": "canfield-strict_4000550_winnable.json",
+                "median_time_us": 83190.0,
+                "mean_time_us": 83190.0,
+                "median_nodes": 112275.0,
+                "mean_nodes": 112275.0
+            },
+            "current": {
+                "instance": "canfield-strict_4000550_winnable.json",
+                "median_time_us": 80481.0,
+                "mean_time_us": 80481.0,
+                "median_nodes": 112275.0,
+                "mean_nodes": 112275.0
+            },
+            "speedup_ratio": 0.9674359899026326,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "canfield-strict_4000100_unwinnable.json",
+            "baseline": {
+                "instance": "canfield-strict_4000100_unwinnable.json",
+                "median_time_us": 164119.0,
+                "mean_time_us": 164119.0,
+                "median_nodes": 155109.0,
+                "mean_nodes": 155109.0
+            },
+            "current": {
+                "instance": "canfield-strict_4000100_unwinnable.json",
+                "median_time_us": 158340.0,
+                "mean_time_us": 158340.0,
+                "median_nodes": 155109.0,
+                "mean_nodes": 155109.0
+            },
+            "speedup_ratio": 0.964787745477367,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "bakers-game_1733_winnable.json",
+            "baseline": {
+                "instance": "bakers-game_1733_winnable.json",
+                "median_time_us": 52381.0,
+                "mean_time_us": 52381.0,
+                "median_nodes": 72121.0,
+                "mean_nodes": 72121.0
+            },
+            "current": {
+                "instance": "bakers-game_1733_winnable.json",
+                "median_time_us": 54789.0,
+                "mean_time_us": 54789.0,
+                "median_nodes": 72121.0,
+                "mean_nodes": 72121.0
+            },
+            "speedup_ratio": 1.0459708672992116,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "bakers-game_155_unwinnable.json",
+            "baseline": {
+                "instance": "bakers-game_155_unwinnable.json",
+                "median_time_us": 59377.0,
+                "mean_time_us": 59377.0,
+                "median_nodes": 66790.0,
+                "mean_nodes": 66790.0
+            },
+            "current": {
+                "instance": "bakers-game_155_unwinnable.json",
+                "median_time_us": 62363.0,
+                "mean_time_us": 62363.0,
+                "median_nodes": 66790.0,
+                "mean_nodes": 66790.0
+            },
+            "speedup_ratio": 1.0502888323761725,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "black-hole_9029653_winnable.json",
+            "baseline": {
+                "instance": "black-hole_9029653_winnable.json",
+                "median_time_us": 109408.0,
+                "mean_time_us": 109408.0,
+                "median_nodes": 111738.0,
+                "mean_nodes": 111738.0
+            },
+            "current": {
+                "instance": "black-hole_9029653_winnable.json",
+                "median_time_us": 109550.0,
+                "mean_time_us": 109550.0,
+                "median_nodes": 111738.0,
+                "mean_nodes": 111738.0
+            },
+            "speedup_ratio": 1.001297894121088,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "black-hole_9259303_unwinnable.json",
+            "baseline": {
+                "instance": "black-hole_9259303_unwinnable.json",
+                "median_time_us": 131981.0,
+                "mean_time_us": 131981.0,
+                "median_nodes": 141012.0,
+                "mean_nodes": 141012.0
+            },
+            "current": {
+                "instance": "black-hole_9259303_unwinnable.json",
+                "median_time_us": 132419.0,
+                "mean_time_us": 132419.0,
+                "median_nodes": 141012.0,
+                "mean_nodes": 141012.0
+            },
+            "speedup_ratio": 1.0033186595040195,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "fan_172_winnable.json",
+            "baseline": {
+                "instance": "fan_172_winnable.json",
+                "median_time_us": 178574.0,
+                "mean_time_us": 178574.0,
+                "median_nodes": 212446.0,
+                "mean_nodes": 212446.0
+            },
+            "current": {
+                "instance": "fan_172_winnable.json",
+                "median_time_us": 168874.0,
+                "mean_time_us": 168874.0,
+                "median_nodes": 212446.0,
+                "mean_nodes": 212446.0
+            },
+            "speedup_ratio": 0.9456807821967363,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "fan_82_unwinnable.json",
+            "baseline": {
+                "instance": "fan_82_unwinnable.json",
+                "median_time_us": 171837.0,
+                "mean_time_us": 171837.0,
+                "median_nodes": 238959.0,
+                "mean_nodes": 238959.0
+            },
+            "current": {
+                "instance": "fan_82_unwinnable.json",
+                "median_time_us": 176221.0,
+                "mean_time_us": 176221.0,
+                "median_nodes": 238959.0,
+                "mean_nodes": 238959.0
+            },
+            "speedup_ratio": 1.0255125496837119,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "fore-cell_1001510_winnable.json",
+            "baseline": {
+                "instance": "fore-cell_1001510_winnable.json",
+                "median_time_us": 154016.0,
+                "mean_time_us": 154016.0,
+                "median_nodes": 197794.0,
+                "mean_nodes": 197794.0
+            },
+            "current": {
+                "instance": "fore-cell_1001510_winnable.json",
+                "median_time_us": 144675.0,
+                "mean_time_us": 144675.0,
+                "median_nodes": 197794.0,
+                "mean_nodes": 197794.0
+            },
+            "speedup_ratio": 0.9393504570953667,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "fore-cell_1000965_unwinnable.json",
+            "baseline": {
+                "instance": "fore-cell_1000965_unwinnable.json",
+                "median_time_us": 186537.0,
+                "mean_time_us": 186537.0,
+                "median_nodes": 167117.0,
+                "mean_nodes": 167117.0
+            },
+            "current": {
+                "instance": "fore-cell_1000965_unwinnable.json",
+                "median_time_us": 183396.0,
+                "mean_time_us": 183396.0,
+                "median_nodes": 167117.0,
+                "mean_nodes": 167117.0
+            },
+            "speedup_ratio": 0.9831615175541581,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "beleaguered-castle_139_winnable.json",
+            "baseline": {
+                "instance": "beleaguered-castle_139_winnable.json",
+                "median_time_us": 148818.0,
+                "mean_time_us": 148818.0,
+                "median_nodes": 254244.0,
+                "mean_nodes": 254244.0
+            },
+            "current": {
+                "instance": "beleaguered-castle_139_winnable.json",
+                "median_time_us": 153857.0,
+                "mean_time_us": 153857.0,
+                "median_nodes": 254244.0,
+                "mean_nodes": 254244.0
+            },
+            "speedup_ratio": 1.0338601513257806,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "beleaguered-castle_780_unwinnable.json",
+            "baseline": {
+                "instance": "beleaguered-castle_780_unwinnable.json",
+                "median_time_us": 131711.0,
+                "mean_time_us": 131711.0,
+                "median_nodes": 175553.0,
+                "mean_nodes": 175553.0
+            },
+            "current": {
+                "instance": "beleaguered-castle_780_unwinnable.json",
+                "median_time_us": 132055.0,
+                "mean_time_us": 132055.0,
+                "median_nodes": 175553.0,
+                "mean_nodes": 175553.0
+            },
+            "speedup_ratio": 1.0026117788187774,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "eight-off_4026_winnable.json",
+            "baseline": {
+                "instance": "eight-off_4026_winnable.json",
+                "median_time_us": 86124.0,
+                "mean_time_us": 86124.0,
+                "median_nodes": 109842.0,
+                "mean_nodes": 109842.0
+            },
+            "current": {
+                "instance": "eight-off_4026_winnable.json",
+                "median_time_us": 88278.0,
+                "mean_time_us": 88278.0,
+                "median_nodes": 109842.0,
+                "mean_nodes": 109842.0
+            },
+            "speedup_ratio": 1.025010450048767,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "eight-off_9533_unwinnable.json",
+            "baseline": {
+                "instance": "eight-off_9533_unwinnable.json",
+                "median_time_us": 73863.0,
+                "mean_time_us": 73863.0,
+                "median_nodes": 66151.0,
+                "mean_nodes": 66151.0
+            },
+            "current": {
+                "instance": "eight-off_9533_unwinnable.json",
+                "median_time_us": 73267.0,
+                "mean_time_us": 73267.0,
+                "median_nodes": 66151.0,
+                "mean_nodes": 66151.0
+            },
+            "speedup_ratio": 0.9919310074056022,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "fore-cell-same-suit_1429_winnable.json",
+            "baseline": {
+                "instance": "fore-cell-same-suit_1429_winnable.json",
+                "median_time_us": 70134.0,
+                "mean_time_us": 70134.0,
+                "median_nodes": 103537.0,
+                "mean_nodes": 103537.0
+            },
+            "current": {
+                "instance": "fore-cell-same-suit_1429_winnable.json",
+                "median_time_us": 66633.0,
+                "mean_time_us": 66633.0,
+                "median_nodes": 103537.0,
+                "mean_nodes": 103537.0
+            },
+            "speedup_ratio": 0.9500812729917016,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "fore-cell-same-suit_103_unwinnable.json",
+            "baseline": {
+                "instance": "fore-cell-same-suit_103_unwinnable.json",
+                "median_time_us": 96539.0,
+                "mean_time_us": 96539.0,
+                "median_nodes": 133921.0,
+                "mean_nodes": 133921.0
+            },
+            "current": {
+                "instance": "fore-cell-same-suit_103_unwinnable.json",
+                "median_time_us": 102394.0,
+                "mean_time_us": 102394.0,
+                "median_nodes": 133921.0,
+                "mean_nodes": 133921.0
+            },
+            "speedup_ratio": 1.0606490641088058,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "east-haven_83_winnable.json",
+            "baseline": {
+                "instance": "east-haven_83_winnable.json",
+                "median_time_us": 112803.0,
+                "mean_time_us": 112803.0,
+                "median_nodes": 198807.0,
+                "mean_nodes": 198807.0
+            },
+            "current": {
+                "instance": "east-haven_83_winnable.json",
+                "median_time_us": 117297.0,
+                "mean_time_us": 117297.0,
+                "median_nodes": 198807.0,
+                "mean_nodes": 198807.0
+            },
+            "speedup_ratio": 1.0398393659743093,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "east-haven_196_unwinnable.json",
+            "baseline": {
+                "instance": "east-haven_196_unwinnable.json",
+                "median_time_us": 141318.0,
+                "mean_time_us": 141318.0,
+                "median_nodes": 165183.0,
+                "mean_nodes": 165183.0
+            },
+            "current": {
+                "instance": "east-haven_196_unwinnable.json",
+                "median_time_us": 129089.0,
+                "mean_time_us": 129089.0,
+                "median_nodes": 165183.0,
+                "mean_nodes": 165183.0
+            },
+            "speedup_ratio": 0.9134646683366592,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-1-cell_115_winnable.json",
+            "baseline": {
+                "instance": "free-cell-1-cell_115_winnable.json",
+                "median_time_us": 109638.0,
+                "mean_time_us": 109638.0,
+                "median_nodes": 137371.0,
+                "mean_nodes": 137371.0
+            },
+            "current": {
+                "instance": "free-cell-1-cell_115_winnable.json",
+                "median_time_us": 205591.0,
+                "mean_time_us": 205591.0,
+                "median_nodes": 137371.0,
+                "mean_nodes": 137371.0
+            },
+            "speedup_ratio": 1.8751801382732265,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-1-cell_286_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell-1-cell_286_unwinnable.json",
+                "median_time_us": 82086.0,
+                "mean_time_us": 82086.0,
+                "median_nodes": 94541.0,
+                "mean_nodes": 94541.0
+            },
+            "current": {
+                "instance": "free-cell-1-cell_286_unwinnable.json",
+                "median_time_us": 84309.0,
+                "mean_time_us": 84309.0,
+                "median_nodes": 94541.0,
+                "mean_nodes": 94541.0
+            },
+            "speedup_ratio": 1.0270813537022148,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-2-cell_582_winnable.json",
+            "baseline": {
+                "instance": "free-cell-2-cell_582_winnable.json",
+                "median_time_us": 142226.0,
+                "mean_time_us": 142226.0,
+                "median_nodes": 170841.0,
+                "mean_nodes": 170841.0
+            },
+            "current": {
+                "instance": "free-cell-2-cell_582_winnable.json",
+                "median_time_us": 138332.0,
+                "mean_time_us": 138332.0,
+                "median_nodes": 170841.0,
+                "mean_nodes": 170841.0
+            },
+            "speedup_ratio": 0.9726210397536316,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-2-cell_902_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell-2-cell_902_unwinnable.json",
+                "median_time_us": 177124.0,
+                "mean_time_us": 177124.0,
+                "median_nodes": 174401.0,
+                "mean_nodes": 174401.0
+            },
+            "current": {
+                "instance": "free-cell-2-cell_902_unwinnable.json",
+                "median_time_us": 172346.0,
+                "mean_time_us": 172346.0,
+                "median_nodes": 174401.0,
+                "mean_nodes": 174401.0
+            },
+            "speedup_ratio": 0.9730245477744405,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-3-cell_1783_winnable.json",
+            "baseline": {
+                "instance": "free-cell-3-cell_1783_winnable.json",
+                "median_time_us": 147556.0,
+                "mean_time_us": 147556.0,
+                "median_nodes": 154421.0,
+                "mean_nodes": 154421.0
+            },
+            "current": {
+                "instance": "free-cell-3-cell_1783_winnable.json",
+                "median_time_us": 147588.0,
+                "mean_time_us": 147588.0,
+                "median_nodes": 154421.0,
+                "mean_nodes": 154421.0
+            },
+            "speedup_ratio": 1.0002168668166662,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-3-cell_951_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell-3-cell_951_unwinnable.json",
+                "median_time_us": 186786.0,
+                "mean_time_us": 186786.0,
+                "median_nodes": 197327.0,
+                "mean_nodes": 197327.0
+            },
+            "current": {
+                "instance": "free-cell-3-cell_951_unwinnable.json",
+                "median_time_us": 195040.0,
+                "mean_time_us": 195040.0,
+                "median_nodes": 197327.0,
+                "mean_nodes": 197327.0
+            },
+            "speedup_ratio": 1.0441896073581531,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-0-cell_4854_winnable.json",
+            "baseline": {
+                "instance": "free-cell-0-cell_4854_winnable.json",
+                "median_time_us": 154807.0,
+                "mean_time_us": 154807.0,
+                "median_nodes": 186473.0,
+                "mean_nodes": 186473.0
+            },
+            "current": {
+                "instance": "free-cell-0-cell_4854_winnable.json",
+                "median_time_us": 148009.0,
+                "mean_time_us": 148009.0,
+                "median_nodes": 186473.0,
+                "mean_nodes": 186473.0
+            },
+            "speedup_ratio": 0.9560872570361806,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-0-cell_9463_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell-0-cell_9463_unwinnable.json",
+                "median_time_us": 105595.0,
+                "mean_time_us": 105595.0,
+                "median_nodes": 151924.0,
+                "mean_nodes": 151924.0
+            },
+            "current": {
+                "instance": "free-cell-0-cell_9463_unwinnable.json",
+                "median_time_us": 115332.0,
+                "mean_time_us": 115332.0,
+                "median_nodes": 151924.0,
+                "mean_nodes": 151924.0
+            },
+            "speedup_ratio": 1.0922108054358635,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-5-pile_126_winnable.json",
+            "baseline": {
+                "instance": "free-cell-5-pile_126_winnable.json",
+                "median_time_us": 134903.0,
+                "mean_time_us": 134903.0,
+                "median_nodes": 160061.0,
+                "mean_nodes": 160061.0
+            },
+            "current": {
+                "instance": "free-cell-5-pile_126_winnable.json",
+                "median_time_us": 127408.0,
+                "mean_time_us": 127408.0,
+                "median_nodes": 160061.0,
+                "mean_nodes": 160061.0
+            },
+            "speedup_ratio": 0.9444415617147135,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-5-pile_313_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell-5-pile_313_unwinnable.json",
+                "median_time_us": 166567.0,
+                "mean_time_us": 166567.0,
+                "median_nodes": 206933.0,
+                "mean_nodes": 206933.0
+            },
+            "current": {
+                "instance": "free-cell-5-pile_313_unwinnable.json",
+                "median_time_us": 166793.0,
+                "mean_time_us": 166793.0,
+                "median_nodes": 206933.0,
+                "mean_nodes": 206933.0
+            },
+            "speedup_ratio": 1.0013568113732012,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-6-pile_34_winnable.json",
+            "baseline": {
+                "instance": "free-cell-6-pile_34_winnable.json",
+                "median_time_us": 135483.0,
+                "mean_time_us": 135483.0,
+                "median_nodes": 162715.0,
+                "mean_nodes": 162715.0
+            },
+            "current": {
+                "instance": "free-cell-6-pile_34_winnable.json",
+                "median_time_us": 124529.0,
+                "mean_time_us": 124529.0,
+                "median_nodes": 162715.0,
+                "mean_nodes": 162715.0
+            },
+            "speedup_ratio": 0.9191485278595839,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-6-pile_128_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell-6-pile_128_unwinnable.json",
+                "median_time_us": 298408.0,
+                "mean_time_us": 298408.0,
+                "median_nodes": 189680.0,
+                "mean_nodes": 189680.0
+            },
+            "current": {
+                "instance": "free-cell-6-pile_128_unwinnable.json",
+                "median_time_us": 170724.0,
+                "mean_time_us": 170724.0,
+                "median_nodes": 189680.0,
+                "mean_nodes": 189680.0
+            },
+            "speedup_ratio": 0.5721160290608831,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-7-pile_402_winnable.json",
+            "baseline": {
+                "instance": "free-cell-7-pile_402_winnable.json",
+                "median_time_us": 153893.0,
+                "mean_time_us": 153893.0,
+                "median_nodes": 150906.0,
+                "mean_nodes": 150906.0
+            },
+            "current": {
+                "instance": "free-cell-7-pile_402_winnable.json",
+                "median_time_us": 134902.0,
+                "mean_time_us": 134902.0,
+                "median_nodes": 150906.0,
+                "mean_nodes": 150906.0
+            },
+            "speedup_ratio": 0.8765960764947074,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-7-pile_1087_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell-7-pile_1087_unwinnable.json",
+                "median_time_us": 139668.0,
+                "mean_time_us": 139668.0,
+                "median_nodes": 119372.0,
+                "mean_nodes": 119372.0
+            },
+            "current": {
+                "instance": "free-cell-7-pile_1087_unwinnable.json",
+                "median_time_us": 127569.0,
+                "mean_time_us": 127569.0,
+                "median_nodes": 119372.0,
+                "mean_nodes": 119372.0
+            },
+            "speedup_ratio": 0.9133731420225105,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "gaps-basic-variant_4243042_winnable.json",
+            "baseline": {
+                "instance": "gaps-basic-variant_4243042_winnable.json",
+                "median_time_us": 104072.0,
+                "mean_time_us": 104072.0,
+                "median_nodes": 70264.0,
+                "mean_nodes": 70264.0
+            },
+            "current": {
+                "instance": "gaps-basic-variant_4243042_winnable.json",
+                "median_time_us": 103051.0,
+                "mean_time_us": 103051.0,
+                "median_nodes": 70264.0,
+                "mean_nodes": 70264.0
+            },
+            "speedup_ratio": 0.9901894842032439,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "gaps-basic-variant_4499582_unwinnable.json",
+            "baseline": {
+                "instance": "gaps-basic-variant_4499582_unwinnable.json",
+                "median_time_us": 100670.0,
+                "mean_time_us": 100670.0,
+                "median_nodes": 79961.0,
+                "mean_nodes": 79961.0
+            },
+            "current": {
+                "instance": "gaps-basic-variant_4499582_unwinnable.json",
+                "median_time_us": 100988.0,
+                "mean_time_us": 100988.0,
+                "median_nodes": 79961.0,
+                "mean_nodes": 79961.0
+            },
+            "speedup_ratio": 1.003158835800139,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "gaps-one-deal_2580_winnable.json",
+            "baseline": {
+                "instance": "gaps-one-deal_2580_winnable.json",
+                "median_time_us": 163169.0,
+                "mean_time_us": 163169.0,
+                "median_nodes": 114613.0,
+                "mean_nodes": 114613.0
+            },
+            "current": {
+                "instance": "gaps-one-deal_2580_winnable.json",
+                "median_time_us": 160074.0,
+                "mean_time_us": 160074.0,
+                "median_nodes": 114613.0,
+                "mean_nodes": 114613.0
+            },
+            "speedup_ratio": 0.9810319362133738,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "gaps-one-deal_77_unwinnable.json",
+            "baseline": {
+                "instance": "gaps-one-deal_77_unwinnable.json",
+                "median_time_us": 168854.0,
+                "mean_time_us": 168854.0,
+                "median_nodes": 97708.0,
+                "mean_nodes": 97708.0
+            },
+            "current": {
+                "instance": "gaps-one-deal_77_unwinnable.json",
+                "median_time_us": 163413.0,
+                "mean_time_us": 163413.0,
+                "median_nodes": 97708.0,
+                "mean_nodes": 97708.0
+            },
+            "speedup_ratio": 0.9677768960166772,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "golf_37_winnable.json",
+            "baseline": {
+                "instance": "golf_37_winnable.json",
+                "median_time_us": 169542.0,
+                "mean_time_us": 169542.0,
+                "median_nodes": 281384.0,
+                "mean_nodes": 281384.0
+            },
+            "current": {
+                "instance": "golf_37_winnable.json",
+                "median_time_us": 166649.0,
+                "mean_time_us": 166649.0,
+                "median_nodes": 281384.0,
+                "mean_nodes": 281384.0
+            },
+            "speedup_ratio": 0.9829363815455757,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "golf_41_unwinnable.json",
+            "baseline": {
+                "instance": "golf_41_unwinnable.json",
+                "median_time_us": 181610.0,
+                "mean_time_us": 181610.0,
+                "median_nodes": 275587.0,
+                "mean_nodes": 275587.0
+            },
+            "current": {
+                "instance": "golf_41_unwinnable.json",
+                "median_time_us": 179817.0,
+                "mean_time_us": 179817.0,
+                "median_nodes": 275587.0,
+                "mean_nodes": 275587.0
+            },
+            "speedup_ratio": 0.9901271956390066,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "king-albert_1000108_winnable.json",
+            "baseline": {
+                "instance": "king-albert_1000108_winnable.json",
+                "median_time_us": 45671.0,
+                "mean_time_us": 45671.0,
+                "median_nodes": 51727.0,
+                "mean_nodes": 51727.0
+            },
+            "current": {
+                "instance": "king-albert_1000108_winnable.json",
+                "median_time_us": 46782.0,
+                "mean_time_us": 46782.0,
+                "median_nodes": 51727.0,
+                "mean_nodes": 51727.0
+            },
+            "speedup_ratio": 1.0243261588316437,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "king-albert_1000379_unwinnable.json",
+            "baseline": {
+                "instance": "king-albert_1000379_unwinnable.json",
+                "median_time_us": 41403.0,
+                "mean_time_us": 41403.0,
+                "median_nodes": 39181.0,
+                "mean_nodes": 39181.0
+            },
+            "current": {
+                "instance": "king-albert_1000379_unwinnable.json",
+                "median_time_us": 44644.0,
+                "mean_time_us": 44644.0,
+                "median_nodes": 39181.0,
+                "mean_nodes": 39181.0
+            },
+            "speedup_ratio": 1.0782793517377969,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike_699325_winnable.json",
+            "baseline": {
+                "instance": "klondike_699325_winnable.json",
+                "median_time_us": 121429.0,
+                "mean_time_us": 121429.0,
+                "median_nodes": 143658.0,
+                "mean_nodes": 143658.0
+            },
+            "current": {
+                "instance": "klondike_699325_winnable.json",
+                "median_time_us": 130045.0,
+                "mean_time_us": 130045.0,
+                "median_nodes": 143658.0,
+                "mean_nodes": 143658.0
+            },
+            "speedup_ratio": 1.070955043688081,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike_886399_unwinnable.json",
+            "baseline": {
+                "instance": "klondike_886399_unwinnable.json",
+                "median_time_us": 162195.0,
+                "mean_time_us": 162195.0,
+                "median_nodes": 167718.0,
+                "mean_nodes": 167718.0
+            },
+            "current": {
+                "instance": "klondike_886399_unwinnable.json",
+                "median_time_us": 169390.0,
+                "mean_time_us": 169390.0,
+                "median_nodes": 167718.0,
+                "mean_nodes": 167718.0
+            },
+            "speedup_ratio": 1.0443601837294614,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-1_700004_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-1_700004_winnable.json",
+                "median_time_us": 149172.0,
+                "mean_time_us": 149172.0,
+                "median_nodes": 80587.0,
+                "mean_nodes": 80587.0
+            },
+            "current": {
+                "instance": "klondike-deal-1_700004_winnable.json",
+                "median_time_us": 140048.0,
+                "mean_time_us": 140048.0,
+                "median_nodes": 80587.0,
+                "mean_nodes": 80587.0
+            },
+            "speedup_ratio": 0.9388357064328426,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-1_637778_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-1_637778_unwinnable.json",
+                "median_time_us": 160056.0,
+                "mean_time_us": 160056.0,
+                "median_nodes": 95870.0,
+                "mean_nodes": 95870.0
+            },
+            "current": {
+                "instance": "klondike-deal-1_637778_unwinnable.json",
+                "median_time_us": 152017.0,
+                "mean_time_us": 152017.0,
+                "median_nodes": 95870.0,
+                "mean_nodes": 95870.0
+            },
+            "speedup_ratio": 0.949773829159794,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-1-noworryback_188733_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-1-noworryback_188733_winnable.json",
+                "median_time_us": 145681.0,
+                "mean_time_us": 145681.0,
+                "median_nodes": 123614.0,
+                "mean_nodes": 123614.0
+            },
+            "current": {
+                "instance": "klondike-deal-1-noworryback_188733_winnable.json",
+                "median_time_us": 151778.0,
+                "mean_time_us": 151778.0,
+                "median_nodes": 123614.0,
+                "mean_nodes": 123614.0
+            },
+            "speedup_ratio": 1.0418517171079276,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-1-noworryback_291141_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-1-noworryback_291141_unwinnable.json",
+                "median_time_us": 126420.0,
+                "mean_time_us": 126420.0,
+                "median_nodes": 95465.0,
+                "mean_nodes": 95465.0
+            },
+            "current": {
+                "instance": "klondike-deal-1-noworryback_291141_unwinnable.json",
+                "median_time_us": 117637.0,
+                "mean_time_us": 117637.0,
+                "median_nodes": 95465.0,
+                "mean_nodes": 95465.0
+            },
+            "speedup_ratio": 0.9305252333491536,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-2_645385_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-2_645385_winnable.json",
+                "median_time_us": 122232.0,
+                "mean_time_us": 122232.0,
+                "median_nodes": 124768.0,
+                "mean_nodes": 124768.0
+            },
+            "current": {
+                "instance": "klondike-deal-2_645385_winnable.json",
+                "median_time_us": 122971.0,
+                "mean_time_us": 122971.0,
+                "median_nodes": 124768.0,
+                "mean_nodes": 124768.0
+            },
+            "speedup_ratio": 1.0060458799659664,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-2_275229_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-2_275229_unwinnable.json",
+                "median_time_us": 85547.0,
+                "mean_time_us": 85547.0,
+                "median_nodes": 108715.0,
+                "mean_nodes": 108715.0
+            },
+            "current": {
+                "instance": "klondike-deal-2_275229_unwinnable.json",
+                "median_time_us": 88388.0,
+                "mean_time_us": 88388.0,
+                "median_nodes": 108715.0,
+                "mean_nodes": 108715.0
+            },
+            "speedup_ratio": 1.0332098144879422,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-2-noworryback_673293_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-2-noworryback_673293_winnable.json",
+                "median_time_us": 122487.0,
+                "mean_time_us": 122487.0,
+                "median_nodes": 122918.0,
+                "mean_nodes": 122918.0
+            },
+            "current": {
+                "instance": "klondike-deal-2-noworryback_673293_winnable.json",
+                "median_time_us": 128176.0,
+                "mean_time_us": 128176.0,
+                "median_nodes": 122918.0,
+                "mean_nodes": 122918.0
+            },
+            "speedup_ratio": 1.0464457452627627,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-2-noworryback_716433_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-2-noworryback_716433_unwinnable.json",
+                "median_time_us": 171197.0,
+                "mean_time_us": 171197.0,
+                "median_nodes": 133879.0,
+                "mean_nodes": 133879.0
+            },
+            "current": {
+                "instance": "klondike-deal-2-noworryback_716433_unwinnable.json",
+                "median_time_us": 155354.0,
+                "mean_time_us": 155354.0,
+                "median_nodes": 133879.0,
+                "mean_nodes": 133879.0
+            },
+            "speedup_ratio": 0.9074574904934082,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-anyspace_265002_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-anyspace_265002_winnable.json",
+                "median_time_us": 114186.0,
+                "mean_time_us": 114186.0,
+                "median_nodes": 93343.0,
+                "mean_nodes": 93343.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-anyspace_265002_winnable.json",
+                "median_time_us": 109152.0,
+                "mean_time_us": 109152.0,
+                "median_nodes": 93343.0,
+                "mean_nodes": 93343.0
+            },
+            "speedup_ratio": 0.9559140349955336,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-anyspace_842574_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-anyspace_842574_unwinnable.json",
+                "median_time_us": 132321.0,
+                "mean_time_us": 132321.0,
+                "median_nodes": 90867.0,
+                "mean_nodes": 90867.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-anyspace_842574_unwinnable.json",
+                "median_time_us": 124467.0,
+                "mean_time_us": 124467.0,
+                "median_nodes": 90867.0,
+                "mean_nodes": 90867.0
+            },
+            "speedup_ratio": 0.9406443421679098,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-anysuit_176898_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-anysuit_176898_winnable.json",
+                "median_time_us": 158178.0,
+                "mean_time_us": 158178.0,
+                "median_nodes": 182345.0,
+                "mean_nodes": 182345.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-anysuit_176898_winnable.json",
+                "median_time_us": 158373.0,
+                "mean_time_us": 158373.0,
+                "median_nodes": 182345.0,
+                "mean_nodes": 182345.0
+            },
+            "speedup_ratio": 1.0012327883776504,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-anysuit_239055_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-anysuit_239055_unwinnable.json",
+                "median_time_us": 75890.0,
+                "mean_time_us": 75890.0,
+                "median_nodes": 74362.0,
+                "mean_nodes": 74362.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-anysuit_239055_unwinnable.json",
+                "median_time_us": 76255.0,
+                "mean_time_us": 76255.0,
+                "median_nodes": 74362.0,
+                "mean_nodes": 74362.0
+            },
+            "speedup_ratio": 1.0048095928317302,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-anysuitanyspace_870306_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-anysuitanyspace_870306_winnable.json",
+                "median_time_us": 134649.0,
+                "mean_time_us": 134649.0,
+                "median_nodes": 201563.0,
+                "mean_nodes": 201563.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-anysuitanyspace_870306_winnable.json",
+                "median_time_us": 138721.0,
+                "mean_time_us": 138721.0,
+                "median_nodes": 201563.0,
+                "mean_nodes": 201563.0
+            },
+            "speedup_ratio": 1.0302415910998226,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-anysuitanyspace_898114_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-anysuitanyspace_898114_unwinnable.json",
+                "median_time_us": 149143.0,
+                "mean_time_us": 149143.0,
+                "median_nodes": 119811.0,
+                "mean_nodes": 119811.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-anysuitanyspace_898114_unwinnable.json",
+                "median_time_us": 154996.0,
+                "mean_time_us": 154996.0,
+                "median_nodes": 119811.0,
+                "mean_nodes": 119811.0
+            },
+            "speedup_ratio": 1.0392442152833188,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-anysuitnospace_792_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-anysuitnospace_792_winnable.json",
+                "median_time_us": 137968.0,
+                "mean_time_us": 137968.0,
+                "median_nodes": 122234.0,
+                "mean_nodes": 122234.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-anysuitnospace_792_winnable.json",
+                "median_time_us": 145174.0,
+                "mean_time_us": 145174.0,
+                "median_nodes": 122234.0,
+                "mean_nodes": 122234.0
+            },
+            "speedup_ratio": 1.0522295024933317,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-anysuitnospace_3647_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-anysuitnospace_3647_unwinnable.json",
+                "median_time_us": 157888.0,
+                "mean_time_us": 157888.0,
+                "median_nodes": 115250.0,
+                "mean_nodes": 115250.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-anysuitnospace_3647_unwinnable.json",
+                "median_time_us": 146381.0,
+                "mean_time_us": 146381.0,
+                "median_nodes": 115250.0,
+                "mean_nodes": 115250.0
+            },
+            "speedup_ratio": 0.9271192237535468,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-nospace_777857_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-nospace_777857_winnable.json",
+                "median_time_us": 113076.0,
+                "mean_time_us": 113076.0,
+                "median_nodes": 129646.0,
+                "mean_nodes": 129646.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-nospace_777857_winnable.json",
+                "median_time_us": 104160.0,
+                "mean_time_us": 104160.0,
+                "median_nodes": 129646.0,
+                "mean_nodes": 129646.0
+            },
+            "speedup_ratio": 0.9211503767377693,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-nospace_786723_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-nospace_786723_unwinnable.json",
+                "median_time_us": 151396.0,
+                "mean_time_us": 151396.0,
+                "median_nodes": 128053.0,
+                "mean_nodes": 128053.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-nospace_786723_unwinnable.json",
+                "median_time_us": 144297.0,
+                "mean_time_us": 144297.0,
+                "median_nodes": 128053.0,
+                "mean_nodes": 128053.0
+            },
+            "speedup_ratio": 0.9531097254881239,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-noworryback_902818_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-noworryback_902818_winnable.json",
+                "median_time_us": 81442.0,
+                "mean_time_us": 81442.0,
+                "median_nodes": 90983.0,
+                "mean_nodes": 90983.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-noworryback_902818_winnable.json",
+                "median_time_us": 81155.0,
+                "mean_time_us": 81155.0,
+                "median_nodes": 90983.0,
+                "mean_nodes": 90983.0
+            },
+            "speedup_ratio": 0.9964760197441124,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-noworryback_111805_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-noworryback_111805_unwinnable.json",
+                "median_time_us": 138071.0,
+                "mean_time_us": 138071.0,
+                "median_nodes": 112445.0,
+                "mean_nodes": 112445.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-noworryback_111805_unwinnable.json",
+                "median_time_us": 144600.0,
+                "mean_time_us": 144600.0,
+                "median_nodes": 112445.0,
+                "mean_nodes": 112445.0
+            },
+            "speedup_ratio": 1.04728726524759,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-samesuit_1137_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-samesuit_1137_winnable.json",
+                "median_time_us": 142966.0,
+                "mean_time_us": 142966.0,
+                "median_nodes": 256442.0,
+                "mean_nodes": 256442.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-samesuit_1137_winnable.json",
+                "median_time_us": 153088.0,
+                "mean_time_us": 153088.0,
+                "median_nodes": 256442.0,
+                "mean_nodes": 256442.0
+            },
+            "speedup_ratio": 1.0708000503616244,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-samesuit_320_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-samesuit_320_unwinnable.json",
+                "median_time_us": 167107.0,
+                "mean_time_us": 167107.0,
+                "median_nodes": 162749.0,
+                "mean_nodes": 162749.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-samesuit_320_unwinnable.json",
+                "median_time_us": 176653.0,
+                "mean_time_us": 176653.0,
+                "median_nodes": 162749.0,
+                "mean_nodes": 162749.0
+            },
+            "speedup_ratio": 1.0571250755503958,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-samesuitanyspace_530816_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-samesuitanyspace_530816_winnable.json",
+                "median_time_us": 133722.0,
+                "mean_time_us": 133722.0,
+                "median_nodes": 128987.0,
+                "mean_nodes": 128987.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-samesuitanyspace_530816_winnable.json",
+                "median_time_us": 132571.0,
+                "mean_time_us": 132571.0,
+                "median_nodes": 128987.0,
+                "mean_nodes": 128987.0
+            },
+            "speedup_ratio": 0.9913925905984057,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-samesuitanyspace_974096_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-samesuitanyspace_974096_unwinnable.json",
+                "median_time_us": 149578.0,
+                "mean_time_us": 149578.0,
+                "median_nodes": 172185.0,
+                "mean_nodes": 172185.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-samesuitanyspace_974096_unwinnable.json",
+                "median_time_us": 149340.0,
+                "mean_time_us": 149340.0,
+                "median_nodes": 172185.0,
+                "mean_nodes": 172185.0
+            },
+            "speedup_ratio": 0.9984088569174612,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-samesuitnospace_446698_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-samesuitnospace_446698_winnable.json",
+                "median_time_us": 140645.0,
+                "mean_time_us": 140645.0,
+                "median_nodes": 248674.0,
+                "mean_nodes": 248674.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-samesuitnospace_446698_winnable.json",
+                "median_time_us": 143858.0,
+                "mean_time_us": 143858.0,
+                "median_nodes": 248674.0,
+                "mean_nodes": 248674.0
+            },
+            "speedup_ratio": 1.022844750968751,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-3-samesuitnospace_874496_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-3-samesuitnospace_874496_unwinnable.json",
+                "median_time_us": 165676.0,
+                "mean_time_us": 165676.0,
+                "median_nodes": 357644.0,
+                "mean_nodes": 357644.0
+            },
+            "current": {
+                "instance": "klondike-deal-3-samesuitnospace_874496_unwinnable.json",
+                "median_time_us": 166103.0,
+                "mean_time_us": 166103.0,
+                "median_nodes": 357644.0,
+                "mean_nodes": 357644.0
+            },
+            "speedup_ratio": 1.0025773195876289,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-4_18238_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-4_18238_winnable.json",
+                "median_time_us": 74414.0,
+                "mean_time_us": 74414.0,
+                "median_nodes": 85799.0,
+                "mean_nodes": 85799.0
+            },
+            "current": {
+                "instance": "klondike-deal-4_18238_winnable.json",
+                "median_time_us": 74198.0,
+                "mean_time_us": 74198.0,
+                "median_nodes": 85799.0,
+                "mean_nodes": 85799.0
+            },
+            "speedup_ratio": 0.9970973203966995,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-4_430681_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-4_430681_unwinnable.json",
+                "median_time_us": 67531.0,
+                "mean_time_us": 67531.0,
+                "median_nodes": 60469.0,
+                "mean_nodes": 60469.0
+            },
+            "current": {
+                "instance": "klondike-deal-4_430681_unwinnable.json",
+                "median_time_us": 75020.0,
+                "mean_time_us": 75020.0,
+                "median_nodes": 60469.0,
+                "mean_nodes": 60469.0
+            },
+            "speedup_ratio": 1.1108972175741512,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-4-noworryback_211038_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-4-noworryback_211038_winnable.json",
+                "median_time_us": 125133.0,
+                "mean_time_us": 125133.0,
+                "median_nodes": 144690.0,
+                "mean_nodes": 144690.0
+            },
+            "current": {
+                "instance": "klondike-deal-4-noworryback_211038_winnable.json",
+                "median_time_us": 131776.0,
+                "mean_time_us": 131776.0,
+                "median_nodes": 144690.0,
+                "mean_nodes": 144690.0
+            },
+            "speedup_ratio": 1.0530875148841632,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-4-noworryback_2165_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-4-noworryback_2165_unwinnable.json",
+                "median_time_us": 157148.0,
+                "mean_time_us": 157148.0,
+                "median_nodes": 159733.0,
+                "mean_nodes": 159733.0
+            },
+            "current": {
+                "instance": "klondike-deal-4-noworryback_2165_unwinnable.json",
+                "median_time_us": 164862.0,
+                "mean_time_us": 164862.0,
+                "median_nodes": 159733.0,
+                "mean_nodes": 159733.0
+            },
+            "speedup_ratio": 1.0490874844096012,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-5_258208_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-5_258208_winnable.json",
+                "median_time_us": 125584.0,
+                "mean_time_us": 125584.0,
+                "median_nodes": 147111.0,
+                "mean_nodes": 147111.0
+            },
+            "current": {
+                "instance": "klondike-deal-5_258208_winnable.json",
+                "median_time_us": 124523.0,
+                "mean_time_us": 124523.0,
+                "median_nodes": 147111.0,
+                "mean_nodes": 147111.0
+            },
+            "speedup_ratio": 0.9915514715250351,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-5_447216_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-5_447216_unwinnable.json",
+                "median_time_us": 140892.0,
+                "mean_time_us": 140892.0,
+                "median_nodes": 113558.0,
+                "mean_nodes": 113558.0
+            },
+            "current": {
+                "instance": "klondike-deal-5_447216_unwinnable.json",
+                "median_time_us": 139622.0,
+                "mean_time_us": 139622.0,
+                "median_nodes": 113558.0,
+                "mean_nodes": 113558.0
+            },
+            "speedup_ratio": 0.990986003463646,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-5-noworryback_756012_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-5-noworryback_756012_winnable.json",
+                "median_time_us": 71370.0,
+                "mean_time_us": 71370.0,
+                "median_nodes": 77937.0,
+                "mean_nodes": 77937.0
+            },
+            "current": {
+                "instance": "klondike-deal-5-noworryback_756012_winnable.json",
+                "median_time_us": 75495.0,
+                "mean_time_us": 75495.0,
+                "median_nodes": 77937.0,
+                "mean_nodes": 77937.0
+            },
+            "speedup_ratio": 1.0577973938629677,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-5-noworryback_196027_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-5-noworryback_196027_unwinnable.json",
+                "median_time_us": 146628.0,
+                "mean_time_us": 146628.0,
+                "median_nodes": 116768.0,
+                "mean_nodes": 116768.0
+            },
+            "current": {
+                "instance": "klondike-deal-5-noworryback_196027_unwinnable.json",
+                "median_time_us": 152248.0,
+                "mean_time_us": 152248.0,
+                "median_nodes": 116768.0,
+                "mean_nodes": 116768.0
+            },
+            "speedup_ratio": 1.038328286548272,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-6_265155_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-6_265155_winnable.json",
+                "median_time_us": 131060.0,
+                "mean_time_us": 131060.0,
+                "median_nodes": 117204.0,
+                "mean_nodes": 117204.0
+            },
+            "current": {
+                "instance": "klondike-deal-6_265155_winnable.json",
+                "median_time_us": 125232.0,
+                "mean_time_us": 125232.0,
+                "median_nodes": 117204.0,
+                "mean_nodes": 117204.0
+            },
+            "speedup_ratio": 0.9555318174881734,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-6_203592_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-6_203592_unwinnable.json",
+                "median_time_us": 137222.0,
+                "mean_time_us": 137222.0,
+                "median_nodes": 124863.0,
+                "mean_nodes": 124863.0
+            },
+            "current": {
+                "instance": "klondike-deal-6_203592_unwinnable.json",
+                "median_time_us": 145600.0,
+                "mean_time_us": 145600.0,
+                "median_nodes": 124863.0,
+                "mean_nodes": 124863.0
+            },
+            "speedup_ratio": 1.061054349885587,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-6-noworryback_95126_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-6-noworryback_95126_winnable.json",
+                "median_time_us": 133823.0,
+                "mean_time_us": 133823.0,
+                "median_nodes": 146705.0,
+                "mean_nodes": 146705.0
+            },
+            "current": {
+                "instance": "klondike-deal-6-noworryback_95126_winnable.json",
+                "median_time_us": 142201.0,
+                "mean_time_us": 142201.0,
+                "median_nodes": 146705.0,
+                "mean_nodes": 146705.0
+            },
+            "speedup_ratio": 1.0626050828332947,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-6-noworryback_585545_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-6-noworryback_585545_unwinnable.json",
+                "median_time_us": 137943.0,
+                "mean_time_us": 137943.0,
+                "median_nodes": 137685.0,
+                "mean_nodes": 137685.0
+            },
+            "current": {
+                "instance": "klondike-deal-6-noworryback_585545_unwinnable.json",
+                "median_time_us": 140204.0,
+                "mean_time_us": 140204.0,
+                "median_nodes": 137685.0,
+                "mean_nodes": 137685.0
+            },
+            "speedup_ratio": 1.0163908280956626,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-7_520209_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-7_520209_winnable.json",
+                "median_time_us": 113058.0,
+                "mean_time_us": 113058.0,
+                "median_nodes": 121399.0,
+                "mean_nodes": 121399.0
+            },
+            "current": {
+                "instance": "klondike-deal-7_520209_winnable.json",
+                "median_time_us": 112174.0,
+                "mean_time_us": 112174.0,
+                "median_nodes": 121399.0,
+                "mean_nodes": 121399.0
+            },
+            "speedup_ratio": 0.9921810044401989,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-7_943027_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-7_943027_unwinnable.json",
+                "median_time_us": 145043.0,
+                "mean_time_us": 145043.0,
+                "median_nodes": 142185.0,
+                "mean_nodes": 142185.0
+            },
+            "current": {
+                "instance": "klondike-deal-7_943027_unwinnable.json",
+                "median_time_us": 141836.0,
+                "mean_time_us": 141836.0,
+                "median_nodes": 142185.0,
+                "mean_nodes": 142185.0
+            },
+            "speedup_ratio": 0.9778893155822757,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-7-noworryback_741459_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-7-noworryback_741459_winnable.json",
+                "median_time_us": 138998.0,
+                "mean_time_us": 138998.0,
+                "median_nodes": 179278.0,
+                "mean_nodes": 179278.0
+            },
+            "current": {
+                "instance": "klondike-deal-7-noworryback_741459_winnable.json",
+                "median_time_us": 146600.0,
+                "mean_time_us": 146600.0,
+                "median_nodes": 179278.0,
+                "mean_nodes": 179278.0
+            },
+            "speedup_ratio": 1.0546914344091283,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-7-noworryback_654343_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-7-noworryback_654343_unwinnable.json",
+                "median_time_us": 152081.0,
+                "mean_time_us": 152081.0,
+                "median_nodes": 151034.0,
+                "mean_nodes": 151034.0
+            },
+            "current": {
+                "instance": "klondike-deal-7-noworryback_654343_unwinnable.json",
+                "median_time_us": 151781.0,
+                "mean_time_us": 151781.0,
+                "median_nodes": 151034.0,
+                "mean_nodes": 151034.0
+            },
+            "speedup_ratio": 0.9980273669952197,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-8_316_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-8_316_winnable.json",
+                "median_time_us": 123534.0,
+                "mean_time_us": 123534.0,
+                "median_nodes": 117098.0,
+                "mean_nodes": 117098.0
+            },
+            "current": {
+                "instance": "klondike-deal-8_316_winnable.json",
+                "median_time_us": 127406.0,
+                "mean_time_us": 127406.0,
+                "median_nodes": 117098.0,
+                "mean_nodes": 117098.0
+            },
+            "speedup_ratio": 1.0313435977139898,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-8_12_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-8_12_unwinnable.json",
+                "median_time_us": 137904.0,
+                "mean_time_us": 137904.0,
+                "median_nodes": 161120.0,
+                "mean_nodes": 161120.0
+            },
+            "current": {
+                "instance": "klondike-deal-8_12_unwinnable.json",
+                "median_time_us": 147051.0,
+                "mean_time_us": 147051.0,
+                "median_nodes": 161120.0,
+                "mean_nodes": 161120.0
+            },
+            "speedup_ratio": 1.0663287504350853,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-8-noworryback_254601_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-8-noworryback_254601_winnable.json",
+                "median_time_us": 137238.0,
+                "mean_time_us": 137238.0,
+                "median_nodes": 185283.0,
+                "mean_nodes": 185283.0
+            },
+            "current": {
+                "instance": "klondike-deal-8-noworryback_254601_winnable.json",
+                "median_time_us": 141875.0,
+                "mean_time_us": 141875.0,
+                "median_nodes": 185283.0,
+                "mean_nodes": 185283.0
+            },
+            "speedup_ratio": 1.033788017895918,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-8-noworryback_272660_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-8-noworryback_272660_unwinnable.json",
+                "median_time_us": 124714.0,
+                "mean_time_us": 124714.0,
+                "median_nodes": 106609.0,
+                "mean_nodes": 106609.0
+            },
+            "current": {
+                "instance": "klondike-deal-8-noworryback_272660_unwinnable.json",
+                "median_time_us": 130683.0,
+                "mean_time_us": 130683.0,
+                "median_nodes": 106609.0,
+                "mean_nodes": 106609.0
+            },
+            "speedup_ratio": 1.0478615071283095,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-9_35923_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-9_35923_winnable.json",
+                "median_time_us": 133376.0,
+                "mean_time_us": 133376.0,
+                "median_nodes": 135789.0,
+                "mean_nodes": 135789.0
+            },
+            "current": {
+                "instance": "klondike-deal-9_35923_winnable.json",
+                "median_time_us": 132391.0,
+                "mean_time_us": 132391.0,
+                "median_nodes": 135789.0,
+                "mean_nodes": 135789.0
+            },
+            "speedup_ratio": 0.992614863243762,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-9_991487_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-9_991487_unwinnable.json",
+                "median_time_us": 142939.0,
+                "mean_time_us": 142939.0,
+                "median_nodes": 150607.0,
+                "mean_nodes": 150607.0
+            },
+            "current": {
+                "instance": "klondike-deal-9_991487_unwinnable.json",
+                "median_time_us": 150521.0,
+                "mean_time_us": 150521.0,
+                "median_nodes": 150607.0,
+                "mean_nodes": 150607.0
+            },
+            "speedup_ratio": 1.053043606013754,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-9-noworryback_573853_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-9-noworryback_573853_winnable.json",
+                "median_time_us": 129961.0,
+                "mean_time_us": 129961.0,
+                "median_nodes": 121440.0,
+                "mean_nodes": 121440.0
+            },
+            "current": {
+                "instance": "klondike-deal-9-noworryback_573853_winnable.json",
+                "median_time_us": 131940.0,
+                "mean_time_us": 131940.0,
+                "median_nodes": 121440.0,
+                "mean_nodes": 121440.0
+            },
+            "speedup_ratio": 1.015227645216642,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-9-noworryback_539591_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-9-noworryback_539591_unwinnable.json",
+                "median_time_us": 154926.0,
+                "mean_time_us": 154926.0,
+                "median_nodes": 123446.0,
+                "mean_nodes": 123446.0
+            },
+            "current": {
+                "instance": "klondike-deal-9-noworryback_539591_unwinnable.json",
+                "median_time_us": 151161.0,
+                "mean_time_us": 151161.0,
+                "median_nodes": 123446.0,
+                "mean_nodes": 123446.0
+            },
+            "speedup_ratio": 0.9756980752101003,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-10_215554_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-10_215554_winnable.json",
+                "median_time_us": 121483.0,
+                "mean_time_us": 121483.0,
+                "median_nodes": 146286.0,
+                "mean_nodes": 146286.0
+            },
+            "current": {
+                "instance": "klondike-deal-10_215554_winnable.json",
+                "median_time_us": 121316.0,
+                "mean_time_us": 121316.0,
+                "median_nodes": 146286.0,
+                "mean_nodes": 146286.0
+            },
+            "speedup_ratio": 0.998625322061523,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-10_438187_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-10_438187_unwinnable.json",
+                "median_time_us": 143054.0,
+                "mean_time_us": 143054.0,
+                "median_nodes": 118529.0,
+                "mean_nodes": 118529.0
+            },
+            "current": {
+                "instance": "klondike-deal-10_438187_unwinnable.json",
+                "median_time_us": 137551.0,
+                "mean_time_us": 137551.0,
+                "median_nodes": 118529.0,
+                "mean_nodes": 118529.0
+            },
+            "speedup_ratio": 0.9615320088917472,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-10-noworryback_404391_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-10-noworryback_404391_winnable.json",
+                "median_time_us": 128300.0,
+                "mean_time_us": 128300.0,
+                "median_nodes": 152672.0,
+                "mean_nodes": 152672.0
+            },
+            "current": {
+                "instance": "klondike-deal-10-noworryback_404391_winnable.json",
+                "median_time_us": 132371.0,
+                "mean_time_us": 132371.0,
+                "median_nodes": 152672.0,
+                "mean_nodes": 152672.0
+            },
+            "speedup_ratio": 1.031730319563523,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-10-noworryback_738985_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-10-noworryback_738985_unwinnable.json",
+                "median_time_us": 150076.0,
+                "mean_time_us": 150076.0,
+                "median_nodes": 151183.0,
+                "mean_nodes": 151183.0
+            },
+            "current": {
+                "instance": "klondike-deal-10-noworryback_738985_unwinnable.json",
+                "median_time_us": 151440.0,
+                "mean_time_us": 151440.0,
+                "median_nodes": 151183.0,
+                "mean_nodes": 151183.0
+            },
+            "speedup_ratio": 1.009088728377622,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-11_806981_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-11_806981_winnable.json",
+                "median_time_us": 152697.0,
+                "mean_time_us": 152697.0,
+                "median_nodes": 166700.0,
+                "mean_nodes": 166700.0
+            },
+            "current": {
+                "instance": "klondike-deal-11_806981_winnable.json",
+                "median_time_us": 159051.0,
+                "mean_time_us": 159051.0,
+                "median_nodes": 166700.0,
+                "mean_nodes": 166700.0
+            },
+            "speedup_ratio": 1.041611819485648,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-11_133751_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-11_133751_unwinnable.json",
+                "median_time_us": 140195.0,
+                "mean_time_us": 140195.0,
+                "median_nodes": 151153.0,
+                "mean_nodes": 151153.0
+            },
+            "current": {
+                "instance": "klondike-deal-11_133751_unwinnable.json",
+                "median_time_us": 144446.0,
+                "mean_time_us": 144446.0,
+                "median_nodes": 151153.0,
+                "mean_nodes": 151153.0
+            },
+            "speedup_ratio": 1.0303220514283675,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-11-noworryback_903394_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-11-noworryback_903394_winnable.json",
+                "median_time_us": 154315.0,
+                "mean_time_us": 154315.0,
+                "median_nodes": 150016.0,
+                "mean_nodes": 150016.0
+            },
+            "current": {
+                "instance": "klondike-deal-11-noworryback_903394_winnable.json",
+                "median_time_us": 155500.0,
+                "mean_time_us": 155500.0,
+                "median_nodes": 150016.0,
+                "mean_nodes": 150016.0
+            },
+            "speedup_ratio": 1.0076790979490005,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-11-noworryback_812839_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-11-noworryback_812839_unwinnable.json",
+                "median_time_us": 133925.0,
+                "mean_time_us": 133925.0,
+                "median_nodes": 151259.0,
+                "mean_nodes": 151259.0
+            },
+            "current": {
+                "instance": "klondike-deal-11-noworryback_812839_unwinnable.json",
+                "median_time_us": 143326.0,
+                "mean_time_us": 143326.0,
+                "median_nodes": 151259.0,
+                "mean_nodes": 151259.0
+            },
+            "speedup_ratio": 1.070196005226806,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-12_695016_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-12_695016_winnable.json",
+                "median_time_us": 108689.0,
+                "mean_time_us": 108689.0,
+                "median_nodes": 98222.0,
+                "mean_nodes": 98222.0
+            },
+            "current": {
+                "instance": "klondike-deal-12_695016_winnable.json",
+                "median_time_us": 116586.0,
+                "mean_time_us": 116586.0,
+                "median_nodes": 98222.0,
+                "mean_nodes": 98222.0
+            },
+            "speedup_ratio": 1.0726568465990118,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-12_239547_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-12_239547_unwinnable.json",
+                "median_time_us": 149764.0,
+                "mean_time_us": 149764.0,
+                "median_nodes": 157559.0,
+                "mean_nodes": 157559.0
+            },
+            "current": {
+                "instance": "klondike-deal-12_239547_unwinnable.json",
+                "median_time_us": 148627.0,
+                "mean_time_us": 148627.0,
+                "median_nodes": 157559.0,
+                "mean_nodes": 157559.0
+            },
+            "speedup_ratio": 0.9924080553404022,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-12-noworryback_819657_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-12-noworryback_819657_winnable.json",
+                "median_time_us": 146247.0,
+                "mean_time_us": 146247.0,
+                "median_nodes": 141239.0,
+                "mean_nodes": 141239.0
+            },
+            "current": {
+                "instance": "klondike-deal-12-noworryback_819657_winnable.json",
+                "median_time_us": 145661.0,
+                "mean_time_us": 145661.0,
+                "median_nodes": 141239.0,
+                "mean_nodes": 141239.0
+            },
+            "speedup_ratio": 0.9959930801999357,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-12-noworryback_335354_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-12-noworryback_335354_unwinnable.json",
+                "median_time_us": 140287.0,
+                "mean_time_us": 140287.0,
+                "median_nodes": 130013.0,
+                "mean_nodes": 130013.0
+            },
+            "current": {
+                "instance": "klondike-deal-12-noworryback_335354_unwinnable.json",
+                "median_time_us": 142192.0,
+                "mean_time_us": 142192.0,
+                "median_nodes": 130013.0,
+                "mean_nodes": 130013.0
+            },
+            "speedup_ratio": 1.0135793052813162,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-13_729723_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-13_729723_winnable.json",
+                "median_time_us": 176620.0,
+                "mean_time_us": 176620.0,
+                "median_nodes": 226245.0,
+                "mean_nodes": 226245.0
+            },
+            "current": {
+                "instance": "klondike-deal-13_729723_winnable.json",
+                "median_time_us": 179942.0,
+                "mean_time_us": 179942.0,
+                "median_nodes": 226245.0,
+                "mean_nodes": 226245.0
+            },
+            "speedup_ratio": 1.018808741931831,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-13_157789_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-13_157789_unwinnable.json",
+                "median_time_us": 163556.0,
+                "mean_time_us": 163556.0,
+                "median_nodes": 156166.0,
+                "mean_nodes": 156166.0
+            },
+            "current": {
+                "instance": "klondike-deal-13_157789_unwinnable.json",
+                "median_time_us": 161641.0,
+                "mean_time_us": 161641.0,
+                "median_nodes": 156166.0,
+                "mean_nodes": 156166.0
+            },
+            "speedup_ratio": 0.9882914720340434,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-13-noworryback_72032_winnable.json",
+            "baseline": {
+                "instance": "klondike-deal-13-noworryback_72032_winnable.json",
+                "median_time_us": 150624.0,
+                "mean_time_us": 150624.0,
+                "median_nodes": 144088.0,
+                "mean_nodes": 144088.0
+            },
+            "current": {
+                "instance": "klondike-deal-13-noworryback_72032_winnable.json",
+                "median_time_us": 166707.0,
+                "mean_time_us": 166707.0,
+                "median_nodes": 144088.0,
+                "mean_nodes": 144088.0
+            },
+            "speedup_ratio": 1.1067758126195029,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "klondike-deal-13-noworryback_690016_unwinnable.json",
+            "baseline": {
+                "instance": "klondike-deal-13-noworryback_690016_unwinnable.json",
+                "median_time_us": 158922.0,
+                "mean_time_us": 158922.0,
+                "median_nodes": 190659.0,
+                "mean_nodes": 190659.0
+            },
+            "current": {
+                "instance": "klondike-deal-13-noworryback_690016_unwinnable.json",
+                "median_time_us": 171742.0,
+                "mean_time_us": 171742.0,
+                "median_nodes": 190659.0,
+                "mean_nodes": 190659.0
+            },
+            "speedup_ratio": 1.08066850404601,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "late-binding-solitaire_151_winnable.json",
+            "baseline": {
+                "instance": "late-binding-solitaire_151_winnable.json",
+                "median_time_us": 204481.0,
+                "mean_time_us": 204481.0,
+                "median_nodes": 501750.0,
+                "mean_nodes": 501750.0
+            },
+            "current": {
+                "instance": "late-binding-solitaire_151_winnable.json",
+                "median_time_us": 223888.0,
+                "mean_time_us": 223888.0,
+                "median_nodes": 501750.0,
+                "mean_nodes": 501750.0
+            },
+            "speedup_ratio": 1.0949085734126887,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "late-binding-solitaire_172_unwinnable.json",
+            "baseline": {
+                "instance": "late-binding-solitaire_172_unwinnable.json",
+                "median_time_us": 203923.0,
+                "mean_time_us": 203923.0,
+                "median_nodes": 492827.0,
+                "mean_nodes": 492827.0
+            },
+            "current": {
+                "instance": "late-binding-solitaire_172_unwinnable.json",
+                "median_time_us": 232369.0,
+                "mean_time_us": 232369.0,
+                "median_nodes": 492827.0,
+                "mean_nodes": 492827.0
+            },
+            "speedup_ratio": 1.1394938285529341,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "mrs-mop_1800013_winnable.json",
+            "baseline": {
+                "instance": "mrs-mop_1800013_winnable.json",
+                "median_time_us": 171881.0,
+                "mean_time_us": 171881.0,
+                "median_nodes": 163635.0,
+                "mean_nodes": 163635.0
+            },
+            "current": {
+                "instance": "mrs-mop_1800013_winnable.json",
+                "median_time_us": 172315.0,
+                "mean_time_us": 172315.0,
+                "median_nodes": 163635.0,
+                "mean_nodes": 163635.0
+            },
+            "speedup_ratio": 1.00252500276354,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "mrs-mop_1996451_unwinnable.json",
+            "baseline": {
+                "instance": "mrs-mop_1996451_unwinnable.json",
+                "median_time_us": 84683.0,
+                "mean_time_us": 84683.0,
+                "median_nodes": 79347.0,
+                "mean_nodes": 79347.0
+            },
+            "current": {
+                "instance": "mrs-mop_1996451_unwinnable.json",
+                "median_time_us": 89014.0,
+                "mean_time_us": 89014.0,
+                "median_nodes": 79347.0,
+                "mean_nodes": 79347.0
+            },
+            "speedup_ratio": 1.0511436770071916,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "northwest-territory_110_winnable.json",
+            "baseline": {
+                "instance": "northwest-territory_110_winnable.json",
+                "median_time_us": 130625.0,
+                "mean_time_us": 130625.0,
+                "median_nodes": 116862.0,
+                "mean_nodes": 116862.0
+            },
+            "current": {
+                "instance": "northwest-territory_110_winnable.json",
+                "median_time_us": 140294.0,
+                "mean_time_us": 140294.0,
+                "median_nodes": 116862.0,
+                "mean_nodes": 116862.0
+            },
+            "speedup_ratio": 1.074021052631579,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "northwest-territory_271_unwinnable.json",
+            "baseline": {
+                "instance": "northwest-territory_271_unwinnable.json",
+                "median_time_us": 74504.0,
+                "mean_time_us": 74504.0,
+                "median_nodes": 57499.0,
+                "mean_nodes": 57499.0
+            },
+            "current": {
+                "instance": "northwest-territory_271_unwinnable.json",
+                "median_time_us": 76106.0,
+                "mean_time_us": 76106.0,
+                "median_nodes": 57499.0,
+                "mean_nodes": 57499.0
+            },
+            "speedup_ratio": 1.0215022012240953,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "raglan_43_winnable.json",
+            "baseline": {
+                "instance": "raglan_43_winnable.json",
+                "median_time_us": 144317.0,
+                "mean_time_us": 144317.0,
+                "median_nodes": 169479.0,
+                "mean_nodes": 169479.0
+            },
+            "current": {
+                "instance": "raglan_43_winnable.json",
+                "median_time_us": 148765.0,
+                "mean_time_us": 148765.0,
+                "median_nodes": 169479.0,
+                "mean_nodes": 169479.0
+            },
+            "speedup_ratio": 1.0308210397943416,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "raglan_545_unwinnable.json",
+            "baseline": {
+                "instance": "raglan_545_unwinnable.json",
+                "median_time_us": 165911.0,
+                "mean_time_us": 165911.0,
+                "median_nodes": 192817.0,
+                "mean_nodes": 192817.0
+            },
+            "current": {
+                "instance": "raglan_545_unwinnable.json",
+                "median_time_us": 171947.0,
+                "mean_time_us": 171947.0,
+                "median_nodes": 192817.0,
+                "mean_nodes": 192817.0
+            },
+            "speedup_ratio": 1.0363809512328899,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "seahaven-towers_53_winnable.json",
+            "baseline": {
+                "instance": "seahaven-towers_53_winnable.json",
+                "median_time_us": 180619.0,
+                "mean_time_us": 180619.0,
+                "median_nodes": 273776.0,
+                "mean_nodes": 273776.0
+            },
+            "current": {
+                "instance": "seahaven-towers_53_winnable.json",
+                "median_time_us": 178545.0,
+                "mean_time_us": 178545.0,
+                "median_nodes": 273776.0,
+                "mean_nodes": 273776.0
+            },
+            "speedup_ratio": 0.9885172656254325,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "seahaven-towers_1849_unwinnable.json",
+            "baseline": {
+                "instance": "seahaven-towers_1849_unwinnable.json",
+                "median_time_us": 172117.0,
+                "mean_time_us": 172117.0,
+                "median_nodes": 238368.0,
+                "mean_nodes": 238368.0
+            },
+            "current": {
+                "instance": "seahaven-towers_1849_unwinnable.json",
+                "median_time_us": 174018.0,
+                "mean_time_us": 174018.0,
+                "median_nodes": 238368.0,
+                "mean_nodes": 238368.0
+            },
+            "speedup_ratio": 1.0110448125403069,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "siegecraft_2690_winnable.json",
+            "baseline": {
+                "instance": "siegecraft_2690_winnable.json",
+                "median_time_us": 176438.0,
+                "mean_time_us": 176438.0,
+                "median_nodes": 249094.0,
+                "mean_nodes": 249094.0
+            },
+            "current": {
+                "instance": "siegecraft_2690_winnable.json",
+                "median_time_us": 179065.0,
+                "mean_time_us": 179065.0,
+                "median_nodes": 249094.0,
+                "mean_nodes": 249094.0
+            },
+            "speedup_ratio": 1.0148890828506332,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "siegecraft_3672_unwinnable.json",
+            "baseline": {
+                "instance": "siegecraft_3672_unwinnable.json",
+                "median_time_us": 127827.0,
+                "mean_time_us": 127827.0,
+                "median_nodes": 172434.0,
+                "mean_nodes": 172434.0
+            },
+            "current": {
+                "instance": "siegecraft_3672_unwinnable.json",
+                "median_time_us": 121889.0,
+                "mean_time_us": 121889.0,
+                "median_nodes": 172434.0,
+                "mean_nodes": 172434.0
+            },
+            "speedup_ratio": 0.9535465903134706,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "simple-simon_2134_winnable.json",
+            "baseline": {
+                "instance": "simple-simon_2134_winnable.json",
+                "median_time_us": 144966.0,
+                "mean_time_us": 144966.0,
+                "median_nodes": 160177.0,
+                "mean_nodes": 160177.0
+            },
+            "current": {
+                "instance": "simple-simon_2134_winnable.json",
+                "median_time_us": 142491.0,
+                "mean_time_us": 142491.0,
+                "median_nodes": 160177.0,
+                "mean_nodes": 160177.0
+            },
+            "speedup_ratio": 0.9829270311659286,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "simple-simon_10406_unwinnable.json",
+            "baseline": {
+                "instance": "simple-simon_10406_unwinnable.json",
+                "median_time_us": 130456.0,
+                "mean_time_us": 130456.0,
+                "median_nodes": 178151.0,
+                "mean_nodes": 178151.0
+            },
+            "current": {
+                "instance": "simple-simon_10406_unwinnable.json",
+                "median_time_us": 129760.0,
+                "mean_time_us": 129760.0,
+                "median_nodes": 178151.0,
+                "mean_nodes": 178151.0
+            },
+            "speedup_ratio": 0.9946648678481633,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "somerset_1000019_winnable.json",
+            "baseline": {
+                "instance": "somerset_1000019_winnable.json",
+                "median_time_us": 15970.0,
+                "mean_time_us": 15970.0,
+                "median_nodes": 17510.0,
+                "mean_nodes": 17510.0
+            },
+            "current": {
+                "instance": "somerset_1000019_winnable.json",
+                "median_time_us": 15738.0,
+                "mean_time_us": 15738.0,
+                "median_nodes": 17510.0,
+                "mean_nodes": 17510.0
+            },
+            "speedup_ratio": 0.9854727614276769,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "somerset_1000068_unwinnable.json",
+            "baseline": {
+                "instance": "somerset_1000068_unwinnable.json",
+                "median_time_us": 18885.0,
+                "mean_time_us": 18885.0,
+                "median_nodes": 21484.0,
+                "mean_nodes": 21484.0
+            },
+            "current": {
+                "instance": "somerset_1000068_unwinnable.json",
+                "median_time_us": 18058.0,
+                "mean_time_us": 18058.0,
+                "median_nodes": 21484.0,
+                "mean_nodes": 21484.0
+            },
+            "speedup_ratio": 0.9562086311887742,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell_1457_winnable.json",
+            "baseline": {
+                "instance": "free-cell_1457_winnable.json",
+                "median_time_us": 70510.0,
+                "mean_time_us": 70510.0,
+                "median_nodes": 88231.0,
+                "mean_nodes": 88231.0
+            },
+            "current": {
+                "instance": "free-cell_1457_winnable.json",
+                "median_time_us": 64054.0,
+                "mean_time_us": 64054.0,
+                "median_nodes": 88231.0,
+                "mean_nodes": 88231.0
+            },
+            "speedup_ratio": 0.9084385193589561,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell_537751_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell_537751_unwinnable.json",
+                "median_time_us": 53872.0,
+                "mean_time_us": 53872.0,
+                "median_nodes": 54939.0,
+                "mean_nodes": 54939.0
+            },
+            "current": {
+                "instance": "free-cell_537751_unwinnable.json",
+                "median_time_us": 50715.0,
+                "mean_time_us": 50715.0,
+                "median_nodes": 54939.0,
+                "mean_nodes": 54939.0
+            },
+            "speedup_ratio": 0.9413981288981289,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "spider_1776_winnable.json",
+            "baseline": {
+                "instance": "spider_1776_winnable.json",
+                "median_time_us": 138329.0,
+                "mean_time_us": 138329.0,
+                "median_nodes": 194047.0,
+                "mean_nodes": 194047.0
+            },
+            "current": {
+                "instance": "spider_1776_winnable.json",
+                "median_time_us": 141305.0,
+                "mean_time_us": 141305.0,
+                "median_nodes": 194047.0,
+                "mean_nodes": 194047.0
+            },
+            "speedup_ratio": 1.0215139269422897,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "spiderette_1702_winnable.json",
+            "baseline": {
+                "instance": "spiderette_1702_winnable.json",
+                "median_time_us": 147581.0,
+                "mean_time_us": 147581.0,
+                "median_nodes": 254883.0,
+                "mean_nodes": 254883.0
+            },
+            "current": {
+                "instance": "spiderette_1702_winnable.json",
+                "median_time_us": 161164.0,
+                "mean_time_us": 161164.0,
+                "median_nodes": 254883.0,
+                "mean_nodes": 254883.0
+            },
+            "speedup_ratio": 1.0920375929150772,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "spiderette_8376_unwinnable.json",
+            "baseline": {
+                "instance": "spiderette_8376_unwinnable.json",
+                "median_time_us": 147093.0,
+                "mean_time_us": 147093.0,
+                "median_nodes": 199919.0,
+                "mean_nodes": 199919.0
+            },
+            "current": {
+                "instance": "spiderette_8376_unwinnable.json",
+                "median_time_us": 154932.0,
+                "mean_time_us": 154932.0,
+                "median_nodes": 199919.0,
+                "mean_nodes": 199919.0
+            },
+            "speedup_ratio": 1.0532928147498521,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "streets-and-alleys_3_winnable.json",
+            "baseline": {
+                "instance": "streets-and-alleys_3_winnable.json",
+                "median_time_us": 134866.0,
+                "mean_time_us": 134866.0,
+                "median_nodes": 187685.0,
+                "mean_nodes": 187685.0
+            },
+            "current": {
+                "instance": "streets-and-alleys_3_winnable.json",
+                "median_time_us": 128865.0,
+                "mean_time_us": 128865.0,
+                "median_nodes": 187685.0,
+                "mean_nodes": 187685.0
+            },
+            "speedup_ratio": 0.9555039817300135,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "streets-and-alleys_24_unwinnable.json",
+            "baseline": {
+                "instance": "streets-and-alleys_24_unwinnable.json",
+                "median_time_us": 138094.0,
+                "mean_time_us": 138094.0,
+                "median_nodes": 167110.0,
+                "mean_nodes": 167110.0
+            },
+            "current": {
+                "instance": "streets-and-alleys_24_unwinnable.json",
+                "median_time_us": 135784.0,
+                "mean_time_us": 135784.0,
+                "median_nodes": 167110.0,
+                "mean_nodes": 167110.0
+            },
+            "speedup_ratio": 0.9832722638202963,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "stronghold_552_winnable.json",
+            "baseline": {
+                "instance": "stronghold_552_winnable.json",
+                "median_time_us": 156714.0,
+                "mean_time_us": 156714.0,
+                "median_nodes": 200203.0,
+                "mean_nodes": 200203.0
+            },
+            "current": {
+                "instance": "stronghold_552_winnable.json",
+                "median_time_us": 162665.0,
+                "mean_time_us": 162665.0,
+                "median_nodes": 200203.0,
+                "mean_nodes": 200203.0
+            },
+            "speedup_ratio": 1.0379736334979643,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "stronghold_354_unwinnable.json",
+            "baseline": {
+                "instance": "stronghold_354_unwinnable.json",
+                "median_time_us": 197568.0,
+                "mean_time_us": 197568.0,
+                "median_nodes": 239237.0,
+                "mean_nodes": 239237.0
+            },
+            "current": {
+                "instance": "stronghold_354_unwinnable.json",
+                "median_time_us": 198159.0,
+                "mean_time_us": 198159.0,
+                "median_nodes": 239237.0,
+                "mean_nodes": 239237.0
+            },
+            "speedup_ratio": 1.0029913751214772,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "thirty_7194_winnable.json",
+            "baseline": {
+                "instance": "thirty_7194_winnable.json",
+                "median_time_us": 151231.0,
+                "mean_time_us": 151231.0,
+                "median_nodes": 258297.0,
+                "mean_nodes": 258297.0
+            },
+            "current": {
+                "instance": "thirty_7194_winnable.json",
+                "median_time_us": 144544.0,
+                "mean_time_us": 144544.0,
+                "median_nodes": 258297.0,
+                "mean_nodes": 258297.0
+            },
+            "speedup_ratio": 0.9557828752041578,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "thirty_4308_unwinnable.json",
+            "baseline": {
+                "instance": "thirty_4308_unwinnable.json",
+                "median_time_us": 168728.0,
+                "mean_time_us": 168728.0,
+                "median_nodes": 241690.0,
+                "mean_nodes": 241690.0
+            },
+            "current": {
+                "instance": "thirty_4308_unwinnable.json",
+                "median_time_us": 165440.0,
+                "mean_time_us": 165440.0,
+                "median_nodes": 241690.0,
+                "mean_nodes": 241690.0
+            },
+            "speedup_ratio": 0.9805130150301077,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "thirtysix_397_winnable.json",
+            "baseline": {
+                "instance": "thirtysix_397_winnable.json",
+                "median_time_us": 165602.0,
+                "mean_time_us": 165602.0,
+                "median_nodes": 199831.0,
+                "mean_nodes": 199831.0
+            },
+            "current": {
+                "instance": "thirtysix_397_winnable.json",
+                "median_time_us": 161982.0,
+                "mean_time_us": 161982.0,
+                "median_nodes": 199831.0,
+                "mean_nodes": 199831.0
+            },
+            "speedup_ratio": 0.9781403606236639,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "thirtysix_635_unwinnable.json",
+            "baseline": {
+                "instance": "thirtysix_635_unwinnable.json",
+                "median_time_us": 147684.0,
+                "mean_time_us": 147684.0,
+                "median_nodes": 165824.0,
+                "mean_nodes": 165824.0
+            },
+            "current": {
+                "instance": "thirtysix_635_unwinnable.json",
+                "median_time_us": 138575.0,
+                "mean_time_us": 138575.0,
+                "median_nodes": 165824.0,
+                "mean_nodes": 165824.0
+            },
+            "speedup_ratio": 0.9383210097234637,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "spanish-patience_12378_winnable.json",
+            "baseline": {
+                "instance": "spanish-patience_12378_winnable.json",
+                "median_time_us": 66005.0,
+                "mean_time_us": 66005.0,
+                "median_nodes": 82197.0,
+                "mean_nodes": 82197.0
+            },
+            "current": {
+                "instance": "spanish-patience_12378_winnable.json",
+                "median_time_us": 66164.0,
+                "mean_time_us": 66164.0,
+                "median_nodes": 82197.0,
+                "mean_nodes": 82197.0
+            },
+            "speedup_ratio": 1.002408908416029,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "spanish-patience_133097_unwinnable.json",
+            "baseline": {
+                "instance": "spanish-patience_133097_unwinnable.json",
+                "median_time_us": 67057.0,
+                "mean_time_us": 67057.0,
+                "median_nodes": 85954.0,
+                "mean_nodes": 85954.0
+            },
+            "current": {
+                "instance": "spanish-patience_133097_unwinnable.json",
+                "median_time_us": 66440.0,
+                "mean_time_us": 66440.0,
+                "median_nodes": 85954.0,
+                "mean_nodes": 85954.0
+            },
+            "speedup_ratio": 0.9907988726009216,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "will-o-the-wisp_2760_winnable.json",
+            "baseline": {
+                "instance": "will-o-the-wisp_2760_winnable.json",
+                "median_time_us": 69657.0,
+                "mean_time_us": 69657.0,
+                "median_nodes": 103052.0,
+                "mean_nodes": 103052.0
+            },
+            "current": {
+                "instance": "will-o-the-wisp_2760_winnable.json",
+                "median_time_us": 65666.0,
+                "mean_time_us": 65666.0,
+                "median_nodes": 103052.0,
+                "mean_nodes": 103052.0
+            },
+            "speedup_ratio": 0.9427049686320111,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "will-o-the-wisp_8434_unwinnable.json",
+            "baseline": {
+                "instance": "will-o-the-wisp_8434_unwinnable.json",
+                "median_time_us": 78075.0,
+                "mean_time_us": 78075.0,
+                "median_nodes": 121935.0,
+                "mean_nodes": 121935.0
+            },
+            "current": {
+                "instance": "will-o-the-wisp_8434_unwinnable.json",
+                "median_time_us": 78172.0,
+                "mean_time_us": 78172.0,
+                "median_nodes": 121935.0,
+                "mean_nodes": 121935.0
+            },
+            "speedup_ratio": 1.001242395132885,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-4-pile_664642_winnable.json",
+            "baseline": {
+                "instance": "free-cell-4-pile_664642_winnable.json",
+                "median_time_us": 121777.0,
+                "mean_time_us": 121777.0,
+                "median_nodes": 187401.0,
+                "mean_nodes": 187401.0
+            },
+            "current": {
+                "instance": "free-cell-4-pile_664642_winnable.json",
+                "median_time_us": 127624.0,
+                "mean_time_us": 127624.0,
+                "median_nodes": 187401.0,
+                "mean_nodes": 187401.0
+            },
+            "speedup_ratio": 1.0480139927901,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "free-cell-4-pile_326375_unwinnable.json",
+            "baseline": {
+                "instance": "free-cell-4-pile_326375_unwinnable.json",
+                "median_time_us": 151035.0,
+                "mean_time_us": 151035.0,
+                "median_nodes": 206714.0,
+                "mean_nodes": 206714.0
+            },
+            "current": {
+                "instance": "free-cell-4-pile_326375_unwinnable.json",
+                "median_time_us": 145626.0,
+                "mean_time_us": 145626.0,
+                "median_nodes": 206714.0,
+                "mean_nodes": 206714.0
+            },
+            "speedup_ratio": 0.964187108948257,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "trigon_290781_winnable.json",
+            "baseline": {
+                "instance": "trigon_290781_winnable.json",
+                "median_time_us": 99537.0,
+                "mean_time_us": 99537.0,
+                "median_nodes": 68087.0,
+                "mean_nodes": 68087.0
+            },
+            "current": {
+                "instance": "trigon_290781_winnable.json",
+                "median_time_us": 100684.0,
+                "mean_time_us": 100684.0,
+                "median_nodes": 68087.0,
+                "mean_nodes": 68087.0
+            },
+            "speedup_ratio": 1.0115233531249685,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "trigon_12386_unwinnable.json",
+            "baseline": {
+                "instance": "trigon_12386_unwinnable.json",
+                "median_time_us": 87190.0,
+                "mean_time_us": 87190.0,
+                "median_nodes": 61900.0,
+                "mean_nodes": 61900.0
+            },
+            "current": {
+                "instance": "trigon_12386_unwinnable.json",
+                "median_time_us": 90653.0,
+                "mean_time_us": 90653.0,
+                "median_nodes": 61900.0,
+                "mean_nodes": 61900.0
+            },
+            "speedup_ratio": 1.0397178575524717,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "accordion_1009_winnable.json",
+            "baseline": {
+                "instance": "accordion_1009_winnable.json",
+                "median_time_us": 78940.0,
+                "mean_time_us": 78940.0,
+                "median_nodes": 159046.0,
+                "mean_nodes": 159046.0
+            },
+            "current": {
+                "instance": "accordion_1009_winnable.json",
+                "median_time_us": 76803.0,
+                "mean_time_us": 76803.0,
+                "median_nodes": 159046.0,
+                "mean_nodes": 159046.0
+            },
+            "speedup_ratio": 0.9729288066886242,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "british-canister_811174049_winnable.json",
+            "baseline": {
+                "instance": "british-canister_811174049_winnable.json",
+                "median_time_us": 148061.0,
+                "mean_time_us": 148061.0,
+                "median_nodes": 213069.0,
+                "mean_nodes": 213069.0
+            },
+            "current": {
+                "instance": "british-canister_811174049_winnable.json",
+                "median_time_us": 146983.0,
+                "mean_time_us": 146983.0,
+                "median_nodes": 213069.0,
+                "mean_nodes": 213069.0
+            },
+            "speedup_ratio": 0.992719217079447,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "british-canister_1073003_unwinnable.json",
+            "baseline": {
+                "instance": "british-canister_1073003_unwinnable.json",
+                "median_time_us": 115343.0,
+                "mean_time_us": 115343.0,
+                "median_nodes": 135292.0,
+                "mean_nodes": 135292.0
+            },
+            "current": {
+                "instance": "british-canister_1073003_unwinnable.json",
+                "median_time_us": 105899.0,
+                "mean_time_us": 105899.0,
+                "median_nodes": 135292.0,
+                "mean_nodes": 135292.0
+            },
+            "speedup_ratio": 0.9181224695040011,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "worm-hole_442555_winnable.json",
+            "baseline": {
+                "instance": "worm-hole_442555_winnable.json",
+                "median_time_us": 190279.0,
+                "mean_time_us": 190279.0,
+                "median_nodes": 237047.0,
+                "mean_nodes": 237047.0
+            },
+            "current": {
+                "instance": "worm-hole_442555_winnable.json",
+                "median_time_us": 178899.0,
+                "mean_time_us": 178899.0,
+                "median_nodes": 237047.0,
+                "mean_nodes": 237047.0
+            },
+            "speedup_ratio": 0.9401930848911335,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "worm-hole_522385_unwinnable.json",
+            "baseline": {
+                "instance": "worm-hole_522385_unwinnable.json",
+                "median_time_us": 8278.0,
+                "mean_time_us": 8278.0,
+                "median_nodes": 9037.0,
+                "mean_nodes": 9037.0
+            },
+            "current": {
+                "instance": "worm-hole_522385_unwinnable.json",
+                "median_time_us": 8445.0,
+                "mean_time_us": 8445.0,
+                "median_nodes": 9037.0,
+                "mean_nodes": 9037.0
+            },
+            "speedup_ratio": 1.0201739550616091,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "fortunes-favor_110266_winnable.json",
+            "baseline": {
+                "instance": "fortunes-favor_110266_winnable.json",
+                "median_time_us": 77576.0,
+                "mean_time_us": 77576.0,
+                "median_nodes": 118873.0,
+                "mean_nodes": 118873.0
+            },
+            "current": {
+                "instance": "fortunes-favor_110266_winnable.json",
+                "median_time_us": 80605.0,
+                "mean_time_us": 80605.0,
+                "median_nodes": 118873.0,
+                "mean_nodes": 118873.0
+            },
+            "speedup_ratio": 1.039045581107559,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "fortunes-favor_31646033_unwinnable.json",
+            "baseline": {
+                "instance": "fortunes-favor_31646033_unwinnable.json",
+                "median_time_us": 92173.0,
+                "mean_time_us": 92173.0,
+                "median_nodes": 114880.0,
+                "mean_nodes": 114880.0
+            },
+            "current": {
+                "instance": "fortunes-favor_31646033_unwinnable.json",
+                "median_time_us": 94369.0,
+                "mean_time_us": 94369.0,
+                "median_nodes": 114880.0,
+                "mean_nodes": 114880.0
+            },
+            "speedup_ratio": 1.0238247643019105,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "alpha-star_125028_winnable.json",
+            "baseline": {
+                "instance": "alpha-star_125028_winnable.json",
+                "median_time_us": 58908.0,
+                "mean_time_us": 58908.0,
+                "median_nodes": 52866.0,
+                "mean_nodes": 52866.0
+            },
+            "current": {
+                "instance": "alpha-star_125028_winnable.json",
+                "median_time_us": 57983.0,
+                "mean_time_us": 57983.0,
+                "median_nodes": 52866.0,
+                "mean_nodes": 52866.0
+            },
+            "speedup_ratio": 0.984297548720038,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "alpha-star_8363153_unwinnable.json",
+            "baseline": {
+                "instance": "alpha-star_8363153_unwinnable.json",
+                "median_time_us": 17029.0,
+                "mean_time_us": 17029.0,
+                "median_nodes": 16148.0,
+                "mean_nodes": 16148.0
+            },
+            "current": {
+                "instance": "alpha-star_8363153_unwinnable.json",
+                "median_time_us": 17057.0,
+                "mean_time_us": 17057.0,
+                "median_nodes": 16148.0,
+                "mean_nodes": 16148.0
+            },
+            "speedup_ratio": 1.0016442539197838,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "delta-star_169669_winnable.json",
+            "baseline": {
+                "instance": "delta-star_169669_winnable.json",
+                "median_time_us": 67773.0,
+                "mean_time_us": 67773.0,
+                "median_nodes": 82927.0,
+                "mean_nodes": 82927.0
+            },
+            "current": {
+                "instance": "delta-star_169669_winnable.json",
+                "median_time_us": 66276.0,
+                "mean_time_us": 66276.0,
+                "median_nodes": 82927.0,
+                "mean_nodes": 82927.0
+            },
+            "speedup_ratio": 0.9779115576999691,
+            "node_ratio": 1.0
+        },
+        {
+            "name": "delta-star_3605081_unwinnable.json",
+            "baseline": {
+                "instance": "delta-star_3605081_unwinnable.json",
+                "median_time_us": 42715.0,
+                "mean_time_us": 42715.0,
+                "median_nodes": 45414.0,
+                "mean_nodes": 45414.0
+            },
+            "current": {
+                "instance": "delta-star_3605081_unwinnable.json",
+                "median_time_us": 43185.0,
+                "mean_time_us": 43185.0,
+                "median_nodes": 45414.0,
+                "mean_nodes": 45414.0
+            },
+            "speedup_ratio": 1.0110031604822662,
+            "node_ratio": 1.0
+        }
+    ],
+    "overall": {
+        "median_speedup_ratio": 1.0025511611755844,
+        "median_node_ratio": 1.0
+    }
+}

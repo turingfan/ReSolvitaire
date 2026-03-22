@@ -21,13 +21,13 @@
 // Created by thecharlesblake on 10/16/17.
 //
 
-#include <tuple>
-#include <vector>
-
-#include <boost/program_options.hpp>
 
 #include "command_line_helper.h"
-#include "../../game/sol_rules.h"
+#include <iostream>
+#include <string>
+#include <boost/program_options.hpp>
+
+#include "benchmark.h"
 #include "../output/log_helper.h"
 #include "sol_preset_types.h"
 
@@ -82,6 +82,7 @@ command_line_helper::command_line_helper()
             ("benchmark-seeds", po::value<vector<int>>()->multitoken(), "supply start and end seeds for benchmarking")
             ("benchmark-iterations", po::value<int>()->default_value(1), "iterations per seed")
             ("benchmark-warmup", po::value<bool>()->default_value(true), "run warmup pass before benchmarking")
+            ("benchmark-json", po::value<string>(), "path to a regression json file to benchmark multiple instances")
             ("deal-only", "outputs the starting deal for a given game type & random seed as json")
             ("json", "outputs the result of the search as a machine-readable JSON object")
             ("reveal-hidden", "reveals identity of face-down cards in JSON output (e.g. 'ah' instead of '##')")
@@ -218,6 +219,11 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
     if (vm.count("benchmark-warmup")) {
         benchmark_warmup = vm["benchmark-warmup"].as<bool>();
     }
+    
+    if (vm.count("benchmark-json")) {
+        benchmark_json = vm["benchmark-json"].as<string>();
+        is_benchmark = true;
+    }
 
     if (is_benchmark) {
         json_output = true;
@@ -259,9 +265,10 @@ bool command_line_helper::assess_errors() {
         return false;
     }
 
-    // The user must supply either a solitaire type or a rules file
-    if ((solitaire_type.empty() && rules_file.empty())
-            || (!solitaire_type.empty() && !rules_file.empty())) {
+    // The user must supply either a solitaire type or a rules file, 
+    // unless benchmark-json is used (which handles rules per instance)
+    if (benchmark_json.empty() && ((solitaire_type.empty() && rules_file.empty())
+            || (!solitaire_type.empty() && !rules_file.empty()))) {
         print_sol_type_rules_error();
         return false;
     }
@@ -387,6 +394,10 @@ int command_line_helper::get_benchmark_iterations() const {
 
 bool command_line_helper::get_benchmark_warmup() const {
     return benchmark_warmup;
+}
+
+const std::string& command_line_helper::get_benchmark_json() const {
+    return benchmark_json;
 }
 
 bool command_line_helper::get_is_benchmark() const {
