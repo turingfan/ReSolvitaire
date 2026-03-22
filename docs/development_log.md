@@ -104,3 +104,38 @@ This document logs the major changes implemented on the `mac-dev` branch of the 
     - **Fallback to Run 2:** If Run 1 is unsolvable or times out.
     - **Total Time Tracking:** Curation now calculates the *final* proof time for smart runs, ensuring they fit within the intended target levels.
 - **Level 2 & 3 Verification:** Successfully verified 320 instances (Levels 2 & 3) with a 100% pass rate.
+
+---
+
+## 10. Benchmarking Infrastructure: Standard Candle Implementation
+**Date:** 2026-03-21  
+**Reason:** To ensure project speed performance is rigorously monitored. We need raw metrics normalized for different hardware specifications (Intel/M1/Linux environments).
+**Key Additions:**
+- **C++ Microsecond Timing Harness:** Updated `command_line_helper` to accept `--benchmark-seeds`, `--benchmark-iterations`, and `--benchmark-warmup`. Altered `benchmark::run` loops to time inner cycles via `std::chrono` and output `<numeric>` calculated standard deviation, mean, median, max, and min statistics directly via RapidJSON objects. Hooks were injected in `main.cpp` to exit properly after execution.
+- **Python Orchestrator (`compare_benchmarks.py`):** Added a python script utilizing `subprocess` bridging to seamlessly capture and cross-compare different solver builds.
+    - Implemented **Standard Candle** mapping logic. The orchestrator executes a hardcoded Klondike workload sequence natively to discover local machine processing power, and normalizes regression speeds dynamically avoiding hardware skew.
+- **Integration Evaluation:** Successfully detected a 11,000% artificial regression via injecting a `sleep_for` 100μs, validating test accuracy correctly.
+- Tests continuously passed post-merging. Documentation updated successfully in `docs/benchmarking_readme.md`.
+
+---
+
+## 11. Benchmarking Infrastructure: Node Tracking and Optimization
+**Date:** 2026-03-22  
+**Reason:** Enable algorithmic efficiency tracking independent of raw hardware execution speeds, capturing search reduction and nodes-per-second (NPS) metrics.
+**Key Additions:**
+- **Node Tracking:** Tracked `states_searched` natively inside the `solver::result`. Extended `benchmark::run` to emit node counts alongside iteration timings into a new `seed_data` JSON structure.
+- **Orchestrator Enhancements:** Python script processes granular array structures to compile detailed throughput and ratio reporting across test variants.
+- **System Overhead Removal:** Stripped fallback loops in the orchestrator to maximize JSON extraction speed, handling extensive runs accurately and reliably.
+
+---
+
+## 12. Benchmarking Infrastructure: Streaming JSON & Median-Based Statistics
+**Date:** 2026-03-22  
+**Reason:** Addressed memory overhead concerns for large benchmark runs and improved statistical robustness against OS-level timing noise.
+**Changes:**
+- **Streaming JSON (SAX):** Refactored the C++ benchmarking engine to use `RapidJSON::Writer` and `FileWriteStream`. This eliminates the need to build a massive DOM object in memory, allowing for benchmarks with thousands of seeds and iterations without risk of OOM.
+- **Median-Based Statistics:** Shifted the primary metric for hardware normalization and speedup calculation from `mean` to `median`. Medians are significantly more resilient to outliers caused by background system processes.
+- **Node Tracking & NPS:** Integrated `states_searched` into the aggregate statistics, providing a hardware-independent measure of algorithmic efficiency and throughput (Nodes Per Second).
+- **Orchestrator Streaming:** Updated `compare_benchmarks.py` to use `subprocess.Popen` and stream engine output directly to a temporary file on disk, further reducing the orchestrator's memory footprint.
+- **Architectural Safety:** Resolved C++ constructor ambiguities in `game_state` by making the `rapidjson::Document` constructor `explicit`.
+- **Verification:** Successfully passed unit tests and all three levels of regression tests (outcome and node-count consistency confirmed).
