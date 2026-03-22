@@ -24,6 +24,7 @@
 #ifndef SOLVITAIRE_COMMAND_LINE_HELPER_H
 #define SOLVITAIRE_COMMAND_LINE_HELPER_H
 
+#include <string>
 #include <boost/program_options.hpp>
 #include "../../game/search-state/game_state.h"
 
@@ -46,6 +47,7 @@ public:
     std::pair<int, int> get_benchmark_seeds() const;
     int get_benchmark_iterations() const;
     bool get_benchmark_warmup() const;
+    const std::string& get_benchmark_json() const;
     bool get_is_benchmark() const;
     streamliner_opt get_streamliners();
     game_state::streamliner_options get_streamliners_game_state();
@@ -91,6 +93,7 @@ private:
     std::pair<int, int> benchmark_seeds = {0, 0};
     int benchmark_iterations = 1;
     bool benchmark_warmup = true;
+    std::string benchmark_json = "";
     bool is_benchmark = false;
 
     streamliner_opt streamliners;

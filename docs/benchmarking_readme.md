@@ -24,7 +24,7 @@ The C++ executable has been extended with native flags to run the engine. Instea
 - `--benchmark`: Triggers the benchmark engine mode.
 - `--benchmark-seeds <start> <end>`: Specifies the inclusive range of seeds to benchmark.
 - `--benchmark-iterations <N>`: The number of times to solve each seed (default: `1`).
-- `--benchmark-warmup <0|1>`: If true (`1`), runs the solver once without timing it before the actual benchmark loop to warm up the CPU cache and boost frequencies (default: `1`).
+- `--benchmark-json <path>`: Runs a benchmark across multiple instances defined in a JSON file. This is the preferred way to run regression benchmarks (Levels 1-5). The engine automatically resolves file paths and handles both Array and Object JSON formats.
 
 ### Example
 
@@ -32,7 +32,16 @@ The C++ executable has been extended with native flags to run the engine. Instea
 ./solvitaire --type klondike --benchmark-seeds 1 100 --benchmark-iterations 3 --benchmark-warmup 1
 ```
 
-This will run Klondike seeds 1 through 100, 3 times each, outputting a JSON object containing a `seed_data` dictionary (with time and node counts per iteration) and an `aggregate_stats` object. The output is streamed directly to `stdout` to avoid in-memory buffering.
+For regression benchmarks:
+```bash
+./solvitaire --benchmark-json tests/oracles/level1.json --benchmark-iterations 1
+```
+
+This will run every instance in the Level 1 JSON, streaming results for each one. The engine performs intelligent path resolution, searching for deal files in:
+1. The exact path provided in the JSON (`instance` or `instance_name` keys).
+2. `tests/` relative to the current directory.
+3. `tests/resources/` relative to the current directory.
+4. Stripped versions of the paths (e.g., removing `instances/` prefix common in Level 1/3 files).
 
 ---
 
