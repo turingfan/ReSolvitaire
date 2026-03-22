@@ -52,7 +52,7 @@ using namespace std;
 
 static char benchmark_buffer[65536];
 
-void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup) {
+void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms) {
     rapidjson::FileWriteStream os(stdout, benchmark_buffer, sizeof(benchmark_buffer));
     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
 
@@ -74,7 +74,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
             solver sol(gs, cache);
 
             auto start = chrono::high_resolution_clock::now();
-            solver::result res = sol.run();
+            solver::result res = sol.run(chrono::milliseconds(timeout_ms));
             auto end = chrono::high_resolution_clock::now();
 
             if (!warmup || i > 0) {
@@ -131,7 +131,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
     os.Flush();
 }
 
-void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int benchmark_iterations, bool benchmark_warmup) {
+void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int benchmark_iterations, bool benchmark_warmup, uint64_t timeout_ms) {
     ifstream f(json_path);
     if (!f) {
         cerr << "Error: Could not open benchmark JSON: " << json_path << endl;
@@ -258,7 +258,7 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
             lru_cache cache(*gs, cache_capacity);
             solver sol(*gs, cache);
             auto start = chrono::high_resolution_clock::now();
-            solver::result res = sol.run();
+            solver::result res = sol.run(chrono::milliseconds(timeout_ms));
             auto end = chrono::high_resolution_clock::now();
 
             if (!benchmark_warmup || i > 0) {

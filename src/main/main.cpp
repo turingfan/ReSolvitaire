@@ -105,12 +105,12 @@ int main(int argc, const char* argv[]) {
     }
     // If the benchmark option has been supplied, generates it
     if (!clh.get_benchmark_json().empty()) {
-        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup());
+        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout());
         return EXIT_SUCCESS;
     }
 
     if (clh.get_benchmark() || clh.get_is_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup());
+        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout());
         return EXIT_SUCCESS;
     }
     
