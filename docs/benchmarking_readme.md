@@ -47,7 +47,7 @@ This will run every instance in the Level 1 JSON, streaming results for each one
 
 ## 2. Python Orchestrator (`compare_benchmarks.py`)
 
-The python script acts as an orchestrator. It automatically measures the Standard Candle on your machine, then runs the requested benchmark workload on both a `baseline` executable and your `current` executable, finally comparing the two.
+The python script acts as an orchestrator. It automatically measures the Hardware Normalization Factor (HNF) on your machine using a Reference Solver, then runs the requested benchmark workload on both a `baseline` executable and your `current` executable, finally comparing the two.
 
 ### Usage
 
@@ -63,6 +63,8 @@ python3 scripts/compare_benchmarks.py \
 - `--current-exe`: Path to the experimental or current working build.
 - `--candle-exe`: (Optional) Path to the executable used to measure the Standard Candle. Defaults to `--baseline-exe`.
 - `--out-report`: (Optional) The output JSON filename. Defaults to `benchmark_report.json`.
+- `--reference-exe <path>`: (Recommended) The path to the stable reference binary. If omitted, HNF defaults to `1.0` and results are not hardware-normalized.
+- `--calibration-workload <path>`: (Optional) Path to the JSON file used for calibration. Defaults to `tests/oracles/calibration.json`.
 - `--`: Separates orchestrator arguments from the arguments that will be forwarded to the C++ benchmark engine.
 
 ### Example
@@ -105,6 +107,75 @@ Current Normalized Score:    0.3895
 --- Comparison (Median-Based) ---
 Time Ratio (Current/Baseline): 0.9918x
 Node Ratio (Current/Baseline): 1.0000x
+Verdict: Current build is FASTER by 0.82%
+```
+
+A comprehensive `benchmark_report.json` file is also created, making this suite exceptionally easy to hook into CI pipelines.
+
+---
+
+## 3. Hardware Normalization (Reference Solver)
+
+Establishing a machine-independent performance baseline is critical for comparing results across different hardware.
+
+### Methodology
+
+The orchestrator establishes a **Hardware Normalization Factor (HNF)** by running a specific, stable version of Solvitaire (the **Reference Solver**) on a deterministic set of problems (the **Calibration Workload**). 
+
+The raw execution time of any benchmark run is then divided by this HNF to produce a dimensionless **Normalized Score**. A lower score indicates better performance.
+
+### Usage
+
+1.  **Obtain a Reference Binary**: Compile a stable version of Solvitaire (e.g., from a specific git tag like `v0.10.2`) in Release mode. For maximum portability across different OS versions, consider static linking.
+2.  **Run Calibration**: Use the `--reference-exe` flag in the orchestrator.
+
+```bash
+python3 scripts/compare_benchmarks.py \
+    --baseline-exe build/bin/solvitaire_baseline \
+    --current-exe build/bin/solvitaire \
+    --reference-exe /path/to/stable_reference_solvitaire \
+    -- \
+    --benchmark-json tests/oracles/level1.json
+```
+
+### Command Line Flags
+
+- `--reference-exe <path>`: (Recommended) The path to the stable reference binary. If omitted, HNF defaults to `1.0` and results are not hardware-normalized.
+- `--calibration-workload <path>`: (Optional) Path to the JSON file used for calibration. Defaults to `tests/oracles/calibration.json`.
+
+---
+
+## Output Examples
+
+### Aggregate Mode (Seeds)
+
+```text
+--- Hardware Normalized ---
+Reference Solver HNF:        251542.96 us
+Baseline Normalized Score:   0.3927
+Current Normalized Score:    0.3895
+
+--- Comparison (Median-Based) ---
+Time Ratio (Current/Baseline): 0.9918x
+Verdict: Current build is FASTER by 0.82%
+```
+
+### Paired Mode (JSON)
+
+```text
+================ PAIRED INSTANCE BENCHMARK ================
+
+Workload: --benchmark-json tests/oracles/level1.json
+Total instances matched: 150
+
+--- Hardware Normalized ---
+Reference Solver HNF:        251542.96 us
+Baseline Median Ratio:       0.9918x (Relative to reference HNF if provided)
+
+--- Median Ratios (Across all instances) ---
+Median Time Ratio: 0.9918x
+Median Node Ratio: 1.0000x
+
 Verdict: Current build is FASTER by 0.82%
 ```
 
