@@ -1,59 +1,102 @@
-# Human Contributions Log
+# Consolidated List of Ian Gent’s Contributions
 
-Observations, design decisions, and corrections made by the human researcher (Ian Gent) during the cache redesign project. These represent intellectual contributions beyond routine code review.
+
 
 ---
 
-## 1. TwoBig1 Replacement Policy Correction (2026-03-22)
+These are presented in approximate chronological order.  Level of heading indicates how Happy I was on them! 
 
-**Context:** Gemini's initial Milestone 3 implementation had an incorrect replacement policy — it overwrote slot 0 without cascading to slot 1, and didn't check if slot 1 was empty before doing depth comparison.
+Document produced in part by DeepSeek on 23 March 2026
 
-**Contribution:** Identified the bug and specified the correct algorithm:
-1. If slot 0 is empty → insert into slot 0 (never use slot 1 unless slot 0 is occupied)
-2. If slot 1 is empty → insert into slot 1
-3. If both full and new depth ≤ slot 0 depth → cascade slot 0 → slot 1, insert new into slot 0
-4. If both full and new depth > slot 0 depth → overwrite slot 1
+## 0  Lossiness and surprising non requirements.
 
-Also corrected Claude's initial fix proposal which would have inserted into "either empty slot" rather than always preferring slot 0.
+From a prompt: 
 
-## 2. Metamorphic Cache Testing Insight (2026-03-23)
+> As well as using the fact that cards can be in their starting position, cards can be in their final position, so this might be a useful insight. We can assume we know the original layout. The cache will only be used for one run so it is unnecessary to store details which distinguish between different layouts. The only two properties we must have are. 1. From a given game layout we get to the same bit sequence - and preferably the same bit sequence from two symmetric game sequence. 2. Two non equivalent game layouts that could possibly be played from the starting position must lead to different bit sequences. This leaves some properties that, surprisingly, we do NOT need to worry about in the encoding for storing in cache, as long as the above properties are retained. These might give scope for possibilities for even higher state compression. It is NOT required that from a bit sequence we can reconstruct the game layout, as we never have to do that - just compare two game layouts. The reduction to bit sequence can be lossy. Also it is NOT required that two different bit sequences must encode different game layouts. I.e. more than one bit sequence can represent the same game layout, as long as the algorithm we implement always chooses the same one. This may not be useful but it could allow optimisations since we can CHOOSE which representation to use if there is more than one. E.g. we choose one if there are fewer than 10 cards on tableau and another if there are more, with one bit selecting which we are using. Also is NOT required that a bit sequence must represent a legal state. We will not create such states so we do not need to ensure e.g.\that a Klondike layout uses no more than 7 piles. 
 
-**Context:** Two independent cache implementations (lru_cache and flat_cache) coexist for the same game types during the refactoring.
+### 1. Proposal to use Abstract Zobrist Hashing in a general way
+**Insight**: Hash should work for any Solitaire variant, not optimised for a single game.  
+**Evidence**: *AI_Docs-4.pdf* – Prompt 1.
 
-**Contribution:** Recognised that this creates an opportunity for metamorphic testing: since the DFS solver is deterministic, both caches see the identical stream of operations. Up to the first eviction, every insert/contains call must return the same boolean result. With a sufficiently large cache (no evictions), this gives complete cross-validation of two independent state encodings, hash functions, and equality checks. Documented in `metamorphic_cache_testing.md`.
 
-## 3. Spider-Type Dealing Exclusion (2026-03-23)
+### 2. Unified single‑cache design
+**Insight**: False negatives on cycle detection are acceptable; a single flat cache with insertion on forward visit, no live bits, and no separate path structure suffices.  
+**Evidence**: *caching_survey_v2.pdf* – Section 7 (AI Generation Statement and Section 7); 
+*AI_Docs-4.pdf* – Prompt 4.
 
-**Context:** The `use_new_cache()` function excluded two-deck, sequence, and accordion games, but not spider-type stock dealing.
 
-**Contribution:** Identified that spider-type stock dealing (`stock_deal_type::TABLEAU_PILES`) — which distributes cards from the stock across all tableau piles simultaneously — breaks the per-card descriptor model's pile symmetry assumptions. Added `stock_deal_t != TABLEAU_PILES` to the exclusion criteria. This prevents incorrect cache behaviour for games like Spider variants that use this dealing mechanism even if they happen to be single-deck.
+### 3. Removal of live bits and insertion on forward visit
+**Insight**: Removing live‑bit overhead and inserting states on forward visit (rather than on backtrack) enables the unified cache design.  
+**Evidence**: *AI_Docs-4.pdf* – Prompt 4.
 
-## 4. Milestone 5 Architectural Design (2026-03-23)
 
-**Context:** Verification of the `flat_cache` implementation across subtle rule variations and state transitions.
+# 4. Starting position covers stock, waste, and reserve
+**Insight**: Cards in stock, waste, or reserve are in their starting positions and require no per‑card encoding; a waste pointer determines the stock/waste configuration.  
+**Evidence**: *AI_Docs-3.pdf* – Section 2.1; *AI_Docs-5.pdf* – Section 3.1; *payload_spec.pdf* – AI Generation Statement.
 
-**Contribution:** Designed the Milestone 5 verification framework, specifying the parallel `dual_cache` execution model for real-time metamorphic comparison and the `recompute_payload_from_scratch()` safety check. This architecture allowed for the systematic isolation of structural bugs from performance-related cache evictions.
 
-## 5. Foundation Invariance Correction (2026-03-23)
+### 5. Encoding constraints and optimisations (collated descriptors, scheme selection, etc.)
+**Insight**: Use small fixed‑width fields per card; encoding does not need to be reconstructible; multiple representations with a selector bit can improve average case.  
+**Evidence**: *AI_Docs-4.pdf* – Prompt 7.
 
-**Context:** During debugging, the AI (Antigravity) proposed that foundation discrepancies might be "acceptable" based on misinterpreting suit symmetry.
+# 6. Root cards need no pile identifier
+**Insight**: A face‑up root card at the bottom of a tableau pile can be encoded simply as “root”; its association with face‑down blocks is recoverable from the initial layout and starting‑position information.  
+**Evidence**: *AI_Docs-3.pdf* – Section 2.2; *AI_Docs-5.pdf* – Section 4.1.
 
-**Contribution:** Firmly corrected the AI, asserting that foundation progress is an invariant that must match exactly across caches. This critical guardrail forced the investigation to look deeper into the Zobrist hash initialisation, ultimately leading to the discovery of the `STARTING` vs `ROOT` descriptor conflict in deal-originated states.
+### 7. Built groups: only the top card moves
+**Insight**: When a built group moves as a unit, only the top card needs its descriptor updated; internal parent relationships are unchanged.  
+**Evidence**: *AI_Docs-3.pdf* – Section 2.4; *AI_Docs-5.pdf* – Section 4.
 
-## 6. Waste-Symmetry Optimization Insight (2026-03-24)
+## 8. Bottom‑up chain perspective
+**Insight**: Viewing encoding from roots upward shows that when many cards are on the tableau most are chain members costing few bits, and when few are on the tableau the total encoding is small.  
+**Evidence**: *AI_Docs-3.pdf* – Section 4.
 
-**Context:** Identifying the source of "Proxy Misses" (LRU=HIT, Flat=MISS) in Klondike-type games.
 
-**Contribution:** Identified that the legacy LRU cache implicitly optimized "infinite redeal" states by collapsing waste pointer positions when the waste pile size is a multiple of the deal size. Provided the theoretical basis for classifying these as acceptable "false negatives" for the current `flat_cache` baseline, as they represent a legacy shortcut rather than a correctness bug in the new system.
+# 9. Card‑centric encoding eliminates pile‑symmetry sorting
+**Insight**: By encoding each card’s location rather than each pile’s contents, and using descriptors that never reference pile indices, the encoding becomes inherently canonical under pile permutation.  
+**Evidence**: *AI_Docs-5.pdf* – AI Generation Statement, Section 1, and passim.
 
-## 7. Regression Integrity and Determinism (2026-03-17 to 2026-03-20)
+## 10. Descriptor‑aligned Zobrist hashing
+**Insight**: Zobrist hash should be aligned with per‑card descriptor values from the payload, not with pile roles or positions.  
+**Evidence**: *descriptor_zobrist_revised.pdf* – AI Generation Statement, Section 2, and throughout.
 
-**Context:** Developing the Level 1-5 regression suite and ground truth.
+### 11. Elimination of the two‑layer Zobrist combining scheme
+**Insight**: With descriptor‑aligned keys, per‑pile hashes, additive combining for interchangeable piles, and the distinction between interchangeable/non‑interchangeable piles become unnecessary.  
+**Evidence**: *descriptor_zobrist_revised.pdf* – Section 3.1.
 
-**Contribution:** Identified the "Smart Streamliner" multi-run requirement (Run 1 for winnable, Run 2 for unsolvability) and the Hardware Variance rule for node count consistency. Also discovered the "JSON Round-Trip Bug" where pile-reordering on export caused internal arrangement mismatches on reload, leading to the shift from JSON-based to Seed-based regression testing.
+# 12. Dramatic reduction of the Zobrist table size
+**Insight**: Table reduces from ~295 KB to ~4 KB, fitting in L1 cache.  
+**Evidence**: *descriptor_zobrist_revised.pdf* – Section 3.2.
 
-## 8. Statistical Benchmarking Strategy (2026-03-21 to 2026-03-22)
+## 13. Merging of hash and payload maintenance
+**Insight**: Because both are keyed by the same event (descriptor change), they can be updated in the same code path, simplifying incremental updates.  
+**Evidence**: *descriptor_zobrist_revised.pdf* – Section 3.3.
 
-**Context:** Implementing a hardware-agnostic benchmarking suite.
+### 14. Introduction of the `STARTING_FACE_UP` descriptor
+**Insight**: Resolves ambiguity where a face‑down card that has been revealed but not moved still had the `STARTING` descriptor.  
+**Evidence**: *descriptor_zobrist_revised.pdf* – Section 4..
 
-**Contribution:** Designed the "Standard Candle" approach for hardware normalization and implemented the shift from mean to median-based statistics to ensure resilience against OS-level timing noise.
+# 15. Metamorphic cache testing insight
+**Insight**: During refactoring, two independent cache implementations see the same operation stream, enabling cross‑validation up to the first eviction.  
+**Evidence**: *human_contributions.md* – Section 2.
+
+# 16. 1 bit payload
+
+**Insight**: When we are streamlining, we need not worry about false positives in cache so do not need to store payload confirming equivalence of state.  We only need one bit for whether or not hash value has been seen. Benefit is increasing number of states in cache by 256 times compared to 32 byte payload.
+
+---
+
+## Source Documents and Abbreviations
+
+| Abbreviation in references | Full document name |
+|----------------------------|--------------------|
+| [desc_zobrist] | *descriptor_zobrist_revised.pdf* |
+| [caching_survey_v2] | *caching_survey_v2.pdf* |
+| [state_comp_v1] | *AI_Docs-3.pdf* (General State Compression for ReSolvitaire: A Per‑Card Descriptor Encoding) |
+| [payload_spec] | *payload_spec.pdf* |
+| [prompt_log] | *AI_Docs-4.pdf* (Prompt Log) |
+| [human_contrib] | *human_contributions.md* |
+| [state_comp_v2] | *AI_Docs-5.pdf* (State Compression for ReSolitaire: A Card‑Centric Encoding that Eliminates Sorting) |
+
+*All documents were provided in the conversation and are assumed to be accurate records of the collaboration.*
+
