@@ -28,8 +28,22 @@ This script builds an Ubuntu-based image and extracts a **statically-linked Linu
     *   To use a different engine: `./scripts/build-linux-reference.sh -e docker`
     *   The binary will be located at `bin/linux/solvitaire-linux-arm64`.
 
-### Cross-Architecture (x86_64)
-To build a reference binary for standard x86 servers, you can modify the `container build` command in the script to include the platform flag: `--platform linux/amd64`.
+## Official Reference Binaries
+Stable, statically-linked reference binaries for this version of the solver are publicly available for download. These binaries are intended to be a **"one-and-done" permanent reference point** for benchmarking.
+
+They are hosted on the project's GitHub Pages site:
+- **Direct Download**: [https://turingfan.github.io/ReSolvitaire/](https://turingfan.github.io/ReSolvitaire/)
+- **Included Architectures**: Linux (amd64, arm64) and macOS (arm64).
+- **Compliance**: As required by the GNU GPL v2 license, a complete tarball of the source code for this specific reference state is also provided on the hosting page.
+
+### Technical Reproduction & Hosting Details
+To maintain a permanent, verifiable record while keeping the repository history clean, the following process was used to create the reference release:
+
+1. **Binary Generation**: Built via `./scripts/build-mac-reference.sh` and `./scripts/build-linux-reference.sh` (utilizing the multi-arch `container` CLI workflow).
+2. **Security & Integrity**: Binaries were verified against the 133 unit tests and a 150-instance regression suite before being packaged.
+3. **Source Archive**: A snapshot of this branch (state with all reference fixes) was created using:  
+   `git archive --format=tar.gz --output=solvitaire-reference-source.tar.gz HEAD`
+4. **Isolated Hosting**: A dedicated hosting environment was initialized using an orphan branch (`reference-binaries`) to keep the primary repository history clean.
 
 ---
 
