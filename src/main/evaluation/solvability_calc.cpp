@@ -28,7 +28,9 @@
 #include "solvability_calc.h"
 #include "../solver/solver.h"
 #include "../game/global_cache.h"
+#include "../game/flat_cache.h"
 #include "binomial_ci.h"
+#include <memory>
 
 using namespace std;
 
@@ -172,9 +174,15 @@ solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec ti
                                                           uint64_t cache_capacity,
                                                           game_state::streamliner_options stream_opt) {
     game_state gs(rules, seed, stream_opt);
-    lru_cache cache(gs, cache_capacity);
-    solver sol(gs, cache);
 
+    std::unique_ptr<cache_interface> cache_ptr;
+    if (use_new_cache(rules)) {
+        cache_ptr = std::make_unique<flat_cache>(cache_capacity);
+    } else {
+        cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
+    }
+
+    solver sol(gs, *cache_ptr);
     return seed_result(seed, sol.run(boost::optional<std::chrono::milliseconds>(timeout)));
 }
 

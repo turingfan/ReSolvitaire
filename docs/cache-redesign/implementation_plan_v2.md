@@ -185,7 +185,7 @@ Create a helper function (e.g. in a new file or in an appropriate existing heade
 bool use_new_cache(const sol_rules& rules);
 ```
 
-Returns true if the game is: single deck (`!two_decks`), no sequences (`sequence_count == 0`), no accordion (`accordion_size == 0`). Otherwise returns false (use old cache).
+Returns true if the game is: single deck (`!two_decks`), no sequences (`sequence_count == 0`), no accordion (`accordion_size == 0`), no spider-type stock dealing (`stock_deal_t != TABLEAU_PILES`). Spider-type dealing distributes cards across tableau piles in a way that breaks the per-card descriptor model's pile symmetry assumptions. Otherwise returns false (use old cache).
 
 ### Task 2.5: Integrate into game_state
 
@@ -275,9 +275,10 @@ void update_payload_and_hash(uint8_t card_id, uint8_t old_desc, uint8_t new_desc
 
 ---
 
-## Milestone 3: Flat Cache Implementation
+## Milestone 3: Flat Cache Implementation ✓ COMPLETE
 
 **Goal:** Implement the flat open-addressed cache with two-slot clusters. Not yet connected to the solver.
+**Status:** Complete. Committed in `19ea515`.
 
 *(This corresponds to Milestone 4 from the original plan, renumbered.)*
 
@@ -367,8 +368,8 @@ private:
 ### Review Criteria
 - Solvability matches baseline for all benchmark seeds
 - No crashes or memory errors
-- New cache used for single-deck foundation/hole games
-- Old cache used for Spider, Gaps, Accordion, two-deck games
+- New cache used for single-deck foundation/hole games without spider-type dealing
+- Old cache used for Spider, Gaps, Accordion, two-deck games, and spider-deal games
 
 ---
 

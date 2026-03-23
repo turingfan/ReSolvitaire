@@ -121,6 +121,7 @@ set(sources_test_unit
         src/test/unit_tests/k_plus_stock_test.cpp
         src/test/unit_tests/zobrist_test.cpp
         src/test/unit_tests/flat_cache_test.cpp
+        src/test/unit_tests/solver_cache_selection_test.cpp
 )
 
 set(sources_test_helper

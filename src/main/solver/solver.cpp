@@ -33,6 +33,7 @@
 
 #include "solver.h"
 #include "../game/move.h"
+#include "../game/flat_cache.h"
 #include "../input-output/output/log_helper.h"
 #include "../input-output/output/state_printer.h"
 #include "../input-output/input/command_line_helper.h"
@@ -43,6 +44,7 @@ using std::cout;
 using std::clog;
 using std::pair;
 using std::max;
+using std::min;
 using std::begin;
 using std::end;
 using boost::optional;
@@ -63,6 +65,7 @@ solver::solver(const game_state& gs, cache_interface& c)
         , frontier()
         , root(move(move::mtype::null))
         , current_node() {
+    using_flat_cache = (dynamic_cast<flat_cache*>(&cache) != nullptr);
     frontier.push_back(root);
     current_node = begin(frontier);
     res.states_searched = 0;
@@ -119,10 +122,17 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
         } else {
             try {
                 // Caches the current state
-                auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);
-                pair<lru_cache::item_list::iterator, bool> insert_res = lru_cache_ref.insert_with_iterator(state);
-                current_node->cache_state = insert_res.first;
-                bool is_new_state = insert_res.second;
+                bool is_new_state;
+                if (using_flat_cache) {
+                    state.set_payload_depth(static_cast<uint16_t>(
+                        min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
+                    is_new_state = cache.insert(state);
+                } else {
+                    auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);
+                    pair<lru_cache::item_list::iterator, bool> insert_res = lru_cache_ref.insert_with_iterator(state);
+                    current_node->cache_state = insert_res.first;
+                    is_new_state = insert_res.second;
+                }
 
                 if (is_new_state) {
                     // Gets the legal moves in the current state
@@ -130,7 +140,11 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
 
                     // If there are none, reverts to the last node with children
                     if (next_moves.empty()) {
-                        states_exhausted = revert_to_last_node_with_children(insert_res.first);
+                        if (using_flat_cache) {
+                            states_exhausted = revert_to_last_node_with_children();
+                        } else {
+                            states_exhausted = revert_to_last_node_with_children(current_node->cache_state);
+                        }
                     } else {
                         current_node->child_moves = std::move(next_moves);
                     }
@@ -140,7 +154,7 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
                     res.unique_states_searched--;
                     states_exhausted = revert_to_last_node_with_children();
                 }
-            } catch (const std::runtime_error &e) {
+            } catch (const std::runtime_error& e) {
                 return result::type::MEM_LIMIT;
             }
         }

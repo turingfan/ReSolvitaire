@@ -1024,6 +1024,10 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
     return compact_state::STARTING;
 }
 
+void game_state::set_payload_depth(uint16_t depth) {
+    payload.set_depth(depth);
+}
+
 void game_state::compute_hash_from_scratch() {
     // Recompute hash from the payload's current descriptor values
     zobrist_hash_value = 0;

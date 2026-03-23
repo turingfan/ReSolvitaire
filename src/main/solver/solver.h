@@ -82,6 +82,7 @@ private:
     bool revert_to_last_node_with_children(boost::optional<lru_cache::item_list::iterator> = boost::none);
     void set_to_child();
 
+    bool using_flat_cache;
     game_state state;
     std::vector<node> frontier;
 

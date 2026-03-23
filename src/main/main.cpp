@@ -30,10 +30,12 @@
 #include "input-output/input/json-parsing/rules_parser.h"
 #include "input-output/output/log_helper.h"
 #include "game/global_cache.h"
+#include "game/flat_cache.h"
 #include "game/zobrist.h"
 #include "solver/solver.h"
 #include "evaluation/solvability_calc.h"
 #include "evaluation/benchmark.h"
+#include <memory>
 
 using namespace rapidjson;
 
@@ -252,8 +254,16 @@ pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout
                                         game_state::streamliner_options str_opts,
                                         optional<int> seed, optional<const Document&> in_doc) {
     game_state gs = seed ? game_state(rules, *seed, str_opts) : game_state(rules, *in_doc, str_opts);
-    lru_cache cache(gs, cache_capacity);
-    solver sol(gs, cache);
+
+    // Use unique_ptr for polymorphic ownership
+    std::unique_ptr<cache_interface> cache_ptr;
+    if (use_new_cache(rules)) {
+        cache_ptr = std::make_unique<flat_cache>(cache_capacity);
+    } else {
+        cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
+    }
+
+    solver sol(gs, *cache_ptr);
     solver::result res = sol.run(std::chrono::milliseconds(timeout));
     return make_pair(sol, res);
 }

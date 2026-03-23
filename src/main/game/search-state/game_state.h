@@ -81,6 +81,7 @@ public:
     const std::vector<pile>& get_data() const;
     uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
     const compact_state& get_payload() const { return payload; }
+    void set_payload_depth(uint16_t depth);
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
 
     /* Printing */
