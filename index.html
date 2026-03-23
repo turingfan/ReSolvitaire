@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solvitaire Reference Binaries</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 0 20px; background-color: #f9f9f9; }
+        h1 { color: #000; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .binary-list { list-style: none; padding: 0; }
+        .binary-item { background: #fff; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .binary-info { flex-grow: 1; }
+        .download-btn { background: #007bff; color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; transition: background 0.2s; }
+        .download-btn:hover { background: #0056b3; }
+        footer { margin-top: 50px; font-size: 0.9em; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
+        .disclaimer { background: #fff3cd; color: #856404; padding: 15px; border: 1px solid #ffeeba; border-radius: 8px; margin: 20px 0; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <h1>Solvitaire Reference Binaries</h1>
+    <p>This page provides stable, statically-linked reference binaries for the <strong>Solvitaire</strong> solver. These binaries are maintained as a permanent reference point for benchmarking across different platforms.</p>
+    
+    <div class="disclaimer">
+        <strong>Disclaimer:</strong> This software is provided "as is", without warranty of any kind, express or implied. In no event shall the authors be liable for any claim, damages or other liability. Use at your own risk.
+    </div>
+
+    <h2>Downloads</h2>
+    <ul class="binary-list">
+        <li class="binary-item">
+            <div class="binary-info">
+                <strong>Linux (ARM64)</strong><br>
+                <span>For Apple Silicon or ARM-based servers</span>
+            </div>
+            <a href="solvitaire-linux-arm64" class="download-btn">Download</a>
+        </li>
+        <li class="binary-item">
+            <div class="binary-info">
+                <strong>Linux (AMD64)</strong><br>
+                <span>For standard x86_64 servers</span>
+            </div>
+            <a href="solvitaire-linux-amd64" class="download-btn">Download</a>
+        </li>
+        <li class="binary-item">
+            <div class="binary-info">
+                <strong>macOS (ARM64)</strong><br>
+                <span>Natively compiled for Apple Silicon Mac</span>
+            </div>
+            <a href="solvitaire-mac-arm64" class="download-btn">Download</a>
+        </li>
+    </ul>
+
+    <h2>Open Source Compliance</h2>
+    <p>Solvitaire is released under the <strong>GNU General Public License v2.0</strong>. In accordance with the license, the complete source code for this specific reference version is provided below:</p>
+    <ul class="binary-list">
+        <li class="binary-item" style="border-color: #28a745; background-color: #f1fff4;">
+            <div class="binary-info">
+                <strong>Source Code Tarball</strong><br>
+                <span>Snapshot of solvitaire-reference branch (no git history)</span>
+            </div>
+            <a href="solvitaire-reference-source.tar.gz" class="download-btn" style="background: #28a745;">Download Source</a>
+        </li>
+    </ul>
+
+    <h2>Resources</h2>
+    <ul>
+        <li>Official Code Repository: <a href="https://github.com/turingfan/ReSolvitaire">GitHub (ReSolvitaire)</a></li>
+        <li>Original Project: <a href="https://github.com/thecharlieblake/Solvitaire">Original Solvitaire by Charlie Blake</a></li>
+    </ul>
+
+    <footer>
+        <p>&copy; 2026 turingfan/ReSolvitaire Projects. All rights reserved.</p>
+    </footer>
+</body>
+</html>
