@@ -22,7 +22,7 @@ COPY . .
 # We use -DBoost_USE_STATIC_LIBS=ON to keep it portable across Linux distros
 RUN mkdir build && cd build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_USE_STATIC_LIBS=ON .. && \
-    make -j$(nproc)
+    make
 
 # We'll use a volume mount to extract the binary
 CMD ["/bin/bash"]
