@@ -27,3 +27,33 @@ Also corrected Claude's initial fix proposal which would have inserted into "eit
 **Context:** The `use_new_cache()` function excluded two-deck, sequence, and accordion games, but not spider-type stock dealing.
 
 **Contribution:** Identified that spider-type stock dealing (`stock_deal_type::TABLEAU_PILES`) — which distributes cards from the stock across all tableau piles simultaneously — breaks the per-card descriptor model's pile symmetry assumptions. Added `stock_deal_t != TABLEAU_PILES` to the exclusion criteria. This prevents incorrect cache behaviour for games like Spider variants that use this dealing mechanism even if they happen to be single-deck.
+
+## 4. Milestone 5 Architectural Design (2026-03-23)
+
+**Context:** Verification of the `flat_cache` implementation across subtle rule variations and state transitions.
+
+**Contribution:** Designed the Milestone 5 verification framework, specifying the parallel `dual_cache` execution model for real-time metamorphic comparison and the `recompute_payload_from_scratch()` safety check. This architecture allowed for the systematic isolation of structural bugs from performance-related cache evictions.
+
+## 5. Foundation Invariance Correction (2026-03-23)
+
+**Context:** During debugging, the AI (Antigravity) proposed that foundation discrepancies might be "acceptable" based on misinterpreting suit symmetry.
+
+**Contribution:** Firmly corrected the AI, asserting that foundation progress is an invariant that must match exactly across caches. This critical guardrail forced the investigation to look deeper into the Zobrist hash initialisation, ultimately leading to the discovery of the `STARTING` vs `ROOT` descriptor conflict in deal-originated states.
+
+## 6. Waste-Symmetry Optimization Insight (2026-03-24)
+
+**Context:** Identifying the source of "Proxy Misses" (LRU=HIT, Flat=MISS) in Klondike-type games.
+
+**Contribution:** Identified that the legacy LRU cache implicitly optimized "infinite redeal" states by collapsing waste pointer positions when the waste pile size is a multiple of the deal size. Provided the theoretical basis for classifying these as acceptable "false negatives" for the current `flat_cache` baseline, as they represent a legacy shortcut rather than a correctness bug in the new system.
+
+## 7. Regression Integrity and Determinism (2026-03-17 to 2026-03-20)
+
+**Context:** Developing the Level 1-5 regression suite and ground truth.
+
+**Contribution:** Identified the "Smart Streamliner" multi-run requirement (Run 1 for winnable, Run 2 for unsolvability) and the Hardware Variance rule for node count consistency. Also discovered the "JSON Round-Trip Bug" where pile-reordering on export caused internal arrangement mismatches on reload, leading to the shift from JSON-based to Seed-based regression testing.
+
+## 8. Statistical Benchmarking Strategy (2026-03-21 to 2026-03-22)
+
+**Context:** Implementing a hardware-agnostic benchmarking suite.
+
+**Contribution:** Designed the "Standard Candle" approach for hardware normalization and implemented the shift from mean to median-based statistics to ensure resilience against OS-level timing noise.
