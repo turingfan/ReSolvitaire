@@ -338,9 +338,10 @@ private:
 
 ---
 
-## Milestone 4: Wire the Solver to the New Cache
+## Milestone 4: Wire the Solver to the New Cache ✓ COMPLETE
 
 **Goal:** Connect the flat cache to the solver for supported game types. First milestone where behaviour changes.
+**Status:** Complete. Committed in `8caf454`.
 
 *(Corresponds to original Milestone 5.)*
 
@@ -381,7 +382,7 @@ private:
 
 ### Tasks
 
-1. Run 100 seeds each for all single-deck presets listed in the design document (Section 8 of main.pdf). Compare against old-cache runs. All solvability results must agree.
+1. Run regression Levels 1–3 (covering ~80 game types with winnable and unwinnable instances). All outcomes must match oracles. This replaces the original plan of running 100 seeds per game type.
 
 2. Add debug mode (`#ifndef NDEBUG`): on every cache insert, recompute payload from scratch and assert it matches the incremental payload.
 
