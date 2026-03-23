@@ -31,7 +31,7 @@ inline bool use_new_cache(const sol_rules& rules) {
     return !rules.two_decks
         && rules.sequence_count == 0
         && rules.accordion_size == 0
-        && rules.stock_deal_t != sol_rules::stock_deal_type::TABLEAU_PILES;
+        && (rules.stock_size == 0 || rules.stock_deal_t != sol_rules::stock_deal_type::TABLEAU_PILES);
 }
 
 #endif

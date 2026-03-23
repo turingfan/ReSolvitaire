@@ -65,7 +65,7 @@ solver::solver(const game_state& gs, cache_interface& c)
         , frontier()
         , root(move(move::mtype::null))
         , current_node() {
-    using_flat_cache = (dynamic_cast<flat_cache*>(&cache) != nullptr);
+    using_flat_cache = (dynamic_cast<lru_cache*>(&cache) == nullptr);
     frontier.push_back(root);
     current_node = begin(frontier);
     res.states_searched = 0;
@@ -127,6 +127,21 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
                     state.set_payload_depth(static_cast<uint16_t>(
                         min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
                     is_new_state = cache.insert(state);
+#ifndef NDEBUG
+                    if (using_flat_cache) {
+                        compact_state recomputed = state.recompute_payload_from_scratch();
+                        compact_state current = state.get_payload();
+                        if (!recomputed.matches(current)) {
+                            std::cerr << "PAYLOAD DIVERGENCE DETECTED!" << std::endl;
+                            std::cerr << "Recomputed: ";
+                            for(int i=0; i<32; ++i) fprintf(stderr, "%02x ", recomputed.data[i]);
+                            std::cerr << std::endl << "Current:    ";
+                            for(int i=0; i<32; ++i) fprintf(stderr, "%02x ", current.data[i]);
+                            std::cerr << std::endl;
+                            assert(false && "Incremental payload diverged");
+                        }
+                    }
+#endif
                 } else {
                     auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);
                     pair<lru_cache::item_list::iterator, bool> insert_res = lru_cache_ref.insert_with_iterator(state);

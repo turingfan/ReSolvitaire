@@ -62,6 +62,7 @@ set(sources_game
         src/main/game/parent_table.cpp
         src/main/game/flat_cache.h
         src/main/game/flat_cache.cpp
+        src/main/game/dual_cache.h
 )
 
 set(sources_solver
@@ -122,6 +123,7 @@ set(sources_test_unit
         src/test/unit_tests/zobrist_test.cpp
         src/test/unit_tests/flat_cache_test.cpp
         src/test/unit_tests/solver_cache_selection_test.cpp
+        src/test/unit_tests/dual_cache_test.cpp
 )
 
 set(sources_test_helper
