@@ -111,12 +111,17 @@ Algorithm:
 3. Compute cluster index from hash.
 4. Check both slots for a match using `compact_state::matches()`:
    - If either slot matches → return `false` (state already present, not newly inserted).
-5. If no match, try to insert:
-   - **Slot 0 (depth-preferred):** If slot 0 is empty, place there. If slot 0 is occupied, overwrite only if the new entry's depth ≤ stored entry's depth. (For Milestone 3, depth is always 0, so this effectively means: if empty, use it; if occupied, overwrite since 0 ≤ stored depth.)
-   - **Slot 1 (always-replace):** If slot 0 couldn't be used, place in slot 1.
-   - If an occupied slot was overwritten, increment `eviction_count`.
+5. If no match, insert using the TwoBig1 replacement policy:
+   - **If slot 0 is empty:** Insert into slot 0. No eviction.
+   - **Else if slot 1 is empty:** Insert into slot 1. No eviction.
+   - **Else (both slots full), new entry's depth ≤ slot 0's depth:**
+     Cascade slot 0 → slot 1 (evicting old slot 1). Insert new entry into slot 0. Increment `eviction_count`.
+   - **Else (both slots full, new depth > slot 0 depth):**
+     Insert new entry into slot 1 (evicting old slot 1). Increment `eviction_count`.
 6. Increment `occupied_count`.
 7. Return `true` (newly inserted).
+
+**Rationale:** Slot 0 is the "preferred" slot — it holds deeper (more expensive to recompute) states. Slot 1 is overflow/always-replace. We only evict when both slots are full. When a new entry displaces slot 0, the old slot 0 cascades to slot 1 rather than being discarded, maximising cache utilisation.
 
 ### contains(const game_state& gs) const
 

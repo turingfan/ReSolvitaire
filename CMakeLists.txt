@@ -60,6 +60,8 @@ set(sources_game
         src/main/game/compact_state.cpp
         src/main/game/parent_table.h
         src/main/game/parent_table.cpp
+        src/main/game/flat_cache.h
+        src/main/game/flat_cache.cpp
 )
 
 set(sources_solver
@@ -118,6 +120,7 @@ set(sources_test_unit
         src/test/unit_tests/face_up_cards_test.cpp
         src/test/unit_tests/k_plus_stock_test.cpp
         src/test/unit_tests/zobrist_test.cpp
+        src/test/unit_tests/flat_cache_test.cpp
 )
 
 set(sources_test_helper
