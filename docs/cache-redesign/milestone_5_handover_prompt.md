@@ -26,6 +26,9 @@ Before proceeding to Milestone 6, you must independently verify that the `flat_c
 
 Once you have confirmed that the Milestone 5 status is acceptable, construct a detailed **Implementation Plan** for Milestone 6.
 
+### Known Issues to Address in M6:
+- **TwoBig1 Replacement Policy (flat_cache.cpp:L52-55)**: In the current `flat_cache::insert` implementation, when slot 1 is empty and slot 0 is occupied, the new state is simply placed into slot 1. This is incorrect. The policy should ensure that the state with the **lower depth** (the "Bigger" entry) always occupies slot 0. You should compare the new state's depth with the entry in slot 0 and swap them if the new state has a lower depth.
+
 ### Key Objectives for Milestone 6:
 - **Final Cut-Over**: Switch the default solver cache from `lru_cache` to `flat_cache`.
 - **Infrastructure Removal**: Deactivate the `dual_cache` wrapper and remove the diagnostic `recompute_payload_from_scratch()` overhead from production code paths.
