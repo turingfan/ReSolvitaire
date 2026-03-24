@@ -32,7 +32,8 @@ This script builds an Ubuntu-based image and extracts a **statically-linked Linu
 Stable, statically-linked reference binaries for this version of the solver are publicly available for download. These binaries are intended to be a **"one-and-done" permanent reference point** for benchmarking.
 
 They are hosted on the project's GitHub Pages site:
-- **Direct Download**: [https://turingfan.github.io/ReSolvitaire/](https://turingfan.github.io/ReSolvitaire/)
+- **Direct Download (Web)**: [https://turingfan.github.io/ReSolvitaire/](https://turingfan.github.io/ReSolvitaire/) (Available once Pages is enabled)
+- **Direct Link (GitHub Repository)**: [https://github.com/turingfan/ReSolvitaire/tree/reference-binaries](https://github.com/turingfan/ReSolvitaire/tree/reference-binaries)
 - **Included Architectures**: Linux (amd64, arm64) and macOS (arm64).
 - **Compliance**: As required by the GNU GPL v2 license, a complete tarball of the source code for this specific reference state is also provided on the hosting page.
 
