@@ -1,0 +1,28 @@
+Start testing: Mar 18 17:31 GMT
+----------------------------------------------------------
+4/7 Testing: regression_level2
+4/7 Test: regression_level2
+Command: "/opt/homebrew/bin/python3" "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire/scripts/regression_runner.py" "--exe" "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire/cmake-build-release/bin/solvitaire" "--instances" "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire/tests/resources/level2" "--oracle" "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire/tests/oracles/level2.json" "--timeout" "60"
+Directory: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire
+"regression_level2" start time: Mar 18 17:31 GMT
+Output:
+----------------------------------------------------------
+Running Regression: 207 instances (Oracle: level2.json)
+------------------------------------------------------------
+Progress: 25/207 (Pass: 25, Fail: 0)
+Progress: 50/207 (Pass: 50, Fail: 0)
+[FAIL] mrs-mop_1996451_unwinnable.json (streamliner: none)
+  - TIMEOUT FAILURE: 1450957 nodes processed before timeout (baseline 79347)
+Progress: 75/207 (Pass: 74, Fail: 1)
+------------------------------------------------------------
+Final Report: Passed: 95/207
+FAILED: 1/207
+<end of output>
+Test time =  13.13 sec
+----------------------------------------------------------
+Test Failed.
+"regression_level2" end time: Mar 18 17:31 GMT
+"regression_level2" time elapsed: 00:00:13
+----------------------------------------------------------
+
+End testing: Mar 18 17:31 GMT

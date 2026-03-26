@@ -84,6 +84,10 @@ public:
     void set_payload_depth(uint16_t depth);
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
 
+#ifndef NDEBUG
+    compact_state recompute_payload_from_scratch() const;  // Debug only: recompute payload from piles
+#endif
+
     /* Printing */
 
     friend std::ostream& operator<< (std::ostream&, const game_state&);

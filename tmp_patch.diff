@@ -1,0 +1,147 @@
+--- src/main/game/search-state/game_state.cpp
++++ src/main/game/search-state/game_state.cpp
+@@ -438,10 +438,15 @@ void game_state::make_regular_move(const move m) {
+         old_to_fr = payload.get_foundation(to_fs);
+     }
+     uint8_t old_ht = 255;
+-    if (m.to == hole) {
++    if (m.to == hole || m.from == hole) {
+         old_ht = payload.get_hole_top();
+     }
+ 
++    uint8_t old_waste_ptr = 255;
++    if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
++        old_waste_ptr = payload.get_waste_ptr();
++    }
++
+     // Pile operations
+     place_card(m.to, take_card(m.from));
+ 
+@@ -475,6 +480,20 @@ void game_state::make_regular_move(const move m) {
+-        update_card_descriptor(rev_cid, compact_state::STARTING_FACE_UP);
++        update_card_descriptor(rev_cid, compact_state::ROOT);
+     }
+ 
++    // Handle waste pointer updates (stock/waste mechanics)
++    if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
++        if (m.from == waste || m.to == waste) {
++            update_waste_ptr_in_hash(static_cast<uint8_t>(piles[waste].size()));
++        }
++    }
++
++    // Handle hole top update when taking FROM hole
++    if (m.from == hole) {
++        uint8_t new_ht_cid = piles[hole].empty() 
++            ? 255 : zobrist_hash::card_id(piles[hole].top_card().get_suit(), piles[hole].top_card().get_rank());
++        update_hole_top_in_hash(new_ht_cid);
++    }
++
+     // Push undo info
+     zobrist_undo undo = {};
+     undo.card_id = cid;
+@@ -485,8 +504,9 @@ void game_state::make_regular_move(const move m) {
+     undo.to_found_suit = to_fs;
+     undo.old_to_found_rank = old_to_fr;
+     undo.old_hole_top = old_ht;
+-    undo.old_waste_ptr = 255;
++    undo.old_waste_ptr = old_waste_ptr;
+     undo.sat_count = 0;
++
+     zobrist_undo_stack.push_back(undo);
+ }
+ 
+@@ -510,6 +530,11 @@ void game_state::undo_regular_move(const move m) {
+         update_hole_top_in_hash(undo.old_hole_top);
+     }
+ 
++    // Undo waste pointer
++    if (undo.old_waste_ptr != 255) {
++        update_waste_ptr_in_hash(undo.old_waste_ptr);
++    }
++
+     // Undo destination foundation header
+     if (undo.to_found_suit != 255) {
+         update_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank);
+@@ -570,7 +595,35 @@ void game_state::make_built_group_move(move m) {
+         piles[m.from][0].turn_face_up();
+         card rev = piles[m.from][0];
+         rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
+-        update_card_descriptor(rev_cid, compact_state::STARTING_FACE_UP);
++        update_card_descriptor(rev_cid, compact_state::ROOT);
+     }
+ 
++    // Handle foundations/hole/waste (though rare for group moves, be safe)
++    uint8_t from_fs = 255, old_from_fr = 255;
++    if (is_foundation_pile(m.from)) {
++        from_fs = get_foundation_suit(m.from);
++        old_from_fr = payload.get_foundation(from_fs);
++        uint8_t new_rank = piles[m.from].empty() ? 0 : piles[m.from].top_card().get_rank();
++        update_foundation_in_hash(from_fs, new_rank);
++    }
++    uint8_t to_fs = 255, old_to_fr = 255;
++    if (is_foundation_pile(m.to)) {
++        to_fs = get_foundation_suit(m.to);
++        old_to_fr = payload.get_foundation(to_fs);
++        update_foundation_in_hash(to_fs, bottom.get_rank());
++    }
++    uint8_t old_ht = 255;
++    if (m.to == hole || m.from == hole) {
++        old_ht = payload.get_hole_top();
++        uint8_t new_ht_cid = (m.to == hole) ? bottom_cid : (piles[hole].empty() ? 255 : zobrist_hash::card_id(piles[hole].top_card().get_suit(), piles[hole].top_card().get_rank()));
++        update_hole_top_in_hash(new_ht_cid);
++    }
++    uint8_t old_waste_ptr = 255;
++    if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
++        if (m.from == waste || m.to == waste) {
++            old_waste_ptr = payload.get_waste_ptr();
++            update_waste_ptr_in_hash(static_cast<uint8_t>(piles[waste].size()));
++        }
++    }
++
+     // Push undo
+@@ -578,12 +631,12 @@ void game_state::make_built_group_move(move m) {
+     undo.card_id = bottom_cid;
+     undo.old_desc = old_desc;
+     undo.revealed_card_id = rev_cid;
+-    undo.from_found_suit = 255;
+-    undo.old_from_found_rank = 255;
+-    undo.to_found_suit = 255;
+-    undo.old_to_found_rank = 255;
+-    undo.old_hole_top = 255;
+-    undo.old_waste_ptr = 255;
++    undo.from_found_suit = from_fs;
++    undo.old_from_found_rank = old_from_fr;
++    undo.to_found_suit = to_fs;
++    undo.old_to_found_rank = old_to_fr;
++    undo.old_hole_top = old_ht;
++    undo.old_waste_ptr = old_waste_ptr;
+     undo.sat_count = 0;
+     zobrist_undo_stack.push_back(undo);
+ }
+@@ -606,6 +659,26 @@ void game_state::undo_built_group_move(move m) {
+     // Restore bottom card's descriptor
+     update_card_descriptor(undo.card_id, undo.old_desc);
+ 
++    // Undo hole header
++    if (undo.old_hole_top != 255) {
++        update_hole_top_in_hash(undo.old_hole_top);
++    }
++
++    // Undo waste pointer
++    if (undo.old_waste_ptr != 255) {
++        update_waste_ptr_in_hash(undo.old_waste_ptr);
++    }
++
++    // Undo destination foundation header
++    if (undo.to_found_suit != 255) {
++        update_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank);
++    }
++
++    // Undo source foundation header
++    if (undo.from_found_suit != 255) {
++        update_foundation_in_hash(undo.from_found_suit, undo.old_from_found_rank);
++    }
++
+     // Adds the cards to the 'from' pile
+     for (auto pile_idx = m.count; pile_idx-- > 0;) {
+         place_card(m.from, piles[m.to][pile_idx]);

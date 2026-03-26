@@ -1,0 +1,29 @@
+Start testing: Mar 22 09:49 GMT
+----------------------------------------------------------
+6/8 Testing: regression_level3
+6/8 Test: regression_level3
+Command: "/opt/homebrew/bin/python3" "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/scripts/regression_runner.py" "--exe" "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/bin/solvitaire" "--oracle" "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/tests/oracles/level3.json" "--max-instance-timeout-ms" "120000"
+Directory: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking
+"regression_level3" start time: Mar 22 09:49 GMT
+Output:
+----------------------------------------------------------
+Running Regression: 160 instances (Oracle: level3.json)
+------------------------------------------------------------
+Progress: 25/160 (Pass: 25, Fail: 0)
+Progress: 50/160 (Pass: 50, Fail: 0)
+Progress: 75/160 (Pass: 75, Fail: 0)
+Progress: 100/160 (Pass: 100, Fail: 0)
+Progress: 125/160 (Pass: 125, Fail: 0)
+Progress: 150/160 (Pass: 150, Fail: 0)
+------------------------------------------------------------
+Final Report: Passed: 160/160
+Regression suite components verified successfully.
+<end of output>
+Test time = 119.65 sec
+----------------------------------------------------------
+Test Passed.
+"regression_level3" end time: Mar 22 09:50 GMT
+"regression_level3" time elapsed: 00:01:59
+----------------------------------------------------------
+
+End testing: Mar 22 09:50 GMT
