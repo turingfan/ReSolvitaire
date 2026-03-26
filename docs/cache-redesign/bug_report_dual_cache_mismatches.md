@@ -105,8 +105,25 @@ To debug further, need to:
 - **Failing**: 5 (these mismatches)
 - **Outcome tests**: All passing (correct solutions despite different node counts)
 
+## Deep Dive: FreeCell Op 7
+
+**Key Finding**: When FreeCell is solved deterministically (always taking first move), both caches correctly report MISS for op 7 — the state is genuinely new. However, during DFS with backtracking, LRU reports HIT while flat reports MISS.
+
+**Analysis**:
+- The state at op 7 CAN be reached via multiple move sequences
+- LRU's deterministic state encoding recognizes the duplicate
+- Flat_cache's encoding does NOT recognize the same state when reached via a different path
+- All seven hashes are unique in the deterministic trace (no collisions)
+
+**Conclusion**: This is a **correctness bug, not a deduplication efficiency issue**. Flat_cache is failing to recognize equivalent game states reached through different move orders. This causes it to re-explore already-visited portions of the game tree.
+
+**Severity**: HIGH — flat_cache is incorrectly returning MISS for states that have been seen before, violating transposition table correctness.
+
+---
+
 ## Notes
 
 - The mismatches occur in games without pile symmetry (not suit-symmetry related)
 - Somerset seed 1 passes, seed 3 fails (seed-dependent behavior)
-- FreeCell at op 7 is suspiciously early, suggesting possible initialization divergence
+- FreeCell op 7 is a genuine correctness bug, not initialization divergence
+- Root cause likely: flat_cache descriptor model doesn't canonicalize equivalent states reached via different move orders

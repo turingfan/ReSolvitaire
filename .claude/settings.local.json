@@ -51,7 +51,14 @@
       "Bash(make solvitaire:*)",
       "Bash(./build.sh --release)",
       "Bash(/tmp/suit_symmetry_report.txt:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(cmake-build-debug/bin/unit_tests)",
+      "Bash(make)",
+      "Bash(./build.sh --debug --unit-tests)",
+      "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"MismatchAnalyzer.*\" 2>&1)",
+      "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"MismatchAnalyzer.*\")",
+      "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"FreeCellOp7Debug.*\")",
+      "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"FreeCellOp7Debug.*\" 2>&1)"
     ]
   }
 }
