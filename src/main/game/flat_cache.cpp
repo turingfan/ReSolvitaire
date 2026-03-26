@@ -51,7 +51,13 @@ bool flat_cache::insert(const game_state& gs) {
         occupied_count++;
     } else if (!cl.entries[1].is_occupied()) {
         // Slot 1 is empty, Slot 0 is occupied
-        cl.entries[1] = new_state;
+        // Compare depths: bigger (lower depth) goes to slot 0
+        if (new_state.get_depth() <= cl.entries[0].get_depth()) {
+            cl.entries[1] = cl.entries[0];
+            cl.entries[0] = new_state;
+        } else {
+            cl.entries[1] = new_state;
+        }
         occupied_count++;
     } else if (new_state.get_depth() <= cl.entries[0].get_depth()) {
         // Both slots full, new entry depth-wins against slot 0
