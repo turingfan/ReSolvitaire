@@ -204,6 +204,7 @@ private:
     // Descriptor update helpers
     void update_card_descriptor(uint8_t cid, uint8_t new_desc);
     void update_foundation_in_hash(uint8_t suit, uint8_t new_rank);
+    uint8_t effective_waste_ptr() const;
     void update_waste_ptr_in_hash(uint8_t new_ptr);
     void update_hole_top_in_hash(uint8_t new_cid);
     uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;

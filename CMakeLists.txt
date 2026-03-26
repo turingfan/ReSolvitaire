@@ -127,6 +127,8 @@ set(sources_test_unit
         src/test/unit_tests/mismatch_analyzer.cpp
         src/test/unit_tests/freecell_first_7_nodes.cpp
         src/test/unit_tests/freecell_actual_dfs.cpp
+        src/test/unit_tests/freecell_record_ops.cpp
+        src/test/unit_tests/mismatch_diagnostic.cpp
 )
 
 set(sources_test_helper

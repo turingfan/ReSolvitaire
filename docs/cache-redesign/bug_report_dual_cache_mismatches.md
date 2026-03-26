@@ -4,7 +4,7 @@
 
 5 dual_cache unit tests fail with `LRU=HIT, Flat=MISS` mismatches occurring pre-eviction. In all cases, the lru_cache finds and recognizes states that the flat_cache misses, causing different behavior during search.
 
-**Status**: Root cause unknown. Outcome tests pass (correct solutions reached) but node counts differ.
+**Status**: ROOT CAUSE IDENTIFIED AND FIXED (2026-03-26). See "Root Cause" section below.
 
 ---
 
@@ -121,9 +121,53 @@ To debug further, need to:
 
 ---
 
+## Root Cause
+
+**STARTING(0) descriptor was not position-canonical.**
+
+`init_payload_and_hash()` assigned STARTING(0) to all cards regardless of their
+actual tableau position. But `determine_destination_descriptor()` computes
+position-based descriptors (ROOT, PARENT_0–3) when a card is placed on a pile.
+When a card was moved away and returned to the same position via a different move
+sequence, it received a PARENT_x descriptor instead of STARTING(0). The LRU
+cache, which rebuilds its representation from scratch on every insert, saw these
+as the same state. The flat cache, which relies on incrementally-maintained
+descriptors, saw them as different.
+
+**Example (FreeCell seed 1, op 7):** Card 8C starts on 9D with descriptor
+STARTING(0). Via one move sequence it never moves (stays STARTING). Via another
+sequence it is moved away then returned to 9D, receiving PARENT_1(5) from
+`determine_destination_descriptor`. Same board, different payload.
+
+**Fix:** `init_payload_and_hash()` now computes the correct positional descriptor
+for every face-up tableau card (ROOT for bottom of pile, PARENT_x for cards
+sitting on a parent), matching what `determine_destination_descriptor()` would
+compute. STARTING(0) is now only used for face-down cards.
+
+## Design Note: STARTING descriptor and future rule variants
+
+The fix above eliminates the STARTING/PARENT distinction for face-up cards,
+which is correct because the LRU cache has no concept of "original position."
+However, this assumes that `determine_destination_descriptor()` is the canonical
+authority on what descriptor a card should have at any given position.
+
+**Potential edge case for future rules:** If a game variant were introduced where
+a card's history matters (e.g., "a card that has never been moved has special
+properties"), the descriptor model would need to distinguish "originally placed
+here" from "moved back here." This would require either:
+
+1. A dedicated STARTING descriptor that `determine_destination_descriptor()`
+   also returns when a card is in its original position (requires tracking
+   original positions), or
+2. Accepting false negatives (flat cache misses valid cache hits) for such games,
+   or
+3. A separate mechanism outside the descriptor model to track card history.
+
+No current game variant has this property. This note is for future reference.
+
 ## Notes
 
 - The mismatches occur in games without pile symmetry (not suit-symmetry related)
 - Somerset seed 1 passes, seed 3 fails (seed-dependent behavior)
 - FreeCell op 7 is a genuine correctness bug, not initialization divergence
-- Root cause likely: flat_cache descriptor model doesn't canonicalize equivalent states reached via different move orders
+- Root cause: STARTING(0) was assigned to all cards at init but not returned by determine_destination_descriptor() for the same position

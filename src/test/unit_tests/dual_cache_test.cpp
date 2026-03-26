@@ -95,7 +95,7 @@ TEST_F(DualCacheTest, EightOffAgreement) {
 }
 
 TEST_F(DualCacheTest, SpanishPatienceAgreement) {
-    run_lru_better_agreement_test("spanish-patience", 1); 
+    run_lru_better_agreement_test("spanish-patience", 1);
 }
 
 TEST_F(DualCacheTest, SomersetAgreement) {

@@ -472,7 +472,11 @@ void game_state::make_regular_move(const move m) {
         piles[m.from][0].turn_face_up();
         card rev = piles[m.from][0];
         rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
-        update_card_descriptor(rev_cid, compact_state::STARTING_FACE_UP);
+        // Bottom of pile → IN_SPACE; otherwise STARTING_FACE_UP
+        uint8_t rev_desc = (piles[m.from].size() == 1)
+            ? compact_state::IN_SPACE
+            : compact_state::STARTING_FACE_UP;
+        update_card_descriptor(rev_cid, rev_desc);
     }
 
     // Push undo info
@@ -551,7 +555,7 @@ void game_state::make_built_group_move(move m) {
     // Parent (if any) is at piles[m.to][m.count]
     uint8_t new_desc;
     if (static_cast<pile::size_type>(piles[m.to].size()) == m.count) {
-        new_desc = compact_state::ROOT;
+        new_desc = compact_state::IN_SPACE;
     } else {
         card parent_card = piles[m.to][m.count];
         uint8_t parent_cid = zobrist_hash::card_id(
@@ -570,7 +574,11 @@ void game_state::make_built_group_move(move m) {
         piles[m.from][0].turn_face_up();
         card rev = piles[m.from][0];
         rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
-        update_card_descriptor(rev_cid, compact_state::STARTING_FACE_UP);
+        // Bottom of pile → IN_SPACE; otherwise STARTING_FACE_UP
+        uint8_t rev_desc = (piles[m.from].size() == 1)
+            ? compact_state::IN_SPACE
+            : compact_state::STARTING_FACE_UP;
+        update_card_descriptor(rev_cid, rev_desc);
     }
 
     // Push undo
@@ -674,8 +682,8 @@ void game_state::make_stock_k_plus_move(const move m) {
     }
 
     // Update waste pointer to current waste size
-    uint8_t new_waste_ptr = static_cast<uint8_t>(piles[waste].size());
-    update_waste_ptr_in_hash(new_waste_ptr);
+    // (applying waste-deal symmetry if applicable)
+    update_waste_ptr_in_hash(effective_waste_ptr());
 
     // Push undo
     zobrist_undo undo = {};
@@ -882,6 +890,20 @@ void game_state::check_face_down_consistent() const {
             seen_face_up = seen_face_up || !c.is_face_down();
             assert(!(c.is_face_down() && seen_face_up));
         }
+
+        // Check that face-down cards have STARTING descriptor
+        for (auto& c : piles[p].pile_vec) {
+            if (c.is_face_down()) {
+                uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+                uint8_t desc = payload.get_descriptor(cid);
+                if (desc != compact_state::STARTING) {
+                    std::cerr << "DESCRIPTOR BUG: face-down card " << (int)cid
+                              << " has descriptor " << (int)desc
+                              << " (expected STARTING=0)" << std::endl;
+                    assert(false);
+                }
+            }
+        }
     }
 }
 #endif
@@ -921,22 +943,57 @@ void game_state::init_payload_and_hash() {
     }
 
     // Waste pointer: initial position = size of waste pile
+    // When waste-deal symmetry holds (redeal enabled and waste size divisible
+    // by deal count), use 0 to match LRU's position-independent encoding.
     if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
-        uint8_t ptr = static_cast<uint8_t>(piles[waste].size());
+        uint8_t ptr = effective_waste_ptr();
         payload.set_waste_ptr(ptr);
         zobrist_hash_value ^= zobrist_hash::waste_key(ptr);
     }
 
-    // Set descriptors for cards not in starting position
+    // Set positional descriptors for face-up tableau cards.
+    // This must match what determine_destination_descriptor() would compute,
+    // so that a card moved away and returned to the same position gets the
+    // same descriptor as it had initially.
+    for (auto tab_ref : original_tableau_piles) {
+        const pile& p = piles[tab_ref];
+        for (pile::size_type i = 0; i < p.size(); ++i) {
+            card c = p[i];
+            if (c.is_face_down()) continue;
+
+            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+            uint8_t new_desc;
+            if (i == p.size() - 1) {
+                // Bottom of pile
+                new_desc = compact_state::IN_SPACE;
+            } else {
+                // Card below this one is p[i+1]
+                card parent_card = p[i + 1];
+                uint8_t parent_cid = zobrist_hash::card_id(
+                    parent_card.get_suit(), parent_card.get_rank());
+                uint8_t desc = parent_table::get_descriptor_for_parent(
+                    cid, parent_cid, rules.build_pol);
+                new_desc = (desc != 0) ? desc : compact_state::ROOT;
+            }
+            update_card_descriptor(cid, new_desc);
+        }
+    }
+
     // Pre-filled cells: IN_CELL
     for (auto c_ref : original_cells) {
         if (!piles[c_ref].empty()) {
             card c = piles[c_ref].top_card();
             uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
-            uint8_t old_desc = payload.get_descriptor(cid);
-            payload.set_descriptor(cid, compact_state::IN_CELL);
-            zobrist_hash_value ^= zobrist_hash::card_key(cid, old_desc)
-                                ^ zobrist_hash::card_key(cid, compact_state::IN_CELL);
+            update_card_descriptor(cid, compact_state::IN_CELL);
+        }
+    }
+
+    // Hole cards
+    if (rules.hole && !piles[hole].empty()) {
+        for (pile::size_type i = 0; i < piles[hole].size(); ++i) {
+            card c = piles[hole][i];
+            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+            update_card_descriptor(cid, compact_state::IN_HOLE);
         }
     }
 }
@@ -953,6 +1010,15 @@ void game_state::update_foundation_in_hash(uint8_t suit, uint8_t new_rank) {
     zobrist_hash_value ^= zobrist_hash::foundation_key(suit, old_rank)
                         ^ zobrist_hash::foundation_key(suit, new_rank);
     payload.set_foundation(suit, new_rank);
+}
+
+uint8_t game_state::effective_waste_ptr() const {
+    bool waste_deal_symmetry = rules.stock_redeal
+        && piles[waste].size() % rules.stock_deal_count == 0;
+    if (waste_deal_symmetry) {
+        return 0;
+    }
+    return static_cast<uint8_t>(piles[waste].size());
 }
 
 void game_state::update_waste_ptr_in_hash(uint8_t new_ptr) {
@@ -1004,7 +1070,7 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
         if (dest >= first_tab && dest <= last_tab) {
             // After place_card, size==1 means the pile was empty before
             if (piles[dest].size() == 1) {
-                return compact_state::ROOT;
+                return compact_state::IN_SPACE;
             }
             // Card below the moved card is the parent
             card parent_card = piles[dest][1];
@@ -1015,7 +1081,7 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
             uint8_t desc = parent_table::get_descriptor_for_parent(
                 moved_cid, parent_cid, rules.build_pol);
             if (desc != 0) return desc;
-            // Forced deal or unmatched build — treat as ROOT
+            // Non-legal-build parent below — ROOT
             return compact_state::ROOT;
         }
     }

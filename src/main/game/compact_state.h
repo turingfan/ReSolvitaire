@@ -17,6 +17,7 @@ struct compact_state {
         PARENT_2         = 6,
         PARENT_3         = 7,
         IN_HOLE          = 8,
+        IN_SPACE         = 9,  // Moved to an empty tableau pile (distinct from ROOT = original bottom)
     };
 
     void clear();
