@@ -12,7 +12,7 @@ protected:
         zobrist_hash::init();
     }
 
-    void run_agreement_test(const std::string& preset, int seeds = 3, uint64_t cap = 10000000) {
+    void run_perfect_agreement_test(const std::string& preset, int seeds = 3, uint64_t cap = 10000000) {
         sol_rules rules = rules_parser::from_preset(preset);
         for (int seed = 1; seed <= seeds; ++seed) {
             dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
@@ -23,6 +23,36 @@ protected:
             
             EXPECT_EQ(cache.get_lru_only_hits(), 0) 
                 << "Unacceptable LRU=HIT, flat=MISS in " << preset << " at seed " << seed;
+            EXPECT_EQ(cache.get_flat_only_hits(), 0) 
+                << "Unacceptable LRU=MISS, flat=HIT in " << preset << " at seed " << seed;
+        }
+    }
+
+    void run_flat_better_agreement_test(const std::string& preset, int seeds = 3, uint64_t cap = 10000000) {
+        sol_rules rules = rules_parser::from_preset(preset);
+        for (int seed = 1; seed <= seeds; ++seed) {
+            dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
+            game_state gs(rules, seed, game_state::streamliner_options::NONE);
+            dual_cache cache(gs, cap);
+            solver sol(gs, cache);
+            sol.run(boost::optional<std::chrono::milliseconds>(10000));
+            
+            EXPECT_EQ(cache.get_lru_only_hits(), 0) 
+                << "Unacceptable LRU=HIT, flat=MISS in " << preset << " at seed " << seed;
+        }
+    }
+
+    void run_lru_better_agreement_test(const std::string& preset, int seeds = 3, uint64_t cap = 10000000) {
+        sol_rules rules = rules_parser::from_preset(preset);
+        for (int seed = 1; seed <= seeds; ++seed) {
+            dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
+            game_state gs(rules, seed, game_state::streamliner_options::NONE);
+            dual_cache cache(gs, cap);
+            solver sol(gs, cache);
+            sol.run(boost::optional<std::chrono::milliseconds>(10000));
+            
+            EXPECT_EQ(cache.get_flat_only_hits(), 0) 
+                << "Unacceptable LRU=MISS, flat=HIT in " << preset << " at seed " << seed;
         }
     }
 
@@ -48,14 +78,48 @@ protected:
     }
 };
 
+// --- Node Agreement Tests (Streamliner: NONE) ---
+// These games do NOT have a hole and we use no streamliners, 
+// so legacy symmetry should be disabled. Nodes must match exactly.
+
+TEST_F(DualCacheTest, FreeCellAgreement) {
+    run_flat_better_agreement_test("free-cell");
+}
+
+TEST_F(DualCacheTest, BakersGameAgreement) {
+    run_flat_better_agreement_test("bakers-game");
+}
+
+TEST_F(DualCacheTest, EightOffAgreement) {
+    run_flat_better_agreement_test("eight-off");
+}
+
+TEST_F(DualCacheTest, SpanishPatienceAgreement) {
+    run_lru_better_agreement_test("spanish-patience", 1); 
+}
+
+TEST_F(DualCacheTest, SomersetAgreement) {
+    run_flat_better_agreement_test("somerset", 3);
+}
+
+TEST_F(DualCacheTest, FlowerGardenAgreement) {
+    run_perfect_agreement_test("flower-garden", 1);
+}
+
+TEST_F(DualCacheTest, FortunesFavorAgreement) {
+    run_perfect_agreement_test("fortunes-favor", 3);
+}
+
+TEST_F(DualCacheTest, SeahavenTowersAgreement) {
+    run_perfect_agreement_test("seahaven-towers", 3);
+}
+
+TEST_F(DualCacheTest, KlondikeAgreement) {
+    run_lru_better_agreement_test("klondike-deal-1", 3, 10000000);
+}
+
 // --- Outcome Agreement Tests ---
-// flat_cache uses per-card descriptors which don't collapse pile-order-equivalent
-// states like lru_cache's sorted pile encoding does. So flat_cache may explore
-// more states, but must reach the same solvability outcome.
-// Known divergence categories:
-//   A: Pile-ordering asymmetry (LRU deduplicates more via sorted piles)
-//   B: Waste-pointer asymmetry (LRU collapses circular waste in redeal games)
-//   C: Suit symmetry (LRU collapses suit-equivalent states)
+// Run outcome tests as fallback in case we get agreement failures
 
 TEST_F(DualCacheTest, FreeCellOutcome) {
     run_outcome_test("free-cell", 3, 10000000);
