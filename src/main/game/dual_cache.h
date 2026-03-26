@@ -21,12 +21,21 @@ public:
         , eviction_occurred(false)
         , lru_only_hits(0)
         , flat_only_hits(0)
+        , first_mismatch_op(0)
+        , mismatch_zobrist_hash(0)
+        , mismatch_lru_hit(false)
+        , mismatch_flat_hit(false)
     {}
 
     static std::string& context() {
         static std::string s_context = "unknown";
         return s_context;
     }
+
+    uint64_t get_first_mismatch_op() const { return first_mismatch_op; }
+    uint64_t get_mismatch_zobrist_hash() const { return mismatch_zobrist_hash; }
+    bool get_mismatch_lru_hit() const { return mismatch_lru_hit; }
+    bool get_mismatch_flat_hit() const { return mismatch_flat_hit; }
 
     bool insert(const game_state& gs) override {
         ops++;
@@ -44,7 +53,7 @@ public:
         if (!eviction_occurred && lru_result != flat_result) {
             bool lru_hit = !lru_result;
             bool flat_hit = !flat_result;
-            
+
             if (lru_hit && !flat_hit) {
                 lru_only_hits++;
             } else if (!lru_hit && flat_hit) {
@@ -54,6 +63,13 @@ public:
             std::cerr << "MISMATCH [" << context() << "] at op " << ops
                       << ": insert() " << (lru_hit ? "LRU=HIT" : "LRU=MISS")
                       << ", " << (flat_hit ? "flat=HIT" : "flat=MISS") << std::endl;
+
+            if (first_mismatch_op == 0) {
+                first_mismatch_op = ops;
+                mismatch_zobrist_hash = gs.get_zobrist_hash();
+                mismatch_lru_hit = lru_hit;
+                mismatch_flat_hit = flat_hit;
+            }
         }
 
         return flat_result; // Return flat result to drive testing
@@ -108,6 +124,10 @@ private:
     bool eviction_occurred;
     uint64_t lru_only_hits;
     uint64_t flat_only_hits;
+    uint64_t first_mismatch_op;
+    uint64_t mismatch_zobrist_hash;
+    bool mismatch_lru_hit;
+    bool mismatch_flat_hit;
 };
 
 #endif // SOLVITAIRE_DUAL_CACHE_H
