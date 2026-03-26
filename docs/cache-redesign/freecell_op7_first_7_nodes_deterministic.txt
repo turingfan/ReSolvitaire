@@ -1,0 +1,148 @@
+=== FreeCell Seed 1: First 7 Cache Operations ===
+
+--- Node 1 ---
+LRU.insert() returned: true (MISS)
+Flat.insert() returned: true (MISS)
+Hash: 0x622ead1d6173e0e9
+
+Board state:
+--- Foundations ---------
+[]	[]	[]	[]
+--- Cells ---------------
+[]	[]	[]	[]
+--- Tableau Piles -------
+6H	KS	10C	QH	AC	2S	4H	QC
+QS	3S	AD	5C	2D	4D	KC	7C
+4S	9C	5S	7D	10H	3H	6C	10S
+2H	3D	6S	9S	QD	4C	9D	5D
+3C	8H	JS	10D	AS	KD	8C	5H
+8S	JC	7S	7H	8D	6D	2C	9H
+JH	KH	AH	JD
+===================================
+
+
+--- Node 2 ---
+LRU.insert() returned: true (MISS)
+Flat.insert() returned: true (MISS)
+Hash: 0xbf61c87b442c4c16
+
+Board state:
+--- Foundations ---------
+[]	[]	[]	[]
+--- Cells ---------------
+[]	[]	[]	KH
+--- Tableau Piles -------
+6H	KS	10C	QH	AC	2S	4H	QC
+QS	3S	AD	5C	2D	4D	KC	7C
+4S	9C	5S	7D	10H	3H	6C	10S
+2H	3D	6S	9S	QD	4C	9D	5D
+3C	8H	JS	10D	AS	KD	8C	5H
+8S	JC	7S	7H	8D	6D	2C	9H
+JH		AH	JD
+===================================
+
+
+--- Node 3 ---
+LRU.insert() returned: true (MISS)
+Flat.insert() returned: true (MISS)
+Hash: 0xcefeaec1b5f117d2
+
+Board state:
+--- Foundations ---------
+[]	[]	[]	[]
+--- Cells ---------------
+[]	[]	JD	KH
+--- Tableau Piles -------
+6H	KS	10C	QH	AC	2S	4H	QC
+QS	3S	AD	5C	2D	4D	KC	7C
+4S	9C	5S	7D	10H	3H	6C	10S
+2H	3D	6S	9S	QD	4C	9D	5D
+3C	8H	JS	10D	AS	KD	8C	5H
+8S	JC	7S	7H	8D	6D	2C	9H
+JH		AH
+===================================
+
+
+--- Node 4 ---
+LRU.insert() returned: true (MISS)
+Flat.insert() returned: true (MISS)
+Hash: 0x6b4b8a8077bd4e69
+
+Board state:
+--- Foundations ---------
+[]	[]	[]	[]
+--- Cells ---------------
+[]	AH	JD	KH
+--- Tableau Piles -------
+6H	KS	10C	QH	AC	2S	4H	QC
+QS	3S	AD	5C	2D	4D	KC	7C
+4S	9C	5S	7D	10H	3H	6C	10S
+2H	3D	6S	9S	QD	4C	9D	5D
+3C	8H	JS	10D	AS	KD	8C	5H
+8S	JC	7S	7H	8D	6D	2C	9H
+JH
+===================================
+
+
+--- Node 5 ---
+LRU.insert() returned: true (MISS)
+Flat.insert() returned: true (MISS)
+Hash: 0x61e14fda3f23df40
+
+Board state:
+--- Foundations ---------
+[]	[]	[]	[]
+--- Cells ---------------
+JH	AH	JD	KH
+--- Tableau Piles -------
+6H	KS	10C	QH	AC	2S	4H	QC
+QS	3S	AD	5C	2D	4D	KC	7C
+4S	9C	5S	7D	10H	3H	6C	10S
+2H	3D	6S	9S	QD	4C	9D	5D
+3C	8H	JS	10D	AS	KD	8C	5H
+8S	JC	7S	7H	8D	6D	2C	9H
+===================================
+
+
+--- Node 6 ---
+LRU.insert() returned: true (MISS)
+Flat.insert() returned: true (MISS)
+Hash: 0x7cd5e3536780eea4
+
+Board state:
+--- Foundations ---------
+[]	[]	[]	[]
+--- Cells ---------------
+JH	AH	JD	KH
+--- Tableau Piles -------
+6H	KS	10C	QH	AC	2S	4H	QC
+QS	3S	AD	5C	2D	4D	KC	7C
+4S	9C	5S	7D	10H	3H	6C	10S
+2H	3D	6S	9S	QD	4C	9D	5D
+3C	8H	JS	10D	AS	KD	8C	5H
+8S	JC	7S		8D	6D	2C	9H
+7H
+===================================
+
+
+--- Node 7 ---
+LRU.insert() returned: true (MISS)
+Flat.insert() returned: true (MISS)
+Hash: 0x48f85e293813fc0a
+
+Board state:
+--- Foundations ---------
+[]	[]	[]	[]
+--- Cells ---------------
+JH	AH	JD	KH
+--- Tableau Piles -------
+6H	KS	10C	QH	AC	2S	4H	QC
+QS	3S	AD	5C	2D	4D	KC	7C
+4S	9C	5S	7D	10H	3H	6C	10S
+2H	3D	6S	9S	QD	4C	9D	5D
+3C	8H	JS	10D	AS	KD	8C	5H
+8S	JC			8D	6D	2C	9H
+7H				7S
+===================================
+
+
