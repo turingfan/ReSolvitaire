@@ -214,20 +214,10 @@ TEST(ZobristGameState, PayloadInitialization) {
 
     const compact_state& payload = gs.get_payload();
 
-    // AC and 2D start face up at the bottom of the tableau, so their descriptors are ROOT
-    // All other unused cards are STARTING (0) initially
-    
-    // AC is Clubs(0) rank 1 => card_id = 0
-    // 2D is Diamonds(3) rank 2 => card_id = 40
-
+    // All descriptors should be STARTING (0) initially
     for (uint8_t c = 0; c < 52; ++c) {
-        if (c == 0 || c == 40) {
-            EXPECT_EQ(payload.get_descriptor(c), compact_state::ROOT)
-                << "Card " << (int)c << " should have ROOT descriptor";
-        } else {
-            EXPECT_EQ(payload.get_descriptor(c), compact_state::STARTING)
-                << "Card " << (int)c << " should have STARTING descriptor";
-        }
+        EXPECT_EQ(payload.get_descriptor(c), compact_state::STARTING)
+            << "Card " << (int)c << " should have STARTING descriptor";
     }
 }
 
@@ -385,9 +375,9 @@ TEST(ZobristIncremental, DescriptorChangesOnTableauMove) {
     // AC alone, 2H alone, empty — AC can move onto 2H (red-black)
     game_state gs(rules, sil{{"AC"}, {"2H"}, {}});
 
-    // AC is alone at bottom of tableau, starts as ROOT
+    // AC starts as STARTING
     uint8_t ac_cid = zobrist_hash::card_id(0, 1);  // Ace of Clubs
-    EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::ROOT);
+    EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::STARTING);
 
     uint64_t hash_before = gs.get_zobrist_hash();
 
@@ -399,22 +389,22 @@ TEST(ZobristIncremental, DescriptorChangesOnTableauMove) {
     move m = moves[0];
     gs.make_move(m);
 
-    // After move, AC's descriptor should change (placed on 2H, so it becomes PARENT)
-    EXPECT_NE(gs.get_payload().get_descriptor(ac_cid), compact_state::ROOT)
+    // After move, AC's descriptor should change (no longer STARTING)
+    EXPECT_NE(gs.get_payload().get_descriptor(ac_cid), compact_state::STARTING)
         << "AC descriptor should change after being built on 2H";
     EXPECT_NE(gs.get_zobrist_hash(), hash_before)
         << "Hash should change after move";
 
     // Undo and verify restoration
     gs.undo_move(m);
-    EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::ROOT)
+    EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::STARTING)
         << "AC descriptor should be restored after undo";
     EXPECT_EQ(gs.get_zobrist_hash(), hash_before)
         << "Hash should be restored after undo";
 }
 
-// Test: ROOT descriptor on reveal move (previously STARTING_FACE_UP)
-TEST(ZobristIncremental, RootDescriptorOnReveal) {
+// Test: STARTING_FACE_UP on reveal move
+TEST(ZobristIncremental, StartingFaceUpOnReveal) {
     zobrist_hash::init();
     sol_rules rules;
     rules.tableau_pile_count = 3;
@@ -449,9 +439,9 @@ TEST(ZobristIncremental, RootDescriptorOnReveal) {
     if (found) {
         gs.make_move(reveal_move);
 
-        // 3S is now face-up at the bottom of the tableau, so it becomes ROOT
-        EXPECT_EQ(gs.get_payload().get_descriptor(s3_cid), compact_state::ROOT)
-            << "Revealed card should have ROOT descriptor";
+        // 3S should now be STARTING_FACE_UP
+        EXPECT_EQ(gs.get_payload().get_descriptor(s3_cid), compact_state::STARTING_FACE_UP)
+            << "Revealed card should have STARTING_FACE_UP descriptor";
         EXPECT_NE(gs.get_zobrist_hash(), hash_before)
             << "Hash should change after reveal";
 
@@ -547,7 +537,7 @@ TEST(ZobristIncremental, CellMoveDescriptor) {
         EXPECT_NE(gs.get_zobrist_hash(), hash_before);
 
         gs.undo_move(cell_move);
-        EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::ROOT);
+        EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::STARTING);
         EXPECT_EQ(gs.get_zobrist_hash(), hash_before);
     }
 }

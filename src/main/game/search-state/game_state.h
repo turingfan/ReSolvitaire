@@ -81,9 +81,6 @@ public:
     const std::vector<pile>& get_data() const;
     uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
     const compact_state& get_payload() const { return payload; }
-#ifndef NDEBUG
-    compact_state recompute_payload_from_scratch() const;
-#endif
     void set_payload_depth(uint16_t depth);
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
 
@@ -183,11 +180,7 @@ private:
     uint64_t zobrist_hash_value;
     compact_state payload;
 
-#ifndef NDEBUG
     void init_payload_and_hash();  // Called at end of constructors
-#else
-    void init_payload_and_hash();
-#endif
 
     // Undo record for incremental descriptor/hash updates
     struct zobrist_undo {
@@ -201,8 +194,6 @@ private:
         uint8_t old_hole_top;          // 255 = dest not hole
         uint8_t old_waste_ptr;         // 255 = waste ptr didn't change
         uint8_t sat_count;             // stock_to_all_tableau card count (0 otherwise)
-        bool exposed_upgraded_to_root; // true if exposed card upgraded to ROOT
-        uint8_t exposed_card_id;       // cid of upgraded card
     };
     std::vector<zobrist_undo> zobrist_undo_stack;
 
