@@ -58,7 +58,16 @@
       "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"MismatchAnalyzer.*\" 2>&1)",
       "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"MismatchAnalyzer.*\")",
       "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"FreeCellOp7Debug.*\")",
-      "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"FreeCellOp7Debug.*\" 2>&1)"
+      "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"FreeCellOp7Debug.*\" 2>&1)",
+      "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=\"FreeCellOp7Capture.*\")",
+      "Bash(cmake-build-debug/bin/unit_tests --gtest_filter=FreeCellOp7Trace.* 2)",
+      "Bash(./bin/unit_tests --gtest_filter=\"FreeCellActualDFS.*\")",
+      "Bash(./bin/unit_tests --gtest_filter=\"MismatchDiagnostic.FreeCellSeed1\")",
+      "Bash(./bin/unit_tests --gtest_filter=MismatchDiagnostic.FlowerGardenSeed1)",
+      "Bash(./bin/unit_tests --gtest_filter=\"DualCacheTest.FlowerGardenAgreement\")",
+      "Bash(./bin/unit_tests --gtest_filter=\"DualCacheTest.SeahavenTowersAgreement\")",
+      "Bash(./bin/unit_tests --gtest_filter=\"DualCacheTest.SpanishPatienceAgreement\")",
+      "Bash(cd:*)"
     ]
   }
 }

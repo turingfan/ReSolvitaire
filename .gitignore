@@ -60,3 +60,6 @@ results/
 
 venv/
 .aider*
+
+# Editor backup files
+*~

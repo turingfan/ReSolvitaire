@@ -22,6 +22,7 @@ static const char* desc_name(uint8_t d) {
         case 6: return "PARENT_2";
         case 7: return "PARENT_3";
         case 8: return "IN_HOLE";
+        case 9: return "IN_SPACE";
         default: return "???";
     }
 }
@@ -425,6 +426,40 @@ protected:
         outfile << "=== End ===" << std::endl;
         std::cout << "Diagnostic saved to " << filename << std::endl;
     }
+
+    void run_diagnostic_from_file(const std::string& rules_file, const std::string& name, int seed, uint64_t timeout_ms = 60000) {
+        std::string filename = "/tmp/mismatch_diagnostic_" + name + "_seed" + std::to_string(seed) + ".txt";
+        std::ofstream outfile(filename);
+
+        outfile << "=== Mismatch Diagnostic: " << name << " seed " << seed << " ===" << std::endl;
+        outfile << std::endl;
+
+        sol_rules rules = rules_parser::from_file(rules_file);
+        game_state gs(rules, seed, game_state::streamliner_options::NONE);
+
+        RecordingDiagnosticCache cache(gs, 10000000, outfile, rules);
+        solver sol(gs, cache);
+        sol.run(boost::optional<std::chrono::milliseconds>(timeout_ms));
+
+        outfile << "Stats: ops=" << cache.get_ops()
+                << " lru_only_hits=" << cache.get_lru_only_hits()
+                << " flat_only_hits=" << cache.get_flat_only_hits()
+                << " evictions=" << cache.get_states_removed_from_cache() << std::endl;
+
+        if (!cache.had_recording_mismatch() && !cache.had_flat_only_mismatch()) {
+            outfile << "NO MISMATCHES DETECTED" << std::endl;
+        }
+
+        EXPECT_EQ(cache.get_flat_only_hits(), 0)
+            << "FLAT FALSE POSITIVE in " << name << " at seed " << seed
+            << " — see " << filename;
+        EXPECT_EQ(cache.get_lru_only_hits(), 0)
+            << "FLAT FALSE NEGATIVE in " << name << " at seed " << seed
+            << " — see " << filename;
+
+        outfile << "=== End ===" << std::endl;
+        std::cout << "Diagnostic saved to " << filename << std::endl;
+    }
 };
 
 TEST_F(MismatchDiagnostic, FreeCellSeed1) {
@@ -441,4 +476,14 @@ TEST_F(MismatchDiagnostic, SpanishPatienceSeed1) {
 
 TEST_F(MismatchDiagnostic, SeahavenTowersSeed1) {
     run_diagnostic("seahaven-towers", 1);
+}
+
+TEST_F(MismatchDiagnostic, FortunesFavorSeed31646033) {
+    run_diagnostic_from_file("tests/rules/fortunes-favor.json",
+                             "fortunes-favor", 31646033);
+}
+
+TEST_F(MismatchDiagnostic, CanfieldStrictSeed4000100) {
+    run_diagnostic_from_file("tests/rules/canfield-strict.json",
+                             "canfield-strict", 4000100);
 }
