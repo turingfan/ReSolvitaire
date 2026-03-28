@@ -113,7 +113,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (clh.get_benchmark() || clh.get_is_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout());
+        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_force_lru_cache());
         return EXIT_SUCCESS;
     }
     
@@ -255,7 +255,7 @@ pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout
                                         game_state::streamliner_options str_opts,
                                         optional<int> seed, optional<const Document&> in_doc,
                                         bool force_lru) {
-    game_state gs = seed ? game_state(rules, *seed, str_opts) : game_state(rules, *in_doc, str_opts);
+    game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru) : game_state(rules, *in_doc, str_opts, force_lru);
 
     // Use unique_ptr for polymorphic ownership
     std::unique_ptr<cache_interface> cache_ptr;

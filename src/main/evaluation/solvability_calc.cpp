@@ -174,7 +174,7 @@ solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec ti
                                                           uint64_t cache_capacity,
                                                           game_state::streamliner_options stream_opt,
                                                           bool force_lru) {
-    game_state gs(rules, seed, stream_opt);
+    game_state gs(rules, seed, stream_opt, force_lru);
 
     std::unique_ptr<cache_interface> cache_ptr;
     if (use_new_cache(rules) && !force_lru) {

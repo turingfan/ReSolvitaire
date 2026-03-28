@@ -65,7 +65,7 @@ typedef sol_rules::foundations_init_type fit;
 
 // A private constructor used by both of the public ones. Initializes all of the
 // piles and pile refs specified by the rules
-game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts_)
+game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts_, bool force_lru)
         : rules(s_rules)
         , stream_opts(stream_opts_)
         , foundations_base(card::rank_t(1))
@@ -142,19 +142,19 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
 
     // Initialize Zobrist hash and payload to zero (will be filled by subclasses)
     zobrist_hash_value = 0;
-    skip_pile_ordering = use_new_cache(s_rules);
+    skip_pile_ordering = use_new_cache(s_rules) && !force_lru;
 }
 
 // Constructs an initial game state from a JSON doc
-game_state::game_state(const sol_rules& s_rules, const Document& doc, streamliner_options s_opts)
-        : game_state(s_rules, s_opts) {
+game_state::game_state(const sol_rules& s_rules, const Document& doc, streamliner_options s_opts, bool force_lru)
+        : game_state(s_rules, s_opts, force_lru) {
     deal_parser::parse(*this, doc);
     init_payload_and_hash();
 }
 
 // Constructs an initial game state from a seed
-game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s_opts)
-        : game_state(s_rules, s_opts) {
+game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s_opts, bool force_lru)
+        : game_state(s_rules, s_opts, force_lru) {
     auto rng = mt19937(seed);
     vector<card> deck = gen_shuffled_deck(rules.max_rank, rules.two_decks, rng);
 

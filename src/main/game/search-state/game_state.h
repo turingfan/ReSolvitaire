@@ -57,9 +57,9 @@ public:
     /* Constructors */
 
     // Creates a game state representation from a JSON doc
-    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options);
+    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options, bool force_lru = false);
     // Does the same from a seed
-    game_state(const sol_rules&, int seed, streamliner_options);
+    game_state(const sol_rules&, int seed, streamliner_options, bool force_lru = false);
     // Does the same but with an initialiser list (useful for testing)
     game_state(const sol_rules&, std::initializer_list<std::initializer_list<std::string>>);
 
@@ -95,7 +95,7 @@ public:
 private:
     /* Constructors (& helper function) */
 
-    explicit game_state(const sol_rules&, streamliner_options);
+    explicit game_state(const sol_rules&, streamliner_options, bool force_lru = false);
     static std::vector<card> gen_shuffled_deck(card::rank_t, bool, std::mt19937);
     template<class RandomIt, class URBG> static void shuffle(RandomIt, RandomIt, URBG&&);
 

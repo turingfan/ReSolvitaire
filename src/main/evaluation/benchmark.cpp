@@ -53,7 +53,7 @@ using namespace std;
 
 static char benchmark_buffer[65536];
 
-void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms) {
+void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms, bool force_lru) {
     rapidjson::FileWriteStream os(stdout, benchmark_buffer, sizeof(benchmark_buffer));
     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
 
@@ -70,9 +70,9 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         writer.StartArray();
 
         for (int i = 0; i < iterations + (warmup ? 1 : 0); ++i) {
-            game_state gs(rules, (int)seed, str_opts);
+            game_state gs(rules, (int)seed, str_opts, force_lru);
             std::unique_ptr<cache_interface> cache_ptr;
-            if (use_new_cache(rules)) {
+            if (use_new_cache(rules) && !force_lru) {
                 cache_ptr = std::make_unique<flat_cache>(cache_capacity);
             } else {
                 cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
