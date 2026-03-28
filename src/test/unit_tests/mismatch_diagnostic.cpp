@@ -413,7 +413,7 @@ protected:
         outfile << std::endl;
 
         sol_rules rules = rules_parser::from_preset(preset);
-        game_state gs(rules, seed, game_state::streamliner_options::NONE);
+        game_state gs(rules, seed, game_state::streamliner_options::NONE, true);
 
         RecordingDiagnosticCache cache(gs, 10000000, outfile, rules);
         solver sol(gs, cache);
@@ -427,7 +427,8 @@ protected:
         std::cout << "Diagnostic saved to " << filename << std::endl;
     }
 
-    void run_diagnostic_from_file(const std::string& rules_file, const std::string& name, int seed, uint64_t timeout_ms = 60000) {
+    void run_diagnostic_from_file(const std::string& rules_file, const std::string& name, int seed,
+                                  uint64_t timeout_ms = 60000) {
         std::string filename = "/tmp/mismatch_diagnostic_" + name + "_seed" + std::to_string(seed) + ".txt";
         std::ofstream outfile(filename);
 
@@ -435,7 +436,7 @@ protected:
         outfile << std::endl;
 
         sol_rules rules = rules_parser::from_file(rules_file);
-        game_state gs(rules, seed, game_state::streamliner_options::NONE);
+        game_state gs(rules, seed, game_state::streamliner_options::NONE, true);
 
         RecordingDiagnosticCache cache(gs, 10000000, outfile, rules);
         solver sol(gs, cache);
@@ -480,10 +481,10 @@ TEST_F(MismatchDiagnostic, SeahavenTowersSeed1) {
 
 TEST_F(MismatchDiagnostic, FortunesFavorSeed31646033) {
     run_diagnostic_from_file("tests/rules/fortunes-favor.json",
-                             "fortunes-favor", 31646033);
+                             "fortunes-favor", 31646033, 60000);
 }
 
 TEST_F(MismatchDiagnostic, CanfieldStrictSeed4000100) {
     run_diagnostic_from_file("tests/rules/canfield-strict.json",
-                             "canfield-strict", 4000100);
+                             "canfield-strict", 4000100, 60000);
 }

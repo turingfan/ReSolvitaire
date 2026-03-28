@@ -1,8 +1,30 @@
 # Milestone 5: Verification and Hardening — Detailed Plan
 
-**Status:** Ready to implement
+**Status:** Complete (2026-03-28)
 **Prerequisite:** Milestone 4 (complete) — flat_cache is wired into the solver and passes Level 1 regression.
 **Branch:** `refactor-caching`
+
+---
+
+## Completion Summary (2026-03-28)
+
+All correctness bugs found during M5 testing are fixed. Unit tests pass cleanly (both `unit_tests` and `unit_tests_full` CTest targets). Level 1 regression passes.
+
+### Bugs fixed
+
+**Bug B — canfield-strict wrapping builds (`parent_table`):** `get_parents()` used a raw `rank+1` formula and returned no parents for Kings. Games with a non-Ace foundation base (e.g., canfield-strict with base=King) use a wrapping build sequence (King→Ace→2→...→Queen), so Ace's parent is King. Fix: `get_parents()` now accepts `foundations_base` and `max_rank` parameters and applies `foundation_base_convert` logic to compute the correct parent rank for any base. Four call sites in `game_state.cpp` updated; 5 unit tests added to `zobrist_test.cpp`.
+
+**Bug A — fortunes-favor waste pointer stale on regular moves:** `make_regular_move()` never called `update_waste_ptr_in_hash()` when the source pile was `waste`. This caused 18,908 LRU-only hits (false negatives) at seed 31646033. Fix: `make_regular_move` now captures the old waste pointer before the move and calls `update_waste_ptr_in_hash(effective_waste_ptr())` after pile manipulation; `undo_regular_move` restores via the saved value.
+
+### Test infrastructure fix — dual-cache `force_lru=true`
+
+The dual-cache metamorphic tests (`dual_cache_test.cpp`, `mismatch_diagnostic.cpp`) construct `game_state` without `force_lru=true`. In M6, `skip_pile_ordering` was made a runtime property: it is `true` when `use_new_cache(rules) && !force_lru`. With pile ordering disabled, swapped single-card empty tableau piles produce different LRU hashes but identical flat-cache payloads, creating spurious flat-only hits. Fix: all three dual-cache test helpers and both diagnostic helpers now pass `force_lru=true` as the 4th constructor argument. This re-enables pile canonicalization in test runs so both caches agree on equivalent states; flat-only hits dropped to zero.
+
+### Parked (not blocking M6)
+
+- `recompute_payload_from_scratch()` — cannot distinguish ROOT from IN_SPACE without move history; also uses ROOT instead of IN_SPACE for pile-bottom cards (pre-existing diagnostic bug). Deferred.
+- Sanitizer runs (Address, UB) — deferred.
+- Design docs (`implementation_plan.md`, `implementation_plan_v2.md`) — stale; not updated.
 
 ---
 

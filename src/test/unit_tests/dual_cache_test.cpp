@@ -16,7 +16,7 @@ protected:
         sol_rules rules = rules_parser::from_preset(preset);
         for (int seed = 1; seed <= seeds; ++seed) {
             dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
-            game_state gs(rules, seed, game_state::streamliner_options::NONE);
+            game_state gs(rules, seed, game_state::streamliner_options::NONE, true);
             dual_cache cache(gs, cap);
             solver sol(gs, cache);
             sol.run(boost::optional<std::chrono::milliseconds>(10000));
@@ -32,7 +32,7 @@ protected:
         sol_rules rules = rules_parser::from_preset(preset);
         for (int seed = 1; seed <= seeds; ++seed) {
             dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
-            game_state gs(rules, seed, game_state::streamliner_options::NONE);
+            game_state gs(rules, seed, game_state::streamliner_options::NONE, true);
             dual_cache cache(gs, cap);
             solver sol(gs, cache);
             sol.run(boost::optional<std::chrono::milliseconds>(10000));
@@ -46,7 +46,7 @@ protected:
         sol_rules rules = rules_parser::from_preset(preset);
         for (int seed = 1; seed <= seeds; ++seed) {
             dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
-            game_state gs(rules, seed, game_state::streamliner_options::NONE);
+            game_state gs(rules, seed, game_state::streamliner_options::NONE, true);
             dual_cache cache(gs, cap);
             solver sol(gs, cache);
             sol.run(boost::optional<std::chrono::milliseconds>(10000));

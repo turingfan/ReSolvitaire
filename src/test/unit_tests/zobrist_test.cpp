@@ -291,6 +291,63 @@ TEST(ParentTable, DescriptorForParent) {
     EXPECT_EQ(desc, compact_state::PARENT_1);
 }
 
+// Test: Wrapping builds - King's parent is Ace when foundation base != Ace
+TEST(ParentTable, WrappingKingParentIsAce) {
+    // Canfield with foundation base = King (13): build sequence wraps K,A,2,...,Q
+    // King of Clubs (card_id=12) should have Ace parents (not empty)
+    // With RED_BLACK: King (black) parents are red Aces
+    auto parents = parent_table::get_parents(12, sol_rules::build_policy::RED_BLACK, 13, 13);
+    ASSERT_EQ(parents.size(), 2u);
+    // AH: suit=1, rank=1 -> 1*13+0=13
+    // AD: suit=3, rank=1 -> 3*13+0=39
+    EXPECT_EQ(parents[0], 13);
+    EXPECT_EQ(parents[1], 39);
+}
+
+// Test: Wrapping builds - top of sequence has no parents
+TEST(ParentTable, WrappingTopOfSequenceNoParents) {
+    // Foundation base = 5: sequence is 5,6,...,K,A,2,3,4. Top = rank 4.
+    // 4 of Clubs (card_id=3, rank=4) should have no parents
+    auto parents = parent_table::get_parents(3, sol_rules::build_policy::RED_BLACK, 5, 13);
+    EXPECT_TRUE(parents.empty());
+}
+
+// Test: Wrapping builds - Ace's parent wraps correctly
+TEST(ParentTable, WrappingAceParent) {
+    // Foundation base = 5: A(converted=10), parent converted=11 -> rank 2
+    // Ace of Clubs (card_id=0, black) parents with RED_BLACK: 2H(14), 2D(40)
+    auto parents = parent_table::get_parents(0, sol_rules::build_policy::RED_BLACK, 5, 13);
+    ASSERT_EQ(parents.size(), 2u);
+    EXPECT_EQ(parents[0], 14);  // 2H
+    EXPECT_EQ(parents[1], 40);  // 2D
+}
+
+// Test: Wrapping descriptor lookup
+TEST(ParentTable, WrappingDescriptorForParent) {
+    // Base=13: King of Clubs on Ace of Hearts -> PARENT_0
+    uint8_t desc = parent_table::get_descriptor_for_parent(
+        12, 13, sol_rules::build_policy::RED_BLACK, 13, 13);
+    EXPECT_EQ(desc, compact_state::PARENT_0);
+
+    // King of Clubs on Ace of Diamonds -> PARENT_1
+    desc = parent_table::get_descriptor_for_parent(
+        12, 39, sol_rules::build_policy::RED_BLACK, 13, 13);
+    EXPECT_EQ(desc, compact_state::PARENT_1);
+}
+
+// Test: Default params (base=1) produce same results as before
+TEST(ParentTable, DefaultParamsUnchanged) {
+    // King with default base=1 still has no parents
+    auto parents = parent_table::get_parents(12, sol_rules::build_policy::RED_BLACK);
+    EXPECT_TRUE(parents.empty());
+
+    // Ace with default base=1 still has rank-2 parents
+    parents = parent_table::get_parents(0, sol_rules::build_policy::RED_BLACK);
+    ASSERT_EQ(parents.size(), 2u);
+    EXPECT_EQ(parents[0], 14);
+    EXPECT_EQ(parents[1], 40);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Incremental update tests (Task 2.6)
 ///////////////////////////////////////////////////////////////////////////////

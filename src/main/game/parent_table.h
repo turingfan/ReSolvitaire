@@ -8,13 +8,18 @@
 class parent_table {
 public:
     // Get list of parent card IDs for a given card under a specific build policy.
-    // Card must be able to be built on one of the parents (rank r+1 in a compatible suit).
-    // Returns empty vector if card is a King or build_policy is NO_BUILD.
-    static std::vector<uint8_t> get_parents(uint8_t card_id, sol_rules::build_policy policy);
+    // Card must be able to be built on one of the parents (next rank up in a compatible suit).
+    // For wrapping builds (canfield), pass foundations_base and max_rank so that
+    // the build sequence wraps correctly (e.g. King's parent is Ace when base != Ace).
+    // Returns empty vector if card is at top of build sequence or build_policy is NO_BUILD.
+    static std::vector<uint8_t> get_parents(uint8_t card_id, sol_rules::build_policy policy,
+                                            uint8_t foundations_base = 1, uint8_t max_rank = 13);
 
     // Get the descriptor value (PARENT_0 through PARENT_3) for a card built on a specific parent.
     // Returns 0 if invalid or no such parent exists for this card.
-    static uint8_t get_descriptor_for_parent(uint8_t card_id, uint8_t parent_card_id, sol_rules::build_policy policy);
+    static uint8_t get_descriptor_for_parent(uint8_t card_id, uint8_t parent_card_id,
+                                             sol_rules::build_policy policy,
+                                             uint8_t foundations_base = 1, uint8_t max_rank = 13);
 };
 
 #endif

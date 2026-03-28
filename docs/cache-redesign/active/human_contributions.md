@@ -84,12 +84,12 @@ From a prompt:
 
 **Insight**: When we are streamlining, we need not worry about false positives in cache so do not need to store payload confirming equivalence of state.  We only need one bit for whether or not hash value has been seen. Benefit is increasing number of states in cache by 256 times compared to 32 byte payload.
 
-# 17. STARTING descriptor must be position-canonical (flash of insight)
+## 17. STARTING descriptor must be position-canonical (flash of insight)
 
 **Insight**: The STARTING(0) descriptor assigned at init was not what `determine_destination_descriptor()` would compute for the same position. A card moved away and returned to the same spot got PARENT_x instead of STARTING, causing flat cache false negatives. The fix: compute positional descriptors (ROOT, PARENT_x) at init, eliminating the STARTING/PARENT divergence. Identified via "flash of insight" during debugging session.
 **Evidence**: Bug report `bug_report_dual_cache_mismatches.md`, Root Cause section.
 
-# 18. IN_SPACE descriptor to distinguish empty-pile placement from non-legal-parent stacking
+## 18. IN_SPACE descriptor to distinguish empty-pile placement from non-legal-parent stacking
 
 **Insight**: The ROOT descriptor was overloaded — it meant both "bottom of a pile" and "sitting on a non-legal-build parent" (the fallback case). This caused false positives in SpanishPatience where a card on a non-legal parent (ROOT) was indistinguishable from the same card at the bottom of an empty pile (also ROOT). The fix: introduce IN_SPACE(9) for "bottom of pile / empty space below" and keep ROOT(2) exclusively for "on a non-legal-build parent." This also clarified that IN_SPACE should be used at init for bottom-of-pile cards (matching move semantics), following the same principle as the STARTING fix.
 **Evidence**: Bug report `bug_report_root_descriptor_false_positives.md`.
@@ -103,6 +103,18 @@ From a prompt:
 
 **Insight**: The LRU cache applies `waste_deal_symmetry` (resetting waste position when `stock_redeal && waste_size % deal_count == 0`). The flat cache must apply the same condition via `effective_waste_ptr()` to avoid false negatives in stock games.
 **Evidence**: Suggested during debugging session, implemented in `game_state.cpp`.
+
+### 21. Overrode AI incorrect claim.
+
+**Insight**: AI claimed that false positives were occurring in Canfield Strict. In fact these were correctly identified as equivalent.
+**Evidence**: Suggested during debugging session. AI identified that the cause was an out-of-date assertion.
+
+### 22. Identified `skip_pile_ordering` as root cause of spurious dual-cache test failures.
+
+**Insight**: The dual-cache metamorphic tests were constructed without `force_lru=true`, so `skip_pile_ordering` was `true` (M6 behaviour for flat-cache games). With pile ordering disabled, swapped single-card empty tableau piles produced different LRU hashes but identical flat-cache payloads, creating spurious "flat-only hits" that looked like false positives. The fix was to pass `force_lru=true` in all dual-cache test constructors, re-enabling pile canonicalization so both caches agree. The AI had proposed accepting the spurious hits as legitimate; the correct diagnosis was that the test infrastructure needed to match the production LRU configuration.
+**Evidence**: Identified during M5 debugging session (2026-03-28); implemented in `dual_cache_test.cpp` and `mismatch_diagnostic.cpp`.
+
+
 
 ---
 

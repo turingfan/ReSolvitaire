@@ -443,6 +443,10 @@ void game_state::make_regular_move(const move m) {
     if (m.to == hole) {
         old_ht = payload.get_hole_top();
     }
+    uint8_t old_waste_ptr = 255;
+    if (m.from == waste) {
+        old_waste_ptr = payload.get_waste_ptr();
+    }
 
     // Pile operations
     place_card(m.to, take_card(m.from));
@@ -464,6 +468,11 @@ void game_state::make_regular_move(const move m) {
     // Update hole header
     if (old_ht != 255) {
         update_hole_top_in_hash(cid);
+    }
+
+    // Update waste pointer when playing from waste (top card removed, pointer changes)
+    if (m.from == waste) {
+        update_waste_ptr_in_hash(effective_waste_ptr());
     }
 
     // Handle reveal
@@ -491,7 +500,7 @@ void game_state::make_regular_move(const move m) {
     undo.to_found_suit = to_fs;
     undo.old_to_found_rank = old_to_fr;
     undo.old_hole_top = old_ht;
-    undo.old_waste_ptr = 255;
+    undo.old_waste_ptr = old_waste_ptr;
     undo.sat_count = 0;
     zobrist_undo_stack.push_back(undo);
 }
@@ -514,6 +523,11 @@ void game_state::undo_regular_move(const move m) {
     // Undo hole header
     if (undo.old_hole_top != 255) {
         update_hole_top_in_hash(undo.old_hole_top);
+    }
+
+    // Undo waste pointer (if move was from waste)
+    if (undo.old_waste_ptr != 255) {
+        update_waste_ptr_in_hash(undo.old_waste_ptr);
     }
 
     // Undo destination foundation header
@@ -563,8 +577,10 @@ void game_state::make_built_group_move(move m) {
         uint8_t parent_cid = zobrist_hash::card_id(
             parent_card.get_suit(), parent_card.get_rank());
         uint8_t desc = parent_table::get_descriptor_for_parent(
-            bottom_cid, parent_cid, rules.build_pol);
-        new_desc = (desc != 0) ? desc : compact_state::ROOT;
+            bottom_cid, parent_cid, rules.build_pol,
+            foundations_base, rules.max_rank);
+        new_desc = (desc != 0) ? desc
+            : compact_state::ROOT;
     }
     update_card_descriptor(bottom_cid, new_desc);
 
@@ -976,8 +992,10 @@ void game_state::init_payload_and_hash() {
                 uint8_t parent_cid = zobrist_hash::card_id(
                     parent_card.get_suit(), parent_card.get_rank());
                 uint8_t desc = parent_table::get_descriptor_for_parent(
-                    cid, parent_cid, rules.build_pol);
-                new_desc = (desc != 0) ? desc : compact_state::ROOT;
+                    cid, parent_cid, rules.build_pol,
+                    foundations_base, rules.max_rank);
+                new_desc = (desc != 0) ? desc
+                    : compact_state::ROOT;
             }
             update_card_descriptor(cid, new_desc);
         }
@@ -1083,9 +1101,10 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
             uint8_t parent_cid = zobrist_hash::card_id(
                 parent_card.get_suit(), parent_card.get_rank());
             uint8_t desc = parent_table::get_descriptor_for_parent(
-                moved_cid, parent_cid, rules.build_pol);
+                moved_cid, parent_cid, rules.build_pol,
+                foundations_base, rules.max_rank);
             if (desc != 0) return desc;
-            // Non-legal-build parent below — ROOT
+            // Non-legal-build parent below — ROOT discriminated by parent suit
             return compact_state::ROOT;
         }
     }
@@ -1247,8 +1266,10 @@ compact_state game_state::recompute_payload_from_scratch() const {
                         cp.set_descriptor(cid, compact_state::STARTING);
                     } else {
                         uint8_t parent_cid = zobrist_hash::card_id(parent.get_suit(), parent.get_rank());
-                        uint8_t desc = parent_table::get_descriptor_for_parent(cid, parent_cid, rules.build_pol);
-                        cp.set_descriptor(cid, (desc != 0) ? desc : compact_state::ROOT);
+                        uint8_t desc = parent_table::get_descriptor_for_parent(cid, parent_cid, rules.build_pol,
+                            foundations_base, rules.max_rank);
+                        cp.set_descriptor(cid, (desc != 0) ? desc
+                            : compact_state::ROOT);
                     }
                 }
             } else {
