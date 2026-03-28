@@ -1,0 +1,5 @@
+# UBSan ignorelist — suppress third-party library false positives
+# RapidJSON uses intentional null+offset pattern in its stack allocator
+src:*/lib/rapidjson/*
+# Boost internals
+src:*/boost/*

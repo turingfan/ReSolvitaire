@@ -47,6 +47,7 @@ sol_rules::sol_rules() :
         foundations_present(false),
         foundations_init_cards(fit::NONE),
         foundations_base(1),
+        foundations_removable(false),
         foundations_only_comp_piles(false),
         diagonal_deal(false),
         cells(0),
@@ -54,11 +55,13 @@ sol_rules::sol_rules() :
         stock_size(0),
         stock_deal_t(sdt::TABLEAU_PILES),
         stock_deal_count(1),
+        stock_redeal(false),
         reserve_size(0),
         reserve_stacked(false),
         face_up(fu::ALL),
         sequence_count(0),
         sequence_direction(dir::LEFT),
         sequence_build_pol(pol::SAME_SUIT),
+        sequence_fixed_suit(false),
         accordion_size(0) {
 }
