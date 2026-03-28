@@ -129,6 +129,9 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
                     state.set_payload_depth(static_cast<uint16_t>(
                         min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
                     is_new_state = cache.insert(state);
+#ifndef NDEBUG
+                    state.assert_payload_consistent();
+#endif
                 } else {
                     auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);
                     pair<lru_cache::item_list::iterator, bool> insert_res = lru_cache_ref.insert_with_iterator(state);

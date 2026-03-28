@@ -85,7 +85,8 @@ public:
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
 
 #ifndef NDEBUG
-    compact_state recompute_payload_from_scratch() const;  // Debug only: recompute payload from piles
+    compact_state recompute_payload_from_scratch() const;  // Debug: rebuild payload from board state
+    void assert_payload_consistent() const;                // Debug: assert incremental payload matches recomputed
 #endif
 
     /* Printing */

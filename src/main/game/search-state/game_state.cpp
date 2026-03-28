@@ -1215,69 +1215,99 @@ const std::vector<pile>& game_state::get_data() const {
 #ifndef NDEBUG
 compact_state game_state::recompute_payload_from_scratch() const {
     compact_state cp;
-    cp.clear();
+    cp.clear();  // All 52 card descriptors default to STARTING(0)
 
-    // 1. Foundations
+    // Foundation tops (bytes 3-4)
     if (rules.foundations_present) {
         for (uint8_t s = 0; s < 4; ++s) {
             uint8_t top_rank = 0;
             if (s < foundations.size()) {
-                top_rank = piles[foundations[s]].empty() ? 0 : piles[foundations[s]].top_card().get_rank();
+                top_rank = piles[foundations[s]].empty() ? 0
+                         : piles[foundations[s]].top_card().get_rank();
             }
             cp.set_foundation(s, top_rank);
         }
     }
 
-    // 2. Hole
+    // Hole top (byte 3, mutually exclusive with foundations)
     if (rules.hole && !piles[hole].empty()) {
         card top = piles[hole].top_card();
         cp.set_hole_top(zobrist_hash::card_id(top.get_suit(), top.get_rank()));
     }
 
-    // 3. Waste Pointer
+    // Waste pointer (byte 5) — must apply the same symmetry as effective_waste_ptr()
     if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
-        cp.set_waste_ptr(static_cast<uint8_t>(piles[waste].size()));
+        cp.set_waste_ptr(effective_waste_ptr());
     }
 
-    // 4. Card Descriptors
-    for (pile::ref pr = 0; pr < piles.size(); pr++) {
-        const pile& p = piles[pr];
-
-        for (uint8_t i = 0; i < p.size(); ++i) {
+    // Tableau card descriptors — walk current piles explicitly
+    for (auto tab_ref : original_tableau_piles) {
+        const pile& p = piles[tab_ref];
+        for (pile::size_type i = 0; i < p.size(); ++i) {
             card c = p[i];
-            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+            if (c.is_face_down()) continue;  // face-down cards remain STARTING
 
-            if (is_foundation_pile(pr)) {
-                cp.set_descriptor(cid, compact_state::STARTING);
-            } else if (!original_cells.empty() && pr >= original_cells.front() && pr <= original_cells.back()) {
-                cp.set_descriptor(cid, compact_state::IN_CELL);
-            } else if (pr == hole) {
-                cp.set_descriptor(cid, compact_state::IN_HOLE);
-            } else if (!original_tableau_piles.empty() && pr >= original_tableau_piles.front() && pr <= original_tableau_piles.back()) {
-                if (i == p.size() - 1) { // Bottom of pile
-                    if (p[i].is_face_down()) {
-                        cp.set_descriptor(cid, compact_state::STARTING);
-                    } else {
-                        cp.set_descriptor(cid, compact_state::ROOT);
-                    }
-                } else {
-                    card parent = p[i+1];
-                    if (parent.is_face_down()) {
-                        cp.set_descriptor(cid, compact_state::STARTING);
-                    } else {
-                        uint8_t parent_cid = zobrist_hash::card_id(parent.get_suit(), parent.get_rank());
-                        uint8_t desc = parent_table::get_descriptor_for_parent(cid, parent_cid, rules.build_pol,
-                            foundations_base, rules.max_rank);
-                        cp.set_descriptor(cid, (desc != 0) ? desc
-                            : compact_state::ROOT);
-                    }
-                }
+            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+            uint8_t new_desc;
+
+            if (i == p.size() - 1) {
+                // Bottom of pile: empty space below — IN_SPACE, not ROOT
+                new_desc = compact_state::IN_SPACE;
             } else {
-                cp.set_descriptor(cid, compact_state::STARTING);
+                card parent_card = p[i + 1];
+                if (parent_card.is_face_down()) {
+                    // Face-up card above a face-down card. Cannot distinguish
+                    // ROOT (original deal position) from STARTING_FACE_UP (revealed
+                    // card) without move history. Assign ROOT conservatively — matches
+                    // init_payload_and_hash() for the original-deal case.
+                    // NOTE: this makes recompute inaccurate for revealed cards in
+                    // face-down games; assert_payload_consistent() skips assertion
+                    // for such games (face_up_policy::TOP_CARDS).
+                    new_desc = compact_state::ROOT;
+                } else {
+                    uint8_t parent_cid = zobrist_hash::card_id(
+                        parent_card.get_suit(), parent_card.get_rank());
+                    uint8_t desc = parent_table::get_descriptor_for_parent(
+                        cid, parent_cid, rules.build_pol,
+                        foundations_base, rules.max_rank);
+                    new_desc = (desc != 0) ? desc : compact_state::ROOT;
+                }
             }
+            cp.set_descriptor(cid, new_desc);
         }
     }
+
+    // Cell cards — IN_CELL (walk all cell pile refs, not just pre-filled ones)
+    for (auto c_ref : cells) {
+        if (!piles[c_ref].empty()) {
+            card c = piles[c_ref].top_card();
+            cp.set_descriptor(zobrist_hash::card_id(c.get_suit(), c.get_rank()),
+                              compact_state::IN_CELL);
+        }
+    }
+
+    // Hole cards — IN_HOLE
+    if (rules.hole) {
+        for (pile::size_type i = 0; i < piles[hole].size(); ++i) {
+            card c = piles[hole][i];
+            cp.set_descriptor(zobrist_hash::card_id(c.get_suit(), c.get_rank()),
+                              compact_state::IN_HOLE);
+        }
+    }
+
     return cp;
+}
+
+void game_state::assert_payload_consistent() const {
+    // Cannot accurately recompute STARTING_FACE_UP for face-down games
+    // (revealed cards are indistinguishable from originally-placed cards by
+    // board inspection alone). Only assert for fully face-up games.
+    if (rules.face_up != sol_rules::face_up_policy::ALL) return;
+
+    compact_state recomputed = recompute_payload_from_scratch();
+    assert(recomputed.matches(payload) &&
+           "Incremental payload diverged from scratch-recomputed payload — "
+           "make_move/undo_move descriptor update bug");
 }
 #endif
 
