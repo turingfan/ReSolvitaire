@@ -179,10 +179,33 @@ tuning deferred post-merge. Regression oracle regeneration is the sole blocking 
 
 ### Remaining task (blocking)
 
-**Regenerate regression oracles** (Levels 1–3 minimum; ideally all levels) to establish
-post-M6 baselines. Current oracles are stale due to M6's `skip_pile_ordering` changing
-DFS traversal order. No outcome errors; only `states_searched` counts differ. A nuanced
-plan for this is being developed separately.
+**Regenerate regression oracles** (Levels 1–5) to establish post-M6 baselines and update
+the regression comparison logic. Current oracles are stale due to M6's `skip_pile_ordering`
+changing DFS traversal order. No outcome errors are expected — only `states_searched` counts
+differ.
+
+#### Regression comparison policy (post-M6)
+
+M6 removes pile ordering for flat-cache games, making `states_searched` sensitive to
+traversal order but not affecting correctness. The oracle comparison policy is therefore:
+
+| Oracle outcome | New run outcome | Verdict |
+|---|---|---|
+| SOLVED | SOLVED | **PASS** (check `states_searched` matches) |
+| UNSOLVABLE | UNSOLVABLE | **PASS** (check `states_searched` matches) |
+| SOLVED | UNSOLVABLE | **HARD FAIL** — correctness bug |
+| UNSOLVABLE | SOLVED | **HARD FAIL** — correctness bug |
+| Any | TIMEOUT | **SOFT PASS** — traversal-order timing regression, acceptable |
+| TIMEOUT | SOLVED/UNSOLVABLE | **PASS** — improvement |
+| TIMEOUT | TIMEOUT | **PASS** |
+
+**`states_searched` is recorded in all oracles** as a reference value and must match for
+SOLVED/UNSOLVABLE pairs. Its primary value is as a baseline for future work on this branch
+and as a regression signal for code changes that should not alter traversal order (e.g.,
+future bug fixes). If oracles are ever regenerated on a different system or build, the
+`states_searched` values should be updated accordingly.
+
+Note: there are no TIMEOUT entries in the current oracle set at Levels 1–3.
 
 ### Deferred (post-merge)
 
@@ -197,11 +220,11 @@ plan for this is being developed separately.
 
 ## Milestone 8: Documentation and Merge Preparation
 
-**Status:** Not started. Prerequisite: M7 regression oracles regenerated.
+**Status:** Not started. Prerequisite: M7 regression oracles regenerated and suite passing.
 
 ### Tasks
 
-1. Verify regenerated oracles pass cleanly at all levels.
+1. Confirm all levels pass under the new outcome-based comparison policy.
 2. Remove dead code; clean up TODOs and debug prints.
 3. Update CLAUDE.md and any stale design documents.
 4. Organise commits for clean merge into `mac-dev`.
