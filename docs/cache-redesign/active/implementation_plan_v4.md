@@ -191,19 +191,18 @@ traversal order but not affecting correctness. The oracle comparison policy is t
 
 | Oracle outcome | New run outcome | Verdict |
 |---|---|---|
-| SOLVED | SOLVED | **PASS** (check `states_searched` matches) |
-| UNSOLVABLE | UNSOLVABLE | **PASS** (check `states_searched` matches) |
+| SOLVED | SOLVED | **PASS** |
+| UNSOLVABLE | UNSOLVABLE | **PASS** |
 | SOLVED | UNSOLVABLE | **HARD FAIL** — correctness bug |
 | UNSOLVABLE | SOLVED | **HARD FAIL** — correctness bug |
-| Any | TIMEOUT | **SOFT PASS** — traversal-order timing regression, acceptable |
+| Any | TIMEOUT | **SOFT PASS** — timing/traversal regression, acceptable |
 | TIMEOUT | SOLVED/UNSOLVABLE | **PASS** — improvement |
 | TIMEOUT | TIMEOUT | **PASS** |
 
-**`states_searched` is recorded in all oracles** as a reference value and must match for
-SOLVED/UNSOLVABLE pairs. Its primary value is as a baseline for future work on this branch
-and as a regression signal for code changes that should not alter traversal order (e.g.,
-future bug fixes). If oracles are ever regenerated on a different system or build, the
-`states_searched` values should be updated accordingly.
+**`states_searched` is recorded in oracles for reference** but is not enforced during
+comparison. Traversal order is sensitive to cache implementation changes (pile ordering
+removal in M6, future refactors), making node counts non-reproducible across refactors.
+Counts serve as a baseline for future profiling and tuning work.
 
 Note: there are no TIMEOUT entries in the current oracle set at Levels 1–3.
 

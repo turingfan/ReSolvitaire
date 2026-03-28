@@ -291,8 +291,10 @@ add_test(NAME regression_level1
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
 )
+set_tests_properties(regression_level1 PROPERTIES TIMEOUT 900)
 # Levels 2-5 use seed-based invocation (no JSON instance files on disk).
-# --instances is omitted; --max-instance-timeout-ms caps each run.
+# --instances is omitted; --max-instance-timeout-ms caps each per-instance run.
+# CTest TIMEOUT is set to 1.5x the worst-case total (instances * per-instance cap + overhead).
 add_test(NAME regression_level2
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
@@ -300,6 +302,7 @@ add_test(NAME regression_level2
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
         "--max-instance-timeout-ms" "60000"
 )
+set_tests_properties(regression_level2 PROPERTIES TIMEOUT 15000)
 add_test(NAME regression_level3
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
@@ -307,6 +310,7 @@ add_test(NAME regression_level3
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
         "--max-instance-timeout-ms" "120000"
 )
+set_tests_properties(regression_level3 PROPERTIES TIMEOUT 30000)
 add_test(NAME regression_level4
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
@@ -314,6 +318,7 @@ add_test(NAME regression_level4
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level4.json"
         "--max-instance-timeout-ms" "600000"
 )
+set_tests_properties(regression_level4 PROPERTIES TIMEOUT 150000)
 add_test(NAME regression_level5
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
@@ -321,6 +326,7 @@ add_test(NAME regression_level5
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level5.json"
         "--max-instance-timeout-ms" "1800000"
 )
+set_tests_properties(regression_level5 PROPERTIES TIMEOUT 450000)
 
 ###############################################################################
 ## packaging ##################################################################
