@@ -23,7 +23,7 @@
 | 4 | Wire solver to new cache | ✓ COMPLETE |
 | 5 | Verification and hardening | ✓ COMPLETE |
 | 6 | Remove pile ordering for flat-cache games | ✓ COMPLETE |
-| 7 | Performance benchmarking and tuning | In progress — initial results recorded, tuning not done |
+| 7 | Performance benchmarking and tuning | In progress — benchmarks done; oracle regeneration is the blocking task |
 | 8 | Documentation and merge preparation | Not started |
 
 ---
@@ -158,7 +158,8 @@ before merge. This is expected and accepted.
 
 ## Milestone 7: Performance Benchmarking and Tuning
 
-**Status:** In progress. Infrastructure and first results committed in `a7f3744`.
+**Status:** Benchmarking infrastructure and first results complete (`a7f3744`). Performance
+tuning deferred post-merge. Regression oracle regeneration is the sole blocking task.
 
 ### What has been done
 
@@ -176,29 +177,34 @@ before merge. This is expected and accepted.
   highest).
 - Results saved in `speedup_comparison_20260328.json` and `throughput_baseline_20260328.json`.
 
-### Remaining tasks
+### Remaining task (blocking)
 
-1. **Tune replacement policy:** test always-replace vs TwoBig1 vs depth-only across a
-   representative suite. TwoBig1 is currently hardcoded in `flat_cache.cpp`.
-2. **Profile hotspots:** nibble accessor overhead, `memcmp` cost, hash computation.
-   Consider whether a 64-bit hash reduction is preferable to full 32-byte comparison.
-3. **Decision on flat cache extension:** based on speedup evidence, decide whether to
-   extend `use_new_cache()` to currently excluded game types (spider-type stock dealing,
-   two-deck, accordion, sequences).
-4. **Regenerate regression oracles** (Levels 1–3 minimum) to establish post-M6 baselines.
+**Regenerate regression oracles** (Levels 1–3 minimum; ideally all levels) to establish
+post-M6 baselines. Current oracles are stale due to M6's `skip_pile_ordering` changing
+DFS traversal order. No outcome errors; only `states_searched` counts differ. A nuanced
+plan for this is being developed separately.
+
+### Deferred (post-merge)
+
+- **Performance tuning:** replacement policy (TwoBig1 vs always-replace vs depth-only),
+  nibble accessor overhead, `memcmp` cost, 64-bit hash reduction. These are minor
+  optimisations not required for correctness or delivery.
+- **Flat cache extension:** extending `use_new_cache()` to currently excluded game types
+  (spider-type stock dealing, two-deck, accordion, sequences). Planned for a subsequent
+  phase after merge into `mac-dev`.
 
 ---
 
 ## Milestone 8: Documentation and Merge Preparation
 
-**Status:** Not started. Prerequisite: M7 complete.
+**Status:** Not started. Prerequisite: M7 regression oracles regenerated.
 
 ### Tasks
 
-1. Regenerate and verify Level 1–5 regression oracles.
+1. Verify regenerated oracles pass cleanly at all levels.
 2. Remove dead code; clean up TODOs and debug prints.
 3. Update CLAUDE.md and any stale design documents.
-4. Organise commits for clean merge into master.
+4. Organise commits for clean merge into `mac-dev`.
 5. Create PR with summary of design, correctness verification, and benchmark results.
 
 ---
