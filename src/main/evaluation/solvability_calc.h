@@ -59,7 +59,7 @@ private:
 
     // Solving methods
     static void solver_thread(solvability_calc*, uint core);
-    static seed_result solve_seed(int, std::chrono::milliseconds, const sol_rules&, uint64_t, game_state::streamliner_options);
+    static seed_result solve_seed(int, std::chrono::milliseconds, const sol_rules&, uint64_t, game_state::streamliner_options, bool force_lru = false);
 
     const sol_rules& rules;
     const uint64_t cache_capacity;

@@ -58,6 +58,7 @@ public:
     bool get_json_output() const;
     bool get_reveal_hidden() const;
     bool get_debug() const;
+    bool get_force_lru_cache() const;
     bool get_version();
     static game_state::streamliner_options convert_streamliners(streamliner_opt);
 
@@ -102,6 +103,7 @@ private:
     bool json_output = false;
     bool reveal_hidden = false;
     bool debug = false;
+    bool force_lru_cache = false;
 };
 
 #endif //SOLVITAIRE_COMMAND_LINE_HELPER_H

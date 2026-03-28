@@ -37,6 +37,7 @@
 #include "../../input-output/output/log_helper.h"
 #include "../move.h"
 #include "../sol_rules.h"
+#include "../cache_interface.h"
 
 using namespace rapidjson;
 using std::vector;
@@ -141,6 +142,7 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
 
     // Initialize Zobrist hash and payload to zero (will be filled by subclasses)
     zobrist_hash_value = 0;
+    skip_pile_ordering = use_new_cache(s_rules);
 }
 
 // Constructs an initial game state from a JSON doc
@@ -859,7 +861,8 @@ void game_state::place_card(pile::ref pr, card c) {
 
 #ifndef NO_PILE_SYMMETRY
     // If the stock deals to the tableau piles, there is no pile symmetry
-    if (rules.stock_size == 0 || rules.stock_deal_t != sdt::TABLEAU_PILES) {
+    if (!skip_pile_ordering
+        && (rules.stock_size == 0 || rules.stock_deal_t != sdt::TABLEAU_PILES)) {
         eval_pile_order(pr, true);
     }
 #endif
@@ -870,7 +873,8 @@ card game_state::take_card(pile::ref pr) {
     card c = piles[pr].take();
 #ifndef NO_PILE_SYMMETRY
     // If the stock deals to the tableau piles, there is no pile symmetry
-    if (rules.stock_size == 0 || rules.stock_deal_t != sdt::TABLEAU_PILES) {
+    if (!skip_pile_ordering
+        && (rules.stock_size == 0 || rules.stock_deal_t != sdt::TABLEAU_PILES)) {
         eval_pile_order(pr, false);
     }
 #endif

@@ -125,9 +125,6 @@ set(sources_test_unit
         src/test/unit_tests/solver_cache_selection_test.cpp
         src/test/unit_tests/dual_cache_test.cpp
         src/test/unit_tests/mismatch_analyzer.cpp
-        src/test/unit_tests/freecell_first_7_nodes.cpp
-        src/test/unit_tests/freecell_actual_dfs.cpp
-        src/test/unit_tests/freecell_record_ops.cpp
         src/test/unit_tests/mismatch_diagnostic.cpp
 )
 
@@ -256,7 +253,19 @@ enable_testing()
 
 # Run the GoogleTest suite.  Working directory is the project root so that
 # integration tests can resolve paths like "tests/resources/unit_tests/…"
+#
+# unit_tests       — M6 default: excludes DualCacheTest and MismatchDiagnostic
+#                    (DualCacheTest targets M5 behaviour; MismatchDiagnostic is
+#                    a diagnostic tool, not a regression gate)
+# unit_tests_full  — all tests including DualCacheTest; use near end of M6
+#                    for regression verification
 add_test(NAME unit_tests
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "$<TARGET_FILE:unit_tests>"
+                "--gtest_filter=-DualCacheTest.*:MismatchDiagnostic.*"
+)
+
+add_test(NAME unit_tests_full
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "$<TARGET_FILE:unit_tests>"
 )

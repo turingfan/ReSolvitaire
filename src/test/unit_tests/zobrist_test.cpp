@@ -214,10 +214,19 @@ TEST(ZobristGameState, PayloadInitialization) {
 
     const compact_state& payload = gs.get_payload();
 
-    // All descriptors should be STARTING (0) initially
+    // v3 semantics: face-up cards at pile bottom get IN_SPACE; unplaced cards get STARTING
+    // AC (suit 0, rank 1 -> id 0) and 2D (suit 3, rank 2 -> id 40) are at pile bottoms
+    uint8_t ac_cid = zobrist_hash::card_id(0, 1);
+    uint8_t d2_cid = zobrist_hash::card_id(3, 2);
+    EXPECT_EQ(payload.get_descriptor(ac_cid), compact_state::IN_SPACE)
+        << "AC at pile bottom should have IN_SPACE descriptor";
+    EXPECT_EQ(payload.get_descriptor(d2_cid), compact_state::IN_SPACE)
+        << "2D at pile bottom should have IN_SPACE descriptor";
     for (uint8_t c = 0; c < 52; ++c) {
-        EXPECT_EQ(payload.get_descriptor(c), compact_state::STARTING)
-            << "Card " << (int)c << " should have STARTING descriptor";
+        if (c != ac_cid && c != d2_cid) {
+            EXPECT_EQ(payload.get_descriptor(c), compact_state::STARTING)
+                << "Card " << (int)c << " not in any pile should have STARTING descriptor";
+        }
     }
 }
 
@@ -375,9 +384,9 @@ TEST(ZobristIncremental, DescriptorChangesOnTableauMove) {
     // AC alone, 2H alone, empty — AC can move onto 2H (red-black)
     game_state gs(rules, sil{{"AC"}, {"2H"}, {}});
 
-    // AC starts as STARTING
+    // AC is alone at pile bottom -> IN_SPACE (v3 semantics)
     uint8_t ac_cid = zobrist_hash::card_id(0, 1);  // Ace of Clubs
-    EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::STARTING);
+    EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::IN_SPACE);
 
     uint64_t hash_before = gs.get_zobrist_hash();
 
@@ -397,8 +406,8 @@ TEST(ZobristIncremental, DescriptorChangesOnTableauMove) {
 
     // Undo and verify restoration
     gs.undo_move(m);
-    EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::STARTING)
-        << "AC descriptor should be restored after undo";
+    EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::IN_SPACE)
+        << "AC descriptor should be restored to IN_SPACE after undo";
     EXPECT_EQ(gs.get_zobrist_hash(), hash_before)
         << "Hash should be restored after undo";
 }
@@ -537,7 +546,7 @@ TEST(ZobristIncremental, CellMoveDescriptor) {
         EXPECT_NE(gs.get_zobrist_hash(), hash_before);
 
         gs.undo_move(cell_move);
-        EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::STARTING);
+        EXPECT_EQ(gs.get_payload().get_descriptor(ac_cid), compact_state::IN_SPACE);
         EXPECT_EQ(gs.get_zobrist_hash(), hash_before);
     }
 }

@@ -178,6 +178,7 @@ private:
 
     const sol_rules rules;
     streamliner_options stream_opts;
+    bool skip_pile_ordering;
     card::rank_t foundations_base;
 
     /* Descriptor-aligned Zobrist hash and payload */

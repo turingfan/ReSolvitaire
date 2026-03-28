@@ -34,6 +34,7 @@ TEST(GlobalCache, CommutativeTableauPiles) {
     sol_rules rules;
     rules.tableau_pile_count = 3;
     rules.build_pol = sol_rules::build_policy::SAME_SUIT;
+    rules.two_decks = true;  // Force LRU path so pile ordering is active
     game_state gs(rules, string_il{{},{},{}});
     lru_cache cache(gs, 1000);
 
@@ -58,6 +59,7 @@ TEST(GlobalCache, CommutativeReserve) {
     sol_rules rules;
     rules.reserve_size = 3;
     rules.build_pol = sol_rules::build_policy::SAME_SUIT;
+    rules.two_decks = true;  // Force LRU path so pile ordering is active
     game_state gs(rules, string_il{{},{},{}});
     lru_cache cache(gs, 1000);
 
@@ -82,6 +84,7 @@ TEST(GlobalCache, CommutativeCells) {
     sol_rules rules;
     rules.cells = 3;
     rules.build_pol = sol_rules::build_policy::SAME_SUIT;
+    rules.two_decks = true;  // Force LRU path so pile ordering is active
     game_state gs(rules, string_il{{},{},{}});
     lru_cache cache(gs, 1000);
 
