@@ -1,0 +1,20 @@
+{
+  "date": "2026-03-28T14:56:55Z",
+  "seeds": "1-20",
+  "iterations": 1,
+  "timeout_ms": 30000,
+  "streamliner": "none",
+  "results": [
+    {"game": "free-cell", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 1902743.9705552, "mean_nodes": 6247633.95, "median_nodes": 276859.0, "mean_time_us": 3283486.4, "median_time_us": 165182.0},
+    {"game": "bakers-game", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 2047610.7064114332, "mean_nodes": 26886.05, "median_nodes": 14861.0, "mean_time_us": 13130.45, "median_time_us": 7571.0},
+    {"game": "somerset", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 2254692.1145414566, "mean_nodes": 86651.2, "median_nodes": 6855.0, "mean_time_us": 38431.5, "median_time_us": 4609.0},
+    {"game": "seahaven-towers", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 3118359.806830744, "mean_nodes": 42876.2, "median_nodes": 3540.0, "mean_time_us": 13749.6, "median_time_us": 2459.0},
+    {"game": "flower-garden", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 2186428.444826807, "mean_nodes": 44608119.1, "median_nodes": 63613507.0, "mean_time_us": 20402277.15, "median_time_us": 30000002.0},
+    {"game": "spanish-patience", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 1589661.7510169093, "mean_nodes": 21994059.8, "median_nodes": 7627351.0, "mean_time_us": 13835685.35, "median_time_us": 5164813.0},
+    {"game": "black-hole", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 1848675.6533271787, "mean_nodes": 1106552.45, "median_nodes": 171855.0, "mean_time_us": 598564.95, "median_time_us": 87116.0},
+    {"game": "golf", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 2881138.7420269144, "mean_nodes": 850004.5, "median_nodes": 498009.0, "mean_time_us": 295023.8, "median_time_us": 168693.0},
+    {"game": "klondike", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 1827131.0769870619, "mean_nodes": 3549685.85, "median_nodes": 17132.0, "mean_time_us": 1942764.75, "median_time_us": 5915.0},
+    {"game": "fortunes-favor", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 1902780.818918327, "mean_nodes": 434.5, "median_nodes": 96.0, "mean_time_us": 228.35, "median_time_us": 125.0},
+    {"game": "canfield-strict", "seeds": "1-20", "iterations": 1, "timeout_ms": 30000, "streamliner": "none", "nodes_per_second": 1687013.009035476, "mean_nodes": 2676169.3, "median_nodes": 12176.0, "mean_time_us": 1586335.9, "median_time_us": 7546.0}
+  ]
+}

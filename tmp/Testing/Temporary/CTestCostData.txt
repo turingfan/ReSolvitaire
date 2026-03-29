@@ -1,0 +1,8 @@
+regression_level1 13 0.36553
+trailing_space 3 0.0611064
+trailing_space_free_cell 3 0.0697332
+regression_level2 0 0
+regression_level3 0 0
+regression_level4 0 0
+---
+regression_level2

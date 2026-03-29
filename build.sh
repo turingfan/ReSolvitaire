@@ -53,8 +53,11 @@ else
     fi
     cmake \
     "-DCMAKE_BUILD_TYPE=$build_type" \
-    "-Bcmake-build-$build" -H. 
-    cmake --build "cmake-build-$build" --target "$target"
+    "-Bcmake-build-$build" -H.
+    cmake --build "cmake-build-$build" --target solvitaire
+    if [ "$target" != "solvitaire" ]; then
+        cmake --build "cmake-build-$build" --target "$target"
+    fi
     exit 0
 fi
 

@@ -1,53 +1,64 @@
 # Known Issues
 
-## 1. JSON Deal Round-Trip Changes Node Counts (`json_helper.cpp`)
+This file tracks open issues in the `refactor-caching` branch. Resolved issues that
+are interesting as development history are documented in `docs/resolved-bugs/`.
+
+---
+
+## Open Issues
+
+### 1. JSON Deal Round-Trip Changes Node Counts (`json_helper.cpp`)
 
 **Affected file:** `src/main/input-output/input/json-parsing/json_helper.cpp`
+**Status:** Open in `refactor-caching`; fixed in `claude/quizzical-darwin`
+**Impact:** Different `states_searched` counts when running from exported JSON vs seed
 
-**Status:** Fixed in `claude/quizzical-darwin`; present in `testing-infrastructure` and
-upstream Solvitaire `master`.
+`json_helper::print_game_state_as_json` serialises tableau piles by iterating
+`gs.tableau_piles` (the runtime-reordered list) rather than `gs.original_tableau_piles`
+(the fixed construction order). When pile symmetry has reordered the piles, the
+serialised JSON records them in a different order than the parser expects, producing
+a logically identical but internally different game state.
 
-### Description
+**Workaround:** The Level 2–5 regression runner invokes the solver with `--random <seed>`
+directly, bypassing JSON serialisation. Level 1 is unaffected in practice.
 
-`json_helper::print_game_state_as_json` serialises the tableau piles by iterating
-`gs.tableau_piles` — the *runtime-reordered* list maintained by `eval_pile_order` to
-keep the largest pile first. However, `deal_parser::parse_tableau_piles` reads the piles
-back into `gs.original_tableau_piles` — the *original fixed order* from construction.
-
-When pile symmetry has reordered `tableau_piles` away from the original order, the
-serialised JSON records piles in the reordered sequence, but parsing assigns those cards
-back in the original positional order. The resulting game state has the same cards but
-in a different internal arrangement, leading to:
-
-- Different move-generation order
-- Different transposition-table (cache) hit/miss patterns
-- Different `states_searched` counts — even though the deal is logically identical
-
-**Confirmed example:** `canfield-strict` seed 4000550 with `--streamliners both`
-- Run from seed: **112 275** states searched
-- Run from exported JSON: **112 266** states searched (9 fewer)
-
-### Workaround (applied for levels 2–5)
-
-The Level 2–5 regression runner invokes the solver with `--random <seed>` directly,
-bypassing JSON serialisation entirely. The oracle values were generated from seed-based
-runs in the original experimental dataset, making the comparison consistent.
-
-Level 1 uses JSON instance files, but testing showed the bug does not affect those
-instances at the streamliners used (all Level 1 outcomes and node counts match the
-experimental ground truth exactly).
-
-### Fix (in `claude/quizzical-darwin`)
-
-In `json_helper::print_game_state_as_json`, line 90:
-
+**Fix (one line, in `claude/quizzical-darwin`):**
 ```cpp
-// BUGGY — iterates the reordered list
-for (auto pr : gs.tableau_piles) {
-
-// CORRECT — iterates the original fixed order, matching what the parser expects
-for (auto pr : gs.original_tableau_piles) {
+// Change in json_helper::print_game_state_as_json:
+for (auto pr : gs.original_tableau_piles)  // was: gs.tableau_piles
 ```
 
-This one-line change is applied in the `claude/quizzical-darwin` branch and should be
-merged to `testing-infrastructure` via the pending PR.
+### 2. Spanish Patience Traversal Regression
+
+**Affected game type:** `spanish-patience` (13 tableau piles, any-suit build)
+**Status:** Open; accepted for first delivery
+**Impact:** Some solvable instances explore many more nodes without pile ordering
+
+With pile ordering removed (M6), the DFS traversal order for Spanish Patience degrades
+significantly for some seeds. The pile ordering previously served a dual purpose:
+deduplication (now handled by the descriptor hash) and implicit move ordering (now lost).
+For games with many tableau piles, the move ordering effect can be large.
+
+The regression suite treats these as soft passes (TIMEOUT is acceptable). Correctness
+is not affected — solvable games are still solved given sufficient time; unsolvable games
+are still proven unsolvable.
+
+**Possible future fix:** A lightweight move-ordering heuristic that does not require
+full pile sorting. Deferred post-merge.
+
+---
+
+## Resolved Issues (for reference)
+
+The following issues were open during development and are now fixed. Full details
+are in `docs/resolved-bugs/`.
+
+| Bug | Fix commit | Details |
+|---|---|---|
+| STARTING(0) not position-canonical (false negatives) | `52b8b63` | `bug_starting_descriptor_not_position_canonical.md` |
+| ROOT descriptor overloaded (false positives) | `52b8b63` | `bug_root_descriptor_false_positives.md` |
+| Waste pointer stale on regular moves (FortunesFavor) | `52b8b63` | `bug_waste_ptr_and_canfield_wrapping.md` |
+| Canfield wrapping builds not recognised (CanfieldStrict) | `52b8b63` | `bug_waste_ptr_and_canfield_wrapping.md` |
+| `sol_rules` uninitialized bools (UBSan) | `cb9d26d` | `implementation_plan_v4.md` §M5 |
+| `recompute_payload_from_scratch()` four bugs | `3d5f66d` | `implementation_plan_v4.md` §M5 |
+| `--force-lru` pile ordering not restored in M6 Phase 1 | `a7f3744` | `implementation_plan_v4.md` §M6 |

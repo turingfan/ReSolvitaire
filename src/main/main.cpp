@@ -29,9 +29,13 @@
 #include "input-output/input/json-parsing/json_helper.h"
 #include "input-output/input/json-parsing/rules_parser.h"
 #include "input-output/output/log_helper.h"
+#include "game/global_cache.h"
+#include "game/flat_cache.h"
+#include "game/zobrist.h"
 #include "solver/solver.h"
 #include "evaluation/solvability_calc.h"
 #include "evaluation/benchmark.h"
+#include <memory>
 
 using namespace rapidjson;
 
@@ -48,11 +52,15 @@ void solve_input_files(vector<string>, const sol_rules&, command_line_helper&);
 void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name);
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
-                                        optional<int> seed, optional<const Document&> in_doc);
+                                        optional<int> seed, optional<const Document&> in_doc,
+                                        bool force_lru = false);
 void print_version();
 
 // Decides what to do given supplied command-line options
 int main(int argc, const char* argv[]) {
+
+    // Initialize Zobrist hash tables
+    zobrist_hash::init();
 
     // Parses the command-line options
     command_line_helper clh;
@@ -79,8 +87,12 @@ int main(int argc, const char* argv[]) {
     }
 
     // Generates the rules of the solitaire from the game type
-    const optional<sol_rules> rules = gen_rules(clh);
-    if (!rules) return EXIT_FAILURE;
+    // Skip if we are doing a benchmark-json which handles rules per instance
+    optional<sol_rules> rules;
+    if (clh.get_benchmark_json().empty()) {
+        rules = gen_rules(clh);
+        if (!rules) return EXIT_FAILURE;
+    }
 
     if (clh.get_deal_only()) {
         game_state gs(*rules, clh.get_random_deal(), game_state::streamliner_options::NONE);
@@ -94,13 +106,20 @@ int main(int argc, const char* argv[]) {
         solv_c.calculate_solvability_percentage(clh.get_timeout(), clh.get_solvability(), clh.get_cores(),
                                                 clh.get_streamliners(), clh.get_resume());
     }
-        // If a random deal seed has been supplied, solves it
-    else if (clh.get_random_deal() != -1) {
-        solve_random_game(clh.get_random_deal(), *rules, clh);
-    }
     // If the benchmark option has been supplied, generates it
-    else if (clh.get_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state());
+    if (!clh.get_benchmark_json().empty()) {
+        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout());
+        return EXIT_SUCCESS;
+    }
+
+    if (clh.get_benchmark() || clh.get_is_benchmark()) {
+        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_force_lru_cache());
+        return EXIT_SUCCESS;
+    }
+    
+    // If a random deal seed has been supplied, solves it
+    if (clh.get_random_deal() != -1) {
+        solve_random_game(clh.get_random_deal(), *rules, clh);
     }
     // Otherwise there are supplied input files which should be solved
     else {
@@ -173,14 +192,14 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
         timeout = clh.get_timeout();
         str_opt = clh.get_streamliners_game_state();
     }
-    solve_sol solution = solve_game(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc);
+    solve_sol solution = solve_game(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache());
 
     bool run_again = smart && solution.second.sol_type != solver::result::type::SOLVED;
     cout.flush();
     if (run_again)
         if (!clh.get_classify() && !clh.get_json_output()) cout << "Unsolvable using streamliner. Running again...\n";
     optional<solve_sol> streamliner_solution = run_again
-            ? solve_game(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc)
+            ? solve_game(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache())
             : optional<solve_sol>();
 
     if (clh.get_json_output()) {
@@ -234,9 +253,19 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
 
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
-                                        optional<int> seed, optional<const Document&> in_doc) {
-    game_state gs = seed ? game_state(rules, *seed, str_opts) : game_state(rules, *in_doc, str_opts);
-    solver sol(gs, cache_capacity);
+                                        optional<int> seed, optional<const Document&> in_doc,
+                                        bool force_lru) {
+    game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru) : game_state(rules, *in_doc, str_opts, force_lru);
+
+    // Use unique_ptr for polymorphic ownership
+    std::unique_ptr<cache_interface> cache_ptr;
+    if (use_new_cache(rules) && !force_lru) {
+        cache_ptr = std::make_unique<flat_cache>(cache_capacity);
+    } else {
+        cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
+    }
+
+    solver sol(gs, *cache_ptr);
     solver::result res = sol.run(std::chrono::milliseconds(timeout));
     return make_pair(sol, res);
 }

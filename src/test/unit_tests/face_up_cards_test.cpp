@@ -321,18 +321,18 @@ TEST(FaceUpCards, CacheEncodesFaceDown) {
     cache.insert(gs);
 
     gs.make_move(move(mt::regular, 1, 2, 1, true));
-    new_state = cache.insert(gs).second;
+    new_state = cache.insert_with_iterator(gs).second;
     ASSERT_TRUE(new_state) << "AH to empty pile";
 
     gs.make_move(move(mt::regular, 2, 1, 1, false));
-    new_state = cache.insert(gs).second;
+    new_state = cache.insert_with_iterator(gs).second;
     ASSERT_TRUE(new_state) << "AH back to face-up 2S";
 
     gs.make_move(move(mt::regular, 1, 0, 1, false));
-    new_state = cache.insert(gs).second;
+    new_state = cache.insert_with_iterator(gs).second;
     ASSERT_TRUE(new_state) << "AH to 2C";
 
     gs.make_move(move(mt::regular, 0, 1, 1, false));
-    new_state = cache.insert(gs).second;
+    new_state = cache.insert_with_iterator(gs).second;
     ASSERT_FALSE(new_state) << "AH to 2S";
 }

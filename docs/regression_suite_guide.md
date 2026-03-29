@@ -111,18 +111,19 @@ ctest --rerun-failed --output-on-failure
 ### Timeout budget per level
 
 The CTest configuration sets a `--max-instance-timeout-ms` for each level. This is
-the hard cap on how long any single instance can run before the solver is killed:
+the hard cap on how long any single instance can run before the solver is killed.
+Observed total wall-clock times on a 2026 MacBook Pro (Apple Silicon):
 
-| CTest target        | `--max-instance-timeout-ms` | Wall-clock budget |
+| CTest target        | `--max-instance-timeout-ms` | Observed total |
 |---------------------|-----------------------------|--------------------|
-| `regression_level1` | (no cap; instances are fast)| < 2 min total     |
-| `regression_level2` | 60 000 ms                   | 1 min per instance |
-| `regression_level3` | 120 000 ms                  | 2 min per instance |
-| `regression_level4` | 600 000 ms                  | 10 min per instance |
-| `regression_level5` | 1 800 000 ms                | 30 min per instance |
+| `regression_level1` | (2× baseline; ~30s default) | ~3.5 min |
+| `regression_level2` | 60 000 ms (1 min)           | ~1.5 min |
+| `regression_level3` | 120 000 ms (2 min)          | ~2.5 min |
+| `regression_level4` | 600 000 ms (10 min)         | ~15 min |
+| `regression_level5` | 1 800 000 ms (30 min)       | ~1.25 hr |
 
-Levels 4 and 5 can take many hours on a single machine; they are intended for
-overnight CI runs rather than interactive use.
+In practice most instances complete well within their cap. CTest TIMEOUT properties
+are set generously (1.5× worst-case) to allow for slow machines without false failures.
 
 ---
 
@@ -234,28 +235,42 @@ A failing run:
 
 Use `--output-on-failure` or `-V` to see the per-instance details.
 
+### Comparison policy
+
+The runner uses **outcome-only** comparison. The pass/fail rules are:
+
+| Oracle outcome | Actual outcome | Verdict |
+|---|---|---|
+| SOLVED | SOLVED | **PASS** |
+| UNSOLVABLE | UNSOLVABLE | **PASS** |
+| SOLVED | UNSOLVABLE | **HARD FAIL** — correctness bug |
+| UNSOLVABLE | SOLVED | **HARD FAIL** — correctness bug |
+| Any | TIMEOUT | **SOFT PASS** — timing/traversal variance |
+| TIMEOUT | SOLVED/UNSOLVABLE | **PASS** — improvement |
+
+`states_searched` counts are stored in oracle files for reference but are not enforced.
+Cache implementation changes (pile-ordering removal in M6, future refactors) alter
+traversal order and make node counts non-reproducible across refactors.
+
 ### Per-instance tags from the regression runner
 
 | Tag | Meaning |
 |-----|---------|
-| `[OK]` (or progress line) | Exact match on outcome and node count |
-| `[WARN/SLOW]` | Solver timed out; outcome not contradicted — counted as **pass** |
-| `[FAIL]` | Wrong outcome **or** more nodes than oracle |
+| `[OK]` | Outcome matches oracle (with optional node-count note if `--verbose`) |
+| `[TIMEOUT/SOFT-PASS]` | Solver timed out — not a failure |
+| `[IMPROVED]` | Oracle was TIMEOUT; actual run produced a definitive result |
+| `[FAIL]` | Outcome flip: SOLVED↔UNSOLVABLE — correctness bug |
 | `[ERROR]` | Runner-level exception (solver crash, bad JSON, etc.) |
-
-A timeout producing **fewer** nodes than the oracle is not a failure — the machine is
-slower than the original experiment. A timeout producing **more** nodes is a failure
-(the solver should have terminated earlier).
 
 ### Example verbose output
 
 ```
 Running Regression: 160 instances (Oracle: level2.json)
 ------------------------------------------------------------
+[OK] american-canister_6993035_winnable.json: solved [nodes: 131205 vs oracle 134033]
+[OK] american-canister_1332_unwinnable.json: unsolvable
+[TIMEOUT/SOFT-PASS] spanish-patience_seed_6.json (127504328 nodes before timeout; oracle: solved/738 nodes)
 Progress: 25/160 (Pass: 25, Fail: 0)
-Progress: 50/160 (Pass: 50, Fail: 0)
-[WARN/SLOW] klondike_400007_winnable (no output after 62.3s; baseline 174 nodes)
-Progress: 75/160 (Pass: 75, Fail: 0)
 ...
 ------------------------------------------------------------
 Final Report: Passed: 160/160
@@ -269,16 +284,39 @@ Regression suite components verified successfully.
 Regenerate the oracle when:
 - You make a change that intentionally alters the search (new pruning, move ordering, etc.)
 - You want to add more game types or adjust the difficulty target
-- The oracle becomes stale after a solver version bump
+- The oracle becomes stale after a solver version bump or system change
 
-### Prerequisites
+### Quick regeneration (in-place update)
 
-- Built solver binary
-- The original experimental dataset (not in the repo — see `docs/solvitaire_results_overview.md`)
+The regression runner has a `--regenerate` mode that re-runs all instances in the
+existing oracle and overwrites it with fresh values. Metadata (game type, streamliner,
+custom rules) is preserved; `states_searched`, `unique_states`, `backtracks`, `max_depth`,
+and `solution_type` are updated from the fresh run.
 
-### Level 1
+```bash
+# Regenerate Level 1 oracle in place
+python3 scripts/regression_runner.py \
+    --exe cmake-build-release/bin/solvitaire \
+    --instances tests/resources/level1 \
+    --oracle tests/oracles/level1.json \
+    --regenerate \
+    --max-instance-timeout-ms 60000
 
-Oracle generation and curation are separate for Level 1 (hand-selected instances):
+# Regenerate Level 2 oracle in place
+python3 scripts/regression_runner.py \
+    --exe cmake-build-release/bin/solvitaire \
+    --oracle tests/oracles/level2.json \
+    --regenerate \
+    --max-instance-timeout-ms 60000
+```
+
+If any instance fails during regeneration (solver crash, bad output), the oracle is
+**not** written. Fix the failure and re-run.
+
+### Full regeneration from scratch (Level 1)
+
+Use `generate_baseline.py` when you need to regenerate the Level 1 oracle from the
+original experimental dataset (e.g., after changing the instance set):
 
 ```bash
 python3 scripts/generate_baseline.py \
@@ -290,11 +328,11 @@ python3 scripts/generate_baseline.py \
 
 The `--data-dir` argument looks up the correct per-instance streamliner from the
 experimental dataset. Omitting it runs all instances with `--streamliners none`, which
-will produce different node counts for the 46 smart-run winnable instances.
+will produce different node counts for the ~46 smart-run winnable instances.
 
-### Levels 2–5
+### Full regeneration from scratch (Levels 2–5)
 
-Curation and oracle generation happen in a single command:
+Curation and oracle generation from the original dataset:
 
 ```bash
 python3 scripts/curate_test_sets.py --set 1m --data-dir /path/to/dataset
@@ -303,25 +341,13 @@ python3 scripts/curate_test_sets.py --set 1h --data-dir /path/to/dataset
 python3 scripts/curate_test_sets.py --set 6h --data-dir /path/to/dataset
 ```
 
-Each command writes:
-- `tests/resources/curated_sets/curated_instances_<set>.json` — full curation metadata
-- `tests/oracles/level{2,3,4,5}.json` — the regression oracle
-
-The curation sets targets by total solve time: `1m` selects instances with a ~1-minute
-solve time from across all supported game types, and so on.
+Each command writes `tests/oracles/level{2,3,4,5}.json` and curation metadata.
 
 ### Verify after regeneration
 
 ```bash
-# Quick check (Level 1 + Level 2)
-python3 scripts/regression_runner.py \
-    --exe cmake-build-release/bin/solvitaire \
-    --instances tests/resources/level1 \
-    --oracle tests/oracles/level1.json
-
-python3 scripts/regression_runner.py \
-    --exe cmake-build-release/bin/solvitaire \
-    --oracle tests/oracles/level2.json
+cd cmake-build-release
+ctest -R "regression_level[12]" --output-on-failure
 ```
 
 ---

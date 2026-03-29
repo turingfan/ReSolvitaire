@@ -35,6 +35,7 @@
 
 #include "sol_rules.h"
 #include "search-state/game_state.h"
+#include "cache_interface.h"
 
 struct cached_game_state {
     typedef std::vector<card> state_data;
@@ -62,7 +63,7 @@ struct hasher {
     const game_state& init_gs;
 };
 
-class lru_cache {
+class lru_cache : public cache_interface {
 public:
     typedef boost::multi_index::multi_index_container<
             cached_game_state,
@@ -76,13 +77,20 @@ public:
     > item_list;
 
     explicit lru_cache(const game_state&, uint64_t);
-    std::pair<item_list::iterator, bool> insert(const game_state&);
-    bool contains(const game_state&) const;
-    void clear();
-    item_list::size_type size() const;
-    item_list::size_type bucket_count() const;
+
+    // Original insert method (returns iterator)
+    std::pair<item_list::iterator, bool> insert_with_iterator(const game_state&);
+
+    // cache_interface implementation
+    bool insert(const game_state&) override;
+    bool contains(const game_state&) const override;
+    void clear() override;
+    uint64_t size() const override;
+    uint64_t bucket_count() const override;
+    uint64_t get_states_removed_from_cache() const override;
+
     void set_non_live(item_list::iterator);
-    uint64_t get_states_removed_from_cache() const;
+    item_list::size_type cached_size() const;
 
 private:
     static item_list::ctor_args_list get_init_tuple(const game_state&);

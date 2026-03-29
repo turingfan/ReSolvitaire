@@ -39,6 +39,9 @@
 #include "../pile.h"
 #include "../sol_rules.h"
 #include "../move.h"
+#include "../zobrist.h"
+#include "../compact_state.h"
+#include "../parent_table.h"
 
 class game_state {
     friend struct hasher;
@@ -54,9 +57,9 @@ public:
     /* Constructors */
 
     // Creates a game state representation from a JSON doc
-    game_state(const sol_rules&, const rapidjson::Document&, streamliner_options);
+    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options, bool force_lru = false);
     // Does the same from a seed
-    game_state(const sol_rules&, int seed, streamliner_options);
+    game_state(const sol_rules&, int seed, streamliner_options, bool force_lru = false);
     // Does the same but with an initialiser list (useful for testing)
     game_state(const sol_rules&, std::initializer_list<std::initializer_list<std::string>>);
 
@@ -76,6 +79,15 @@ public:
 
     bool is_solved() const;
     const std::vector<pile>& get_data() const;
+    uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
+    const compact_state& get_payload() const { return payload; }
+    void set_payload_depth(uint16_t depth);
+    void compute_hash_from_scratch();  // For testing: recompute hash from payload
+
+#ifndef NDEBUG
+    compact_state recompute_payload_from_scratch() const;  // Debug: rebuild payload from board state
+    void assert_payload_consistent() const;                // Debug: assert incremental payload matches recomputed
+#endif
 
     /* Printing */
 
@@ -84,7 +96,7 @@ public:
 private:
     /* Constructors (& helper function) */
 
-    explicit game_state(const sol_rules&, streamliner_options);
+    explicit game_state(const sol_rules&, streamliner_options, bool force_lru = false);
     static std::vector<card> gen_shuffled_deck(card::rank_t, bool, std::mt19937);
     template<class RandomIt, class URBG> static void shuffle(RandomIt, RandomIt, URBG&&);
 
@@ -161,11 +173,45 @@ private:
     bool dominance_blocks_foundation_move(pile::ref);
     card::rank_t foundation_base_convert(card::rank_t) const;
 
+    /* Helper methods */
+
     /* Game rules */
 
     const sol_rules rules;
     streamliner_options stream_opts;
+    bool skip_pile_ordering;
     card::rank_t foundations_base;
+
+    /* Descriptor-aligned Zobrist hash and payload */
+    uint64_t zobrist_hash_value;
+    compact_state payload;
+
+    void init_payload_and_hash();  // Called at end of constructors
+
+    // Undo record for incremental descriptor/hash updates
+    struct zobrist_undo {
+        uint8_t card_id;               // Primary moved card
+        uint8_t old_desc;              // Its old descriptor
+        uint8_t revealed_card_id;      // 255 = none
+        uint8_t from_found_suit;       // 255 = source not foundation
+        uint8_t old_from_found_rank;   // Old source foundation rank
+        uint8_t to_found_suit;         // 255 = dest not foundation
+        uint8_t old_to_found_rank;     // Old dest foundation rank
+        uint8_t old_hole_top;          // 255 = dest not hole
+        uint8_t old_waste_ptr;         // 255 = waste ptr didn't change
+        uint8_t sat_count;             // stock_to_all_tableau card count (0 otherwise)
+    };
+    std::vector<zobrist_undo> zobrist_undo_stack;
+
+    // Descriptor update helpers
+    void update_card_descriptor(uint8_t cid, uint8_t new_desc);
+    void update_foundation_in_hash(uint8_t suit, uint8_t new_rank);
+    uint8_t effective_waste_ptr() const;
+    void update_waste_ptr_in_hash(uint8_t new_ptr);
+    void update_hole_top_in_hash(uint8_t new_cid);
+    uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
+    bool is_foundation_pile(pile::ref pr) const;
+    uint8_t get_foundation_suit(pile::ref pr) const;
 
     /* Pile references */
 

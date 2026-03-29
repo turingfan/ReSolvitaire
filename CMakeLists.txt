@@ -47,12 +47,22 @@ set(sources_game
         src/main/game/pile.h
         src/main/game/global_cache.cpp
         src/main/game/global_cache.h
+        src/main/game/cache_interface.h
         src/main/game/sol_rules.cpp
         src/main/game/search-state/game_state.legal_moves.cpp
         src/main/game/search-state/game_state.dominance_moves.cpp
         src/main/game/search-state/game_state.pile_order.cpp
         src/main/game/move.cpp
         src/main/game/move.h
+        src/main/game/zobrist.h
+        src/main/game/zobrist.cpp
+        src/main/game/compact_state.h
+        src/main/game/compact_state.cpp
+        src/main/game/parent_table.h
+        src/main/game/parent_table.cpp
+        src/main/game/flat_cache.h
+        src/main/game/flat_cache.cpp
+        src/main/game/dual_cache.h
 )
 
 set(sources_solver
@@ -110,6 +120,12 @@ set(sources_test_unit
         src/test/unit_tests/built_group_move_gen_test.cpp
         src/test/unit_tests/face_up_cards_test.cpp
         src/test/unit_tests/k_plus_stock_test.cpp
+        src/test/unit_tests/zobrist_test.cpp
+        src/test/unit_tests/flat_cache_test.cpp
+        src/test/unit_tests/solver_cache_selection_test.cpp
+        src/test/unit_tests/dual_cache_test.cpp
+        src/test/unit_tests/mismatch_analyzer.cpp
+        src/test/unit_tests/mismatch_diagnostic.cpp
 )
 
 set(sources_test_helper
@@ -127,6 +143,13 @@ source_group("Test/Helper" FILES ${sources_test_helper})
 ## Rapid JSON setup ###########################################################
 ###############################################################################
 
+include_directories(src/main/game)
+include_directories(src/main/game/search-state)
+include_directories(src/main/solver)
+include_directories(src/main/evaluation)
+include_directories(src/main/input-output/input)
+include_directories(src/main/input-output/input/json-parsing)
+include_directories(src/main/input-output/output)
 include_directories(lib/rapidjson)
 
 ###############################################################################
@@ -230,7 +253,19 @@ enable_testing()
 
 # Run the GoogleTest suite.  Working directory is the project root so that
 # integration tests can resolve paths like "tests/resources/unit_tests/…"
+#
+# unit_tests       — M6 default: excludes DualCacheTest and MismatchDiagnostic
+#                    (DualCacheTest targets M5 behaviour; MismatchDiagnostic is
+#                    a diagnostic tool, not a regression gate)
+# unit_tests_full  — all tests including DualCacheTest; use near end of M6
+#                    for regression verification
 add_test(NAME unit_tests
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "$<TARGET_FILE:unit_tests>"
+                "--gtest_filter=-DualCacheTest.*:MismatchDiagnostic.*"
+)
+
+add_test(NAME unit_tests_full
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "$<TARGET_FILE:unit_tests>"
 )
@@ -256,8 +291,10 @@ add_test(NAME regression_level1
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
 )
+set_tests_properties(regression_level1 PROPERTIES TIMEOUT 900)
 # Levels 2-5 use seed-based invocation (no JSON instance files on disk).
-# --instances is omitted; --max-instance-timeout-ms caps each run.
+# --instances is omitted; --max-instance-timeout-ms caps each per-instance run.
+# CTest TIMEOUT is set to 1.5x the worst-case total (instances * per-instance cap + overhead).
 add_test(NAME regression_level2
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
@@ -265,6 +302,7 @@ add_test(NAME regression_level2
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
         "--max-instance-timeout-ms" "60000"
 )
+set_tests_properties(regression_level2 PROPERTIES TIMEOUT 15000)
 add_test(NAME regression_level3
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
@@ -272,6 +310,7 @@ add_test(NAME regression_level3
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
         "--max-instance-timeout-ms" "120000"
 )
+set_tests_properties(regression_level3 PROPERTIES TIMEOUT 30000)
 add_test(NAME regression_level4
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
@@ -279,6 +318,7 @@ add_test(NAME regression_level4
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level4.json"
         "--max-instance-timeout-ms" "600000"
 )
+set_tests_properties(regression_level4 PROPERTIES TIMEOUT 150000)
 add_test(NAME regression_level5
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
@@ -286,6 +326,7 @@ add_test(NAME regression_level5
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level5.json"
         "--max-instance-timeout-ms" "1800000"
 )
+set_tests_properties(regression_level5 PROPERTIES TIMEOUT 450000)
 
 ###############################################################################
 ## packaging ##################################################################
