@@ -259,7 +259,9 @@ pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout
 
     // Use unique_ptr for polymorphic ownership
     std::unique_ptr<cache_interface> cache_ptr;
-    if (use_new_cache(rules) && !force_lru) {
+    bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
+                 || str_opts == game_state::streamliner_options::BOTH;
+    if (use_new_cache(rules, suit_sym) && !force_lru) {
         cache_ptr = std::make_unique<flat_cache>(cache_capacity);
     } else {
         cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);

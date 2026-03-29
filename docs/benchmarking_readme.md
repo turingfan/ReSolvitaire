@@ -184,5 +184,11 @@ A comprehensive `benchmark_report.json` file is also created, making this suite 
 
 ## Known Issues / Future Work
 
+- **Suit-Symmetry Games Not Benchmarked With Flat Cache:** When `--streamliners suit-symmetry`
+  or `--streamliners both` is active, the solver automatically falls back to the LRU cache
+  (see `docs/known-issues.md` issue #3 and #4). This means any benchmark run on Spanish Patience
+  or other suit-symmetry games measures LRU performance, not flat cache performance. Flat-vs-LRU
+  comparisons are therefore incomplete until suit-canonical hashing is implemented in the flat cache.
+  This is the most important gap to address in benchmarking work on a future branch.
 - **Boost Dependency:** The C++ executable currently relies on `boost/program_options` for parsing command-line arguments. This introduces a heavy external dependency. Future work should consider migrating to a lightweight, header-only argument parser (like `cxxopts` or `argparse`) to reduce build times and simplify cross-platform compilation of the Reference Solver.
 - **Python Memory Overhead:** The `compare_benchmarks.py` orchestrator currently pipes the C++ engine's `stdout` to a temporary file on disk, but then reads the entire file back into memory (`output = tmp.read()`) to find the valid JSON chunk. This introduces unneeded disk I/O while still holding the full string in memory. Future iterations can parse `subprocess.PIPE` iteratively or use a streaming JSON parser in Python to genuinely save RAM.
