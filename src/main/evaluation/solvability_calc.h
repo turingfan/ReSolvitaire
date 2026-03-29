@@ -53,9 +53,7 @@ private:
     };
 
     // Printing methods
-    static void print_general_info(const seed_results&);
     static void print_seed_info(seed_result);
-    static void print_seeds_in_prog(std::set<int>&);
 
     // Solving methods
     static void solver_thread(solvability_calc*, uint core);

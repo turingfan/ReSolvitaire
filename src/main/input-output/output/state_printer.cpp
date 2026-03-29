@@ -102,7 +102,6 @@ void state_printer::print_piles(ostream& stream,
         }
         if (!empty_row || row_idx == 0) {
             // Loops through the current (non-empty) row, and outputs the values
-            // const auto len = pile_rs.size();
             size_t idx = 0;
             std::ostringstream os;
             for (const pile::ref pile_r : pile_rs) {

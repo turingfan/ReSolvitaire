@@ -50,37 +50,11 @@ solvability_calc::solvability_calc(const sol_rules& r, uint64_t cache_capacity_)
 // PRINTING METHODS //
 //////////////////////
 
-void solvability_calc::print_general_info(const seed_results& seed_res) {
-    pair<double, double> interval = binomial_ci::wilson(
-            seed_res.solvable,
-            seed_res.unsolvable,
-            (seed_res.timed_out + seed_res.mem_limit));
-
-    cout << interval.first * 100
-         << ", "  << interval.second * 100
-         << ", "  << seed_res.solvable
-         << ", "  << seed_res.unsolvable
-         << ", "  << seed_res.timed_out
-         << ", "  << seed_res.mem_limit;
-}
-
 void solvability_calc::print_seed_info(seed_result seed_res) {
     auto& res = seed_res.second;
 
     solver::print_result_csv(res);
 }
-
-void solvability_calc::print_seeds_in_prog(std::set<int>& seeds_in_progress) {
-    for(auto iter = begin(seeds_in_progress); iter != end(seeds_in_progress); ++iter) {
-        cout << ", " << *iter;
-    }
-
-    cout << "\n";
-
-    std::flush(clog);
-    std::flush(cout);
-}
-
 
 /////////////////////
 // SOLVING METHODS //
@@ -147,7 +121,6 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
         sc->seed_res.add_result(final_res->second.sol_type);
 
         cout << my_seed;
-        //print_general_info(sc->seed_res);
         if (sc->stream_opt == cmd_sos::SMART) {
             print_seed_info(*stream_res);
             if (no_stream_res) {
@@ -161,7 +134,6 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
             print_seed_info(*no_stream_res);
             cout << ", " << no_stream_res->second.sol_type;
         }
-        //print_seeds_in_prog(sc->seeds_in_progress);
         cout << "\n";
 
         sc->results_mutex.unlock();
