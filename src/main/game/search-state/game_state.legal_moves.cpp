@@ -557,7 +557,6 @@ void game_state::add_non_empty_built_group_move(vector<move>& moves, pile::ref r
     for (pile::ref r = start_idx; r < built_group_height; r++) {
         if (is_next_built_group_card(piles[add_ref].top_card(),  piles[rem_ref][r])) {
            if (card_above_buildable && r+1 < built_group_height)  {
-	//	std::cout << "hello\n" ;
 
            	bool card_in_partial_pile_buildable = false;
             	for (auto f : foundations) {
@@ -566,7 +565,6 @@ void game_state::add_non_empty_built_group_move(vector<move>& moves, pile::ref r
                        break; 
                     } 
                 }
-	//	std::cout << card_in_partial_pile_buildable << std::endl; 
                 if (!card_in_partial_pile_buildable) continue ; // can't build card above so skip it
             }
 	    // This is a valid move so add it

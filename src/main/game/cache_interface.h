@@ -27,8 +27,13 @@ public:
 // The new cache requires single-deck games with no special sequence, accordion, or spider-type
 // stock dealing mechanics. Spider-type dealing (stock_deal_type::TABLEAU_PILES) distributes cards
 // across tableau piles in a way that breaks the per-card descriptor model's pile symmetry assumptions.
-inline bool use_new_cache(const sol_rules& rules) {
-    return !rules.two_decks
+//
+// When suit-symmetry streamliner is active, the flat cache cannot provide suit-canonical deduplication
+// (it hashes on actual card identity, not suit-normalised identity). The LRU cache + pile ordering
+// handles this correctly, so we fall back to it whenever suit-symmetry is in use.
+inline bool use_new_cache(const sol_rules& rules, bool suit_symmetry_active = false) {
+    return !suit_symmetry_active
+        && !rules.two_decks
         && rules.sequence_count == 0
         && rules.accordion_size == 0
         && (rules.stock_size == 0 || rules.stock_deal_t != sol_rules::stock_deal_type::TABLEAU_PILES);

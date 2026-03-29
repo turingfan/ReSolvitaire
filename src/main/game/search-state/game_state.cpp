@@ -142,7 +142,9 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
 
     // Initialize Zobrist hash and payload to zero (will be filled by subclasses)
     zobrist_hash_value = 0;
-    skip_pile_ordering = use_new_cache(s_rules) && !force_lru;
+    bool suit_sym = stream_opts == streamliner_options::SUIT_SYMMETRY
+                 || stream_opts == streamliner_options::BOTH;
+    skip_pile_ordering = use_new_cache(s_rules, suit_sym) && !force_lru;
 }
 
 // Constructs an initial game state from a JSON doc

@@ -57,9 +57,9 @@ Key CLI options: `--type`, `--random <seed>`, `--json`, `--reveal-hidden`, `--st
 ### Core Flow
 
 1. `main.cpp` parses CLI args via `command_line_helper`, constructs `sol_rules` (from preset or JSON), and dispatches to solver, benchmarking, or solvability modes.
-2. `solver.cpp` runs DFS. At each node it calls `game_state::get_dominance_move()` (free simplifications), then `game_state::get_legal_moves()`, then recurses. States are hashed and checked against the LRU cache to avoid revisiting.
+2. `solver.cpp` runs DFS. At each node it calls `game_state::get_dominance_move()` (free simplifications), then `game_state::get_legal_moves()`, then recurses. States are hashed and checked against the transposition table to avoid revisiting.
 3. `game_state` manages pile state with copy/restore semantics for backtracking. It holds multiple pile arrays: `foundations`, `tableau`, `cells`, `reserve`, `waste`, `stock`.
-4. `global_cache` (Boost MultiIndex) provides O(1) lookup via a hashed index plus LRU eviction via a sequenced index.
+4. Cache selection (`cache_interface.h:use_new_cache()`): most single-deck games use `flat_cache` (descriptor-based Zobrist hash, O(1) amortised); two-deck, spider-stock, and suit-symmetry games fall back to `lru_cache` (Boost MultiIndex, pile-order canonicalised).
 
 ### Key Classes
 
@@ -67,7 +67,8 @@ Key CLI options: `--type`, `--random <seed>`, `--json`, `--reveal-hidden`, `--st
 |---|---|---|
 | `solver` | `src/main/solver/solver.h/cpp` | DFS engine, result reporting |
 | `game_state` | `src/main/game/search-state/game_state.h/cpp` | State, move generation, undo |
-| `lru_cache` | `src/main/game/global_cache.h/cpp` | Transposition table (Boost MultiIndex) |
+| `flat_cache` | `src/main/game/flat_cache.h/cpp` | Fast transposition table (descriptor Zobrist hash) |
+| `lru_cache` | `src/main/game/global_cache.h/cpp` | Transposition table with LRU eviction (Boost MultiIndex) |
 | `sol_rules` | `src/main/game/sol_rules.h/cpp` | Game rule enums (build policy, space policy, etc.) |
 | `card` | `src/main/game/card.h/cpp` | Card value, suit, face-down flag |
 | `pile` | `src/main/game/pile.h/cpp` | Vector-based card stack; `pile[0]` = top |
@@ -77,7 +78,7 @@ Key CLI options: `--type`, `--random <seed>`, `--json`, `--reveal-hidden`, `--st
 
 - `game_state.legal_moves.cpp` — generates all valid moves per game rules
 - `game_state.dominance_moves.cpp` — auto-foundation and symmetry heuristics that prune search without losing completeness
-- `game_state.pile_order.cpp` — canonicalizes tableau pile order for deduplication in the hash
+- `game_state.pile_order.cpp` — canonicalizes tableau pile order for LRU cache deduplication (skipped for flat cache games)
 
 ### Face-Down Card Encoding
 
@@ -108,7 +109,7 @@ Oracle files are JSON arrays; each entry stores `outcome`, `states_searched`, `b
 ## Known Issues
 
 1. **`json_helper.cpp` line ~90:** Uses `gs.tableau_piles` (runtime-reordered for symmetry) instead of `gs.original_tableau_piles`. This breaks JSON round-trips when symmetry reordering is active. One-line fix is documented but deferred; Levels 2–5 avoid this by using seed-based runs.
-2. **`command_line_helper.cpp`:** Boolean fields (`json_output`, `reveal_hidden`, `debug`) are uninitialized if `parse()` exits early (e.g., `--help`). Not a runtime issue because early-exit paths don't use these fields, but should be fixed with `= false` initializers.
+2. **Flat cache + suit-symmetry:** The flat cache cannot provide suit-canonical deduplication; games using `--streamliners suit-symmetry` or `both` automatically fall back to `lru_cache`. See `docs/known-issues.md` issues #3 and #4.
 
 ## Compilation Flags
 
