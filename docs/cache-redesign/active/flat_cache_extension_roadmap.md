@@ -201,7 +201,7 @@ top-card sequence.
 
 **Zobrist:** `Z[card_id][predecessor_card_id]`. Standard XOR.
 
-**Move updates — three changes per move:**
+**Move updates — four changes per move:**
 
 When card A (top of its pile) merges onto card B (an adjacent/near-adjacent top card,
 matching by rank or suit), A lands on top of B, burying B:
@@ -212,8 +212,11 @@ matching by rank or suit), A lands on top of B, burying B:
 3. **Card to A's right** (if any — the top card that had A as its predecessor):
    predecessor changes from A to A's old predecessor, closing the gap
    (XOR out old `Z[right][A]`, XOR in new `Z[right][A_pred]`)
+4. **Card to B's right** (if any — the top card that had B as its predecessor):
+   predecessor changes from B to A, since A now occupies B's position
+   (XOR out old `Z[B_right][B]`, XOR in new `Z[B_right][A]`)
 
-Three cards updated, O(1) per move. No pile contents to track, no positional indices
+Four cards updated, O(1) per move. No pile contents to track, no positional indices
 to shift.
 
 ---

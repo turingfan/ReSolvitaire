@@ -116,6 +116,11 @@ From a prompt:
 
 
 
+## 23. Accordion: predecessor-based linked list encoding with only top cards visible
+
+**Insight**: In Accordion, once a card is buried it is strategically irrelevant — it can never be played again. The entire game state is captured by the sequence of top cards and their ordering. The payload should store, for each card, the ID of its predecessor top card in the sequence (0 = buried/invisible). This encodes a linked list of the visible sequence. A merge requires exactly four updates: (1) the buried card set to 0, (2) the moved card gets the buried card's old predecessor, (3) the card to the moved card's right gets the moved card's old predecessor (closing the gap), (4) the card to the buried card's right gets the moved card as predecessor (since it now occupies the buried card's position). All O(1). The Zobrist table is `Z[card_id][predecessor_card_id]`.
+**Evidence**: Design discussion during flat cache extension roadmap planning (2026-03-29).
+
 ---
 
 ## Source Documents and Abbreviations
