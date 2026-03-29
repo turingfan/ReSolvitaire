@@ -413,10 +413,20 @@ by the multiset. Compact encoding: ~12 bits per chain.
 **Two-deck, opposite-colour builds:** This is the hard case. A chain 4S-3H and
 4S-3D are **different chains** (different specific cards), but 4S-3D from copy 1
 and 4S-3D from copy 2 are the **same chain**. Chain contents are NOT determined
-by top card + length alone — we need the specific suit of each card in the chain.
-Chain encoding becomes ~6 bits per card in chain (rank 4 bits + suit 2 bits).
-A chain of length 8 costs ~48 bits vs ~12 bits in the compact case. Still feasible
-within 64 bytes for typical tableau sizes, but significantly more expensive.
+by top card + length alone — we need the specific suit of each non-top card in
+the chain. However, rank is always implied by position (build sequences decrease
+by 1), so we only need the **suit** of each non-top card: 2 bits per card (or
+1 bit for opposite-colour where only the within-colour choice matters).
+
+**Chain encoding cost summary (top card 6 bits + length 4 bits + base 3 bits
+= 13 bits fixed, plus per non-top card):**
+
+| Build type | Bits per non-top card | Chain length 8 total |
+|---|---|---|
+| Same-suit | 0 (suit = top's suit) | 13 bits |
+| Opposite-colour, colour symmetry (2a) | 0 (colour alternates) | 13 bits |
+| Opposite-colour, two-deck | 1 (which suit within colour) | 20 bits |
+| Any-suit | 2 (full suit) | 27 bits |
 
 **Note:** Item 2a avoids this problem entirely because the streamliner defines
 equivalence at the colour level, making it the clean proving ground for the chain
