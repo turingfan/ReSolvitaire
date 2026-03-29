@@ -82,23 +82,54 @@ games (Black Hole, etc.)
 
 ### Two distinct sub-problems
 
-#### 2a. Streamliner-compatible hashing (moderate)
+#### 2a. Streamliner-compatible hashing (hard — proving ground for 2b and #6)
 
 For games where suits matter for mechanics but the streamliner prunes symmetric
-branches: the cache just needs to not fight the streamliner.
+branches: the cache needs to produce identical hashes for suit-symmetric states.
 
-**Approach:** Suit-class Zobrist table `Z[rank][colour_class][descriptor]` with
-**1-bit seen flag** (no payload verification). False positives from hash collisions
-are rare and act as slightly more aggressive pruning, which is acceptable since the
-streamliner is already pruning.
+**Zobrist approach — additive hash with colour-class indexing:**
+- Zobrist table indexed by `Z[rank][colour][descriptor]` (not card ID)
+- AH and AD both use `Z[Ace][red][descriptor]`; AS and AC both use `Z[Ace][black][descriptor]`
+- Combine all contributions via **modular addition** instead of XOR
+- Two equivalent cards with the same descriptor contribute `2 * Z[...]` — no
+  cancellation (unlike XOR where identical contributions cancel to zero)
+- Undo via subtraction (still O(1))
+- Fully additive across all cards for simplicity; collision rate ~1/2^64 is sufficient
 
-**XOR cancellation risk:** Two same-colour same-rank cards (e.g., AH and AD) with
-identical descriptors would cancel to zero. This is uncommon enough that the false
-positive rate stays low; measure rather than over-engineer. Alternatively use
-additive combining across equivalent cards within a colour class.
+This approach is chosen deliberately to validate the additive hash mechanism for
+reuse in 2b (suit-irrelevant, 4 equivalent copies per rank) and #6 (two-deck,
+2 identical copies per card). Solving XOR cancellation here provides the foundation
+for all equivalent-card scenarios.
 
-**Impact:** Removes the current LRU fallback for suit-symmetry games. Immediate
-practical benefit.
+**Open problem — descriptor ambiguity under equivalence (needs more thought):**
+
+The current PARENT_0 through PARENT_3 descriptors distinguish *which copy* of the
+parent rank a card sits on (e.g., PARENT_0 = on AS, PARENT_1 = on AH). Under colour
+symmetry, AS and AH are equivalent, creating a fundamental tension:
+
+- **If we keep PARENT_0/1 distinction:** The descriptor breaks symmetry — "on the
+  first red Ace" vs "on the second red Ace" is a distinction that shouldn't exist
+  under suit equivalence. Two symmetric states get different hashes.
+- **If we merge into a single PARENT:** Two cards on different equivalent parents
+  get the same descriptor, and the state is no longer uniquely defined — we can't
+  tell "two cards on the same Ace" from "two cards on different Aces."
+
+This is the core open question: the descriptor model assumes parents are
+distinguishable, but equivalence makes them interchangeable. Possible directions:
+
+- Encode parent relationships as multiset counts rather than per-card assignments
+  (e.g., "2 cards on red-Ace parents" not "card X on first Ace, card Y on second")
+- Use a canonical ordering within equivalence classes (assign PARENT_0 to whichever
+  equivalent parent has more children, or by some other deterministic rule) —
+  but maintaining this incrementally through moves/undos may be complex
+- Accept that the payload cannot be a per-card descriptor array for symmetric games
+  and design a different payload format
+
+This problem must be solved before 2a can be implemented. The solution will directly
+apply to 2b and #6.
+
+**Impact:** Removes the current LRU fallback for suit-symmetry games. Validates
+the additive hash and descriptor-under-equivalence solutions for all later items.
 
 #### 2b. Suit-irrelevant games (hard)
 
