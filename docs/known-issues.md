@@ -32,7 +32,7 @@ for (auto pr : gs.original_tableau_piles)  // was: gs.tableau_piles
 
 **Affected game type:** `spanish-patience` (13 tableau piles, any-suit build)
 **Status:** Open; accepted for first delivery
-**Impact:** Some solvable instances explore many more nodes without pile ordering
+**Impact:** Some solvable instances OOM or timeout; oracle entries marked as `timeout`
 
 With pile ordering removed (M6), the DFS traversal order for Spanish Patience degrades
 significantly for some seeds. The pile ordering previously served a dual purpose:
@@ -40,8 +40,12 @@ deduplication (now handled by the descriptor hash) and implicit move ordering (n
 For games with many tableau piles, the move ordering effect can be large.
 
 The regression suite treats these as soft passes (TIMEOUT is acceptable). Correctness
-is not affected — solvable games are still solved given sufficient time; unsolvable games
-are still proven unsolvable.
+is not affected — unsolvable games are still proven unsolvable. Some formerly-solvable
+seeds now time out or OOM at any practically-runnable timeout.
+
+**Affected oracle entries (marked `solution_type: timeout`):**
+- Level 5: `spanish-patience_2921115_winnable.json` — formerly solved in 115s with 15M
+  nodes; now OOM-killed under 30-minute regeneration timeout.
 
 **Possible future fix:** A lightweight move-ordering heuristic that does not require
 full pile sorting. Deferred post-merge.
