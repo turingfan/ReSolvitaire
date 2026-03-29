@@ -393,13 +393,38 @@ Each of these is a subtract-old-add-new on the additive hash. O(1) per move.
 Re-sorting the chain list in the payload after a move: O(k log k) where k = number
 of chains. Since k ≤ ~13 (single deck) or ~26 (two deck), this is effectively O(1).
 
-### Open Questions
+### Chain Encoding Cost Depends on Build Rules and Equivalence
+
+**2a (colour symmetry streamliner, single deck):** Builds are opposite-colour.
+Chain contents are fully determined by top card (rank + colour) + length, because
+the colour alternates and there's only one card of each (rank, suit) in the deck.
+The streamliner defines the equivalence classes (H↔D, S↔C). Chain encoding is
+compact: ~12 bits per chain.
+
+**Suit-irrelevant games (2b):** All suits are equivalent. A chain topped by rank 3
+with length 4 in a rank-only build game has contents fully determined (3, 4, 5, 6
+by rank). Very compact.
+
+**Two-deck, same-suit builds (e.g., Forty Thieves):** Chain contents are fully
+determined by top card (rank + suit) + length, because each card in the chain
+shares the suit. Two copies of the same chain (from duplicate cards) are handled
+by the multiset. Compact encoding: ~12 bits per chain.
+
+**Two-deck, opposite-colour builds:** This is the hard case. A chain 4S-3H and
+4S-3D are **different chains** (different specific cards), but 4S-3D from copy 1
+and 4S-3D from copy 2 are the **same chain**. Chain contents are NOT determined
+by top card + length alone — we need the specific suit of each card in the chain.
+Chain encoding becomes ~6 bits per card in chain (rank 4 bits + suit 2 bits).
+A chain of length 8 costs ~48 bits vs ~12 bits in the compact case. Still feasible
+within 64 bytes for typical tableau sizes, but significantly more expensive.
+
+**Note:** Item 2a avoids this problem entirely because the streamliner defines
+equivalence at the colour level, making it the clean proving ground for the chain
+model before tackling the harder two-deck cases.
+
+### Other Open Questions
 
 - **Exact bit layout** within the 64-byte payload for each game category
-- **Handling of games where build rules don't fully determine chain contents** — e.g.,
-  any-suit build games where a chain topped by 3 could have any colour 4 below it.
-  In that case, we need to store each card's colour in the chain, not just the top.
-  Chain encoding becomes (top card, length, colour sequence) which is more expensive.
 - **Validation** that the chain representation is state-complete — no two genuinely
   different game states produce the same chain multiset + zone counts. Needs formal
   argument or exhaustive testing for small cases.
