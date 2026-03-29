@@ -294,12 +294,124 @@ Deferred until lessons from items 1–5 validate the architecture. Approach 1
 
 ---
 
+## Chain-Based State Representation
+
+**Applies to:** Items 2a, 2b, 5, 6 (all cases with equivalent cards)
+**Related literature:** Closest to pattern database projections in automated planning
+and puzzle solving, where abstract states group equivalent concrete states.
+
+### Core Insight
+
+In build-sequence solitaire games, a chain on the tableau is fully determined by
+its **top card** (rank + colour/symmetry class) and its **length**. In a red-on-black
+build game, a chain topped by red-3 with length 4 must be: red-3, black-4, red-5,
+black-6. We don't need to know which specific cards are in the chain — the build
+rules determine them.
+
+This means the state can be represented as:
+1. **A multiset of chains**, each described by (top card rank+colour, length, base
+   position — IN_SPACE, specific foundation, etc.)
+2. **A multiset of non-chain card locations** — for each (rank, colour/symmetry
+   class), how many copies are in each zone: reserve, stock, foundation, or
+   "in a chain" (which doesn't need further specification since the chain
+   description captures it)
+
+### Why This Solves the Descriptor Ambiguity Problem
+
+The "which equivalent parent is this card on" question dissolves. We never ask
+"where is card X" — we ask "what chains exist." Two states with the same multiset
+of chains and the same distribution of non-chain cards are identical, regardless of
+which physical cards (suits) are involved.
+
+### Concrete Flat Cache Representation (draft — needs validation)
+
+For a single-deck game with colour symmetry (2 equivalence classes × 13 ranks =
+26 equivalence classes, 2 cards per class):
+
+**Chain entries (variable count, up to ~13 chains on tableau):**
+
+Each chain needs:
+- Top card rank: 4 bits (1–13)
+- Top card colour class: 1 bit (red/black) — or more bits for finer symmetry
+- Chain length: 4 bits (1–13 typically)
+- Base position: 3 bits (IN_SPACE + which foundation group, or similar)
+- Total: ~12 bits per chain
+
+With at most ~13 chains on the tableau, that's ~156 bits = ~20 bytes for chain data.
+
+**Non-chain card zone counts:**
+
+For each of the 26 equivalence classes, we need to know how many copies (0, 1, or 2)
+are in each non-tableau zone (reserve, stock, waste, foundation). Since there are
+only 2 copies per class, this is 2 bits per class per zone.
+
+With 4 zones × 26 classes × 2 bits = 208 bits = 26 bytes.
+
+**Total payload estimate:** ~46 bytes. Fits in 64-byte payload.
+
+For suit-irrelevant games (13 equivalence classes, 4 copies per class): similar
+structure, slightly different bit widths for counts (need 3 bits for 0–4 copies).
+
+For two-deck games (52 equivalence classes, 2 copies per class): more chain entries
+possible, but same structure. May be tighter on 64 bytes.
+
+### Chain Sorting for Canonical Payload
+
+Chains must be stored in a canonical (sorted) order within the payload so that
+two states with the same chains in different pile positions produce identical
+payloads. Sort by (base_position, top_rank, top_colour, length) or similar
+deterministic ordering.
+
+### Zobrist Hashing for Chain-Based State
+
+**Additive hash** (modular addition) combining:
+- Per-chain: `Z_chain[top_rank][top_colour][length][base_position]`
+- Per-zone-count: `Z_zone[rank][colour][zone][count]`
+
+Addition makes the hash invariant under chain ordering (commutative). Incremental
+updates on a move:
+- Subtract old chain hash for affected chain(s)
+- Subtract old zone count hashes for affected equivalence classes
+- Update chain descriptions and zone counts
+- Add new hashes
+
+Typically touches 1–2 chains per move. The chain hash table
+`Z_chain[13][2][14][8]` is small (~2912 entries × 8 bytes = ~23 KB).
+
+### Move Cost
+
+A single-card move (card from top of chain A onto chain B, or from reserve to
+tableau, etc.):
+- Source chain: length decreases by 1 (or chain disappears if length was 1).
+  New top card is determined by build rules (the card that was below the moved card).
+- Destination chain: length increases by 1, top card changes to moved card.
+  Or a new chain of length 1 is created if placed in an empty space.
+- Zone count: update for the moved card's equivalence class if changing zones.
+
+Each of these is a subtract-old-add-new on the additive hash. O(1) per move.
+
+Re-sorting the chain list in the payload after a move: O(k log k) where k = number
+of chains. Since k ≤ ~13 (single deck) or ~26 (two deck), this is effectively O(1).
+
+### Open Questions
+
+- **Exact bit layout** within the 64-byte payload for each game category
+- **Handling of games where build rules don't fully determine chain contents** — e.g.,
+  any-suit build games where a chain topped by 3 could have any colour 4 below it.
+  In that case, we need to store each card's colour in the chain, not just the top.
+  Chain encoding becomes (top card, length, colour sequence) which is more expensive.
+- **Validation** that the chain representation is state-complete — no two genuinely
+  different game states produce the same chain multiset + zone counts. Needs formal
+  argument or exhaustive testing for small cases.
+
+---
+
 ## Recommended Implementation Order
 
 | Priority | Item | Complexity | Rationale |
 |---|---|---|---|
 | 1 | Tableau dealing | Moderate | No symmetry complications; cleanest extension |
-| 2 | Streamliner hashing (2a) | Moderate | Removes current LRU fallback; immediate benefit |
+| 2 | Streamliner hashing (2a) | Hard | Proves chain model + additive hash; removes LRU fallback |
 | 3 | Gaps | Moderate | Straightforward positional model |
 | 4 | Accordion | Moderate | Elegant predecessor-based model |
 | 5 | Suit-irrelevant (2b) | Hard | Shares XOR problem with #6; needs payload design |
