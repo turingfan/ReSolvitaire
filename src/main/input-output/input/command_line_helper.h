@@ -43,6 +43,10 @@ public:
     uint get_cores();
     bool get_available_game_types();
     bool get_benchmark();
+    std::pair<int, int> get_benchmark_seeds() const;
+    int get_benchmark_iterations() const;
+    bool get_benchmark_warmup() const;
+    const std::string& get_benchmark_json() const;
     streamliner_opt get_streamliners();
     game_state::streamliner_options get_streamliners_game_state();
     std::vector<int> get_resume();
@@ -80,6 +84,10 @@ private:
     bool available_game_types;
     bool version;
     bool benchmark;
+    std::pair<int, int> benchmark_seeds = {1, 100};
+    int benchmark_iterations = 1;
+    bool benchmark_warmup = true;
+    std::string benchmark_json = "";
     streamliner_opt streamliners;
     uint64_t cache_capacity;
     uint64_t timeout;

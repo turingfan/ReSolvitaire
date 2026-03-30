@@ -50,7 +50,8 @@ uint64_t get_resident_memory_bytes() {
     return 0;
 }
 
-void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state::streamliner_options streamliners) {
+void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state::streamliner_options str_opts,
+                    pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms) {
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
@@ -62,32 +63,35 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
     vector<double> all_nodes;
     vector<uint64_t> all_memory;
 
-    for(int seed = 1; seed <= 1000; seed++) {
+    for(int seed = seeds.first; seed <= seeds.second; seed++) {
         writer.Key(to_string(seed).c_str());
         writer.StartArray();
 
-        game_state gs(rules, seed, streamliners);
-        solver sol(gs, cache_capacity);
+        for(int i = 0; i < iterations + (warmup ? 1 : 0); i++) {
+            game_state gs(rules, seed, str_opts);
+            solver sol(gs, cache_capacity);
 
-        auto start = chrono::steady_clock::now();
-        solver::result result = sol.run();
-        auto end = chrono::steady_clock::now();
-        microsec elapsed_micros =
-                chrono::duration_cast<chrono::microseconds>(end - start);
+            auto start = chrono::steady_clock::now();
+            solver::result result = sol.run(chrono::milliseconds(timeout_ms));
+            auto end = chrono::steady_clock::now();
+            microsec elapsed_micros =
+                    chrono::duration_cast<chrono::microseconds>(end - start);
 
-        double duration = static_cast<double>(elapsed_micros.count());
-        uint64_t memory = get_resident_memory_bytes();
+            if (!warmup || i > 0) {
+                double duration = static_cast<double>(elapsed_micros.count());
+                uint64_t memory = get_resident_memory_bytes();
 
-        all_times.push_back(duration);
-        all_nodes.push_back(static_cast<double>(result.states_searched));
-        all_memory.push_back(memory);
+                all_times.push_back(duration);
+                all_nodes.push_back(static_cast<double>(result.states_searched));
+                all_memory.push_back(memory);
 
-        writer.StartObject();
-        writer.Key("time_us"); writer.Double(duration);
-        writer.Key("nodes"); writer.Double(static_cast<double>(result.states_searched));
-        writer.Key("resident_memory_bytes"); writer.Uint64(memory);
-        writer.EndObject();
-
+                writer.StartObject();
+                writer.Key("time_us"); writer.Double(duration);
+                writer.Key("nodes"); writer.Double(static_cast<double>(result.states_searched));
+                writer.Key("resident_memory_bytes"); writer.Uint64(memory);
+                writer.EndObject();
+            }
+        }
         writer.EndArray();
     }
     writer.EndObject(); // End of seed_data
@@ -137,4 +141,17 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
     writer.EndObject(); // End of root
 
     cout << buffer.GetString();
+}
+
+void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int iterations, bool warmup, uint64_t timeout_ms) {
+    // Suppress unused parameter warnings
+    (void)json_path;
+    (void)cache_capacity;
+    (void)iterations;
+    (void)warmup;
+    (void)timeout_ms;
+
+    // Placeholder for JSON instance benchmarking
+    // This would load instances from a JSON file and benchmark each one
+    cerr << "JSON-based benchmarking not yet implemented in minimal version" << endl;
 }

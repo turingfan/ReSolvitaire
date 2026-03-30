@@ -97,8 +97,15 @@ int main(int argc, const char* argv[]) {
         solve_random_game(clh.get_random_deal(), *rules, clh);
     }
     // If the benchmark option has been supplied, generates it
-    else if (clh.get_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state());
+    if (clh.get_benchmark()) {
+        if (!clh.get_benchmark_json().empty()) {
+            benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(),
+                              clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout());
+        } else {
+            benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(),
+                          clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout());
+        }
+        return EXIT_SUCCESS;
     }
     // Otherwise there are supplied input files which should be solved
     else {
