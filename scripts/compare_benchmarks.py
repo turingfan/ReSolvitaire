@@ -515,27 +515,49 @@ def main():
         baseline_map = {item["instance"]: item for item in baseline_payload}
         speedup_ratios = []
         node_ratios = []
+        nps_ratios = []
+        solution_type_mismatches = []
         combined_results = []
-        
+
         for item in current_payload:
             name = item["instance"]
             if name in baseline_map:
                 base = baseline_map[name]
                 ratio = item["median_time_us"] / base["median_time_us"] if base["median_time_us"] > 0 else 1.0
                 n_ratio = item["median_nodes"] / base["median_nodes"] if base["median_nodes"] > 0 else 1.0
-                
+
+                # Calculate nodes per second
+                baseline_nps = (base["median_nodes"] * 1000000) / base["median_time_us"] if base["median_time_us"] > 0 else 0
+                current_nps = (item["median_nodes"] * 1000000) / item["median_time_us"] if item["median_time_us"] > 0 else 0
+                nps_ratio = current_nps / baseline_nps if baseline_nps > 0 else 1.0
+
+                # Check for solution type mismatches
+                base_sol_type = base.get("solution_type", "unknown")
+                current_sol_type = item.get("solution_type", "unknown")
+                if base_sol_type != current_sol_type:
+                    solution_type_mismatches.append({
+                        "instance": name,
+                        "baseline": base_sol_type,
+                        "current": current_sol_type
+                    })
+
                 speedup_ratios.append(ratio)
                 node_ratios.append(n_ratio)
+                nps_ratios.append(nps_ratio)
                 combined_results.append({
                     "name": name,
                     "baseline": base,
                     "current": item,
                     "speedup_ratio": ratio,
-                    "node_ratio": n_ratio
+                    "node_ratio": n_ratio,
+                    "nps_ratio": nps_ratio,
+                    "baseline_nps": baseline_nps,
+                    "current_nps": current_nps
                 })
-        
+
         median_speedup = calculate_median(speedup_ratios)
         median_node_ratio = calculate_median(node_ratios)
+        median_nps_ratio = calculate_median(nps_ratios)
         
         # Build workload description
         workload_desc = " ".join(current_args)
@@ -552,9 +574,12 @@ def main():
             },
             "benchmark_workload": workload_desc,
             "results": combined_results,
+            "solution_type_mismatches": solution_type_mismatches,
             "overall": {
                 "median_speedup_ratio": median_speedup,
-                "median_node_ratio": median_node_ratio
+                "median_node_ratio": median_node_ratio,
+                "median_nps_ratio": median_nps_ratio,
+                "mismatch_count": len(solution_type_mismatches)
             }
         }
 
@@ -570,14 +595,25 @@ def main():
         color = "\033[91m" if median_speedup > 1.05 else ("\033[92m" if median_speedup < 0.95 else "")
         reset = "\033[0m"
         print(f"Median Time Ratio: {color}{median_speedup:.4f}x{reset} (Values > 1.0 indicate regression)")
-        
+
         n_color = "\033[92m" if median_node_ratio < 0.99 else ("\033[91m" if median_node_ratio > 1.01 else "")
-        print(f"Median Node Ratio: {n_color}{median_node_ratio:.4f}x{reset}\n")
+        print(f"Median Node Ratio: {n_color}{median_node_ratio:.4f}x{reset}")
+
+        nps_color = "\033[92m" if median_nps_ratio > 1.01 else ("\033[91m" if median_nps_ratio < 0.99 else "")
+        print(f"Median Nodes/Sec:  {nps_color}{median_nps_ratio:.4f}x{reset}\n")
+
+        if solution_type_mismatches:
+            print(f"--- Solution Type Mismatches ({len(solution_type_mismatches)} instances) ---")
+            print(f"Note: May be expected if different streamliners are used\n")
+            for mismatch in solution_type_mismatches[:10]:
+                print(f"{mismatch['instance']:<30}: {mismatch['baseline']} → {mismatch['current']}")
+            if len(solution_type_mismatches) > 10:
+                print(f"... and {len(solution_type_mismatches) - 10} more mismatches\n")
 
         if combined_results:
             print(f"--- Sample Instances ---")
             for r in combined_results[:5]:
-                print(f"{r['name']:<30}: {r['speedup_ratio']:.4f}x time, {r['node_ratio']:.4f}x nodes")
+                print(f"{r['name']:<30}: {r['speedup_ratio']:.4f}x time, {r['node_ratio']:.4f}x nodes, {r['nps_ratio']:.4f}x nps")
 
     else:
         # Fallback to old aggregate_stats logic
@@ -622,7 +658,8 @@ def main():
                 },
                 "comparison": {
                     "median_speedup_ratio": speedup_ratio,
-                    "median_node_ratio": current_stats["median_nodes"] / baseline_stats["median_nodes"] if baseline_stats["median_nodes"] > 0 else 1.0
+                    "median_node_ratio": current_stats["median_nodes"] / baseline_stats["median_nodes"] if baseline_stats["median_nodes"] > 0 else 1.0,
+                    "nps_ratio": (current_stats["median_nodes"] / current_stats["median_time_us"]) / (baseline_stats["median_nodes"] / baseline_stats["median_time_us"]) if baseline_stats["median_time_us"] > 0 and current_stats["median_time_us"] > 0 else 1.0
                 }
             }
         }
@@ -674,6 +711,12 @@ def main():
         node_ratio = current_stats["median_nodes"] / baseline_stats["median_nodes"] if baseline_stats["median_nodes"] > 0 else 1.0
         n_color = "\033[92m" if node_ratio < 0.99 else ("\033[91m" if node_ratio > 1.01 else "")
         print(f"Node Ratio (Current/Baseline): {n_color}{node_ratio:.4f}x{reset}")
+
+        baseline_nps = (baseline_stats["median_nodes"] * 1000000) / baseline_stats["median_time_us"] if baseline_stats["median_time_us"] > 0 else 0
+        current_nps = (current_stats["median_nodes"] * 1000000) / current_stats["median_time_us"] if current_stats["median_time_us"] > 0 else 0
+        nps_ratio = current_nps / baseline_nps if baseline_nps > 0 else 1.0
+        nps_color = "\033[92m" if nps_ratio > 1.01 else ("\033[91m" if nps_ratio < 0.99 else "")
+        print(f"Nodes/Sec Ratio (Current/Baseline): {nps_color}{nps_ratio:.4f}x{reset}")
         median_speedup = speedup_ratio # For the final verdict
 
     with open(args.out_report, 'w') as f:
