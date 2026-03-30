@@ -397,31 +397,20 @@ def main():
     if forward_args and forward_args[0] == "--":
         forward_args = forward_args[1:]
 
-    # Handle separate baseline and current arguments
-    baseline_args = None
-    current_args = None
+    if not forward_args:
+        forward_args = ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1", "--benchmark-warmup", "1"]
 
-    if args.baseline_args or args.current_args:
-        # User provided explicit args for baseline and/or current
-        if args.baseline_args and args.current_args:
-            # Both provided: use them separately
-            baseline_args = args.baseline_args.split()
-            current_args = args.current_args.split()
-        elif args.baseline_args and not args.current_args:
-            # Only baseline args provided: use for baseline, warn for current
-            print("Warning: --baseline-args provided without --current-args. Using --baseline-args for baseline only; general args for current.")
-            baseline_args = args.baseline_args.split()
-            current_args = forward_args if forward_args else ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1"]
-        elif args.current_args and not args.baseline_args:
-            # Only current args provided: use for current, warn for baseline
-            print("Warning: --current-args provided without --baseline-args. Using --current-args for current only; general args for baseline.")
-            current_args = args.current_args.split()
-            baseline_args = forward_args if forward_args else ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1"]
+    # Handle separate baseline and current arguments
+    # Strategy: if --baseline-args or --current-args provided, prepend them to general args
+    # This allows mixing specific flags with common benchmark parameters
+    if args.baseline_args:
+        baseline_args = args.baseline_args.split() + forward_args
     else:
-        # No explicit args: use unified forward_args for both
-        if not forward_args:
-            forward_args = ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1", "--benchmark-warmup", "1"]
         baseline_args = forward_args
+
+    if args.current_args:
+        current_args = args.current_args.split() + forward_args
+    else:
         current_args = forward_args
 
     # Single-solver mode: skip baseline if not provided
