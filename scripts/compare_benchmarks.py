@@ -8,6 +8,8 @@ import platform
 import os
 import sys
 import re
+import time
+import resource
 
 import tempfile
 
@@ -63,39 +65,89 @@ def get_json_payload(exe_path, extra_args):
             print(f"Exception during benchmark execution: {str(e)}")
             sys.exit(1)
 
+def run_with_timing_and_memory(cmd, timeout=120):
+    """Runs a command and returns (internal_time_ms, external_time_ms, peak_memory_bytes)."""
+    start_time = time.time()
+    try:
+        process = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        end_time = time.time()
+
+        output = process.stdout + process.stderr
+        external_time_ms = (end_time - start_time) * 1000  # Wall-clock time
+
+        # Parse internal timing if available: "Time Taken (milliseconds): <N>"
+        internal_time_ms = None
+        match = re.search(r'Time Taken \(milliseconds\):\s*([\d.]+)', output)
+        if match:
+            internal_time_ms = float(match.group(1))
+
+        # Estimate peak memory using /usr/bin/time if available
+        peak_memory_bytes = estimate_process_memory(cmd, timeout)
+
+        return internal_time_ms, external_time_ms, peak_memory_bytes
+    except subprocess.TimeoutExpired:
+        return None, None, None
+    except Exception as e:
+        print(f"Warning: Error running command: {str(e)}")
+        return None, None, None
+
+def estimate_process_memory(cmd, timeout=120):
+    """Runs command with /usr/bin/time to estimate peak memory. Platform-specific."""
+    try:
+        # Detect platform and use appropriate time command
+        if sys.platform == "darwin":
+            # macOS: use 'time -l' to get max resident set size (in bytes)
+            time_cmd = ["/usr/bin/time", "-l"] + cmd
+            result = subprocess.run(time_cmd, capture_output=True, text=True, timeout=timeout)
+            # macOS time outputs: number followed by "maximum resident set size"
+            match = re.search(r'(\d+)\s*maximum resident set size', result.stderr, re.MULTILINE)
+            if match:
+                return int(match.group(1))  # Already in bytes on macOS
+        else:
+            # Linux: use 'time -v' for verbose output
+            time_cmd = ["/usr/bin/time", "-v"] + cmd
+            result = subprocess.run(time_cmd, capture_output=True, text=True, timeout=timeout)
+            # Linux time outputs "Maximum resident set size (kbytes): <KB>"
+            match = re.search(r'Maximum resident set size \(kbytes\): (\d+)', result.stderr)
+            if match:
+                return int(match.group(1)) * 1024  # Convert KB to bytes
+    except Exception as e:
+        pass  # Silently fail; memory measurement is optional
+
+    return None
+
 def get_json_payload_legacy(exe_path, seed_start, seed_end, game_type="klondike"):
-    """Runs legacy solver (without --benchmark-json support) and extracts timing data."""
-    total_time_us = 0
+    """Runs legacy solver and extracts timing data with external wall-clock time and memory."""
+    total_internal_time_us = 0
+    total_external_time_us = 0
+    max_memory_bytes = 0
     seed_count = 0
 
     for seed in range(seed_start, seed_end + 1):
         cmd = [exe_path, "--type", game_type, "--random", str(seed)]
-        try:
-            process = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-            output = process.stdout + process.stderr
+        internal_ms, external_ms, memory_bytes = run_with_timing_and_memory(cmd, timeout=120)
 
-            # Parse "Time Taken (milliseconds): <N>" pattern
-            match = re.search(r'Time Taken \(milliseconds\):\s*([\d.]+)', output)
-            if match:
-                time_ms = float(match.group(1))
-                total_time_us += time_ms * 1000  # Convert to microseconds
-                seed_count += 1
-        except subprocess.TimeoutExpired:
-            print(f"Warning: Legacy solver timed out on seed {seed}")
-        except Exception as e:
-            print(f"Warning: Error processing seed {seed}: {str(e)}")
+        if internal_ms is not None:
+            total_internal_time_us += internal_ms * 1000
+            total_external_time_us += external_ms * 1000
+            if memory_bytes:
+                max_memory_bytes = max(max_memory_bytes, memory_bytes)
+            seed_count += 1
+        else:
+            print(f"Warning: Legacy solver failed on seed {seed}")
 
     if seed_count == 0:
         print(f"Error: Could not extract timing data from legacy solver {exe_path}")
         sys.exit(1)
 
-    return total_time_us
+    # Return internal time as primary (for HNF), but could use external if needed
+    return total_internal_time_us
 
 def measure_standard_candle(reference_exe, calibration_workload, legacy_reference=False):
-    """Measures the Hardware Normalization Factor (HNF) by summing the median times of all instances in a fixed workload."""
+    """Measures the Hardware Normalization Factor (HNF) and captures reference solver metrics."""
     if not reference_exe:
         print("\033[93mWARNING: No --reference-exe provided. Hardware Normalization Scores will not be representative.\033[0m")
-        return 1.0
+        return {"hnf": 1.0, "internal_time": None, "external_time": None, "memory": None}
 
     if legacy_reference:
         # For legacy solvers, parse a simple seed range (e.g., "1,10" means seeds 1-10)
@@ -105,8 +157,28 @@ def measure_standard_candle(reference_exe, calibration_workload, legacy_referenc
                 try:
                     seed_start = int(parts[0].strip())
                     seed_end = int(parts[1].strip())
-                    total_us = get_json_payload_legacy(reference_exe, seed_start, seed_end)
-                    return total_us
+
+                    # Capture internal time, external time, and memory for all seeds
+                    total_internal_us = 0
+                    total_external_us = 0
+                    max_memory = 0
+
+                    for seed in range(seed_start, seed_end + 1):
+                        cmd = [reference_exe, "--type", "klondike", "--random", str(seed)]
+                        int_ms, ext_ms, mem = run_with_timing_and_memory(cmd)
+                        if int_ms is not None:
+                            total_internal_us += int_ms * 1000
+                        if ext_ms is not None:
+                            total_external_us += ext_ms * 1000
+                        if mem:
+                            max_memory = max(max_memory, mem)
+
+                    return {
+                        "hnf": total_internal_us,
+                        "internal_time": total_internal_us if total_internal_us > 0 else None,
+                        "external_time": total_external_us if total_external_us > 0 else None,
+                        "memory": max_memory if max_memory > 0 else None
+                    }
                 except ValueError:
                     print(f"Error: Invalid seed range format. Use 'START,END' (e.g., '1,50')")
                     sys.exit(1)
@@ -127,10 +199,23 @@ def measure_standard_candle(reference_exe, calibration_workload, legacy_referenc
     if isinstance(payload, list):
         # Sum the median times of each instance. Summing provides a much larger, more stable scalar baseline.
         total_us = sum(inst["median_time_us"] for inst in payload)
-        return total_us
     else:
         # Fallback for old single-object aggregate format
-        return payload["aggregate_stats"]["median_time_us"]
+        total_us = payload["aggregate_stats"]["median_time_us"]
+
+    # For modern solvers, also capture memory from the benchmark output if available
+    memory_bytes = None
+    if isinstance(payload, list) and len(payload) > 0:
+        memory_bytes = payload[0].get("median_memory_bytes")
+    elif not isinstance(payload, list):
+        memory_bytes = payload.get("aggregate_stats", {}).get("median_memory_bytes")
+
+    return {
+        "hnf": total_us,
+        "internal_time": total_us,
+        "external_time": None,
+        "memory": memory_bytes
+    }
 
 def get_git_hash():
     try:
@@ -171,10 +256,19 @@ def main():
         
     print(f"--- ReSolvitaire Orchestrator (Hardware Normalization) ---")
     print(f"Establishing hardware normalization factor using {args.reference_exe or 'NONE'} ...")
-    hnf = measure_standard_candle(args.reference_exe, args.calibration_workload, args.legacy_reference)
+    hnf_data = measure_standard_candle(args.reference_exe, args.calibration_workload, args.legacy_reference)
+    hnf = hnf_data["hnf"]
 
     if args.reference_exe:
-        print(f"Hardware Normalization Factor (HNF) established: {hnf:.2f} us\n")
+        print(f"Hardware Normalization Factor (HNF) established: {hnf:.2f} us")
+        if hnf_data.get("internal_time"):
+            print(f"  Internal time: {hnf_data['internal_time']:.2f} us")
+        if hnf_data.get("external_time"):
+            print(f"  External time: {hnf_data['external_time']:.2f} us")
+        if hnf_data.get("memory"):
+            mem_mb = hnf_data['memory'] / (1024 * 1024)
+            print(f"  Peak memory:   {mem_mb:.1f} MB")
+        print()
     else:
         print(f"Normalization Factor (HNF) defaulted to 1.0 (No normalization active)\n")
 
