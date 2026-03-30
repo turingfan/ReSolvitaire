@@ -337,7 +337,9 @@ def main():
     parser.add_argument("--legacy-reference", action="store_true", help="Flag indicating the reference solver is a legacy binary without --benchmark-json support")
     parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for system calibration (or seed range 'START,END' for legacy solvers)")
     parser.add_argument("--out-report", default="benchmark_report.json", help="Path to save the JSON diagnostic report")
-    parser.add_argument("benchmark_args", nargs=argparse.REMAINDER, help="Arguments to pass through to the solvitaire benchmark engine")
+    parser.add_argument("--baseline-args", default=None, help="Benchmark arguments for baseline solver only (space-separated, overrides general args)")
+    parser.add_argument("--current-args", default=None, help="Benchmark arguments for current solver only (space-separated, overrides general args)")
+    parser.add_argument("benchmark_args", nargs=argparse.REMAINDER, help="Arguments to pass through to the solvitaire benchmark engine (used if --baseline-args and --current-args not provided)")
 
     args = parser.parse_args()
 
@@ -390,28 +392,53 @@ def main():
     else:
         print(f"Normalization Factor (HNF) defaulted to 1.0 (No normalization active)\n")
 
+    # Parse arguments: support both unified args and separate baseline/current args
     forward_args = args.benchmark_args
     if forward_args and forward_args[0] == "--":
         forward_args = forward_args[1:]
 
-    if not forward_args:
-        forward_args = ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1", "--benchmark-warmup", "1"]
+    # Handle separate baseline and current arguments
+    baseline_args = None
+    current_args = None
+
+    if args.baseline_args or args.current_args:
+        # User provided explicit args for baseline and/or current
+        if args.baseline_args and args.current_args:
+            # Both provided: use them separately
+            baseline_args = args.baseline_args.split()
+            current_args = args.current_args.split()
+        elif args.baseline_args and not args.current_args:
+            # Only baseline args provided: use for baseline, warn for current
+            print("Warning: --baseline-args provided without --current-args. Using --baseline-args for baseline only; general args for current.")
+            baseline_args = args.baseline_args.split()
+            current_args = forward_args if forward_args else ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1"]
+        elif args.current_args and not args.baseline_args:
+            # Only current args provided: use for current, warn for baseline
+            print("Warning: --current-args provided without --baseline-args. Using --current-args for current only; general args for baseline.")
+            current_args = args.current_args.split()
+            baseline_args = forward_args if forward_args else ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1"]
+    else:
+        # No explicit args: use unified forward_args for both
+        if not forward_args:
+            forward_args = ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1", "--benchmark-warmup", "1"]
+        baseline_args = forward_args
+        current_args = forward_args
 
     # Single-solver mode: skip baseline if not provided
     baseline_payload = None
     if args.baseline_exe:
-        print(f"Running baseline benchmark: {args.baseline_exe} {' '.join(forward_args)}")
-        baseline_payload = get_json_payload(args.baseline_exe, forward_args)
+        print(f"Running baseline benchmark: {args.baseline_exe} {' '.join(baseline_args)}")
+        baseline_payload = get_json_payload(args.baseline_exe, baseline_args)
     else:
         print(f"Baseline-exe not provided. Running in single-solver mode.\n")
-    
-    print(f"Running current benchmark: {args.current_exe} {' '.join(forward_args)}")
-    current_payload = get_json_payload(args.current_exe, forward_args)
+
+    print(f"Running current benchmark: {args.current_exe} {' '.join(current_args)}")
+    current_payload = get_json_payload(args.current_exe, current_args)
 
     # Single-solver mode: report only current performance
     if baseline_payload is None:
         print("\n================ SINGLE SOLVER BENCHMARK ================\n")
-        print(f"Workload: {' '.join(forward_args)}\n")
+        print(f"Workload: {' '.join(current_args)}\n")
 
         # Handle both formats
         if isinstance(current_payload, list):
@@ -454,7 +481,7 @@ def main():
                 "hardware_normalization_factor_us": hnf,
                 "mode": "single-solver"
             },
-            "benchmark_workload": " ".join(forward_args),
+            "benchmark_workload": " ".join(current_args),
             "results": current_payload
         }
 
@@ -492,6 +519,11 @@ def main():
         median_speedup = calculate_median(speedup_ratios)
         median_node_ratio = calculate_median(node_ratios)
         
+        # Build workload description
+        workload_desc = " ".join(current_args)
+        if baseline_args != current_args:
+            workload_desc = f"baseline: {' '.join(baseline_args)} | current: {' '.join(current_args)}"
+
         report = {
             "metadata": {
                 "date": datetime.datetime.now().isoformat(),
@@ -500,16 +532,16 @@ def main():
                 "hardware_normalization_factor_us": hnf,
                 "mode": "paired-instances"
             },
-            "benchmark_workload": " ".join(forward_args),
+            "benchmark_workload": workload_desc,
             "results": combined_results,
             "overall": {
                 "median_speedup_ratio": median_speedup,
                 "median_node_ratio": median_node_ratio
             }
         }
-        
+
         print("\n================ PAIRED INSTANCE BENCHMARK ================\n")
-        print(f"Workload: {' '.join(forward_args)}")
+        print(f"Workload: {workload_desc}")
         print(f"Total instances matched: {len(combined_results)}\n")
         
         print(f"--- Hardware Normalized ---")
@@ -533,13 +565,18 @@ def main():
         # Fallback to old aggregate_stats logic
         baseline_stats = baseline_payload["aggregate_stats"]
         current_stats = current_payload["aggregate_stats"]
-        
+
         baseline_val = baseline_stats["median_time_us"]
         current_val = current_stats["median_time_us"]
-        
+
         speedup_ratio = current_val / baseline_val if baseline_val > 0 else 1.0
         normalized_sys_score = current_val / hnf if hnf > 0 else 0.0
         baseline_normalized_score = baseline_val / hnf if hnf > 0 else 0.0
+
+        # Build workload description
+        workload_desc = " ".join(current_args)
+        if baseline_args != current_args:
+            workload_desc = f"baseline: {' '.join(baseline_args)} | current: {' '.join(current_args)}"
 
         report = {
             "metadata": {
@@ -549,7 +586,7 @@ def main():
                 "hardware_normalization_factor_us": hnf,
                 "mode": "aggregate-median"
             },
-            "benchmark_workload": " ".join(forward_args),
+            "benchmark_workload": workload_desc,
             "results": {
                 "baseline": {
                     "executable": args.baseline_exe,
@@ -573,7 +610,7 @@ def main():
         }
         
         print("\n================ AGGREGATE STATS BENCHMARK ================\n")
-        print(f"Workload: {' '.join(forward_args)}\n")
+        print(f"Workload: {workload_desc}\n")
         
         print(f"--- Timing (Median us) ---")
         print(f"Baseline: {baseline_stats['median_time_us']:.2f} (Mean: {baseline_stats['mean_time_us']:.2f}, SD: {baseline_stats['sd_time_us']:.2f})")
