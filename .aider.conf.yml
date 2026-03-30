@@ -1,0 +1,16 @@
+
+# Define the active model provider and model type. 
+# # The 'gemini/' prefix routes the request through the LiteLLM translator.
+model: flash
+#
+# # Direct Aider to ingest the detailed external instructions from the Obsidian Vault.
+# # The files are loaded as read-only, preventing the AI from accidentally overwriting its own rules.
+read: 
+   -../../01_Knowledge_Base/AI_Instructions/coding_conventions.md
+   
+# Explicitly enable automatic Git commits for every AI-generated code modification.
+auto-commits: true
+#
+#   # Restrict Aider's repository mapping to the current directory to prevent context bloat.
+subtree-only: true
+

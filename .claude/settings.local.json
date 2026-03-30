@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./bin/solvitaire --type klondike --benchmark-seeds 1 3 --benchmark-iterations 1 --timeout 30000)",
+      "Bash(./bin/solvitaire --type klondike --benchmark-seeds 1 2 --benchmark-iterations 1 --timeout 30000)",
+      "Bash(/Users/ipg/Research/ReSolvitaire-project/04-Executables/reference/solvitaire-reference-mac-arm64 --type klondike --random 1)",
+      "Bash(./cmake-build-release/bin/solvitaire --type klondike --benchmark-seeds 1 1 --benchmark-iterations 1 --timeout 30000)",
+      "Bash(./bin/solvitaire --type klondike --benchmark-seeds 1 1 --benchmark-iterations 1 --timeout 30000)",
+      "Bash(cmake-build-release/bin/solvitaire --type klondike --benchmark-seeds 1 2 --benchmark-iterations 1)",
+      "Bash(git pull:*)",
+      "Bash(git reset:*)",
+      "Bash(./cmake-build-release/bin/solvitaire --benchmark-json tests/oracles/level1.json)",
+      "Bash(tar -tzf build-archive/solvitaire-mac-dev-benchmark-enhancements-*.tar.gz)",
+      "Bash(./cmake-build-release/bin/solvitaire --type klondike --benchmark)"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+data/
+*.csv
+*.json
+*.sql
+*.sqlite
+node_modules/
+venv/
+.env
