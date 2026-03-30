@@ -793,12 +793,16 @@ def main():
             "baseline": baseline_payload,
             "current": current_payload
         }
+        # Ensure parent directory exists
+        os.makedirs(os.path.dirname(args.save_details) or '.', exist_ok=True)
         with open(args.save_details, 'w') as f:
             json.dump(details, f, indent=4)
 
+    # Ensure parent directory exists for report
+    os.makedirs(os.path.dirname(args.out_report) or '.', exist_ok=True)
     with open(args.out_report, 'w') as f:
         json.dump(report, f, indent=4)
-        
+
     print(f"\nReport written to {args.out_report}")
 
 if __name__ == "__main__":
