@@ -723,12 +723,19 @@ def main():
         json.dump(report, f, indent=4)
         
     if median_speedup < 0.98:
-        print(f"Verdict: Current build is FASTER by {((1.0 - median_speedup) * 100):.2f}%")
+        speedup_multiplier = 1.0 / median_speedup
+        print(f"Verdict: Current build is FASTER by {speedup_multiplier:.2f}x")
     elif median_speedup > 1.02:
-        print(f"Verdict: Current build is SLOWER (Regression) by {((median_speedup - 1.0) * 100):.2f}%")
+        print(f"Verdict: Current build is SLOWER (Regression) by {median_speedup:.2f}x")
     else:
         print(f"Verdict: No significant performance change within 2% noise margin.")
-        
+
+    # Report solution type status
+    if 'solution_type_mismatches' in locals() and solution_type_mismatches:
+        print(f"\n⚠️  Solution type discrepancies found: {len(solution_type_mismatches)} instances")
+    elif 'solution_type_mismatches' in locals():
+        print(f"\n✓ Solution types match across all instances")
+
     print(f"\nReport written to {args.out_report}")
 
 if __name__ == "__main__":
