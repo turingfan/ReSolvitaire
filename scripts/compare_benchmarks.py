@@ -238,11 +238,10 @@ def get_json_payload_legacy(exe_path, seed_start, seed_end, game_type="klondike"
     # Return internal time as primary (for HNF)
     return total_internal_time_us
 
-def measure_standard_candle(reference_exe, calibration_workload, legacy_reference=False):
-    """Measures the Hardware Normalization Factor (HNF) and captures reference solver metrics."""
+def measure_reference_solver(reference_exe, calibration_workload, legacy_reference=False):
+    """Measures reference solver performance on this machine (for informational purposes only)."""
     if not reference_exe:
-        print("\033[93mWARNING: No --reference-exe provided. Hardware Normalization Scores will not be representative.\033[0m")
-        return {"hnf": 1.0, "internal_time": None, "external_time": None, "memory": None}
+        return None
 
     if legacy_reference:
         # For legacy solvers, parse a simple seed range (e.g., "1,10" means seeds 1-10)
@@ -257,7 +256,6 @@ def measure_standard_candle(reference_exe, calibration_workload, legacy_referenc
                     total_internal_us = get_json_payload_legacy(reference_exe, seed_start, seed_end)
 
                     return {
-                        "hnf": total_internal_us,
                         "internal_time": legacy_timing_details.get("internal"),
                         "wall_time": legacy_timing_details.get("wall"),
                         "user_time": legacy_timing_details.get("user"),
@@ -277,19 +275,18 @@ def measure_standard_candle(reference_exe, calibration_workload, legacy_referenc
         sys.exit(1)
 
     # We run the calibration workload with multiple iterations for stability
-    # Use 3 iterations for the reference solver to minimize noise in the HNF baseline.
     args = ["--benchmark-json", calibration_workload, "--benchmark-iterations", "3"]
     payload = get_json_payload(reference_exe, args)
 
-    # The HNF should represent the 'Total Calibration Time' across all instances in the set.
+    # Calculate reference solver time on this machine
     if isinstance(payload, list):
-        # Sum the median times of each instance. Summing provides a much larger, more stable scalar baseline.
+        # Sum the median times of each instance for total time
         total_us = sum(inst["median_time_us"] for inst in payload)
     else:
         # Fallback for old single-object aggregate format
         total_us = payload["aggregate_stats"]["median_time_us"]
 
-    # For modern solvers, capture all three memory metrics if available
+    # Capture all three memory metrics if available
     virtual_memory = None      # From getrusage virtual memory
     resident_memory = None     # From getrusage resident (median)
     system_memory = None       # From /usr/bin/time (actual resident)
@@ -305,7 +302,6 @@ def measure_standard_candle(reference_exe, calibration_workload, legacy_referenc
         system_memory = agg.get("system_memory_bytes")
 
     return {
-        "hnf": total_us,
         "internal_time": total_us,
         "virtual_memory": virtual_memory,      # From getrusage
         "resident_memory": resident_memory,    # From getrusage
@@ -344,9 +340,10 @@ def main():
     parser = argparse.ArgumentParser(description="ReSolvitaire Python Orchestrator: Hardware Normalization & Median Statistics")
     parser.add_argument("--baseline-exe", default=None, help="Path to the baseline/master executable (optional; if omitted, only current-exe is benchmarked)")
     parser.add_argument("--current-exe", required=True, help="Path to the current working executable to test")
-    parser.add_argument("--reference-exe", default=None, help="Path to a stable, older reference solver for hardware normalization")
+    parser.add_argument("--reference-exe", default=None, help="Path to a reference solver to measure on this machine (informational; does not set HNF)")
     parser.add_argument("--legacy-reference", action="store_true", help="Flag indicating the reference solver is a legacy binary without --benchmark-json support")
-    parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for system calibration (or seed range 'START,END' for legacy solvers)")
+    parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for calibration (or seed range 'START,END' for legacy solvers)")
+    parser.add_argument("--hnf", type=float, default=None, help="Hardware Normalization Factor (microseconds) from a canonical machine. If not provided, normalization is disabled (HNF=1.0)")
     parser.add_argument("--out-report", default="benchmark_report.json", help="Path to save the JSON diagnostic report")
     parser.add_argument("--baseline-args", nargs=argparse.REMAINDER, help="Benchmark arguments for baseline solver only (can include flags like --force-lru)")
     parser.add_argument("--current-args", nargs=argparse.REMAINDER, help="Benchmark arguments for current solver only (can include flags like --force-lru)")
@@ -387,46 +384,53 @@ def main():
         print(f"Current executable not found: {args.current_exe}")
         sys.exit(1)
         
-    print(f"--- ReSolvitaire Orchestrator (Hardware Normalization) ---")
-    print(f"Establishing hardware normalization factor using {args.reference_exe or 'NONE'} ...")
-    hnf_data = measure_standard_candle(args.reference_exe, args.calibration_workload, args.legacy_reference)
-    hnf = hnf_data["hnf"]
+    print(f"--- ReSolvitaire Orchestrator ---")
 
+    # Measure reference solver if provided (for informational purposes)
+    ref_solver_data = None
     if args.reference_exe:
-        print(f"Hardware Normalization Factor (HNF) established: {hnf:.2f} us")
-        if hnf_data.get("cpu_time"):
-            # Legacy solver: show CPU time (user+sys) as headline, then details
-            cpu_time = hnf_data['cpu_time']
-            print(f"  CPU time (user+sys): {cpu_time:.2f} us")
-            if hnf_data.get("user_time"):
-                print(f"    User time: {hnf_data['user_time']:.2f} us")
-            if hnf_data.get("sys_time"):
-                print(f"    Sys time:  {hnf_data['sys_time']:.2f} us")
-        if hnf_data.get("wall_time"):
-            print(f"  Wall time: {hnf_data['wall_time']:.2f} us")
-        if hnf_data.get("internal_time"):
-            print(f"  Internal time: {hnf_data['internal_time']:.2f} us")
+        print(f"Measuring reference solver: {args.reference_exe} ...")
+        ref_solver_data = measure_reference_solver(args.reference_exe, args.calibration_workload, args.legacy_reference)
+        if ref_solver_data:
+            print(f"Reference solver performance on this machine:")
+            if ref_solver_data.get("cpu_time"):
+                # Legacy solver: show CPU time (user+sys) as headline
+                cpu_time = ref_solver_data['cpu_time']
+                print(f"  CPU time (user+sys): {cpu_time:.2f} us")
+                if ref_solver_data.get("user_time"):
+                    print(f"    User time: {ref_solver_data['user_time']:.2f} us")
+                if ref_solver_data.get("sys_time"):
+                    print(f"    Sys time:  {ref_solver_data['sys_time']:.2f} us")
+            if ref_solver_data.get("wall_time"):
+                print(f"  Wall time: {ref_solver_data['wall_time']:.2f} us")
+            if ref_solver_data.get("internal_time"):
+                print(f"  Internal time: {ref_solver_data['internal_time']:.2f} us")
 
-        # Report all memory metrics, with system-resident as primary
-        if hnf_data.get("memory"):
-            # Legacy solver: only system-measured memory
-            mem_mb = hnf_data['memory'] / (1024 * 1024)
-            print(f"  Peak memory (system resident): {mem_mb:.1f} MB")
-        else:
-            # Modern solver: system-resident is primary, others for reference
-            if hnf_data.get("system_memory"):
-                system_mb = hnf_data['system_memory'] / (1024 * 1024)
-                print(f"  Peak memory (system resident): {system_mb:.1f} MB")
-            if hnf_data.get("resident_memory"):
-                resident_mb = hnf_data['resident_memory'] / (1024 * 1024)
-                print(f"    (getrusage resident):       {resident_mb:.1f} MB")
-            if hnf_data.get("virtual_memory"):
-                virtual_mb = hnf_data['virtual_memory'] / (1024 * 1024)
-                print(f"    (getrusage virtual):        {virtual_mb:.1f} MB")
+            # Report memory metrics
+            if ref_solver_data.get("memory"):
+                # Legacy solver: only system-measured memory
+                mem_mb = ref_solver_data['memory'] / (1024 * 1024)
+                print(f"  Peak memory (system resident): {mem_mb:.1f} MB")
+            else:
+                # Modern solver: system-resident is primary
+                if ref_solver_data.get("system_memory"):
+                    system_mb = ref_solver_data['system_memory'] / (1024 * 1024)
+                    print(f"  Peak memory (system resident): {system_mb:.1f} MB")
+                if ref_solver_data.get("resident_memory"):
+                    resident_mb = ref_solver_data['resident_memory'] / (1024 * 1024)
+                    print(f"    (getrusage resident):       {resident_mb:.1f} MB")
+                if ref_solver_data.get("virtual_memory"):
+                    virtual_mb = ref_solver_data['virtual_memory'] / (1024 * 1024)
+                    print(f"    (getrusage virtual):        {virtual_mb:.1f} MB")
+            print()
 
-        print()
+    # Hardware Normalization Factor
+    hnf = args.hnf if args.hnf else 1.0
+    if args.hnf:
+        print(f"Hardware Normalization Factor (HNF): {hnf:.2f} us (provided)")
+        print(f"  (from canonical hardware measurement)\n")
     else:
-        print(f"Normalization Factor (HNF) defaulted to 1.0 (No normalization active)\n")
+        print(f"Hardware Normalization Factor (HNF): {hnf:.2f} (default, no normalization)\n")
 
     # Use benchmark_argv (args after --) as the general args
     forward_args = benchmark_argv if benchmark_argv else []
