@@ -182,8 +182,39 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         sort(all_nodes.begin(), all_nodes.end());
         double median_nodes = all_nodes[all_nodes.size() / 2];
 
-        double sq_sum_nodes = inner_product(all_nodes.begin(), all_nodes.end(), all_nodes.begin(), 0.0);
-        double stdev_nodes = sqrt(max(0.0, sq_sum_nodes / all_nodes.size() - mean_nodes * mean_nodes));
+        // Geometric means
+        double sum_log_time = 0;
+        double sum_log_nodes = 0;
+        for (double t : all_times) sum_log_time += log(max(1.0, t));
+        for (double n : all_nodes) sum_log_nodes += log(max(1.0, n));
+        double geomean_time = exp(sum_log_time / all_times.size());
+        double geomean_nodes = exp(sum_log_nodes / all_nodes.size());
+
+        // NPS statistics
+        vector<double> indiv_nps;
+        double sum_log_nps = 0;
+        for (size_t i = 0; i < all_times.size(); ++i) {
+            double nps = (all_nodes[i] * 1000000.0) / max(1.0, all_times[i]);
+            indiv_nps.push_back(nps);
+            sum_log_nps += log(max(1.0, nps));
+        }
+        sort(indiv_nps.begin(), indiv_nps.end());
+        double mean_nps = accumulate(indiv_nps.begin(), indiv_nps.end(), 0.0) / indiv_nps.size();
+        double median_nps = indiv_nps[indiv_nps.size() / 2];
+        double geomean_nps = exp(sum_log_nps / indiv_nps.size());
+        double aggregate_nps = (total_nodes * 1000000.0) / max(1.0, total_time);
+
+        // PAR2 Score (penalize timeouts as 2x timeout)
+        // Note: timeout_ms is passed as uint64_t. Convert to us for comparison.
+        double par2_sum_us = 0;
+        for (double t : all_times) {
+            if (t >= (double)timeout_ms * 1000.0 * 0.99) { // 0.99 margin for precision
+                par2_sum_us += (double)timeout_ms * 1000.0 * 2.0;
+            } else {
+                par2_sum_us += t;
+            }
+        }
+        double par2_score_us = par2_sum_us / all_times.size();
 
         // Memory statistics (resident)
         sort(all_memory.begin(), all_memory.end());
@@ -192,11 +223,20 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
 
         writer.Key("mean_time_us"); writer.Double(mean_time);
         writer.Key("median_time_us"); writer.Double(median_time);
+        writer.Key("geometric_mean_time_us"); writer.Double(geomean_time);
         writer.Key("sd_time_us"); writer.Double(stdev);
+        writer.Key("par2_score_us"); writer.Double(par2_score_us);
+
         writer.Key("mean_nodes"); writer.Double(mean_nodes);
         writer.Key("median_nodes"); writer.Double(median_nodes);
-        writer.Key("sd_nodes"); writer.Double(stdev_nodes);
-        writer.Key("nodes_per_second"); writer.Double(total_nodes / (max(1.0, total_time) / 1000000.0));
+        writer.Key("geometric_mean_nodes"); writer.Double(geomean_nodes);
+        
+        writer.Key("mean_nps"); writer.Double(mean_nps);
+        writer.Key("median_nps"); writer.Double(median_nps);
+        writer.Key("geometric_mean_nps"); writer.Double(geomean_nps);
+        writer.Key("aggregate_nps"); writer.Double(aggregate_nps);
+        writer.Key("nodes_per_second"); writer.Double(aggregate_nps); // Keep for compatibility
+        
         writer.Key("min_time_us"); writer.Double(all_times.front());
         writer.Key("max_time_us"); writer.Double(all_times.back());
         writer.Key("max_resident_memory_bytes"); writer.Uint64(max_memory);

@@ -325,6 +325,27 @@ def calculate_median(data):
     else:
         return (sorted_data[n // 2 - 1] + sorted_data[n // 2]) / 2.0
 
+def calculate_geometric_mean(data):
+    if not data:
+        return 0.0
+    try:
+        # Use log to prevent float overflow
+        return math.exp(sum(math.log(max(1.0, x)) for x in data) / len(data))
+    except (ValueError, ZeroDivisionError):
+        return 0.0
+
+def calculate_par2(times, timeout_ms):
+    if not times:
+        return 0.0
+    timeout_us = timeout_ms * 1000
+    sum_par2 = 0
+    for t in times:
+        if t >= timeout_us * 0.99:
+            sum_par2 += timeout_us * 2
+        else:
+            sum_par2 += t
+    return sum_par2 / len(times)
+
 def main():
     # Parse arguments manually to handle -- properly with flags like --force-lru
     # Split sys.argv at -- to separate orchestrator args from benchmark args
@@ -345,6 +366,7 @@ def main():
     parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for calibration (or seed range 'START,END' for legacy solvers)")
     parser.add_argument("--rht", type=float, default=None, help="Reference Hardware Time (microseconds) from a canonical machine. If not provided, normalization is disabled (RHT=1.0)")
     parser.add_argument("--out-report", default="benchmark_report.json", help="Path to save the JSON diagnostic report")
+    parser.add_argument("--save-details", default=None, help="Path to save full seed-level or instance-level details (JSON)")
     parser.add_argument("--baseline-args", nargs=argparse.REMAINDER, help="Benchmark arguments for baseline solver only (can include flags like --force-lru)")
     parser.add_argument("--current-args", nargs=argparse.REMAINDER, help="Benchmark arguments for current solver only (can include flags like --force-lru)")
 
@@ -437,6 +459,15 @@ def main():
     if not forward_args:
         forward_args = ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1", "--benchmark-warmup", "1"]
 
+    # Extract timeout for PAR2 calculation
+    timeout_ms_val = 60000 # default from C++
+    if "--timeout" in forward_args:
+        try:
+            idx = forward_args.index("--timeout")
+            timeout_ms_val = int(forward_args[idx + 1])
+        except (ValueError, IndexError):
+            pass
+    
     # Handle separate baseline and current arguments
     # Use the manually parsed args from orchestrator argv
     baseline_args = baseline_args_raw + forward_args
@@ -556,9 +587,17 @@ def main():
                 })
 
         median_speedup = calculate_median(speedup_ratios)
+        geomean_speedup = calculate_geometric_mean(speedup_ratios)
         median_node_ratio = calculate_median(node_ratios)
         median_nps_ratio = calculate_median(nps_ratios)
         
+        # Calculate PAR2 speedup if many instances
+        baseline_times = [r["baseline"]["median_time_us"] for r in combined_results]
+        current_times = [r["current"]["median_time_us"] for r in combined_results]
+        par2_baseline = calculate_par2(baseline_times, timeout_ms_val)
+        par2_current = calculate_par2(current_times, timeout_ms_val)
+        par2_ratio = par2_current / par2_baseline if par2_baseline > 0 else 1.0
+
         # Build workload description
         workload_desc = " ".join(current_args)
         if baseline_args != current_args:
@@ -570,13 +609,16 @@ def main():
                 "machine_id": platform.node(),
                 "git_hash": get_git_hash(),
                 "hardware_normalization_factor_us": rht,
-                "mode": "paired-instances"
+                "mode": "paired-instances",
+                "timeout_ms": timeout_ms_val
             },
             "benchmark_workload": workload_desc,
             "results": combined_results,
             "solution_type_mismatches": solution_type_mismatches,
             "overall": {
                 "median_speedup_ratio": median_speedup,
+                "geomean_speedup_ratio": geomean_speedup,
+                "par2_speedup_ratio": par2_ratio,
                 "median_node_ratio": median_node_ratio,
                 "median_nps_ratio": median_nps_ratio,
                 "mismatch_count": len(solution_type_mismatches)
@@ -589,18 +631,24 @@ def main():
         
         print(f"--- Hardware Normalized ---")
         print(f"Reference Hardware Time (RHT): {rht:.2f} us")
-        print(f"Baseline Median Ratio:       {median_speedup:.4f}x (Relative to reference RHT if provided)")
         
-        print(f"\n--- Median Ratios (Across all instances) ---")
-        color = "\033[91m" if median_speedup > 1.05 else ("\033[92m" if median_speedup < 0.95 else "")
+        print(f"\n--- Statistical Ratios (Current / Baseline) ---")
+        color = "\033[91m" if geomean_speedup > 1.05 else ("\033[92m" if geomean_speedup < 0.95 else "")
         reset = "\033[0m"
-        print(f"Median Time Ratio: {color}{median_speedup:.4f}x{reset} (Values > 1.0 indicate regression)")
+        print(f"Geo-Mean Time Ratio: {color}{geomean_speedup:.4f}x{reset} (Primary metric)")
+        print(f"Median Time Ratio:   {median_speedup:.4f}x")
+        
+        p_color = "\033[91m" if par2_ratio > 1.05 else ("\033[92m" if par2_ratio < 0.95 else "")
+        print(f"PAR2 Score Ratio:    {p_color}{par2_ratio:.4f}x{reset} (Failures penalized 2x timeout)")
 
         n_color = "\033[92m" if median_node_ratio < 0.99 else ("\033[91m" if median_node_ratio > 1.01 else "")
-        print(f"Median Node Ratio: {n_color}{median_node_ratio:.4f}x{reset}")
+        print(f"Median Node Ratio:   {n_color}{median_node_ratio:.4f}x{reset}")
 
         nps_color = "\033[92m" if median_nps_ratio > 1.01 else ("\033[91m" if median_nps_ratio < 0.99 else "")
-        print(f"Median Nodes/Sec:  {nps_color}{median_nps_ratio:.4f}x{reset}\n")
+        print(f"Median Nodes/Sec:    {nps_color}{median_nps_ratio:.4f}x{reset}\n")
+
+        # Set speedup for final verdict (using Geomean)
+        median_speedup = geomean_speedup
 
         if solution_type_mismatches:
             print(f"--- Solution Type Mismatches ({len(solution_type_mismatches)} instances) ---")
@@ -620,10 +668,16 @@ def main():
         baseline_stats = baseline_payload["aggregate_stats"]
         current_stats = current_payload["aggregate_stats"]
 
-        baseline_val = baseline_stats["median_time_us"]
-        current_val = current_stats["median_time_us"]
+        baseline_val = baseline_stats["geometric_mean_time_us"] if "geometric_mean_time_us" in baseline_stats else baseline_stats["median_time_us"]
+        current_val = current_stats["geometric_mean_time_us"] if "geometric_mean_time_us" in current_stats else current_stats["median_time_us"]
 
         speedup_ratio = current_val / baseline_val if baseline_val > 0 else 1.0
+        
+        # PAR2 score
+        par2_baseline = baseline_stats.get("par2_score_us", baseline_val)
+        par2_current = current_stats.get("par2_score_us", current_val)
+        par2_ratio = par2_current / par2_baseline if par2_baseline > 0 else 1.0
+
         normalized_sys_score = current_val / rht if rht > 0 else 0.0
         baseline_normalized_score = baseline_val / rht if rht > 0 else 0.0
 
@@ -663,19 +717,19 @@ def main():
                 }
             }
         }
-        
-        print("\n================ AGGREGATE STATS BENCHMARK ================\n")
-        print(f"Workload: {workload_desc}\n")
-        
-        print(f"--- Timing (Median us) ---")
-        print(f"Baseline: {baseline_stats['median_time_us']:.2f} (Mean: {baseline_stats['mean_time_us']:.2f}, SD: {baseline_stats['sd_time_us']:.2f})")
-        print(f"Current:  {current_stats['median_time_us']:.2f} (Mean: {current_stats['mean_time_us']:.2f}, SD: {current_stats['sd_time_us']:.2f})\n")
+        print(f"--- Timing (us) ---")
+        print(f"Baseline Median: {baseline_stats['median_time_us']:.2f}, Geo-Mean: {baseline_stats.get('geometric_mean_time_us', 0.0):.2f}")
+        print(f"Current Median:  {current_stats['median_time_us']:.2f}, Geo-Mean: {current_stats.get('geometric_mean_time_us', 0.0):.2f}")
+        print(f"Baseline PAR2:   {baseline_stats.get('par2_score_us', 0.0):.2f}")
+        print(f"Current PAR2:    {current_stats.get('par2_score_us', 0.0):.2f}\n")
 
-        print(f"--- Nodes (Median) ---")
-        print(f"Baseline: {baseline_stats['median_nodes']:.2f} (Mean: {baseline_stats['mean_nodes']:.2f})")
-        print(f"Current:  {current_stats['median_nodes']:.2f} (Mean: {current_stats['mean_nodes']:.2f})")
-        print(f"Baseline NPS: {baseline_stats['nodes_per_second']:.2f} nodes/sec")
-        print(f"Current NPS:  {current_stats['nodes_per_second']:.2f} nodes/sec\n")
+        print(f"--- Nodes ---")
+        print(f"Baseline Median: {baseline_stats['median_nodes']:.2f}, Geo-Mean: {baseline_stats.get('geometric_mean_nodes', 0.0):.2f}")
+        print(f"Current Median:  {current_stats['median_nodes']:.2f}, Geo-Mean: {current_stats.get('geometric_mean_nodes', 0.0):.2f}\n")
+        
+        print(f"--- Nodes/Second ---")
+        print(f"Baseline: Per-Instance Mean: {baseline_stats.get('mean_nps', 0.0):.2f}, Aggregate: {baseline_stats.get('aggregate_nps', 0.0):.2f}")
+        print(f"Current:  Per-Instance Mean: {current_stats.get('mean_nps', 0.0):.2f}, Aggregate: {current_stats.get('aggregate_nps', 0.0):.2f}\n")
         
         print(f"--- Memory Usage ---")
         # System-resident memory as primary (from /usr/bin/time)
@@ -684,18 +738,10 @@ def main():
         if baseline_sys_mem:
             baseline_mem_mb = baseline_sys_mem / (1024 * 1024)
             print(f"Baseline: {baseline_mem_mb:.1f} MB (system resident)")
-        baseline_max_mem = baseline_stats.get("max_resident_memory_bytes")
-        if baseline_max_mem:
-            baseline_max_mb = baseline_max_mem / (1024 * 1024)
-            print(f"          {baseline_max_mb:.1f} MB (max resident)")
-
+        
         if current_sys_mem:
             current_mem_mb = current_sys_mem / (1024 * 1024)
             print(f"Current:  {current_mem_mb:.1f} MB (system resident)")
-        current_max_mem = current_stats.get("max_resident_memory_bytes")
-        if current_max_mem:
-            current_max_mb = current_max_mem / (1024 * 1024)
-            print(f"          {current_max_mb:.1f} MB (max resident)")
         print()
 
         print(f"--- Hardware Normalized ---")
@@ -703,32 +749,34 @@ def main():
         print(f"Baseline Normalized Score:   {baseline_normalized_score:.4f}")
         print(f"Current Normalized Score:    {normalized_sys_score:.4f}\n")
 
-        print(f"--- Comparison (Median-Based) ---")
+        print(f"--- Comparison (Current / Baseline) ---")
         color = "\033[91m" if speedup_ratio > 1.05 else ("\033[92m" if speedup_ratio < 0.95 else "")
         reset = "\033[0m"
-        print(f"Time Ratio (Current/Baseline): {color}{speedup_ratio:.4f}x{reset} (Values > 1.0 indicate regression)")
+        print(f"Time Ratio (Geo-Mean): {color}{speedup_ratio:.4f}x{reset} (Values > 1.0 indicate regression)")
+        
+        p_color = "\033[91m" if par2_ratio > 1.05 else ("\033[92m" if par2_ratio < 0.95 else "")
+        print(f"PAR2 Score Ratio:      {p_color}{par2_ratio:.4f}x{reset}")
 
         node_ratio = current_stats["median_nodes"] / baseline_stats["median_nodes"] if baseline_stats["median_nodes"] > 0 else 1.0
         n_color = "\033[92m" if node_ratio < 0.99 else ("\033[91m" if node_ratio > 1.01 else "")
-        print(f"Node Ratio (Current/Baseline): {n_color}{node_ratio:.4f}x{reset}")
+        print(f"Node Ratio (Median):   {n_color}{node_ratio:.4f}x{reset}")
 
-        baseline_nps = (baseline_stats["median_nodes"] * 1000000) / baseline_stats["median_time_us"] if baseline_stats["median_time_us"] > 0 else 0
-        current_nps = (current_stats["median_nodes"] * 1000000) / current_stats["median_time_us"] if current_stats["median_time_us"] > 0 else 0
+        # NPS Ratio - using Per-Instance Mean as it's more representative of "average" speedup
+        baseline_nps = baseline_stats.get("mean_nps") or ((baseline_stats["median_nodes"] * 1000000) / max(1.0, baseline_stats["median_time_us"]))
+        current_nps = current_stats.get("mean_nps") or ((current_stats["median_nodes"] * 1000000) / max(1.0, current_stats["median_time_us"]))
         nps_ratio = current_nps / baseline_nps if baseline_nps > 0 else 1.0
         nps_color = "\033[92m" if nps_ratio > 1.01 else ("\033[91m" if nps_ratio < 0.99 else "")
-        print(f"Nodes/Sec Ratio (Current/Baseline): {nps_color}{nps_ratio:.4f}x{reset}")
+        print(f"Nodes/Sec Ratio (Mean): {nps_color}{nps_ratio:.4f}x{reset}")
+        
         median_speedup = speedup_ratio # For the final verdict
 
-    with open(args.out_report, 'w') as f:
-        json.dump(report, f, indent=4)
-        
     if median_speedup < 0.98:
         speedup_multiplier = 1.0 / median_speedup
-        print(f"Verdict: Current build is FASTER by {speedup_multiplier:.2f}x")
+        print(f"\nVerdict: Current build is FASTER by {speedup_multiplier:.2f}x")
     elif median_speedup > 1.02:
-        print(f"Verdict: Current build is SLOWER (Regression) by {median_speedup:.2f}x")
+        print(f"\nVerdict: Current build is SLOWER (Regression) by {median_speedup:.2f}x")
     else:
-        print(f"Verdict: No significant performance change within 2% noise margin.")
+        print(f"\nVerdict: No significant performance change within 2% noise margin.")
 
     # Report solution type status
     if 'solution_type_mismatches' in locals() and solution_type_mismatches:
@@ -736,7 +784,21 @@ def main():
     elif 'solution_type_mismatches' in locals():
         print(f"\n✓ Solution types match across all instances")
 
+    # Save raw details if requested
+    if args.save_details:
+        print(f"Saving full benchmark details to {args.save_details}")
+        details = {
+            "baseline": baseline_payload,
+            "current": current_payload
+        }
+        with open(args.save_details, 'w') as f:
+            json.dump(details, f, indent=4)
+
+    with open(args.out_report, 'w') as f:
+        json.dump(report, f, indent=4)
+        
     print(f"\nReport written to {args.out_report}")
 
 if __name__ == "__main__":
+    import math
     main()
