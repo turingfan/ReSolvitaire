@@ -150,6 +150,18 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
         double total_time = accumulate(all_times.begin(), all_times.end(), 0.0);
         double mean_time = total_time / all_times.size();
 
+        // Calculate geometric mean for time
+        double geomean_time = 0.0;
+        try {
+            double log_sum = 0.0;
+            for (double t : all_times) {
+                log_sum += log(max(1.0, t));
+            }
+            geomean_time = exp(log_sum / all_times.size());
+        } catch (...) {
+            geomean_time = 0.0;
+        }
+
         sort(all_times.begin(), all_times.end());
         // Median: for even-sized arrays, average the two middle elements
         double median_time;
@@ -164,6 +176,18 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
 
         double total_nodes = accumulate(all_nodes.begin(), all_nodes.end(), 0.0);
         double mean_nodes = total_nodes / all_nodes.size();
+
+        // Calculate geometric mean for nodes
+        double geomean_nodes = 0.0;
+        try {
+            double log_sum = 0.0;
+            for (double n : all_nodes) {
+                log_sum += log(max(1.0, n));
+            }
+            geomean_nodes = exp(log_sum / all_nodes.size());
+        } catch (...) {
+            geomean_nodes = 0.0;
+        }
 
         sort(all_nodes.begin(), all_nodes.end());
         // Median: for even-sized arrays, average the two middle elements
@@ -182,13 +206,19 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
         uint64_t max_memory = all_memory.back();
         uint64_t median_memory = all_memory[all_memory.size() / 2];
 
+        // Aggregate NPS (total nodes / total time)
+        double aggregate_nps = total_nodes / (max(1.0, total_time) / 1000000.0);
+
         writer.Key("mean_time_us"); writer.Double(mean_time);
         writer.Key("median_time_us"); writer.Double(median_time);
+        writer.Key("geometric_mean_time_us"); writer.Double(geomean_time);
         writer.Key("sd_time_us"); writer.Double(stdev);
         writer.Key("mean_nodes"); writer.Double(mean_nodes);
         writer.Key("median_nodes"); writer.Double(median_nodes);
+        writer.Key("geometric_mean_nodes"); writer.Double(geomean_nodes);
         writer.Key("sd_nodes"); writer.Double(stdev_nodes);
-        writer.Key("nodes_per_second"); writer.Double(total_nodes / (max(1.0, total_time) / 1000000.0));
+        writer.Key("nodes_per_second"); writer.Double(aggregate_nps);
+        writer.Key("aggregate_nps"); writer.Double(aggregate_nps);
         writer.Key("min_time_us"); writer.Double(all_times.front());
         writer.Key("max_time_us"); writer.Double(all_times.back());
         writer.Key("max_resident_memory_bytes"); writer.Uint64(max_memory);
@@ -337,6 +367,18 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int i
         }
         double mean_time = accumulate(times.begin(), times.end(), 0.0) / times.size();
 
+        // Calculate geometric mean for time
+        double geomean_time = 0.0;
+        try {
+            double log_sum = 0.0;
+            for (double t : times) {
+                log_sum += log(max(1.0, t));
+            }
+            geomean_time = exp(log_sum / times.size());
+        } catch (...) {
+            geomean_time = 0.0;
+        }
+
         double median_nodes;
         if (nodes_list.size() % 2 == 1) {
             median_nodes = nodes_list[nodes_list.size() / 2];
@@ -344,6 +386,19 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int i
             median_nodes = (nodes_list[nodes_list.size() / 2 - 1] + nodes_list[nodes_list.size() / 2]) / 2.0;
         }
         double mean_nodes = accumulate(nodes_list.begin(), nodes_list.end(), 0.0) / nodes_list.size();
+
+        // Calculate geometric mean for nodes
+        double geomean_nodes = 0.0;
+        try {
+            double log_sum = 0.0;
+            for (double n : nodes_list) {
+                log_sum += log(max(1.0, n));
+            }
+            geomean_nodes = exp(log_sum / nodes_list.size());
+        } catch (...) {
+            geomean_nodes = 0.0;
+        }
+
         uint64_t max_memory = memory_list.back();
         uint64_t median_memory;
         if (memory_list.size() % 2 == 1) {
@@ -352,12 +407,20 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int i
             median_memory = (memory_list[memory_list.size() / 2 - 1] + memory_list[memory_list.size() / 2]) / 2;
         }
 
+        // Aggregate NPS (total nodes / total time)
+        double total_time = accumulate(times.begin(), times.end(), 0.0);
+        double total_nodes = accumulate(nodes_list.begin(), nodes_list.end(), 0.0);
+        double aggregate_nps = total_nodes / (max(1.0, total_time) / 1000000.0);
+
         writer.StartObject();
         writer.Key("instance"); writer.String(filename.c_str());
         writer.Key("median_time_us"); writer.Double(median_time);
         writer.Key("mean_time_us"); writer.Double(mean_time);
+        writer.Key("geometric_mean_time_us"); writer.Double(geomean_time);
         writer.Key("median_nodes"); writer.Double(median_nodes);
         writer.Key("mean_nodes"); writer.Double(mean_nodes);
+        writer.Key("geometric_mean_nodes"); writer.Double(geomean_nodes);
+        writer.Key("aggregate_nps"); writer.Double(aggregate_nps);
         writer.Key("max_resident_memory_bytes"); writer.Uint64(max_memory);
         writer.Key("median_resident_memory_bytes"); writer.Uint64(median_memory);
         writer.EndObject();
