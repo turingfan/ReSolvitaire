@@ -110,6 +110,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
     vector<double> all_times;
     vector<double> all_nodes;
     vector<uint64_t> all_memory;
+    vector<solver::result::type> all_sol_types;
 
     for (int seed = seeds.first; seed <= seeds.second; ++seed) {
         writer.Key(to_string(seed).c_str());
@@ -138,6 +139,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
                 all_times.push_back(duration);
                 all_nodes.push_back((double)res.states_searched);
                 all_memory.push_back(resident_memory);
+                all_sol_types.push_back(res.sol_type);
 
                 writer.StartObject();
                 writer.Key("time_us"); writer.Double(duration);
@@ -171,19 +173,62 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         double mean_time = total_time / all_times.size();
         
         sort(all_times.begin(), all_times.end());
-        double median_time = all_times[all_times.size() / 2];
+        // Median: for even-sized arrays, average the two middle elements
+        double median_time;
+        if (all_times.size() % 2 == 1) {
+            median_time = all_times[all_times.size() / 2];
+        } else {
+            median_time = (all_times[all_times.size() / 2 - 1] + all_times[all_times.size() / 2]) / 2.0;
+        }
 
         double sq_sum = inner_product(all_times.begin(), all_times.end(), all_times.begin(), 0.0);
         double stdev = sqrt(max(0.0, sq_sum / all_times.size() - mean_time * mean_time));
 
         double total_nodes = accumulate(all_nodes.begin(), all_nodes.end(), 0.0);
         double mean_nodes = total_nodes / all_nodes.size();
-        
-        sort(all_nodes.begin(), all_nodes.end());
-        double median_nodes = all_nodes[all_nodes.size() / 2];
 
-        double sq_sum_nodes = inner_product(all_nodes.begin(), all_nodes.end(), all_nodes.begin(), 0.0);
-        double stdev_nodes = sqrt(max(0.0, sq_sum_nodes / all_nodes.size() - mean_nodes * mean_nodes));
+        sort(all_nodes.begin(), all_nodes.end());
+        // Median: for even-sized arrays, average the two middle elements
+        double median_nodes;
+        if (all_nodes.size() % 2 == 1) {
+            median_nodes = all_nodes[all_nodes.size() / 2];
+        } else {
+            median_nodes = (all_nodes[all_nodes.size() / 2 - 1] + all_nodes[all_nodes.size() / 2]) / 2.0;
+        }
+
+        // Geometric means
+        double sum_log_time = 0;
+        double sum_log_nodes = 0;
+        for (double t : all_times) sum_log_time += log(max(1.0, t));
+        for (double n : all_nodes) sum_log_nodes += log(max(1.0, n));
+        double geomean_time = exp(sum_log_time / all_times.size());
+        double geomean_nodes = exp(sum_log_nodes / all_nodes.size());
+
+        // NPS statistics
+        vector<double> indiv_nps;
+        double sum_log_nps = 0;
+        for (size_t i = 0; i < all_times.size(); ++i) {
+            double nps = (all_nodes[i] * 1000000.0) / max(1.0, all_times[i]);
+            indiv_nps.push_back(nps);
+            sum_log_nps += log(max(1.0, nps));
+        }
+        sort(indiv_nps.begin(), indiv_nps.end());
+        double mean_nps = accumulate(indiv_nps.begin(), indiv_nps.end(), 0.0) / indiv_nps.size();
+        double median_nps = indiv_nps[indiv_nps.size() / 2];
+        double geomean_nps = exp(sum_log_nps / indiv_nps.size());
+        double aggregate_nps = (total_nodes * 1000000.0) / max(1.0, total_time);
+
+        // PAR2 Score (penalize timeouts as 2x timeout)
+        // Penalize instances where solution_type == TIMEOUT
+        double par2_sum_us = 0;
+        for (size_t i = 0; i < all_times.size(); ++i) {
+            if (all_sol_types[i] == solver::result::type::TIMEOUT) {
+                par2_sum_us += (double)timeout_ms * 1000.0 * 2.0;
+            } else {
+                par2_sum_us += all_times[i];
+            }
+        }
+        double par2_score_us = par2_sum_us / all_times.size();
 
         // Memory statistics (resident)
         sort(all_memory.begin(), all_memory.end());
@@ -192,11 +237,20 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
 
         writer.Key("mean_time_us"); writer.Double(mean_time);
         writer.Key("median_time_us"); writer.Double(median_time);
+        writer.Key("geometric_mean_time_us"); writer.Double(geomean_time);
         writer.Key("sd_time_us"); writer.Double(stdev);
+        writer.Key("par2_score_us"); writer.Double(par2_score_us);
+
         writer.Key("mean_nodes"); writer.Double(mean_nodes);
         writer.Key("median_nodes"); writer.Double(median_nodes);
-        writer.Key("sd_nodes"); writer.Double(stdev_nodes);
-        writer.Key("nodes_per_second"); writer.Double(total_nodes / (max(1.0, total_time) / 1000000.0));
+        writer.Key("geometric_mean_nodes"); writer.Double(geomean_nodes);
+        
+        writer.Key("mean_nps"); writer.Double(mean_nps);
+        writer.Key("median_nps"); writer.Double(median_nps);
+        writer.Key("geometric_mean_nps"); writer.Double(geomean_nps);
+        writer.Key("aggregate_nps"); writer.Double(aggregate_nps);
+        writer.Key("nodes_per_second"); writer.Double(aggregate_nps); // Keep for compatibility
+        
         writer.Key("min_time_us"); writer.Double(all_times.front());
         writer.Key("max_time_us"); writer.Double(all_times.back());
         writer.Key("max_resident_memory_bytes"); writer.Uint64(max_memory);

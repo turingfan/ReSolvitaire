@@ -1,5 +1,5 @@
 CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/solver.cpp \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/solver.cpp \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/string \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/comp.h \
@@ -786,10 +786,15 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/forward_list \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/iomanip \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/signal.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/solver.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/global_cache.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_set \
-  /opt/homebrew/include/boost/pool/pool.hpp \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/solver.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/cache_interface.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/sol_rules.h \
+  /opt/homebrew/include/boost/optional.hpp \
+  /opt/homebrew/include/boost/optional/optional.hpp \
+  /opt/homebrew/include/boost/assert.hpp \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/assert.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
+  /opt/homebrew/include/boost/core/addressof.hpp \
   /opt/homebrew/include/boost/config.hpp \
   /opt/homebrew/include/boost/config/user.hpp \
   /opt/homebrew/include/boost/config/detail/select_compiler_config.hpp \
@@ -810,33 +815,40 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/config/detail/suffix.hpp \
   /opt/homebrew/include/boost/config/helper_macros.hpp \
   /opt/homebrew/include/boost/config/detail/cxx_composite.hpp \
-  /opt/homebrew/include/boost/pool/poolfwd.hpp \
-  /opt/homebrew/include/boost/pool/detail/mutex.hpp \
-  /opt/homebrew/include/boost/limits.hpp \
-  /opt/homebrew/include/boost/integer/common_factor_ct.hpp \
-  /opt/homebrew/include/boost/integer_fwd.hpp \
+  /opt/homebrew/include/boost/core/enable_if.hpp \
+  /opt/homebrew/include/boost/core/invoke_swap.hpp \
+  /opt/homebrew/include/boost/core/launder.hpp \
+  /opt/homebrew/include/boost/optional/bad_optional_access.hpp \
+  /opt/homebrew/include/boost/throw_exception.hpp \
+  /opt/homebrew/include/boost/exception/exception.hpp \
+  /opt/homebrew/include/boost/assert/source_location.hpp \
   /opt/homebrew/include/boost/cstdint.hpp \
-  /opt/homebrew/include/boost/pool/simple_segregated_storage.hpp \
+  /opt/homebrew/include/boost/config/workaround.hpp \
   /opt/homebrew/include/boost/type_traits/alignment_of.hpp \
   /opt/homebrew/include/boost/type_traits/intrinsics.hpp \
   /opt/homebrew/include/boost/type_traits/detail/config.hpp \
   /opt/homebrew/include/boost/version.hpp \
-  /opt/homebrew/include/boost/config/workaround.hpp \
   /opt/homebrew/include/boost/type_traits/integral_constant.hpp \
   /opt/homebrew/include/boost/detail/workaround.hpp \
-  /opt/homebrew/include/boost/assert.hpp \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/assert.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
-  /opt/homebrew/include/boost/pool/pool_alloc.hpp \
-  /opt/homebrew/include/boost/throw_exception.hpp \
-  /opt/homebrew/include/boost/exception/exception.hpp \
-  /opt/homebrew/include/boost/assert/source_location.hpp \
-  /opt/homebrew/include/boost/pool/singleton_pool.hpp \
-  /opt/homebrew/include/boost/pool/detail/guard.hpp \
-  /opt/homebrew/include/boost/type_traits/aligned_storage.hpp \
+  /opt/homebrew/include/boost/type_traits/conditional.hpp \
+  /opt/homebrew/include/boost/type_traits/conjunction.hpp \
+  /opt/homebrew/include/boost/type_traits/disjunction.hpp \
+  /opt/homebrew/include/boost/type_traits/has_nothrow_constructor.hpp \
+  /opt/homebrew/include/boost/type_traits/is_default_constructible.hpp \
+  /opt/homebrew/include/boost/type_traits/is_complete.hpp \
+  /opt/homebrew/include/boost/type_traits/declval.hpp \
+  /opt/homebrew/include/boost/type_traits/add_rvalue_reference.hpp \
+  /opt/homebrew/include/boost/type_traits/is_void.hpp \
+  /opt/homebrew/include/boost/type_traits/is_reference.hpp \
+  /opt/homebrew/include/boost/type_traits/is_lvalue_reference.hpp \
+  /opt/homebrew/include/boost/type_traits/is_rvalue_reference.hpp \
+  /opt/homebrew/include/boost/type_traits/remove_reference.hpp \
+  /opt/homebrew/include/boost/type_traits/is_function.hpp \
+  /opt/homebrew/include/boost/type_traits/detail/is_function_cxx_11.hpp \
+  /opt/homebrew/include/boost/type_traits/detail/yes_no_type.hpp \
+  /opt/homebrew/include/boost/static_assert.hpp \
   /opt/homebrew/include/boost/type_traits/type_with_alignment.hpp \
   /opt/homebrew/include/boost/type_traits/is_pod.hpp \
-  /opt/homebrew/include/boost/type_traits/is_void.hpp \
   /opt/homebrew/include/boost/type_traits/is_scalar.hpp \
   /opt/homebrew/include/boost/type_traits/is_arithmetic.hpp \
   /opt/homebrew/include/boost/type_traits/is_integral.hpp \
@@ -846,10 +858,86 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/type_traits/is_member_pointer.hpp \
   /opt/homebrew/include/boost/type_traits/is_member_function_pointer.hpp \
   /opt/homebrew/include/boost/type_traits/detail/is_member_function_pointer_cxx_11.hpp \
-  /opt/homebrew/include/boost/static_assert.hpp \
-  /opt/homebrew/include/boost/type_traits/conditional.hpp \
+  /opt/homebrew/include/boost/type_traits/remove_const.hpp \
+  /opt/homebrew/include/boost/type_traits/decay.hpp \
+  /opt/homebrew/include/boost/type_traits/is_array.hpp \
+  /opt/homebrew/include/boost/type_traits/remove_bounds.hpp \
+  /opt/homebrew/include/boost/type_traits/remove_extent.hpp \
+  /opt/homebrew/include/boost/type_traits/add_pointer.hpp \
+  /opt/homebrew/include/boost/type_traits/remove_cv.hpp \
+  /opt/homebrew/include/boost/type_traits/is_assignable.hpp \
+  /opt/homebrew/include/boost/type_traits/is_base_of.hpp \
+  /opt/homebrew/include/boost/type_traits/is_base_and_derived.hpp \
+  /opt/homebrew/include/boost/type_traits/is_same.hpp \
+  /opt/homebrew/include/boost/type_traits/is_class.hpp \
+  /opt/homebrew/include/boost/type_traits/is_const.hpp \
+  /opt/homebrew/include/boost/type_traits/is_constructible.hpp \
+  /opt/homebrew/include/boost/type_traits/is_destructible.hpp \
+  /opt/homebrew/include/boost/type_traits/is_convertible.hpp \
+  /opt/homebrew/include/boost/type_traits/is_nothrow_move_assignable.hpp \
+  /opt/homebrew/include/boost/type_traits/has_trivial_move_assign.hpp \
+  /opt/homebrew/include/boost/type_traits/is_volatile.hpp \
+  /opt/homebrew/include/boost/type_traits/has_nothrow_assign.hpp \
+  /opt/homebrew/include/boost/type_traits/enable_if.hpp \
+  /opt/homebrew/include/boost/type_traits/is_nothrow_move_constructible.hpp \
+  /opt/homebrew/include/boost/none.hpp \
+  /opt/homebrew/include/boost/none_t.hpp \
+  /opt/homebrew/include/boost/config/pragma_message.hpp \
+  /opt/homebrew/include/boost/optional/optional_fwd.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_config.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_factory_support.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_aligned_storage.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_hash.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_utility.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_trivially_copyable_base.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_reference_spec.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_relops.hpp \
+  /opt/homebrew/include/boost/optional/detail/optional_swap.hpp \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/card.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/map \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__tree \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/document.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/reader.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/allocators.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/rapidjson.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/inttypes.h \
+  /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/inttypes.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/inttypes.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_inttypes.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_inttypes.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/stream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/encodings.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/encodedstream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/memorystream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/meta.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/../rapidjson.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/stack.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/../allocators.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/swap.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/strtod.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/ieee754.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/biginteger.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/diyfp.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/pow10.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/error/error.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/error/../rapidjson.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/strfunc.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../../../lib/rapidjson/internal/../stream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/global_cache.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_set \
+  /opt/homebrew/include/boost/pool/pool.hpp \
+  /opt/homebrew/include/boost/pool/poolfwd.hpp \
+  /opt/homebrew/include/boost/pool/detail/mutex.hpp \
+  /opt/homebrew/include/boost/limits.hpp \
+  /opt/homebrew/include/boost/integer/common_factor_ct.hpp \
+  /opt/homebrew/include/boost/integer_fwd.hpp \
+  /opt/homebrew/include/boost/pool/simple_segregated_storage.hpp \
+  /opt/homebrew/include/boost/pool/pool_alloc.hpp \
+  /opt/homebrew/include/boost/pool/singleton_pool.hpp \
+  /opt/homebrew/include/boost/pool/detail/guard.hpp \
+  /opt/homebrew/include/boost/type_traits/aligned_storage.hpp \
   /opt/homebrew/include/boost/multi_index_container.hpp \
-  /opt/homebrew/include/boost/core/addressof.hpp \
   /opt/homebrew/include/boost/core/no_exceptions_support.hpp \
   /opt/homebrew/include/boost/move/core.hpp \
   /opt/homebrew/include/boost/move/detail/config_begin.hpp \
@@ -1075,7 +1163,6 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/mpl/aux_/iter_fold_if_impl.hpp \
   /opt/homebrew/include/boost/mpl/identity.hpp \
   /opt/homebrew/include/boost/mpl/aux_/preprocessed/gcc/iter_fold_if_impl.hpp \
-  /opt/homebrew/include/boost/type_traits/is_same.hpp \
   /opt/homebrew/include/boost/mpl/same_as.hpp \
   /opt/homebrew/include/boost/mpl/aux_/lambda_spec.hpp \
   /opt/homebrew/include/boost/mpl/size.hpp \
@@ -1093,22 +1180,7 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/mpl/iterator_range.hpp \
   /opt/homebrew/include/boost/multi_index_container_fwd.hpp \
   /opt/homebrew/include/boost/multi_index/identity.hpp \
-  /opt/homebrew/include/boost/core/enable_if.hpp \
   /opt/homebrew/include/boost/multi_index/identity_fwd.hpp \
-  /opt/homebrew/include/boost/type_traits/is_const.hpp \
-  /opt/homebrew/include/boost/type_traits/remove_const.hpp \
-  /opt/homebrew/include/boost/type_traits/is_convertible.hpp \
-  /opt/homebrew/include/boost/type_traits/is_complete.hpp \
-  /opt/homebrew/include/boost/type_traits/declval.hpp \
-  /opt/homebrew/include/boost/type_traits/add_rvalue_reference.hpp \
-  /opt/homebrew/include/boost/type_traits/is_reference.hpp \
-  /opt/homebrew/include/boost/type_traits/is_lvalue_reference.hpp \
-  /opt/homebrew/include/boost/type_traits/is_rvalue_reference.hpp \
-  /opt/homebrew/include/boost/type_traits/remove_reference.hpp \
-  /opt/homebrew/include/boost/type_traits/is_function.hpp \
-  /opt/homebrew/include/boost/type_traits/detail/is_function_cxx_11.hpp \
-  /opt/homebrew/include/boost/type_traits/detail/yes_no_type.hpp \
-  /opt/homebrew/include/boost/type_traits/is_array.hpp \
   /opt/homebrew/include/boost/multi_index/indexed_by.hpp \
   /opt/homebrew/include/boost/mpl/vector.hpp \
   /opt/homebrew/include/boost/mpl/limits/vector.hpp \
@@ -1213,14 +1285,11 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/preprocessor/facilities/intercept.hpp \
   /opt/homebrew/include/boost/preprocessor/facilities/limits/intercept_256.hpp \
   /opt/homebrew/include/boost/preprocessor/repetition/enum_binary_params.hpp \
-  /opt/homebrew/include/boost/type_traits/is_base_and_derived.hpp \
-  /opt/homebrew/include/boost/type_traits/remove_cv.hpp \
   /opt/homebrew/include/boost/multi_index/detail/ord_index_impl_fwd.hpp \
   /opt/homebrew/include/boost/multi_index/detail/access_specifier.hpp \
   /opt/homebrew/include/boost/multi_index/detail/adl_swap.hpp \
   /opt/homebrew/include/boost/multi_index/detail/allocator_traits.hpp \
   /opt/homebrew/include/boost/type_traits/is_empty.hpp \
-  /opt/homebrew/include/boost/type_traits/is_class.hpp \
   /opt/homebrew/include/boost/type_traits/add_reference.hpp \
   /opt/homebrew/include/boost/multi_index/detail/base_type.hpp \
   /opt/homebrew/include/boost/multi_index/detail/index_base.hpp \
@@ -1251,15 +1320,12 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/tuple/tuple.hpp \
   /opt/homebrew/include/boost/core/ref.hpp \
   /opt/homebrew/include/boost/tuple/detail/tuple_basic.hpp \
-  /opt/homebrew/include/boost/core/invoke_swap.hpp \
   /opt/homebrew/include/boost/type_traits/cv_traits.hpp \
   /opt/homebrew/include/boost/type_traits/add_const.hpp \
   /opt/homebrew/include/boost/type_traits/add_volatile.hpp \
   /opt/homebrew/include/boost/type_traits/add_cv.hpp \
-  /opt/homebrew/include/boost/type_traits/is_volatile.hpp \
   /opt/homebrew/include/boost/type_traits/remove_volatile.hpp \
   /opt/homebrew/include/boost/type_traits/function_traits.hpp \
-  /opt/homebrew/include/boost/type_traits/add_pointer.hpp \
   /opt/homebrew/include/boost/multi_index/detail/index_loader.hpp \
   /opt/homebrew/include/boost/multi_index/detail/index_saver.hpp \
   /opt/homebrew/include/boost/multi_index/detail/index_matcher.hpp \
@@ -1309,11 +1375,9 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/iterator/iterator_facade.hpp \
   /opt/homebrew/include/boost/iterator/interoperable.hpp \
   /opt/homebrew/include/boost/iterator/detail/type_traits/disjunction.hpp \
-  /opt/homebrew/include/boost/type_traits/disjunction.hpp \
   /opt/homebrew/include/boost/iterator/iterator_traits.hpp \
   /opt/homebrew/include/boost/iterator/detail/facade_iterator_category.hpp \
   /opt/homebrew/include/boost/iterator/detail/type_traits/conjunction.hpp \
-  /opt/homebrew/include/boost/type_traits/conjunction.hpp \
   /opt/homebrew/include/boost/iterator/detail/config_def.hpp \
   /opt/homebrew/include/boost/iterator/detail/config_undef.hpp \
   /opt/homebrew/include/boost/iterator/detail/type_traits/negation.hpp \
@@ -1328,9 +1392,6 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/multi_index/detail/seq_index_ops.hpp \
   /opt/homebrew/include/boost/multi_index/sequenced_index_fwd.hpp \
   /opt/homebrew/include/boost/type_traits/is_copy_constructible.hpp \
-  /opt/homebrew/include/boost/type_traits/is_constructible.hpp \
-  /opt/homebrew/include/boost/type_traits/is_destructible.hpp \
-  /opt/homebrew/include/boost/type_traits/is_default_constructible.hpp \
   /opt/homebrew/include/boost/multi_index/hashed_index.hpp \
   /opt/homebrew/include/boost/multi_index/detail/bucket_array.hpp \
   /opt/homebrew/include/boost/multi_index/detail/hash_index_node.hpp \
@@ -1374,7 +1435,6 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/mp11/detail/mp_remove_if.hpp \
   /opt/homebrew/include/boost/mp11/detail/mp_map_find.hpp \
   /opt/homebrew/include/boost/mp11/detail/mp_with_index.hpp \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
   /opt/homebrew/include/boost/mp11/integer_sequence.hpp \
   /opt/homebrew/include/boost/describe/members.hpp \
   /opt/homebrew/include/boost/describe/detail/cx_streq.hpp \
@@ -1388,66 +1448,7 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/complex \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/sstream \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/typeindex \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/sol_rules.h \
-  /opt/homebrew/include/boost/optional.hpp \
-  /opt/homebrew/include/boost/optional/optional.hpp \
-  /opt/homebrew/include/boost/core/launder.hpp \
-  /opt/homebrew/include/boost/optional/bad_optional_access.hpp \
-  /opt/homebrew/include/boost/type_traits/has_nothrow_constructor.hpp \
-  /opt/homebrew/include/boost/type_traits/decay.hpp \
-  /opt/homebrew/include/boost/type_traits/remove_bounds.hpp \
-  /opt/homebrew/include/boost/type_traits/remove_extent.hpp \
-  /opt/homebrew/include/boost/type_traits/is_assignable.hpp \
-  /opt/homebrew/include/boost/type_traits/is_base_of.hpp \
-  /opt/homebrew/include/boost/type_traits/is_nothrow_move_assignable.hpp \
-  /opt/homebrew/include/boost/type_traits/has_trivial_move_assign.hpp \
-  /opt/homebrew/include/boost/type_traits/has_nothrow_assign.hpp \
-  /opt/homebrew/include/boost/type_traits/enable_if.hpp \
-  /opt/homebrew/include/boost/type_traits/is_nothrow_move_constructible.hpp \
-  /opt/homebrew/include/boost/none.hpp \
-  /opt/homebrew/include/boost/none_t.hpp \
-  /opt/homebrew/include/boost/config/pragma_message.hpp \
-  /opt/homebrew/include/boost/optional/optional_fwd.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_config.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_factory_support.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_aligned_storage.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_hash.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_utility.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_trivially_copyable_base.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_reference_spec.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_relops.hpp \
-  /opt/homebrew/include/boost/optional/detail/optional_swap.hpp \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/card.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/map \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__tree \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/document.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/reader.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/allocators.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/rapidjson.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/inttypes.h \
-  /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/inttypes.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/inttypes.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_inttypes.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_inttypes.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/stream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/encodings.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/encodedstream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/memorystream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/meta.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/../rapidjson.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/stack.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/../allocators.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/swap.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/strtod.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/ieee754.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/biginteger.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/diyfp.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/pow10.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/error/error.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/error/../rapidjson.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/strfunc.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/../../../lib/rapidjson/internal/../stream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/search-state/game_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/search-state/game_state.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/set \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/random \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__random/bernoulli_distribution.h \
@@ -1490,12 +1491,15 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__random/uniform_random_bit_generator.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__random/weibull_distribution.h \
   /opt/homebrew/include/boost/functional/hash.hpp \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/lib/rapidjson/document.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/search-state/../card.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/search-state/../pile.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/search-state/../sol_rules.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/search-state/../move.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../input-output/input/command_line_helper.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/lib/rapidjson/document.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/search-state/../card.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/search-state/../pile.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/search-state/../sol_rules.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/search-state/../move.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/search-state/../zobrist.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/search-state/../compact_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/search-state/../parent_table.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../input-output/input/command_line_helper.h \
   /opt/homebrew/include/boost/program_options.hpp \
   /opt/homebrew/include/boost/program_options/options_description.hpp \
   /opt/homebrew/include/boost/program_options/config.hpp \
@@ -1580,8 +1584,12 @@ CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: \
   /opt/homebrew/include/boost/program_options/detail/convert.hpp \
   /opt/homebrew/include/boost/program_options/variables_map.hpp \
   /opt/homebrew/include/boost/program_options/version.hpp \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../input-output/input/../../game/search-state/game_state.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../game/move.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../input-output/output/log_helper.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../input-output/output/state_printer.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/../input-output/output/../../game/search-state/game_state.h
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../input-output/input/../../game/search-state/game_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/move.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/flat_cache.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/compact_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/dual_cache.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../input-output/output/state_printer.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../game/../input-output/output/../../game/search-state/game_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../input-output/output/log_helper.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/../input-output/output/state_printer.h

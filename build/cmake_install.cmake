@@ -1,4 +1,4 @@
-# Install script for directory: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking
+# Install script for directory: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,11 +39,11 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/_deps/googletest-build/cmake_install.cmake")
+  include("/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/_deps/googletest-build/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/solvitaire" TYPE EXECUTABLE FILES "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/bin/solvitaire")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/solvitaire" TYPE EXECUTABLE FILES "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/bin/solvitaire")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/solvitaire/solvitaire" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/solvitaire/solvitaire")
     if(CMAKE_INSTALL_DO_STRIP)
@@ -53,13 +53,13 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  include("/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles/solvitaire.dir/install-cxx-module-bmi-Release.cmake" OPTIONAL)
+  include("/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles/solvitaire.dir/install-cxx-module-bmi-Release.cmake" OPTIONAL)
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/install_local_manifest.txt"
+  file(WRITE "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)
@@ -75,6 +75,6 @@ else()
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

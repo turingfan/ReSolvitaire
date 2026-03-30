@@ -1,6 +1,6 @@
 CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/benchmark.cpp \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/benchmark.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/benchmark.cpp \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/benchmark.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/chrono \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__config \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__config_site \
@@ -768,7 +768,7 @@ CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fsfilcnt_t.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_nl_item.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdarg \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/sol_rules.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/sol_rules.h \
   /opt/homebrew/include/boost/optional.hpp \
   /opt/homebrew/include/boost/optional/optional.hpp \
   /opt/homebrew/include/boost/assert.hpp \
@@ -874,38 +874,38 @@ CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: \
   /opt/homebrew/include/boost/optional/detail/optional_reference_spec.hpp \
   /opt/homebrew/include/boost/optional/detail/optional_relops.hpp \
   /opt/homebrew/include/boost/optional/detail/optional_swap.hpp \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/card.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/card.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/map \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__tree \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/document.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/reader.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/allocators.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/rapidjson.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/document.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/reader.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/allocators.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/rapidjson.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/inttypes.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/inttypes.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/inttypes.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_inttypes.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_inttypes.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/stream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/encodings.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/encodedstream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/memorystream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/meta.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/../rapidjson.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/stack.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/../allocators.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/swap.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/strtod.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/ieee754.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/biginteger.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/diyfp.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/pow10.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/error/error.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/error/../rapidjson.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/strfunc.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/../../../lib/rapidjson/internal/../stream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/search-state/game_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/stream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/encodings.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/encodedstream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/memorystream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/meta.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/../rapidjson.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/stack.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/../allocators.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/swap.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/strtod.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/ieee754.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/biginteger.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/diyfp.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/pow10.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/error/error.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/error/../rapidjson.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/strfunc.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/../../../lib/rapidjson/internal/../stream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/search-state/game_state.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/list \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/set \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/random \
@@ -1012,18 +1012,20 @@ CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/stack.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/print \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/typeindex \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/lib/rapidjson/document.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/search-state/../card.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/search-state/../pile.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/search-state/../sol_rules.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../game/search-state/../move.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/lib/rapidjson/document.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/search-state/../card.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/search-state/../pile.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/search-state/../sol_rules.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/search-state/../move.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/search-state/../zobrist.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/search-state/../compact_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/search-state/../parent_table.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/iostream \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/fstream \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/path.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/iomanip \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/filesystem \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../solver/solver.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../solver/../game/global_cache.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/global_cache.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_set \
   /opt/homebrew/include/boost/pool/pool.hpp \
   /opt/homebrew/include/boost/pool/poolfwd.hpp \
@@ -1498,9 +1500,14 @@ CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: \
   /opt/homebrew/include/boost/type_traits/remove_pointer.hpp \
   /opt/homebrew/include/boost/multi_index/hashed_index_fwd.hpp \
   /opt/homebrew/include/boost/multi_index/detail/hash_index_args.hpp \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../solver/../game/sol_rules.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../solver/../game/search-state/game_state.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../solver/../input-output/input/command_line_helper.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/cache_interface.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/flat_cache.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../game/compact_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../solver/solver.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../solver/../game/cache_interface.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../solver/../game/global_cache.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../solver/../game/sol_rules.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../solver/../input-output/input/command_line_helper.h \
   /opt/homebrew/include/boost/program_options.hpp \
   /opt/homebrew/include/boost/program_options/options_description.hpp \
   /opt/homebrew/include/boost/program_options/config.hpp \
@@ -1585,33 +1592,33 @@ CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: \
   /opt/homebrew/include/boost/program_options/detail/convert.hpp \
   /opt/homebrew/include/boost/program_options/variables_map.hpp \
   /opt/homebrew/include/boost/program_options/version.hpp \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../solver/../input-output/input/../../game/search-state/game_state.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/rules_parser.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../game/sol_rules.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/deal_parser.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/document.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/schema.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/pointer.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/itoa.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/../rapidjson.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/stringbuffer.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/stream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/stack.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/regex.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/../allocators.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/../stream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/input/sol_preset_types.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../input-output/output/log_helper.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/document.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/writer.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/stream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/internal/meta.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/internal/stack.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/internal/strfunc.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/internal/dtoa.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/internal/itoa.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/internal/diyfp.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/internal/ieee754.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/stringbuffer.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/filewritestream.h \
-  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/../../../lib/rapidjson/filereadstream.h
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../solver/../input-output/input/../../game/search-state/game_state.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/rules_parser.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../game/sol_rules.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/deal_parser.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/document.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/schema.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/pointer.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/itoa.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/../rapidjson.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/stringbuffer.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/stream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/stack.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/regex.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/../allocators.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/json-parsing/../../../../../lib/rapidjson/internal/../stream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/input/sol_preset_types.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../input-output/output/log_helper.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/document.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/writer.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/stream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/internal/meta.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/internal/stack.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/internal/strfunc.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/internal/dtoa.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/internal/itoa.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/internal/diyfp.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/internal/ieee754.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/stringbuffer.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/filewritestream.h \
+  /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/../../../lib/rapidjson/filereadstream.h
