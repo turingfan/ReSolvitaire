@@ -110,6 +110,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
     vector<double> all_times;
     vector<double> all_nodes;
     vector<uint64_t> all_memory;
+    vector<solver::result::type> all_sol_types;
 
     for (int seed = seeds.first; seed <= seeds.second; ++seed) {
         writer.Key(to_string(seed).c_str());
@@ -138,6 +139,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
                 all_times.push_back(duration);
                 all_nodes.push_back((double)res.states_searched);
                 all_memory.push_back(resident_memory);
+                all_sol_types.push_back(res.sol_type);
 
                 writer.StartObject();
                 writer.Key("time_us"); writer.Double(duration);
@@ -217,13 +219,13 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         double aggregate_nps = (total_nodes * 1000000.0) / max(1.0, total_time);
 
         // PAR2 Score (penalize timeouts as 2x timeout)
-        // Note: timeout_ms is passed as uint64_t. Convert to us for comparison.
+        // Penalize instances where solution_type == TIMEOUT
         double par2_sum_us = 0;
-        for (double t : all_times) {
-            if (t >= (double)timeout_ms * 1000.0 * 0.99) { // 0.99 margin for precision
+        for (size_t i = 0; i < all_times.size(); ++i) {
+            if (all_sol_types[i] == solver::result::type::TIMEOUT) {
                 par2_sum_us += (double)timeout_ms * 1000.0 * 2.0;
             } else {
-                par2_sum_us += t;
+                par2_sum_us += all_times[i];
             }
         }
         double par2_score_us = par2_sum_us / all_times.size();

@@ -337,9 +337,9 @@ def calculate_geometric_mean(data):
 
 def calculate_par2(times, timeout_ms, solution_types=None):
     """
-    Calculate PAR2 score: times are taken as-is, but actual timeouts are penalized as 2x timeout.
-    If solution_types is provided, only penalize instances that were actually timed out.
-    If solution_types is None, use time-based detection (time >= timeout * 0.99).
+    Calculate PAR2 score: penalizes timeouts as 2x timeout.
+    If solution_types is provided, penalize instances where solution_type == "TIMEOUT".
+    If solution_types is None, use time-based detection (fallback).
     """
     if not times:
         return 0.0
@@ -348,10 +348,10 @@ def calculate_par2(times, timeout_ms, solution_types=None):
     for i, t in enumerate(times):
         is_timeout = False
         if solution_types and i < len(solution_types):
-            # Use solver's solution_type: only penalize if TIMEOUT and time is at limit
-            is_timeout = solution_types[i] == "TIMEOUT" and t >= timeout_us * 0.99
+            # Use solver's solution_type: penalize if TIMEOUT
+            is_timeout = solution_types[i] == "TIMEOUT"
         else:
-            # Fallback: time-based detection (old behavior)
+            # Fallback: time-based detection
             is_timeout = t >= timeout_us * 0.99
 
         if is_timeout:
