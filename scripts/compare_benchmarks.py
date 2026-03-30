@@ -10,6 +10,7 @@ import sys
 import re
 import time
 import resource
+import statistics
 
 import tempfile
 
@@ -88,6 +89,10 @@ def get_json_payload(exe_path, extra_args):
                             item["system_memory_bytes"] = system_memory
                     elif isinstance(best_json, dict) and "aggregate_stats" in best_json:
                         best_json["aggregate_stats"]["system_memory_bytes"] = system_memory
+                    # NOTE: This memory measurement is from a SINGLE representative seed.
+                    # When --benchmark is used with multiple instances, the actual benchmark
+                    # may use different cache sizes. This is a known limitation that needs
+                    # further investigation for multi-instance benchmarking scenarios.
 
                 return best_json
 
@@ -271,7 +276,7 @@ def measure_reference_solver(reference_exe, calibration_workload, legacy_referen
             sys.exit(1)
 
     if not os.path.exists(calibration_workload):
-        print(f"\033[91mError: Calibration workload not found: {calibration_workload}\033[0m")
+        print(f"Error: Calibration workload not found: {calibration_workload}")
         sys.exit(1)
 
     # We run the calibration workload with multiple iterations for stability
@@ -316,14 +321,10 @@ def get_git_hash():
         return "unknown"
 
 def calculate_median(data):
+    """Calculate median using standard library. Returns 0.0 for empty data."""
     if not data:
         return 0.0
-    sorted_data = sorted(data)
-    n = len(sorted_data)
-    if n % 2 == 1:
-        return sorted_data[n // 2]
-    else:
-        return (sorted_data[n // 2 - 1] + sorted_data[n // 2]) / 2.0
+    return statistics.median(data)
 
 def calculate_geometric_mean(data):
     if not data:
@@ -334,13 +335,26 @@ def calculate_geometric_mean(data):
     except (ValueError, ZeroDivisionError):
         return 0.0
 
-def calculate_par2(times, timeout_ms):
+def calculate_par2(times, timeout_ms, solution_types=None):
+    """
+    Calculate PAR2 score: times are taken as-is, but actual timeouts are penalized as 2x timeout.
+    If solution_types is provided, only penalize instances that were actually timed out.
+    If solution_types is None, use time-based detection (time >= timeout * 0.99).
+    """
     if not times:
         return 0.0
     timeout_us = timeout_ms * 1000
     sum_par2 = 0
-    for t in times:
-        if t >= timeout_us * 0.99:
+    for i, t in enumerate(times):
+        is_timeout = False
+        if solution_types and i < len(solution_types):
+            # Use solver's solution_type: only penalize if TIMEOUT and time is at limit
+            is_timeout = solution_types[i] == "TIMEOUT" and t >= timeout_us * 0.99
+        else:
+            # Fallback: time-based detection (old behavior)
+            is_timeout = t >= timeout_us * 0.99
+
+        if is_timeout:
             sum_par2 += timeout_us * 2
         else:
             sum_par2 += t
@@ -594,8 +608,10 @@ def main():
         # Calculate PAR2 speedup if many instances
         baseline_times = [r["baseline"]["median_time_us"] for r in combined_results]
         current_times = [r["current"]["median_time_us"] for r in combined_results]
-        par2_baseline = calculate_par2(baseline_times, timeout_ms_val)
-        par2_current = calculate_par2(current_times, timeout_ms_val)
+        baseline_sol_types = [r["baseline"].get("solution_type", "unknown") for r in combined_results]
+        current_sol_types = [r["current"].get("solution_type", "unknown") for r in combined_results]
+        par2_baseline = calculate_par2(baseline_times, timeout_ms_val, baseline_sol_types)
+        par2_current = calculate_par2(current_times, timeout_ms_val, current_sol_types)
         par2_ratio = par2_current / par2_baseline if par2_baseline > 0 else 1.0
 
         # Build workload description
@@ -633,19 +649,11 @@ def main():
         print(f"Reference Hardware Time (RHT): {rht:.2f} us")
         
         print(f"\n--- Statistical Ratios (Current / Baseline) ---")
-        color = "\033[91m" if geomean_speedup > 1.05 else ("\033[92m" if geomean_speedup < 0.95 else "")
-        reset = "\033[0m"
-        print(f"Geo-Mean Time Ratio: {color}{geomean_speedup:.4f}x{reset} (Primary metric)")
+        print(f"Geo-Mean Time Ratio: {geomean_speedup:.4f}x (Primary metric)")
         print(f"Median Time Ratio:   {median_speedup:.4f}x")
-        
-        p_color = "\033[91m" if par2_ratio > 1.05 else ("\033[92m" if par2_ratio < 0.95 else "")
-        print(f"PAR2 Score Ratio:    {p_color}{par2_ratio:.4f}x{reset} (Failures penalized 2x timeout)")
-
-        n_color = "\033[92m" if median_node_ratio < 0.99 else ("\033[91m" if median_node_ratio > 1.01 else "")
-        print(f"Median Node Ratio:   {n_color}{median_node_ratio:.4f}x{reset}")
-
-        nps_color = "\033[92m" if median_nps_ratio > 1.01 else ("\033[91m" if median_nps_ratio < 0.99 else "")
-        print(f"Median Nodes/Sec:    {nps_color}{median_nps_ratio:.4f}x{reset}\n")
+        print(f"PAR2 Score Ratio:    {par2_ratio:.4f}x (Failures penalized 2x timeout)")
+        print(f"Median Node Ratio:   {median_node_ratio:.4f}x")
+        print(f"Median Nodes/Sec:    {median_nps_ratio:.4f}x\n")
 
         # Set speedup for final verdict (using Geomean)
         median_speedup = geomean_speedup
@@ -750,23 +758,17 @@ def main():
         print(f"Current Normalized Score:    {normalized_sys_score:.4f}\n")
 
         print(f"--- Comparison (Current / Baseline) ---")
-        color = "\033[91m" if speedup_ratio > 1.05 else ("\033[92m" if speedup_ratio < 0.95 else "")
-        reset = "\033[0m"
-        print(f"Time Ratio (Geo-Mean): {color}{speedup_ratio:.4f}x{reset} (Values > 1.0 indicate regression)")
-        
-        p_color = "\033[91m" if par2_ratio > 1.05 else ("\033[92m" if par2_ratio < 0.95 else "")
-        print(f"PAR2 Score Ratio:      {p_color}{par2_ratio:.4f}x{reset}")
+        print(f"Time Ratio (Geo-Mean): {speedup_ratio:.4f}x (Values > 1.0 indicate regression)")
+        print(f"PAR2 Score Ratio:      {par2_ratio:.4f}x")
 
         node_ratio = current_stats["median_nodes"] / baseline_stats["median_nodes"] if baseline_stats["median_nodes"] > 0 else 1.0
-        n_color = "\033[92m" if node_ratio < 0.99 else ("\033[91m" if node_ratio > 1.01 else "")
-        print(f"Node Ratio (Median):   {n_color}{node_ratio:.4f}x{reset}")
+        print(f"Node Ratio (Median):   {node_ratio:.4f}x")
 
         # NPS Ratio - using Per-Instance Mean as it's more representative of "average" speedup
         baseline_nps = baseline_stats.get("mean_nps") or ((baseline_stats["median_nodes"] * 1000000) / max(1.0, baseline_stats["median_time_us"]))
         current_nps = current_stats.get("mean_nps") or ((current_stats["median_nodes"] * 1000000) / max(1.0, current_stats["median_time_us"]))
         nps_ratio = current_nps / baseline_nps if baseline_nps > 0 else 1.0
-        nps_color = "\033[92m" if nps_ratio > 1.01 else ("\033[91m" if nps_ratio < 0.99 else "")
-        print(f"Nodes/Sec Ratio (Mean): {nps_color}{nps_ratio:.4f}x{reset}")
+        print(f"Nodes/Sec Ratio (Mean): {nps_ratio:.4f}x")
         
         median_speedup = speedup_ratio # For the final verdict
 

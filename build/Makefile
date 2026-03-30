@@ -57,10 +57,10 @@ RM = /opt/homebrew/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking
+CMAKE_SOURCE_DIR = /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build
+CMAKE_BINARY_DIR = /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -78,7 +78,7 @@ package/fast: package
 # Special rule for the target package_source
 package_source:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Run CPack packaging tool for source..."
-	/opt/homebrew/bin/cpack --config ./CPackSourceConfig.cmake /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CPackSourceConfig.cmake
+	/opt/homebrew/bin/cpack --config ./CPackSourceConfig.cmake /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CPackSourceConfig.cmake
 .PHONY : package_source
 
 # Special rule for the target package_source
@@ -162,16 +162,16 @@ install/strip/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles 0
 .PHONY : all
 
 # The main codegen target
 codegen: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 codegen
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles 0
 .PHONY : codegen
 
 # The main clean target
@@ -384,6 +384,60 @@ src/main/game/card.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/card.cpp.s
 .PHONY : src/main/game/card.cpp.s
 
+src/main/game/compact_state.o: src/main/game/compact_state.cpp.o
+.PHONY : src/main/game/compact_state.o
+
+# target to build an object file
+src/main/game/compact_state.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/compact_state.cpp.o
+.PHONY : src/main/game/compact_state.cpp.o
+
+src/main/game/compact_state.i: src/main/game/compact_state.cpp.i
+.PHONY : src/main/game/compact_state.i
+
+# target to preprocess a source file
+src/main/game/compact_state.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/compact_state.cpp.i
+.PHONY : src/main/game/compact_state.cpp.i
+
+src/main/game/compact_state.s: src/main/game/compact_state.cpp.s
+.PHONY : src/main/game/compact_state.s
+
+# target to generate assembly for a file
+src/main/game/compact_state.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/compact_state.cpp.s
+.PHONY : src/main/game/compact_state.cpp.s
+
+src/main/game/flat_cache.o: src/main/game/flat_cache.cpp.o
+.PHONY : src/main/game/flat_cache.o
+
+# target to build an object file
+src/main/game/flat_cache.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/flat_cache.cpp.o
+.PHONY : src/main/game/flat_cache.cpp.o
+
+src/main/game/flat_cache.i: src/main/game/flat_cache.cpp.i
+.PHONY : src/main/game/flat_cache.i
+
+# target to preprocess a source file
+src/main/game/flat_cache.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/flat_cache.cpp.i
+.PHONY : src/main/game/flat_cache.cpp.i
+
+src/main/game/flat_cache.s: src/main/game/flat_cache.cpp.s
+.PHONY : src/main/game/flat_cache.s
+
+# target to generate assembly for a file
+src/main/game/flat_cache.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/flat_cache.cpp.s
+.PHONY : src/main/game/flat_cache.cpp.s
+
 src/main/game/global_cache.o: src/main/game/global_cache.cpp.o
 .PHONY : src/main/game/global_cache.o
 
@@ -437,6 +491,33 @@ src/main/game/move.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/move.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/move.cpp.s
 .PHONY : src/main/game/move.cpp.s
+
+src/main/game/parent_table.o: src/main/game/parent_table.cpp.o
+.PHONY : src/main/game/parent_table.o
+
+# target to build an object file
+src/main/game/parent_table.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/parent_table.cpp.o
+.PHONY : src/main/game/parent_table.cpp.o
+
+src/main/game/parent_table.i: src/main/game/parent_table.cpp.i
+.PHONY : src/main/game/parent_table.i
+
+# target to preprocess a source file
+src/main/game/parent_table.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/parent_table.cpp.i
+.PHONY : src/main/game/parent_table.cpp.i
+
+src/main/game/parent_table.s: src/main/game/parent_table.cpp.s
+.PHONY : src/main/game/parent_table.s
+
+# target to generate assembly for a file
+src/main/game/parent_table.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/parent_table.cpp.s
+.PHONY : src/main/game/parent_table.cpp.s
 
 src/main/game/pile.o: src/main/game/pile.cpp.o
 .PHONY : src/main/game/pile.o
@@ -599,6 +680,33 @@ src/main/game/sol_rules.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/sol_rules.cpp.s
 .PHONY : src/main/game/sol_rules.cpp.s
+
+src/main/game/zobrist.o: src/main/game/zobrist.cpp.o
+.PHONY : src/main/game/zobrist.o
+
+# target to build an object file
+src/main/game/zobrist.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/zobrist.cpp.o
+.PHONY : src/main/game/zobrist.cpp.o
+
+src/main/game/zobrist.i: src/main/game/zobrist.cpp.i
+.PHONY : src/main/game/zobrist.i
+
+# target to preprocess a source file
+src/main/game/zobrist.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/zobrist.cpp.i
+.PHONY : src/main/game/zobrist.cpp.i
+
+src/main/game/zobrist.s: src/main/game/zobrist.cpp.s
+.PHONY : src/main/game/zobrist.s
+
+# target to generate assembly for a file
+src/main/game/zobrist.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solvitaire.dir/build.make CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/main/game/zobrist.cpp.s
+.PHONY : src/main/game/zobrist.cpp.s
 
 src/main/input-output/input/command_line_helper.o: src/main/input-output/input/command_line_helper.cpp.o
 .PHONY : src/main/input-output/input/command_line_helper.o
@@ -1221,6 +1329,30 @@ src/test/unit_tests/deal_parser_test.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/deal_parser_test.cpp.s
 .PHONY : src/test/unit_tests/deal_parser_test.cpp.s
 
+src/test/unit_tests/dual_cache_test.o: src/test/unit_tests/dual_cache_test.cpp.o
+.PHONY : src/test/unit_tests/dual_cache_test.o
+
+# target to build an object file
+src/test/unit_tests/dual_cache_test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/dual_cache_test.cpp.o
+.PHONY : src/test/unit_tests/dual_cache_test.cpp.o
+
+src/test/unit_tests/dual_cache_test.i: src/test/unit_tests/dual_cache_test.cpp.i
+.PHONY : src/test/unit_tests/dual_cache_test.i
+
+# target to preprocess a source file
+src/test/unit_tests/dual_cache_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/dual_cache_test.cpp.i
+.PHONY : src/test/unit_tests/dual_cache_test.cpp.i
+
+src/test/unit_tests/dual_cache_test.s: src/test/unit_tests/dual_cache_test.cpp.s
+.PHONY : src/test/unit_tests/dual_cache_test.s
+
+# target to generate assembly for a file
+src/test/unit_tests/dual_cache_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/dual_cache_test.cpp.s
+.PHONY : src/test/unit_tests/dual_cache_test.cpp.s
+
 src/test/unit_tests/face_up_cards_test.o: src/test/unit_tests/face_up_cards_test.cpp.o
 .PHONY : src/test/unit_tests/face_up_cards_test.o
 
@@ -1244,6 +1376,30 @@ src/test/unit_tests/face_up_cards_test.s: src/test/unit_tests/face_up_cards_test
 src/test/unit_tests/face_up_cards_test.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/face_up_cards_test.cpp.s
 .PHONY : src/test/unit_tests/face_up_cards_test.cpp.s
+
+src/test/unit_tests/flat_cache_test.o: src/test/unit_tests/flat_cache_test.cpp.o
+.PHONY : src/test/unit_tests/flat_cache_test.o
+
+# target to build an object file
+src/test/unit_tests/flat_cache_test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/flat_cache_test.cpp.o
+.PHONY : src/test/unit_tests/flat_cache_test.cpp.o
+
+src/test/unit_tests/flat_cache_test.i: src/test/unit_tests/flat_cache_test.cpp.i
+.PHONY : src/test/unit_tests/flat_cache_test.i
+
+# target to preprocess a source file
+src/test/unit_tests/flat_cache_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/flat_cache_test.cpp.i
+.PHONY : src/test/unit_tests/flat_cache_test.cpp.i
+
+src/test/unit_tests/flat_cache_test.s: src/test/unit_tests/flat_cache_test.cpp.s
+.PHONY : src/test/unit_tests/flat_cache_test.s
+
+# target to generate assembly for a file
+src/test/unit_tests/flat_cache_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/flat_cache_test.cpp.s
+.PHONY : src/test/unit_tests/flat_cache_test.cpp.s
 
 src/test/unit_tests/foundations_dominance_test.o: src/test/unit_tests/foundations_dominance_test.cpp.o
 .PHONY : src/test/unit_tests/foundations_dominance_test.o
@@ -1341,6 +1497,54 @@ src/test/unit_tests/legal_move_gen_test.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/legal_move_gen_test.cpp.s
 .PHONY : src/test/unit_tests/legal_move_gen_test.cpp.s
 
+src/test/unit_tests/mismatch_analyzer.o: src/test/unit_tests/mismatch_analyzer.cpp.o
+.PHONY : src/test/unit_tests/mismatch_analyzer.o
+
+# target to build an object file
+src/test/unit_tests/mismatch_analyzer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/mismatch_analyzer.cpp.o
+.PHONY : src/test/unit_tests/mismatch_analyzer.cpp.o
+
+src/test/unit_tests/mismatch_analyzer.i: src/test/unit_tests/mismatch_analyzer.cpp.i
+.PHONY : src/test/unit_tests/mismatch_analyzer.i
+
+# target to preprocess a source file
+src/test/unit_tests/mismatch_analyzer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/mismatch_analyzer.cpp.i
+.PHONY : src/test/unit_tests/mismatch_analyzer.cpp.i
+
+src/test/unit_tests/mismatch_analyzer.s: src/test/unit_tests/mismatch_analyzer.cpp.s
+.PHONY : src/test/unit_tests/mismatch_analyzer.s
+
+# target to generate assembly for a file
+src/test/unit_tests/mismatch_analyzer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/mismatch_analyzer.cpp.s
+.PHONY : src/test/unit_tests/mismatch_analyzer.cpp.s
+
+src/test/unit_tests/mismatch_diagnostic.o: src/test/unit_tests/mismatch_diagnostic.cpp.o
+.PHONY : src/test/unit_tests/mismatch_diagnostic.o
+
+# target to build an object file
+src/test/unit_tests/mismatch_diagnostic.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/mismatch_diagnostic.cpp.o
+.PHONY : src/test/unit_tests/mismatch_diagnostic.cpp.o
+
+src/test/unit_tests/mismatch_diagnostic.i: src/test/unit_tests/mismatch_diagnostic.cpp.i
+.PHONY : src/test/unit_tests/mismatch_diagnostic.i
+
+# target to preprocess a source file
+src/test/unit_tests/mismatch_diagnostic.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/mismatch_diagnostic.cpp.i
+.PHONY : src/test/unit_tests/mismatch_diagnostic.cpp.i
+
+src/test/unit_tests/mismatch_diagnostic.s: src/test/unit_tests/mismatch_diagnostic.cpp.s
+.PHONY : src/test/unit_tests/mismatch_diagnostic.s
+
+# target to generate assembly for a file
+src/test/unit_tests/mismatch_diagnostic.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/mismatch_diagnostic.cpp.s
+.PHONY : src/test/unit_tests/mismatch_diagnostic.cpp.s
+
 src/test/unit_tests/pile_test.o: src/test/unit_tests/pile_test.cpp.o
 .PHONY : src/test/unit_tests/pile_test.o
 
@@ -1364,6 +1568,54 @@ src/test/unit_tests/pile_test.s: src/test/unit_tests/pile_test.cpp.s
 src/test/unit_tests/pile_test.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/pile_test.cpp.s
 .PHONY : src/test/unit_tests/pile_test.cpp.s
+
+src/test/unit_tests/solver_cache_selection_test.o: src/test/unit_tests/solver_cache_selection_test.cpp.o
+.PHONY : src/test/unit_tests/solver_cache_selection_test.o
+
+# target to build an object file
+src/test/unit_tests/solver_cache_selection_test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/solver_cache_selection_test.cpp.o
+.PHONY : src/test/unit_tests/solver_cache_selection_test.cpp.o
+
+src/test/unit_tests/solver_cache_selection_test.i: src/test/unit_tests/solver_cache_selection_test.cpp.i
+.PHONY : src/test/unit_tests/solver_cache_selection_test.i
+
+# target to preprocess a source file
+src/test/unit_tests/solver_cache_selection_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/solver_cache_selection_test.cpp.i
+.PHONY : src/test/unit_tests/solver_cache_selection_test.cpp.i
+
+src/test/unit_tests/solver_cache_selection_test.s: src/test/unit_tests/solver_cache_selection_test.cpp.s
+.PHONY : src/test/unit_tests/solver_cache_selection_test.s
+
+# target to generate assembly for a file
+src/test/unit_tests/solver_cache_selection_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/solver_cache_selection_test.cpp.s
+.PHONY : src/test/unit_tests/solver_cache_selection_test.cpp.s
+
+src/test/unit_tests/zobrist_test.o: src/test/unit_tests/zobrist_test.cpp.o
+.PHONY : src/test/unit_tests/zobrist_test.o
+
+# target to build an object file
+src/test/unit_tests/zobrist_test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/zobrist_test.cpp.o
+.PHONY : src/test/unit_tests/zobrist_test.cpp.o
+
+src/test/unit_tests/zobrist_test.i: src/test/unit_tests/zobrist_test.cpp.i
+.PHONY : src/test/unit_tests/zobrist_test.i
+
+# target to preprocess a source file
+src/test/unit_tests/zobrist_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/zobrist_test.cpp.i
+.PHONY : src/test/unit_tests/zobrist_test.cpp.i
+
+src/test/unit_tests/zobrist_test.s: src/test/unit_tests/zobrist_test.cpp.s
+.PHONY : src/test/unit_tests/zobrist_test.s
+
+# target to generate assembly for a file
+src/test/unit_tests/zobrist_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/unit_tests.dir/build.make CMakeFiles/unit_tests.dir/src/test/unit_tests/zobrist_test.cpp.s
+.PHONY : src/test/unit_tests/zobrist_test.cpp.s
 
 # Help Target
 help:
@@ -1399,12 +1651,21 @@ help:
 	@echo "... src/main/game/card.o"
 	@echo "... src/main/game/card.i"
 	@echo "... src/main/game/card.s"
+	@echo "... src/main/game/compact_state.o"
+	@echo "... src/main/game/compact_state.i"
+	@echo "... src/main/game/compact_state.s"
+	@echo "... src/main/game/flat_cache.o"
+	@echo "... src/main/game/flat_cache.i"
+	@echo "... src/main/game/flat_cache.s"
 	@echo "... src/main/game/global_cache.o"
 	@echo "... src/main/game/global_cache.i"
 	@echo "... src/main/game/global_cache.s"
 	@echo "... src/main/game/move.o"
 	@echo "... src/main/game/move.i"
 	@echo "... src/main/game/move.s"
+	@echo "... src/main/game/parent_table.o"
+	@echo "... src/main/game/parent_table.i"
+	@echo "... src/main/game/parent_table.s"
 	@echo "... src/main/game/pile.o"
 	@echo "... src/main/game/pile.i"
 	@echo "... src/main/game/pile.s"
@@ -1423,6 +1684,9 @@ help:
 	@echo "... src/main/game/sol_rules.o"
 	@echo "... src/main/game/sol_rules.i"
 	@echo "... src/main/game/sol_rules.s"
+	@echo "... src/main/game/zobrist.o"
+	@echo "... src/main/game/zobrist.i"
+	@echo "... src/main/game/zobrist.s"
 	@echo "... src/main/input-output/input/command_line_helper.o"
 	@echo "... src/main/input-output/input/command_line_helper.i"
 	@echo "... src/main/input-output/input/command_line_helper.s"
@@ -1498,9 +1762,15 @@ help:
 	@echo "... src/test/unit_tests/deal_parser_test.o"
 	@echo "... src/test/unit_tests/deal_parser_test.i"
 	@echo "... src/test/unit_tests/deal_parser_test.s"
+	@echo "... src/test/unit_tests/dual_cache_test.o"
+	@echo "... src/test/unit_tests/dual_cache_test.i"
+	@echo "... src/test/unit_tests/dual_cache_test.s"
 	@echo "... src/test/unit_tests/face_up_cards_test.o"
 	@echo "... src/test/unit_tests/face_up_cards_test.i"
 	@echo "... src/test/unit_tests/face_up_cards_test.s"
+	@echo "... src/test/unit_tests/flat_cache_test.o"
+	@echo "... src/test/unit_tests/flat_cache_test.i"
+	@echo "... src/test/unit_tests/flat_cache_test.s"
 	@echo "... src/test/unit_tests/foundations_dominance_test.o"
 	@echo "... src/test/unit_tests/foundations_dominance_test.i"
 	@echo "... src/test/unit_tests/foundations_dominance_test.s"
@@ -1513,9 +1783,21 @@ help:
 	@echo "... src/test/unit_tests/legal_move_gen_test.o"
 	@echo "... src/test/unit_tests/legal_move_gen_test.i"
 	@echo "... src/test/unit_tests/legal_move_gen_test.s"
+	@echo "... src/test/unit_tests/mismatch_analyzer.o"
+	@echo "... src/test/unit_tests/mismatch_analyzer.i"
+	@echo "... src/test/unit_tests/mismatch_analyzer.s"
+	@echo "... src/test/unit_tests/mismatch_diagnostic.o"
+	@echo "... src/test/unit_tests/mismatch_diagnostic.i"
+	@echo "... src/test/unit_tests/mismatch_diagnostic.s"
 	@echo "... src/test/unit_tests/pile_test.o"
 	@echo "... src/test/unit_tests/pile_test.i"
 	@echo "... src/test/unit_tests/pile_test.s"
+	@echo "... src/test/unit_tests/solver_cache_selection_test.o"
+	@echo "... src/test/unit_tests/solver_cache_selection_test.i"
+	@echo "... src/test/unit_tests/solver_cache_selection_test.s"
+	@echo "... src/test/unit_tests/zobrist_test.o"
+	@echo "... src/test/unit_tests/zobrist_test.i"
+	@echo "... src/test/unit_tests/zobrist_test.s"
 .PHONY : help
 
 

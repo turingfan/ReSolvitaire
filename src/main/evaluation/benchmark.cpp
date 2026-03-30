@@ -171,16 +171,28 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         double mean_time = total_time / all_times.size();
         
         sort(all_times.begin(), all_times.end());
-        double median_time = all_times[all_times.size() / 2];
+        // Median: for even-sized arrays, average the two middle elements
+        double median_time;
+        if (all_times.size() % 2 == 1) {
+            median_time = all_times[all_times.size() / 2];
+        } else {
+            median_time = (all_times[all_times.size() / 2 - 1] + all_times[all_times.size() / 2]) / 2.0;
+        }
 
         double sq_sum = inner_product(all_times.begin(), all_times.end(), all_times.begin(), 0.0);
         double stdev = sqrt(max(0.0, sq_sum / all_times.size() - mean_time * mean_time));
 
         double total_nodes = accumulate(all_nodes.begin(), all_nodes.end(), 0.0);
         double mean_nodes = total_nodes / all_nodes.size();
-        
+
         sort(all_nodes.begin(), all_nodes.end());
-        double median_nodes = all_nodes[all_nodes.size() / 2];
+        // Median: for even-sized arrays, average the two middle elements
+        double median_nodes;
+        if (all_nodes.size() % 2 == 1) {
+            median_nodes = all_nodes[all_nodes.size() / 2];
+        } else {
+            median_nodes = (all_nodes[all_nodes.size() / 2 - 1] + all_nodes[all_nodes.size() / 2]) / 2.0;
+        }
 
         // Geometric means
         double sum_log_time = 0;

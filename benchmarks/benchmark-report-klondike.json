@@ -1,0 +1,57 @@
+{
+    "metadata": {
+        "date": "2026-03-30T16:49:49.264117",
+        "machine_id": "MCWD704HG9LV",
+        "git_hash": "9f967a8a5b6996a6091cf4c6d2611d417c74544e",
+        "hardware_normalization_factor_us": 1.0,
+        "mode": "aggregate-median"
+    },
+    "benchmark_workload": "--type klondike --benchmark-seeds 1 100 --benchmark-warmup 1 --benchmark-iterations 3 --timeout 60000",
+    "results": {
+        "baseline": {
+            "executable": "build-archive/solvitaire-mac-dev-benchmark-enhancements-20260330-58f60d8",
+            "stats": {
+                "mean_time_us": 3653312.55,
+                "median_time_us": 1702.0,
+                "sd_time_us": 12613226.547494624,
+                "mean_nodes": 3497564.8333333335,
+                "median_nodes": 1509.0,
+                "sd_nodes": 12447609.366752172,
+                "nodes_per_second": 957368.0832025537,
+                "min_time_us": 1.0,
+                "max_time_us": 60001250.0,
+                "max_resident_memory_bytes": 1857011712,
+                "median_resident_memory_bytes": 1835581440,
+                "system_memory_bytes": 23330816
+            },
+            "hardware_normalized_score": 1702.0,
+            "system_memory_bytes": 23330816,
+            "max_resident_memory_bytes": 1857011712
+        },
+        "current": {
+            "executable": "build-archive/solvitaire-mac-dev-20260330-8c50127",
+            "stats": {
+                "mean_time_us": 2490594.84,
+                "median_time_us": 631.0,
+                "sd_time_us": 9775931.645276334,
+                "mean_nodes": 4939395.21,
+                "median_nodes": 880.0,
+                "sd_nodes": 21143691.02370449,
+                "nodes_per_second": 1983219.0811091538,
+                "min_time_us": 9.0,
+                "max_time_us": 60000028.0,
+                "max_resident_memory_bytes": 3202596864,
+                "median_resident_memory_bytes": 3202596864,
+                "system_memory_bytes": 3145498624
+            },
+            "hardware_normalized_score": 631.0,
+            "system_memory_bytes": 3145498624,
+            "max_resident_memory_bytes": 3202596864
+        },
+        "comparison": {
+            "median_speedup_ratio": 0.3707403055229142,
+            "median_node_ratio": 0.583167660702452,
+            "nps_ratio": 1.572981550737834
+        }
+    }
+}

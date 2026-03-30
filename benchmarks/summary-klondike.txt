@@ -1,0 +1,38 @@
+--- ReSolvitaire Orchestrator ---
+Reference Hardware Time (RHT): 1.00 (default, no normalization)
+
+Running baseline benchmark: build-archive/solvitaire-mac-dev-benchmark-enhancements-20260330-58f60d8 --type klondike --benchmark-seeds 1 100 --benchmark-warmup 1 --benchmark-iterations 3 --timeout 60000
+Running current benchmark: build-archive/solvitaire-mac-dev-20260330-8c50127 --type klondike --benchmark-seeds 1 100 --benchmark-warmup 1 --benchmark-iterations 3 --timeout 60000
+
+================ AGGREGATE STATS BENCHMARK ================
+
+Workload: --type klondike --benchmark-seeds 1 100 --benchmark-warmup 1 --benchmark-iterations 3 --timeout 60000
+
+--- Timing (Median us) ---
+Baseline: 1702.00 (Mean: 3653312.55, SD: 12613226.55)
+Current:  631.00 (Mean: 2490594.84, SD: 9775931.65)
+
+--- Nodes (Median) ---
+Baseline: 1509.00 (Mean: 3497564.83)
+Current:  880.00 (Mean: 4939395.21)
+Baseline NPS: 957368.08 nodes/sec
+Current NPS:  1983219.08 nodes/sec
+
+--- Memory Usage ---
+Baseline: 22.2 MB (system resident)
+          1771.0 MB (max resident)
+Current:  2999.8 MB (system resident)
+          3054.2 MB (max resident)
+
+--- Hardware Normalized ---
+Reference Hardware Time (RHT): 1.00 us
+Baseline Normalized Score:   1702.0000
+Current Normalized Score:    631.0000
+
+--- Comparison (Median-Based) ---
+Time Ratio (Current/Baseline): [92m0.3707x[0m (Values > 1.0 indicate regression)
+Node Ratio (Current/Baseline): [92m0.5832x[0m
+Nodes/Sec Ratio (Current/Baseline): [92m1.5730x[0m
+Verdict: Current build is FASTER by 2.70x
+
+Report written to benchmarks/benchmark-report-klondike.json

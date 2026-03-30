@@ -63,3 +63,15 @@ To run a comparison with detailed logging:
 ```bash
 python3 scripts/compare_benchmarks.py --current-exe ./bin/solvitaire --baseline-exe ./bin/old_solvitaire --save-details benchmark_details.json -- --type klondike --benchmark-seeds 1 100
 ```
+
+## Known Issues
+
+### Memory Measurement Limitation
+When using `--benchmark` with multiple instances (seed-based or JSON-based), the system memory metric is measured from a **single representative seed** rather than the full benchmark run. This is a pragmatic choice to avoid artificially inflating memory measurements by running many sequential instances.
+
+**Future work**: For multi-instance benchmarking scenarios, consider:
+- Measuring memory during the actual benchmark run
+- Reporting peak memory across all instances rather than a single seed
+- Documenting which cache strategy was active during the memory measurement
+
+This limitation does not affect the primary metrics (time, nodes) which are reported with full precision for each instance.
