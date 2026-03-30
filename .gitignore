@@ -57,5 +57,7 @@ fabric.properties
 
 results/
 
+build/
+build-archive/
 
 venv/
