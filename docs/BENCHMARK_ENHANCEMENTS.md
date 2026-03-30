@@ -57,9 +57,31 @@ Output includes memory metrics in JSON without any additional flags.
 
 ---
 
-## 2. Legacy Reference Solver Support
+## 2. Reference Solver External Timing & Memory Measurement
 
 ### Problem Solved
+
+1. **Internal Timing Unreliability:** Legacy solvers' internal timing may not be reliable
+2. **Missing Memory Data:** Older binaries lack internal memory tracking capability
+3. **Modern Solver Gaps:** Even modern solvers don't measure their own external overhead accurately
+
+### Solution
+
+All reference solvers now have external timing and memory measurement via system calls (`/usr/bin/time`), reported alongside internal timing where available.
+
+#### External Timing
+- **Method:** Wall-clock time measurement using Python's `time.time()` and `/usr/bin/time`
+- **Why Needed:** Captures true elapsed time including subprocess overhead and system scheduling delays
+- **Reported:** Both internal (solver's own measurement) and external (system measurement) for comparison
+
+#### Memory Measurement
+- **Method:** Parse `maximum resident set size` from `/usr/bin/time` output
+- **Platform Support:**
+  - **macOS:** Uses `time -l`, reads bytes directly
+  - **Linux:** Uses `time -v`, converts kilobytes to bytes
+- **Why Needed:** Internal memory tracking not available in legacy solvers
+
+### Legacy Reference Solver Support
 
 Older Solvitaire binaries lack the `--benchmark-json` flag. This prevented using them as reference solvers for hardware normalization factor (HNF) calibration in `compare_benchmarks.py`.
 
@@ -122,6 +144,16 @@ python3 scripts/compare_benchmarks.py \
     --type klondike --benchmark-seeds 1 50
 ```
 
+**Output example (with external timing & memory):**
+```
+--- ReSolvitaire Orchestrator (Hardware Normalization) ---
+Establishing hardware normalization factor using /path/to/old_solvitaire ...
+Hardware Normalization Factor (HNF) established: 1158000.00 us
+  Internal time: 1158000.00 us
+  External time: 1315996.17 us
+  Peak memory:   96.0 MB
+```
+
 **Single-solver mode:**
 ```bash
 python3 scripts/compare_benchmarks.py \
@@ -157,9 +189,27 @@ Both features have been tested and verified:
 
 ---
 
+## Understanding Timing Discrepancies
+
+When using legacy reference solvers, you may observe:
+- **External time > Internal time:** Subprocess overhead (shell startup, I/O buffering)
+- **Memory varies by seed:** Different game states consume different amounts of memory
+- **Peak memory > Median memory:** Aggregate stats report worst-case peak from all seeds
+
+### Example Analysis
+```
+Internal time: 1158000.00 us  # From solver's stopwatch
+External time: 1315996.17 us  # From /usr/bin/time
+Difference:      157996.17 us (overhead: ~13.6%)
+```
+
+---
+
 ## Integration Notes
 
 - All changes backward-compatible; existing scripts work unchanged
 - Memory data available in JSON reports for post-processing
 - Legacy mode automatically routes to seed-based execution path
 - Single-solver mode re-uses existing benchmark engine logic
+- External timing & memory measurement works for ALL reference solvers, not just legacy
+- Both timing metrics reported for transparency and offline analysis
