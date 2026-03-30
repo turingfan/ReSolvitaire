@@ -31,6 +31,7 @@
 #include <string> // Keep string for to_string and other string operations
 #include <memory> // Keep memory for unique_ptr
 #include <cmath> // Keep cmath for sqrt
+#include <sys/resource.h> // For getrusage() memory measurement
 
 #include "../game/sol_rules.h" // Keep this for sol_rules
 #include "../game/search-state/game_state.h" // Keep this for game_state
@@ -53,6 +54,20 @@ using namespace std;
 
 static char benchmark_buffer[65536];
 
+// Helper function to get peak memory usage in bytes
+static uint64_t get_peak_memory_bytes() {
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) == 0) {
+        // ru_maxrss is in bytes on macOS, kilobytes on Linux
+        #ifdef __APPLE__
+            return (uint64_t)usage.ru_maxrss;
+        #else
+            return (uint64_t)usage.ru_maxrss * 1024;
+        #endif
+    }
+    return 0;
+}
+
 void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms, bool force_lru) {
     rapidjson::FileWriteStream os(stdout, benchmark_buffer, sizeof(benchmark_buffer));
     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
@@ -64,6 +79,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
 
     vector<double> all_times;
     vector<double> all_nodes;
+    vector<uint64_t> all_memory;
 
     for (int seed = seeds.first; seed <= seeds.second; ++seed) {
         writer.Key(to_string(seed).c_str());
@@ -84,15 +100,18 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
             auto start = chrono::high_resolution_clock::now();
             solver::result res = sol.run(chrono::milliseconds(timeout_ms));
             auto end = chrono::high_resolution_clock::now();
+            uint64_t peak_memory = get_peak_memory_bytes();
 
             if (!warmup || i > 0) {
                 double duration = chrono::duration_cast<chrono::microseconds>(end - start).count();
                 all_times.push_back(duration);
                 all_nodes.push_back((double)res.states_searched);
+                all_memory.push_back(peak_memory);
 
                 writer.StartObject();
                 writer.Key("time_us"); writer.Double(duration);
                 writer.Key("nodes"); writer.Double((double)res.states_searched);
+                writer.Key("peak_memory_bytes"); writer.Uint64(peak_memory);
                 writer.EndObject();
             }
         }
@@ -123,6 +142,11 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         double sq_sum_nodes = inner_product(all_nodes.begin(), all_nodes.end(), all_nodes.begin(), 0.0);
         double stdev_nodes = sqrt(max(0.0, sq_sum_nodes / all_nodes.size() - mean_nodes * mean_nodes));
 
+        // Memory statistics
+        sort(all_memory.begin(), all_memory.end());
+        uint64_t max_memory = all_memory.back();
+        uint64_t median_memory = all_memory[all_memory.size() / 2];
+
         writer.Key("mean_time_us"); writer.Double(mean_time);
         writer.Key("median_time_us"); writer.Double(median_time);
         writer.Key("sd_time_us"); writer.Double(stdev);
@@ -132,6 +156,8 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         writer.Key("nodes_per_second"); writer.Double(total_nodes / (max(1.0, total_time) / 1000000.0));
         writer.Key("min_time_us"); writer.Double(all_times.front());
         writer.Key("max_time_us"); writer.Double(all_times.back());
+        writer.Key("max_memory_bytes"); writer.Uint64(max_memory);
+        writer.Key("median_memory_bytes"); writer.Uint64(median_memory);
     }
 
     writer.EndObject(); // End of aggregate_stats
@@ -241,6 +267,7 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
 
         vector<double> times;
         vector<double> nodes_list;
+        vector<uint64_t> memory_list;
 
         for (int i = 0; i < benchmark_iterations + (benchmark_warmup ? 1 : 0); ++i) {
             unique_ptr<game_state> gs;
@@ -257,10 +284,10 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
                 gs = unique_ptr<game_state>(new game_state(rules, deal_doc, str_opts));
             } catch (const exception& e) {
                 cerr << "Error evaluating instance " << full_path << ": " << e.what() << endl;
-                continue; 
+                continue;
             } catch (...) {
                 cerr << "Unknown error evaluating instance " << full_path << endl;
-                continue; 
+                continue;
             }
 
             std::unique_ptr<cache_interface> cache_ptr;
@@ -275,10 +302,12 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
             auto start = chrono::high_resolution_clock::now();
             solver::result res = sol.run(chrono::milliseconds(timeout_ms));
             auto end = chrono::high_resolution_clock::now();
+            uint64_t peak_memory = get_peak_memory_bytes();
 
             if (!benchmark_warmup || i > 0) {
                 times.push_back(chrono::duration_cast<chrono::microseconds>(end - start).count());
                 nodes_list.push_back((double)res.states_searched);
+                memory_list.push_back(peak_memory);
             }
         }
 
@@ -286,11 +315,14 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
 
         sort(times.begin(), times.end());
         sort(nodes_list.begin(), nodes_list.end());
+        sort(memory_list.begin(), memory_list.end());
 
         double median_time = times[times.size() / 2];
         double mean_time = accumulate(times.begin(), times.end(), 0.0) / times.size();
         double median_nodes = nodes_list[nodes_list.size() / 2];
         double mean_nodes = accumulate(nodes_list.begin(), nodes_list.end(), 0.0) / nodes_list.size();
+        uint64_t max_memory = memory_list.back();
+        uint64_t median_memory = memory_list[memory_list.size() / 2];
 
         writer.StartObject();
         writer.Key("instance"); writer.String(filename.c_str());
@@ -298,6 +330,8 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
         writer.Key("mean_time_us"); writer.Double(mean_time);
         writer.Key("median_nodes"); writer.Double(median_nodes);
         writer.Key("mean_nodes"); writer.Double(mean_nodes);
+        writer.Key("max_memory_bytes"); writer.Uint64(max_memory);
+        writer.Key("median_memory_bytes"); writer.Uint64(median_memory);
         writer.EndObject();
     };
 

@@ -7,6 +7,7 @@ import datetime
 import platform
 import os
 import sys
+import re
 
 import tempfile
 
@@ -57,26 +58,71 @@ def get_json_payload(exe_path, extra_args):
                 
             print(f"Failed to extract benchmark JSON from {exe_path}. Raw output snippet:\n{output[:500]}...")
             sys.exit(1)
-            
+
         except Exception as e:
             print(f"Exception during benchmark execution: {str(e)}")
             sys.exit(1)
 
-def measure_standard_candle(reference_exe, calibration_workload):
+def get_json_payload_legacy(exe_path, seed_start, seed_end, game_type="klondike"):
+    """Runs legacy solver (without --benchmark-json support) and extracts timing data."""
+    total_time_us = 0
+    seed_count = 0
+
+    for seed in range(seed_start, seed_end + 1):
+        cmd = [exe_path, "--type", game_type, "--random", str(seed)]
+        try:
+            process = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            output = process.stdout + process.stderr
+
+            # Parse "Time Taken (milliseconds): <N>" pattern
+            match = re.search(r'Time Taken \(milliseconds\):\s*([\d.]+)', output)
+            if match:
+                time_ms = float(match.group(1))
+                total_time_us += time_ms * 1000  # Convert to microseconds
+                seed_count += 1
+        except subprocess.TimeoutExpired:
+            print(f"Warning: Legacy solver timed out on seed {seed}")
+        except Exception as e:
+            print(f"Warning: Error processing seed {seed}: {str(e)}")
+
+    if seed_count == 0:
+        print(f"Error: Could not extract timing data from legacy solver {exe_path}")
+        sys.exit(1)
+
+    return total_time_us
+
+def measure_standard_candle(reference_exe, calibration_workload, legacy_reference=False):
     """Measures the Hardware Normalization Factor (HNF) by summing the median times of all instances in a fixed workload."""
     if not reference_exe:
         print("\033[93mWARNING: No --reference-exe provided. Hardware Normalization Scores will not be representative.\033[0m")
         return 1.0
-    
+
+    if legacy_reference:
+        # For legacy solvers, parse a simple seed range (e.g., "1,10" means seeds 1-10)
+        if "," in calibration_workload:
+            parts = calibration_workload.split(",")
+            if len(parts) == 2:
+                try:
+                    seed_start = int(parts[0].strip())
+                    seed_end = int(parts[1].strip())
+                    total_us = get_json_payload_legacy(reference_exe, seed_start, seed_end)
+                    return total_us
+                except ValueError:
+                    print(f"Error: Invalid seed range format. Use 'START,END' (e.g., '1,50')")
+                    sys.exit(1)
+        else:
+            print(f"Error: For legacy reference, calibration-workload must be seed range (e.g., '1,50')")
+            sys.exit(1)
+
     if not os.path.exists(calibration_workload):
         print(f"\033[91mError: Calibration workload not found: {calibration_workload}\033[0m")
         sys.exit(1)
 
-    # We run the calibration workload with multiple iterations for stability 
+    # We run the calibration workload with multiple iterations for stability
     # Use 3 iterations for the reference solver to minimize noise in the HNF baseline.
     args = ["--benchmark-json", calibration_workload, "--benchmark-iterations", "3"]
     payload = get_json_payload(reference_exe, args)
-    
+
     # The HNF should represent the 'Total Calibration Time' across all instances in the set.
     if isinstance(payload, list):
         # Sum the median times of each instance. Summing provides a much larger, more stable scalar baseline.
@@ -105,45 +151,100 @@ def calculate_median(data):
 
 def main():
     parser = argparse.ArgumentParser(description="ReSolvitaire Python Orchestrator: Hardware Normalization & Median Statistics")
-    parser.add_argument("--baseline-exe", required=True, help="Path to the baseline/master executable")
+    parser.add_argument("--baseline-exe", default=None, help="Path to the baseline/master executable (optional; if omitted, only current-exe is benchmarked)")
     parser.add_argument("--current-exe", required=True, help="Path to the current working executable to test")
     parser.add_argument("--reference-exe", default=None, help="Path to a stable, older reference solver for hardware normalization")
-    parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for system calibration")
+    parser.add_argument("--legacy-reference", action="store_true", help="Flag indicating the reference solver is a legacy binary without --benchmark-json support")
+    parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for system calibration (or seed range 'START,END' for legacy solvers)")
     parser.add_argument("--out-report", default="benchmark_report.json", help="Path to save the JSON diagnostic report")
     parser.add_argument("benchmark_args", nargs=argparse.REMAINDER, help="Arguments to pass through to the solvitaire benchmark engine")
-    
+
     args = parser.parse_args()
-    
-    if not os.path.isfile(args.baseline_exe):
+
+    if args.baseline_exe and not os.path.isfile(args.baseline_exe):
         print(f"Baseline executable not found: {args.baseline_exe}")
         sys.exit(1)
-        
+
     if not os.path.isfile(args.current_exe):
         print(f"Current executable not found: {args.current_exe}")
         sys.exit(1)
         
     print(f"--- ReSolvitaire Orchestrator (Hardware Normalization) ---")
     print(f"Establishing hardware normalization factor using {args.reference_exe or 'NONE'} ...")
-    hnf = measure_standard_candle(args.reference_exe, args.calibration_workload)
-    
+    hnf = measure_standard_candle(args.reference_exe, args.calibration_workload, args.legacy_reference)
+
     if args.reference_exe:
         print(f"Hardware Normalization Factor (HNF) established: {hnf:.2f} us\n")
     else:
         print(f"Normalization Factor (HNF) defaulted to 1.0 (No normalization active)\n")
-    
+
     forward_args = args.benchmark_args
     if forward_args and forward_args[0] == "--":
         forward_args = forward_args[1:]
-        
+
     if not forward_args:
         forward_args = ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1", "--benchmark-warmup", "1"]
-        
-    print(f"Running baseline benchmark: {args.baseline_exe} {' '.join(forward_args)}")
-    baseline_payload = get_json_payload(args.baseline_exe, forward_args)
+
+    # Single-solver mode: skip baseline if not provided
+    baseline_payload = None
+    if args.baseline_exe:
+        print(f"Running baseline benchmark: {args.baseline_exe} {' '.join(forward_args)}")
+        baseline_payload = get_json_payload(args.baseline_exe, forward_args)
+    else:
+        print(f"Baseline-exe not provided. Running in single-solver mode.\n")
     
     print(f"Running current benchmark: {args.current_exe} {' '.join(forward_args)}")
     current_payload = get_json_payload(args.current_exe, forward_args)
-    
+
+    # Single-solver mode: report only current performance
+    if baseline_payload is None:
+        print("\n================ SINGLE SOLVER BENCHMARK ================\n")
+        print(f"Workload: {' '.join(forward_args)}\n")
+
+        # Handle both formats
+        if isinstance(current_payload, list):
+            print(f"Total instances: {len(current_payload)}\n")
+            print(f"--- Sample Results ---")
+            for inst in current_payload[:5]:
+                time_mb = inst.get("median_memory_bytes", 0) / (1024 * 1024)
+                print(f"{inst['instance']:<30}: {inst['median_time_us']:>12.0f} us, {inst['median_nodes']:>12.0f} nodes, {time_mb:>8.1f} MB")
+        else:
+            stats = current_payload["aggregate_stats"]
+            mem_mb = stats.get("median_memory_bytes", 0) / (1024 * 1024)
+            print(f"Median Time:       {stats['median_time_us']:.2f} us")
+            print(f"Median Nodes:      {stats['median_nodes']:.0f}")
+            print(f"Median Memory:     {mem_mb:.1f} MB")
+            print(f"Nodes/Second:      {stats['nodes_per_second']:.0f}")
+
+        if args.reference_exe:
+            print(f"\n--- Hardware Normalized ---")
+            if isinstance(current_payload, list):
+                median_times = [inst["median_time_us"] for inst in current_payload]
+                total_time = sum(median_times)
+            else:
+                total_time = current_payload["aggregate_stats"]["median_time_us"]
+            normalized_score = total_time / hnf
+            print(f"Hardware Normalization Factor: {hnf:.2f} us")
+            print(f"Normalized Score:             {normalized_score:.4f}")
+
+        report = {
+            "metadata": {
+                "date": datetime.datetime.now().isoformat(),
+                "machine_id": platform.node(),
+                "git_hash": get_git_hash(),
+                "hardware_normalization_factor_us": hnf,
+                "mode": "single-solver"
+            },
+            "benchmark_workload": " ".join(forward_args),
+            "results": current_payload
+        }
+
+        with open(args.out_report, 'w') as f:
+            json.dump(report, f, indent=4)
+
+        print(f"\nReport written to {args.out_report}")
+        return
+
     # Check if we have the new array-based format (list of instances)
     if isinstance(baseline_payload, list) and isinstance(current_payload, list):
         # Result pairing logic
