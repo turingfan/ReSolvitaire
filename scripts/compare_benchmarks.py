@@ -13,6 +13,9 @@ import resource
 
 import tempfile
 
+# Global to store detailed timing from legacy solver
+legacy_timing_details = {}
+
 def get_json_payload(exe_path, extra_args):
     """Runs the benchmark and streams output directly to a temporary file, then parses it."""
     cmd = [exe_path] + extra_args
@@ -66,14 +69,14 @@ def get_json_payload(exe_path, extra_args):
             sys.exit(1)
 
 def run_with_timing_and_memory(cmd, timeout=120):
-    """Runs a command and returns (internal_time_ms, external_time_ms, peak_memory_bytes)."""
+    """Runs a command and returns (internal_time_ms, wall_time_ms, user_time_ms, sys_time_ms, peak_memory_bytes)."""
     start_time = time.time()
     try:
         process = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         end_time = time.time()
 
         output = process.stdout + process.stderr
-        external_time_ms = (end_time - start_time) * 1000  # Wall-clock time
+        wall_time_ms = (end_time - start_time) * 1000  # Wall-clock time
 
         # Parse internal timing if available: "Time Taken (milliseconds): <N>"
         internal_time_ms = None
@@ -81,15 +84,60 @@ def run_with_timing_and_memory(cmd, timeout=120):
         if match:
             internal_time_ms = float(match.group(1))
 
-        # Estimate peak memory using /usr/bin/time if available
-        peak_memory_bytes = estimate_process_memory(cmd, timeout)
+        # Get detailed timing and memory from /usr/bin/time
+        user_time_ms, sys_time_ms, peak_memory_bytes = get_detailed_timing_and_memory(cmd, timeout)
 
-        return internal_time_ms, external_time_ms, peak_memory_bytes
+        return internal_time_ms, wall_time_ms, user_time_ms, sys_time_ms, peak_memory_bytes
     except subprocess.TimeoutExpired:
-        return None, None, None
+        return None, None, None, None, None
     except Exception as e:
         print(f"Warning: Error running command: {str(e)}")
-        return None, None, None
+        return None, None, None, None, None
+
+def get_detailed_timing_and_memory(cmd, timeout=120):
+    """Uses /usr/bin/time to get user time, system time, and peak memory."""
+    try:
+        if sys.platform == "darwin":
+            # macOS: use 'time -l' to get detailed stats
+            time_cmd = ["/usr/bin/time", "-l"] + cmd
+            result = subprocess.run(time_cmd, capture_output=True, text=True, timeout=timeout)
+            stderr = result.stderr
+
+            # Parse: "X.XX real   Y.YY user   Z.ZZ sys"
+            time_match = re.search(r'([\d.]+)\s+real\s+([\d.]+)\s+user\s+([\d.]+)\s+sys', stderr)
+            user_time_ms = None
+            sys_time_ms = None
+            if time_match:
+                user_time_ms = float(time_match.group(2)) * 1000  # Convert to ms
+                sys_time_ms = float(time_match.group(3)) * 1000
+
+            # Parse memory: number followed by "maximum resident set size"
+            mem_match = re.search(r'(\d+)\s*maximum resident set size', stderr, re.MULTILINE)
+            peak_memory_bytes = int(mem_match.group(1)) if mem_match else None
+
+            return user_time_ms, sys_time_ms, peak_memory_bytes
+        else:
+            # Linux: use 'time -v' for verbose output
+            time_cmd = ["/usr/bin/time", "-v"] + cmd
+            result = subprocess.run(time_cmd, capture_output=True, text=True, timeout=timeout)
+            stderr = result.stderr
+
+            # Parse "User time (seconds): X.XX" and "System time (seconds): Y.YY"
+            user_match = re.search(r'User time \(seconds\): ([\d.]+)', stderr)
+            sys_match = re.search(r'System time \(seconds\): ([\d.]+)', stderr)
+
+            user_time_ms = float(user_match.group(1)) * 1000 if user_match else None
+            sys_time_ms = float(sys_match.group(1)) * 1000 if sys_match else None
+
+            # Parse "Maximum resident set size (kbytes): <KB>"
+            mem_match = re.search(r'Maximum resident set size \(kbytes\): (\d+)', stderr)
+            peak_memory_bytes = int(mem_match.group(1)) * 1024 if mem_match else None
+
+            return user_time_ms, sys_time_ms, peak_memory_bytes
+    except Exception as e:
+        pass  # Silently fail; detailed timing is optional
+
+    return None, None, None
 
 def estimate_process_memory(cmd, timeout=120):
     """Runs command with /usr/bin/time to estimate peak memory. Platform-specific."""
@@ -117,19 +165,25 @@ def estimate_process_memory(cmd, timeout=120):
     return None
 
 def get_json_payload_legacy(exe_path, seed_start, seed_end, game_type="klondike"):
-    """Runs legacy solver and extracts timing data with external wall-clock time and memory."""
+    """Runs legacy solver and extracts timing data with wall-clock, CPU, and memory metrics."""
     total_internal_time_us = 0
-    total_external_time_us = 0
+    total_wall_time_us = 0
+    total_user_time_us = 0
+    total_sys_time_us = 0
     max_memory_bytes = 0
     seed_count = 0
 
     for seed in range(seed_start, seed_end + 1):
         cmd = [exe_path, "--type", game_type, "--random", str(seed)]
-        internal_ms, external_ms, memory_bytes = run_with_timing_and_memory(cmd, timeout=120)
+        internal_ms, wall_ms, user_ms, sys_ms, memory_bytes = run_with_timing_and_memory(cmd, timeout=120)
 
         if internal_ms is not None:
             total_internal_time_us += internal_ms * 1000
-            total_external_time_us += external_ms * 1000
+            total_wall_time_us += wall_ms * 1000
+            if user_ms is not None:
+                total_user_time_us += user_ms * 1000
+            if sys_ms is not None:
+                total_sys_time_us += sys_ms * 1000
             if memory_bytes:
                 max_memory_bytes = max(max_memory_bytes, memory_bytes)
             seed_count += 1
@@ -140,7 +194,18 @@ def get_json_payload_legacy(exe_path, seed_start, seed_end, game_type="klondike"
         print(f"Error: Could not extract timing data from legacy solver {exe_path}")
         sys.exit(1)
 
-    # Return internal time as primary (for HNF), but could use external if needed
+    # Store timing details for reporting
+    global legacy_timing_details
+    legacy_timing_details = {
+        "internal": total_internal_time_us,
+        "wall": total_wall_time_us,
+        "user": total_user_time_us,
+        "sys": total_sys_time_us,
+        "cpu": total_user_time_us + total_sys_time_us,  # CPU time = user + sys
+        "memory": max_memory_bytes
+    }
+
+    # Return internal time as primary (for HNF)
     return total_internal_time_us
 
 def measure_standard_candle(reference_exe, calibration_workload, legacy_reference=False):
@@ -158,26 +223,17 @@ def measure_standard_candle(reference_exe, calibration_workload, legacy_referenc
                     seed_start = int(parts[0].strip())
                     seed_end = int(parts[1].strip())
 
-                    # Capture internal time, external time, and memory for all seeds
-                    total_internal_us = 0
-                    total_external_us = 0
-                    max_memory = 0
-
-                    for seed in range(seed_start, seed_end + 1):
-                        cmd = [reference_exe, "--type", "klondike", "--random", str(seed)]
-                        int_ms, ext_ms, mem = run_with_timing_and_memory(cmd)
-                        if int_ms is not None:
-                            total_internal_us += int_ms * 1000
-                        if ext_ms is not None:
-                            total_external_us += ext_ms * 1000
-                        if mem:
-                            max_memory = max(max_memory, mem)
+                    # Call the legacy function which populates legacy_timing_details
+                    total_internal_us = get_json_payload_legacy(reference_exe, seed_start, seed_end)
 
                     return {
                         "hnf": total_internal_us,
-                        "internal_time": total_internal_us if total_internal_us > 0 else None,
-                        "external_time": total_external_us if total_external_us > 0 else None,
-                        "memory": max_memory if max_memory > 0 else None
+                        "internal_time": legacy_timing_details.get("internal"),
+                        "wall_time": legacy_timing_details.get("wall"),
+                        "user_time": legacy_timing_details.get("user"),
+                        "sys_time": legacy_timing_details.get("sys"),
+                        "cpu_time": legacy_timing_details.get("cpu"),
+                        "memory": legacy_timing_details.get("memory")
                     }
                 except ValueError:
                     print(f"Error: Invalid seed range format. Use 'START,END' (e.g., '1,50')")
@@ -261,10 +317,18 @@ def main():
 
     if args.reference_exe:
         print(f"Hardware Normalization Factor (HNF) established: {hnf:.2f} us")
+        if hnf_data.get("cpu_time"):
+            # Legacy solver: show CPU time (user+sys) as headline, then details
+            cpu_time = hnf_data['cpu_time']
+            print(f"  CPU time (user+sys): {cpu_time:.2f} us")
+            if hnf_data.get("user_time"):
+                print(f"    User time: {hnf_data['user_time']:.2f} us")
+            if hnf_data.get("sys_time"):
+                print(f"    Sys time:  {hnf_data['sys_time']:.2f} us")
+        if hnf_data.get("wall_time"):
+            print(f"  Wall time: {hnf_data['wall_time']:.2f} us")
         if hnf_data.get("internal_time"):
             print(f"  Internal time: {hnf_data['internal_time']:.2f} us")
-        if hnf_data.get("external_time"):
-            print(f"  External time: {hnf_data['external_time']:.2f} us")
         if hnf_data.get("memory"):
             mem_mb = hnf_data['memory'] / (1024 * 1024)
             print(f"  Peak memory:   {mem_mb:.1f} MB")

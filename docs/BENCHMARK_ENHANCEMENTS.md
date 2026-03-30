@@ -205,6 +205,23 @@ Difference:      157996.17 us (overhead: ~13.6%)
 
 ---
 
+## Known Issues & Limitations
+
+### Linux Testing Gap
+**Status:** Code path implemented but untested on Linux systems
+- `/usr/bin/time -v` parsing implemented for Linux
+- Memory measurement converts KB to bytes (vs macOS bytes)
+- User/system time extraction from verbose output
+- **Action needed:** Test on Linux before production use
+
+### Virtual vs Resident Memory
+The internal benchmark memory metrics (`getrusage().ru_maxrss`) report virtual memory, not resident set size:
+- **Modern solver:** Internal metric ~3.2 GB (virtual), system-measured ~1.1 GB (resident)
+- **Legacy solver:** Only system-measured memory available (~96 MB resident)
+- **Recommendation:** Prefer system-measured memory from `/usr/bin/time` for accuracy
+
+---
+
 ## Integration Notes
 
 - All changes backward-compatible; existing scripts work unchanged
@@ -212,4 +229,5 @@ Difference:      157996.17 us (overhead: ~13.6%)
 - Legacy mode automatically routes to seed-based execution path
 - Single-solver mode re-uses existing benchmark engine logic
 - External timing & memory measurement works for ALL reference solvers, not just legacy
-- Both timing metrics reported for transparency and offline analysis
+- CPU headline uses system+user time for accuracy
+- Detailed timing breakdown (wall, user, sys) available for analysis
