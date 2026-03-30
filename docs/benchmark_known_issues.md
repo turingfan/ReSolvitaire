@@ -52,3 +52,43 @@ Without consolidation, each new feature or change requires:
 4. Remember to port between branches
 
 This is error-prone and slows development. The Python-only approach eliminates this burden.
+
+---
+
+## CRITICAL Issue: mac-dev-benchmark-enhancements Branch Contamination
+
+### Problem
+**mac-dev-benchmark-enhancements MUST remain a clean benchmarking-only branch.** It has repeatedly been contaminated by merges from `refactor-caching` branch (specifically commits that pull in flat_cache implementations and other M0-M8 milestone work).
+
+This contamination:
+- Violates the architectural separation of concerns
+- Introduces flat_cache dependencies that mac-dev-benchmark-enhancements should NOT have
+- Makes it impossible to use this branch for focused benchmarking work without the full refactor-caching infrastructure
+- Requires manual cleanup and forced pushes
+
+### Why It Matters
+- **mac-dev**: Production branch that can include refactor-caching and other major features
+- **mac-dev-benchmark-enhancements**: Research/benchmarking-only branch that should be INDEPENDENT of refactor-caching
+- **implement-benchmark-features**: Feature development branch, safe to merge from
+
+Merging refactor-caching into mac-dev-benchmark-enhancements is **architectural contamination** and must never happen.
+
+### Prevention (Mandatory)
+When working with these branches:
+1. **NEVER** merge refactor-caching into mac-dev-benchmark-enhancements
+2. **ONLY** merge from mac-dev or implement-benchmark-features if absolutely needed
+3. If contamination occurs (detected by presence of flat_cache includes or M0-M8 milestone commits), reset immediately and document
+
+### How to Detect
+Check for these contamination markers:
+```bash
+git log --oneline | grep "Merge refactor-caching"
+git log --oneline | grep "flat cache"
+git log --oneline | grep "Milestone"
+grep -r "flat_cache.h" src/
+```
+
+If any of these appear in mac-dev-benchmark-enhancements history, the branch is contaminated and must be cleaned.
+
+### Current Status (2026-03-30)
+mac-dev-benchmark-enhancements was cleaned of refactor-caching contamination and force-pushed to remote with clean state (commit 8d1cb06).
