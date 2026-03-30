@@ -23,6 +23,7 @@
 
 #include <climits>
 #include <iostream>
+#include <fstream>
 #include <numeric>
 #include <sys/resource.h>
 #include <cmath>
@@ -30,13 +31,18 @@
 #include "benchmark.h"
 #include "../game/search-state/game_state.h"
 #include "../solver/solver.h"
+#include "../input-output/input/json-parsing/rules_parser.h"
+#include "../input-output/input/sol_preset_types.h"
 
 #include "../../../lib/rapidjson/document.h"
 #include "../../../lib/rapidjson/writer.h"
 #include "../../../lib/rapidjson/stringbuffer.h"
+#include "../../../lib/rapidjson/filewritestream.h"
 
 using namespace std;
 typedef chrono::microseconds microsec;
+
+static char benchmark_buffer[65536];
 
 uint64_t get_resident_memory_bytes() {
     struct rusage usage;
@@ -144,14 +150,160 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
 }
 
 void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int iterations, bool warmup, uint64_t timeout_ms) {
-    // Suppress unused parameter warnings
-    (void)json_path;
-    (void)cache_capacity;
-    (void)iterations;
-    (void)warmup;
-    (void)timeout_ms;
+    (void)timeout_ms; // Not used in minimal version
 
-    // Placeholder for JSON instance benchmarking
-    // This would load instances from a JSON file and benchmark each one
-    cerr << "JSON-based benchmarking not yet implemented in minimal version" << endl;
+    ifstream f(json_path);
+    if (!f) {
+        cerr << "Error: Could not open benchmark JSON: " << json_path << endl;
+        return;
+    }
+
+    string content((istreambuf_iterator<char>(f)), (istreambuf_iterator<char>()));
+    rapidjson::Document doc;
+    doc.Parse(content.c_str());
+
+    if (doc.HasParseError()) {
+        cerr << "Error: Failed to parse benchmark JSON." << endl;
+        return;
+    }
+
+    rapidjson::FileWriteStream os(stdout, benchmark_buffer, sizeof(benchmark_buffer));
+    rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
+
+    writer.StartArray();
+
+    auto process_instance = [&](const rapidjson::Value& item) {
+        if (!item.IsObject()) return;
+
+        string instance_path = "";
+        if (item.HasMember("instance") && item["instance"].IsString()) {
+            instance_path = item["instance"].GetString();
+        } else if (item.HasMember("instance_name") && item["instance_name"].IsString()) {
+            instance_path = item["instance_name"].GetString();
+        } else {
+            return;
+        }
+
+        // Dynamic game type from filepath
+        string game_type = "";
+        size_t last_slash = instance_path.find_last_of("/");
+        string filename = (last_slash == string::npos) ? instance_path : instance_path.substr(last_slash + 1);
+        size_t first_underscore = filename.find_first_of("_");
+        if (first_underscore != string::npos) {
+            game_type = filename.substr(0, first_underscore);
+        }
+
+        // Rules handling
+        sol_rules rules;
+        bool rules_loaded = false;
+        if (item.HasMember("custom_rules") && item["custom_rules"].IsString()) {
+            string rules_path = item["custom_rules"].GetString();
+            if (ifstream(rules_path)) {
+                rules = rules_parser::from_file(rules_path);
+                rules_loaded = true;
+            } else if (ifstream("tests/" + rules_path)) {
+                rules = rules_parser::from_file("tests/" + rules_path);
+                rules_loaded = true;
+            }
+        }
+
+        if (!rules_loaded && !game_type.empty()) {
+            if (sol_preset_types::is_valid_preset(game_type)) {
+                rules = rules_parser::from_preset(game_type);
+                rules_loaded = true;
+            }
+        }
+
+        if (!rules_loaded) return;
+
+        // Deal loading resolution
+        string full_path = "";
+        vector<string> search_paths = {
+            instance_path,
+            "tests/" + instance_path,
+            "tests/resources/" + instance_path
+        };
+
+        for (const string& p : search_paths) {
+            if (ifstream(p)) {
+                full_path = p;
+                break;
+            }
+        }
+
+        if (full_path.empty()) return;
+
+        vector<double> times;
+        vector<double> nodes_list;
+        vector<uint64_t> memory_list;
+
+        for (int i = 0; i < iterations + (warmup ? 1 : 0); ++i) {
+            unique_ptr<game_state> gs;
+            try {
+                ifstream deal_file(full_path);
+                if (!deal_file) throw runtime_error("File not found");
+                string deal_content((istreambuf_iterator<char>(deal_file)), (istreambuf_iterator<char>()));
+                rapidjson::Document deal_doc;
+                deal_doc.Parse(deal_content.c_str());
+                if (deal_doc.HasParseError()) {
+                    throw runtime_error("JSON parse error");
+                }
+                gs = unique_ptr<game_state>(new game_state(rules, deal_doc, game_state::streamliner_options::NONE));
+            } catch (const exception& e) {
+                cerr << "Error evaluating instance " << full_path << ": " << e.what() << endl;
+                return;
+            } catch (...) {
+                cerr << "Unknown error evaluating instance " << full_path << endl;
+                return;
+            }
+
+            solver sol(*gs, cache_capacity);
+            auto start = chrono::high_resolution_clock::now();
+            solver::result res = sol.run();
+            auto end = chrono::high_resolution_clock::now();
+            uint64_t resident_memory = get_resident_memory_bytes();
+
+            if (!warmup || i > 0) {
+                times.push_back(chrono::duration_cast<chrono::microseconds>(end - start).count());
+                nodes_list.push_back((double)res.states_searched);
+                memory_list.push_back(resident_memory);
+            }
+        }
+
+        if (times.empty()) return;
+
+        sort(times.begin(), times.end());
+        sort(nodes_list.begin(), nodes_list.end());
+        sort(memory_list.begin(), memory_list.end());
+
+        double median_time = times[times.size() / 2];
+        double mean_time = accumulate(times.begin(), times.end(), 0.0) / times.size();
+        double median_nodes = nodes_list[nodes_list.size() / 2];
+        double mean_nodes = accumulate(nodes_list.begin(), nodes_list.end(), 0.0) / nodes_list.size();
+        uint64_t max_memory = memory_list.back();
+        uint64_t median_memory = memory_list[memory_list.size() / 2];
+
+        writer.StartObject();
+        writer.Key("instance"); writer.String(filename.c_str());
+        writer.Key("median_time_us"); writer.Double(median_time);
+        writer.Key("mean_time_us"); writer.Double(mean_time);
+        writer.Key("median_nodes"); writer.Double(median_nodes);
+        writer.Key("mean_nodes"); writer.Double(mean_nodes);
+        writer.Key("max_resident_memory_bytes"); writer.Uint64(max_memory);
+        writer.Key("median_resident_memory_bytes"); writer.Uint64(median_memory);
+        writer.EndObject();
+    };
+
+    if (doc.IsArray()) {
+        for (auto& item : doc.GetArray()) {
+            process_instance(item);
+        }
+    } else if (doc.IsObject()) {
+        for (auto& m : doc.GetObject()) {
+            process_instance(m.value);
+        }
+    }
+
+    writer.EndArray();
+    os.Flush();
 }
