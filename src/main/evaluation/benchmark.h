@@ -31,7 +31,8 @@
 
 class benchmark {
 public:
-    static void run(const sol_rules &rules, uint64_t, game_state::streamliner_options);
+    static void run(const sol_rules &rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, std::pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms = 604800000, bool force_lru = false);
+    static void run_json(const std::string& json_path, uint64_t cache_capacity, int iterations, bool warmup, uint64_t timeout_ms = 604800000);
 };
 
 
