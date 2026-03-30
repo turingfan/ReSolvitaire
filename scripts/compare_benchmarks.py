@@ -19,22 +19,22 @@ legacy_timing_details = {}
 def get_json_payload(exe_path, extra_args):
     """Runs the benchmark and streams output directly to a temporary file, then parses it."""
     cmd = [exe_path] + extra_args
-    
+
     with tempfile.NamedTemporaryFile(mode='w+', delete=True) as tmp:
         try:
             # Stream stdout to the temporary file
             process = subprocess.Popen(cmd, stdout=tmp, stderr=subprocess.PIPE, text=True)
             stdout, stderr = process.communicate()
-            
+
             if process.returncode != 0:
                 print(f"Error running benchmark: {' '.join(cmd)}")
                 print(f"Stderr: {stderr}")
                 sys.exit(1)
-            
+
             # Seek to search for JSON in the file
             tmp.seek(0)
             output = tmp.read()
-            
+
             # Robust JSON extraction: keep the longest valid JSON block found
             best_json = None
             longest_len = -1
@@ -47,7 +47,7 @@ def get_json_payload(exe_path, extra_args):
                            stack += 1
                         elif (char == '{' and output[j] == '}') or (char == '[' and output[j] == ']'):
                            stack -= 1
-                        
+
                         if stack == 0:
                             candidate = output[i:j+1]
                             try:
@@ -57,10 +57,40 @@ def get_json_payload(exe_path, extra_args):
                                     longest_len = len(candidate)
                             except json.JSONDecodeError:
                                 pass
-            
+
             if best_json is not None:
+                # Try to measure system memory from a single representative seed
+                # This avoids inflating memory usage from running many instances
+                single_seed_cmd = None
+
+                if "--benchmark-seeds" in cmd:
+                    # For seed-based runs, measure just the first seed
+                    idx = cmd.index("--benchmark-seeds")
+                    first_seed = cmd[idx + 1]
+                    single_seed_cmd = [exe_path, "--type", "klondike", "--random", first_seed]
+                else:
+                    # For JSON-based runs, measure a single seed as representative
+                    # Extract game type if available
+                    game_type = "klondike"
+                    if "--type" in cmd:
+                        idx = cmd.index("--type")
+                        if idx + 1 < len(cmd):
+                            game_type = cmd[idx + 1]
+                    single_seed_cmd = [exe_path, "--type", game_type, "--random", "1"]
+
+                system_memory = None
+                if single_seed_cmd:
+                    _, _, system_memory = get_detailed_timing_and_memory(single_seed_cmd)
+
+                if system_memory:
+                    if isinstance(best_json, list):
+                        for item in best_json:
+                            item["system_memory_bytes"] = system_memory
+                    elif isinstance(best_json, dict) and "aggregate_stats" in best_json:
+                        best_json["aggregate_stats"]["system_memory_bytes"] = system_memory
+
                 return best_json
-                
+
             print(f"Failed to extract benchmark JSON from {exe_path}. Raw output snippet:\n{output[:500]}...")
             sys.exit(1)
 
@@ -259,18 +289,23 @@ def measure_standard_candle(reference_exe, calibration_workload, legacy_referenc
         # Fallback for old single-object aggregate format
         total_us = payload["aggregate_stats"]["median_time_us"]
 
-    # For modern solvers, also capture memory from the benchmark output if available
-    memory_bytes = None
+    # For modern solvers, capture all three memory metrics if available
+    solver_memory = None  # From getrusage (possibly virtual)
+    system_memory = None  # From /usr/bin/time (actual resident)
+
     if isinstance(payload, list) and len(payload) > 0:
-        memory_bytes = payload[0].get("median_memory_bytes")
+        solver_memory = payload[0].get("median_memory_bytes")
+        system_memory = payload[0].get("system_memory_bytes")
     elif not isinstance(payload, list):
-        memory_bytes = payload.get("aggregate_stats", {}).get("median_memory_bytes")
+        agg = payload.get("aggregate_stats", {})
+        solver_memory = agg.get("median_memory_bytes")
+        system_memory = agg.get("system_memory_bytes")
 
     return {
         "hnf": total_us,
         "internal_time": total_us,
-        "external_time": None,
-        "memory": memory_bytes
+        "solver_memory": solver_memory,  # From getrusage
+        "system_memory": system_memory   # From /usr/bin/time
     }
 
 def get_git_hash():
@@ -329,9 +364,21 @@ def main():
             print(f"  Wall time: {hnf_data['wall_time']:.2f} us")
         if hnf_data.get("internal_time"):
             print(f"  Internal time: {hnf_data['internal_time']:.2f} us")
+
+        # Report all memory metrics
         if hnf_data.get("memory"):
+            # Legacy solver: only system-measured memory
             mem_mb = hnf_data['memory'] / (1024 * 1024)
-            print(f"  Peak memory:   {mem_mb:.1f} MB")
+            print(f"  Peak memory (system):   {mem_mb:.1f} MB")
+        elif hnf_data.get("solver_memory") or hnf_data.get("system_memory"):
+            # Modern solver: all three metrics
+            if hnf_data.get("solver_memory"):
+                solver_mb = hnf_data['solver_memory'] / (1024 * 1024)
+                print(f"  Memory (solver-reported): {solver_mb:.1f} MB")
+            if hnf_data.get("system_memory"):
+                system_mb = hnf_data['system_memory'] / (1024 * 1024)
+                print(f"  Memory (system-measured):  {system_mb:.1f} MB")
+
         print()
     else:
         print(f"Normalization Factor (HNF) defaulted to 1.0 (No normalization active)\n")
