@@ -330,6 +330,17 @@ def calculate_median(data):
         return (sorted_data[n // 2 - 1] + sorted_data[n // 2]) / 2.0
 
 def main():
+    # Parse arguments manually to handle -- properly with flags like --force-lru
+    # Split sys.argv at -- to separate orchestrator args from benchmark args
+    try:
+        dash_dash_idx = sys.argv.index("--")
+        orch_argv = sys.argv[1:dash_dash_idx]
+        benchmark_argv = sys.argv[dash_dash_idx+1:]
+    except ValueError:
+        # No -- separator, treat all as orchestrator args
+        orch_argv = sys.argv[1:]
+        benchmark_argv = []
+
     parser = argparse.ArgumentParser(description="ReSolvitaire Python Orchestrator: Hardware Normalization & Median Statistics")
     parser.add_argument("--baseline-exe", default=None, help="Path to the baseline/master executable (optional; if omitted, only current-exe is benchmarked)")
     parser.add_argument("--current-exe", required=True, help="Path to the current working executable to test")
@@ -337,11 +348,36 @@ def main():
     parser.add_argument("--legacy-reference", action="store_true", help="Flag indicating the reference solver is a legacy binary without --benchmark-json support")
     parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for system calibration (or seed range 'START,END' for legacy solvers)")
     parser.add_argument("--out-report", default="benchmark_report.json", help="Path to save the JSON diagnostic report")
-    parser.add_argument("--baseline-args", default=None, help="Benchmark arguments for baseline solver only (space-separated, overrides general args)")
-    parser.add_argument("--current-args", default=None, help="Benchmark arguments for current solver only (space-separated, overrides general args)")
-    parser.add_argument("benchmark_args", nargs=argparse.REMAINDER, help="Arguments to pass through to the solvitaire benchmark engine (used if --baseline-args and --current-args not provided)")
+    parser.add_argument("--baseline-args", nargs=argparse.REMAINDER, help="Benchmark arguments for baseline solver only (can include flags like --force-lru)")
+    parser.add_argument("--current-args", nargs=argparse.REMAINDER, help="Benchmark arguments for current solver only (can include flags like --force-lru)")
 
-    args = parser.parse_args()
+    # Parse only the orchestrator arguments before --
+    args = parser.parse_args(orch_argv)
+
+    # Handle baseline-args and current-args manually
+    # We need to extract them from orch_argv and consume everything until the next known orchestrator flag
+    known_orchestrator_flags = {
+        "--baseline-exe", "--current-exe", "--reference-exe", "--legacy-reference",
+        "--calibration-workload", "--out-report", "--baseline-args", "--current-args"
+    }
+    baseline_args_raw = []
+    current_args_raw = []
+    i = 0
+    while i < len(orch_argv):
+        if orch_argv[i] == "--baseline-args":
+            # Consume all following args until next known orchestrator flag
+            i += 1
+            while i < len(orch_argv) and orch_argv[i] not in known_orchestrator_flags:
+                baseline_args_raw.append(orch_argv[i])
+                i += 1
+        elif orch_argv[i] == "--current-args":
+            # Consume all following args until next known orchestrator flag
+            i += 1
+            while i < len(orch_argv) and orch_argv[i] not in known_orchestrator_flags:
+                current_args_raw.append(orch_argv[i])
+                i += 1
+        else:
+            i += 1
 
     if args.baseline_exe and not os.path.isfile(args.baseline_exe):
         print(f"Baseline executable not found: {args.baseline_exe}")
@@ -392,26 +428,15 @@ def main():
     else:
         print(f"Normalization Factor (HNF) defaulted to 1.0 (No normalization active)\n")
 
-    # Parse arguments: support both unified args and separate baseline/current args
-    forward_args = args.benchmark_args
-    if forward_args and forward_args[0] == "--":
-        forward_args = forward_args[1:]
-
+    # Use benchmark_argv (args after --) as the general args
+    forward_args = benchmark_argv if benchmark_argv else []
     if not forward_args:
         forward_args = ["--type", "klondike", "--benchmark-seeds", "1", "50", "--benchmark-iterations", "1", "--benchmark-warmup", "1"]
 
     # Handle separate baseline and current arguments
-    # Strategy: if --baseline-args or --current-args provided, prepend them to general args
-    # This allows mixing specific flags with common benchmark parameters
-    if args.baseline_args:
-        baseline_args = args.baseline_args.split() + forward_args
-    else:
-        baseline_args = forward_args
-
-    if args.current_args:
-        current_args = args.current_args.split() + forward_args
-    else:
-        current_args = forward_args
+    # Use the manually parsed args from orchestrator argv
+    baseline_args = baseline_args_raw + forward_args
+    current_args = current_args_raw + forward_args
 
     # Single-solver mode: skip baseline if not provided
     baseline_payload = None
