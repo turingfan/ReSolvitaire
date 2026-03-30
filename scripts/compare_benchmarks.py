@@ -369,22 +369,22 @@ def main():
         if hnf_data.get("internal_time"):
             print(f"  Internal time: {hnf_data['internal_time']:.2f} us")
 
-        # Report all memory metrics
+        # Report all memory metrics, with system-resident as primary
         if hnf_data.get("memory"):
             # Legacy solver: only system-measured memory
             mem_mb = hnf_data['memory'] / (1024 * 1024)
-            print(f"  Peak memory (system):   {mem_mb:.1f} MB")
+            print(f"  Peak memory (system resident): {mem_mb:.1f} MB")
         else:
-            # Modern solver: report all three metrics if available
-            if hnf_data.get("virtual_memory"):
-                virtual_mb = hnf_data['virtual_memory'] / (1024 * 1024)
-                print(f"  Memory (getrusage virtual):  {virtual_mb:.1f} MB")
-            if hnf_data.get("resident_memory"):
-                resident_mb = hnf_data['resident_memory'] / (1024 * 1024)
-                print(f"  Memory (solver resident):    {resident_mb:.1f} MB")
+            # Modern solver: system-resident is primary, others for reference
             if hnf_data.get("system_memory"):
                 system_mb = hnf_data['system_memory'] / (1024 * 1024)
-                print(f"  Memory (system resident):    {system_mb:.1f} MB")
+                print(f"  Peak memory (system resident): {system_mb:.1f} MB")
+            if hnf_data.get("resident_memory"):
+                resident_mb = hnf_data['resident_memory'] / (1024 * 1024)
+                print(f"    (getrusage resident):       {resident_mb:.1f} MB")
+            if hnf_data.get("virtual_memory"):
+                virtual_mb = hnf_data['virtual_memory'] / (1024 * 1024)
+                print(f"    (getrusage virtual):        {virtual_mb:.1f} MB")
 
         print()
     else:
@@ -418,14 +418,21 @@ def main():
             print(f"Total instances: {len(current_payload)}\n")
             print(f"--- Sample Results ---")
             for inst in current_payload[:5]:
-                time_mb = inst.get("median_memory_bytes", 0) / (1024 * 1024)
+                # Use system memory if available, else fall back to median resident
+                mem_bytes = inst.get("system_memory_bytes") or inst.get("median_resident_memory_bytes", 0)
+                time_mb = mem_bytes / (1024 * 1024)
                 print(f"{inst['instance']:<30}: {inst['median_time_us']:>12.0f} us, {inst['median_nodes']:>12.0f} nodes, {time_mb:>8.1f} MB")
         else:
             stats = current_payload["aggregate_stats"]
-            mem_mb = stats.get("median_memory_bytes", 0) / (1024 * 1024)
+            # System memory as primary metric, with max resident
+            mem_bytes = stats.get("system_memory_bytes") or stats.get("median_resident_memory_bytes", 0)
+            mem_mb = mem_bytes / (1024 * 1024)
             print(f"Median Time:       {stats['median_time_us']:.2f} us")
             print(f"Median Nodes:      {stats['median_nodes']:.0f}")
-            print(f"Median Memory:     {mem_mb:.1f} MB")
+            print(f"Peak Memory (sys): {mem_mb:.1f} MB")
+            if stats.get("max_resident_memory_bytes"):
+                max_mb = stats["max_resident_memory_bytes"] / (1024 * 1024)
+                print(f"Max Resident:      {max_mb:.1f} MB")
             print(f"Nodes/Second:      {stats['nodes_per_second']:.0f}")
 
         if args.reference_exe:
@@ -547,12 +554,16 @@ def main():
                 "baseline": {
                     "executable": args.baseline_exe,
                     "stats": baseline_stats,
-                    "hardware_normalized_score": baseline_normalized_score
+                    "hardware_normalized_score": baseline_normalized_score,
+                    "system_memory_bytes": baseline_stats.get("system_memory_bytes"),
+                    "max_resident_memory_bytes": baseline_stats.get("max_resident_memory_bytes")
                 },
                 "current": {
                     "executable": args.current_exe,
                     "stats": current_stats,
-                    "hardware_normalized_score": normalized_sys_score
+                    "hardware_normalized_score": normalized_sys_score,
+                    "system_memory_bytes": current_stats.get("system_memory_bytes"),
+                    "max_resident_memory_bytes": current_stats.get("max_resident_memory_bytes")
                 },
                 "comparison": {
                     "median_speedup_ratio": speedup_ratio,
@@ -574,16 +585,37 @@ def main():
         print(f"Baseline NPS: {baseline_stats['nodes_per_second']:.2f} nodes/sec")
         print(f"Current NPS:  {current_stats['nodes_per_second']:.2f} nodes/sec\n")
         
+        print(f"--- Memory Usage ---")
+        # System-resident memory as primary (from /usr/bin/time)
+        baseline_sys_mem = baseline_stats.get("system_memory_bytes")
+        current_sys_mem = current_stats.get("system_memory_bytes")
+        if baseline_sys_mem:
+            baseline_mem_mb = baseline_sys_mem / (1024 * 1024)
+            print(f"Baseline: {baseline_mem_mb:.1f} MB (system resident)")
+        baseline_max_mem = baseline_stats.get("max_resident_memory_bytes")
+        if baseline_max_mem:
+            baseline_max_mb = baseline_max_mem / (1024 * 1024)
+            print(f"          {baseline_max_mb:.1f} MB (max resident)")
+
+        if current_sys_mem:
+            current_mem_mb = current_sys_mem / (1024 * 1024)
+            print(f"Current:  {current_mem_mb:.1f} MB (system resident)")
+        current_max_mem = current_stats.get("max_resident_memory_bytes")
+        if current_max_mem:
+            current_max_mb = current_max_mem / (1024 * 1024)
+            print(f"          {current_max_mb:.1f} MB (max resident)")
+        print()
+
         print(f"--- Hardware Normalized ---")
         print(f"Reference Solver HNF:        {hnf:.2f} us")
         print(f"Baseline Normalized Score:   {baseline_normalized_score:.4f}")
         print(f"Current Normalized Score:    {normalized_sys_score:.4f}\n")
-        
+
         print(f"--- Comparison (Median-Based) ---")
         color = "\033[91m" if speedup_ratio > 1.05 else ("\033[92m" if speedup_ratio < 0.95 else "")
         reset = "\033[0m"
         print(f"Time Ratio (Current/Baseline): {color}{speedup_ratio:.4f}x{reset} (Values > 1.0 indicate regression)")
-        
+
         node_ratio = current_stats["median_nodes"] / baseline_stats["median_nodes"] if baseline_stats["median_nodes"] > 0 else 1.0
         n_color = "\033[92m" if node_ratio < 0.99 else ("\033[91m" if node_ratio > 1.01 else "")
         print(f"Node Ratio (Current/Baseline): {n_color}{node_ratio:.4f}x{reset}")
