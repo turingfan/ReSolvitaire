@@ -726,18 +726,18 @@ def main():
             }
         }
         print(f"--- Timing (us) ---")
-        print(f"Baseline Median: {baseline_stats['median_time_us']:.2f}, Geo-Mean: {baseline_stats.get('geometric_mean_time_us', 0.0):.2f}")
-        print(f"Current Median:  {current_stats['median_time_us']:.2f}, Geo-Mean: {current_stats.get('geometric_mean_time_us', 0.0):.2f}")
+        print(f"Baseline Mean:   {baseline_stats.get('mean_time_us', 0.0):.2f}, Median: {baseline_stats['median_time_us']:.2f}, Geo-Mean: {baseline_stats.get('geometric_mean_time_us', 0.0):.2f}")
+        print(f"Current Mean:    {current_stats.get('mean_time_us', 0.0):.2f}, Median: {current_stats['median_time_us']:.2f}, Geo-Mean: {current_stats.get('geometric_mean_time_us', 0.0):.2f}")
         print(f"Baseline PAR2:   {baseline_stats.get('par2_score_us', 0.0):.2f}")
         print(f"Current PAR2:    {current_stats.get('par2_score_us', 0.0):.2f}\n")
 
         print(f"--- Nodes ---")
-        print(f"Baseline Median: {baseline_stats['median_nodes']:.2f}, Geo-Mean: {baseline_stats.get('geometric_mean_nodes', 0.0):.2f}")
-        print(f"Current Median:  {current_stats['median_nodes']:.2f}, Geo-Mean: {current_stats.get('geometric_mean_nodes', 0.0):.2f}\n")
-        
+        print(f"Baseline Mean:   {baseline_stats.get('mean_nodes', 0.0):.2f}, Median: {baseline_stats['median_nodes']:.2f}, Geo-Mean: {baseline_stats.get('geometric_mean_nodes', 0.0):.2f}")
+        print(f"Current Mean:    {current_stats.get('mean_nodes', 0.0):.2f}, Median: {current_stats['median_nodes']:.2f}, Geo-Mean: {current_stats.get('geometric_mean_nodes', 0.0):.2f}\n")
+
         print(f"--- Nodes/Second ---")
-        print(f"Baseline: Per-Instance Mean: {baseline_stats.get('mean_nps', 0.0):.2f}, Aggregate: {baseline_stats.get('aggregate_nps', 0.0):.2f}")
-        print(f"Current:  Per-Instance Mean: {current_stats.get('mean_nps', 0.0):.2f}, Aggregate: {current_stats.get('aggregate_nps', 0.0):.2f}\n")
+        print(f"Baseline Aggregate: {baseline_stats.get('aggregate_nps', 0.0):.2f}")
+        print(f"Current Aggregate:  {current_stats.get('aggregate_nps', 0.0):.2f}\n")
         
         print(f"--- Memory Usage ---")
         # System-resident memory as primary (from /usr/bin/time)
