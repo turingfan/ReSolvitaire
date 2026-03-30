@@ -734,7 +734,7 @@ def main():
     if 'solution_type_mismatches' in locals() and solution_type_mismatches:
         print(f"\n⚠️  Solution type discrepancies found: {len(solution_type_mismatches)} instances")
     elif 'solution_type_mismatches' in locals():
-        print(f"\n✓ Solution types match across all instances")
+        print(f"\n✓ Solution type discrepancies: 0 instances")
 
     print(f"\nReport written to {args.out_report}")
 
