@@ -238,7 +238,7 @@ bool command_line_helper::assess_errors() {
 
     // The user must either supply input files, a random seed, or ask for the
     // solvability percentage, or benchmark
-    int opt_count = (random_deal != -1) + !input_files.empty() + (solvability > 0) + benchmark;
+    int opt_count = (random_deal != -1) + !input_files.empty() + (solvability > 0) + is_benchmark;
 
     if (opt_count > 1) {
         print_too_many_opts_error();
