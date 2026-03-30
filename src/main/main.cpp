@@ -97,7 +97,7 @@ int main(int argc, const char* argv[]) {
         solve_random_game(clh.get_random_deal(), *rules, clh);
     }
     // If the benchmark option has been supplied, generates it
-    if (clh.get_benchmark()) {
+    if (clh.get_is_benchmark()) {
         if (!clh.get_benchmark_json().empty()) {
             benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(),
                               clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout());

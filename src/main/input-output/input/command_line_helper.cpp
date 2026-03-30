@@ -201,6 +201,7 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
             benchmark_seeds.first = stoi(seed_str.substr(0, comma_pos));
             benchmark_seeds.second = stoi(seed_str.substr(comma_pos + 1));
         }
+        is_benchmark = true;
     }
 
     if (vm.count("benchmark-iterations")) {
@@ -213,6 +214,7 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
 
     if (vm.count("benchmark-json")) {
         benchmark_json = vm["benchmark-json"].as<string>();
+        is_benchmark = true;
     }
 
     // Handle logic error scenarios
@@ -359,6 +361,10 @@ string command_line_helper::get_describe_game_rules() {
 
 bool command_line_helper::get_benchmark() {
     return benchmark;
+}
+
+bool command_line_helper::get_is_benchmark() const {
+    return is_benchmark;
 }
 
 std::pair<int, int> command_line_helper::get_benchmark_seeds() const {

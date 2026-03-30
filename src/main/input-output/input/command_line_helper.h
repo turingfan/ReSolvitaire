@@ -43,6 +43,7 @@ public:
     uint get_cores();
     bool get_available_game_types();
     bool get_benchmark();
+    bool get_is_benchmark() const;
     std::pair<int, int> get_benchmark_seeds() const;
     int get_benchmark_iterations() const;
     bool get_benchmark_warmup() const;
@@ -84,6 +85,7 @@ private:
     bool available_game_types;
     bool version;
     bool benchmark;
+    bool is_benchmark = false;
     std::pair<int, int> benchmark_seeds = {1, 100};
     int benchmark_iterations = 1;
     bool benchmark_warmup = true;
