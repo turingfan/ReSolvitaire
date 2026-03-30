@@ -340,10 +340,10 @@ def main():
     parser = argparse.ArgumentParser(description="ReSolvitaire Python Orchestrator: Hardware Normalization & Median Statistics")
     parser.add_argument("--baseline-exe", default=None, help="Path to the baseline/master executable (optional; if omitted, only current-exe is benchmarked)")
     parser.add_argument("--current-exe", required=True, help="Path to the current working executable to test")
-    parser.add_argument("--reference-exe", default=None, help="Path to a reference solver to measure on this machine (informational; does not set HNF)")
+    parser.add_argument("--reference-exe", default=None, help="Path to a reference solver to measure on this machine (informational; does not set RHT)")
     parser.add_argument("--legacy-reference", action="store_true", help="Flag indicating the reference solver is a legacy binary without --benchmark-json support")
     parser.add_argument("--calibration-workload", default="tests/oracles/level1.json", help="Path to the fixed regression JSON used for calibration (or seed range 'START,END' for legacy solvers)")
-    parser.add_argument("--hnf", type=float, default=None, help="Hardware Normalization Factor (microseconds) from a canonical machine. If not provided, normalization is disabled (HNF=1.0)")
+    parser.add_argument("--rht", type=float, default=None, help="Reference Hardware Time (microseconds) from a canonical machine. If not provided, normalization is disabled (RHT=1.0)")
     parser.add_argument("--out-report", default="benchmark_report.json", help="Path to save the JSON diagnostic report")
     parser.add_argument("--baseline-args", nargs=argparse.REMAINDER, help="Benchmark arguments for baseline solver only (can include flags like --force-lru)")
     parser.add_argument("--current-args", nargs=argparse.REMAINDER, help="Benchmark arguments for current solver only (can include flags like --force-lru)")
@@ -424,13 +424,13 @@ def main():
                     print(f"    (getrusage virtual):        {virtual_mb:.1f} MB")
             print()
 
-    # Hardware Normalization Factor
-    hnf = args.hnf if args.hnf else 1.0
-    if args.hnf:
-        print(f"Hardware Normalization Factor (HNF): {hnf:.2f} us (provided)")
-        print(f"  (from canonical hardware measurement)\n")
+    # Reference Hardware Time
+    rht = args.rht if args.rht else 1.0
+    if args.rht:
+        print(f"Reference Hardware Time (RHT): {rht:.2f} us (provided)")
+        print(f"  (from canonical machine measurement)\n")
     else:
-        print(f"Hardware Normalization Factor (HNF): {hnf:.2f} (default, no normalization)\n")
+        print(f"Reference Hardware Time (RHT): {rht:.2f} (default, no normalization)\n")
 
     # Use benchmark_argv (args after --) as the general args
     forward_args = benchmark_argv if benchmark_argv else []
@@ -487,8 +487,8 @@ def main():
                 total_time = sum(median_times)
             else:
                 total_time = current_payload["aggregate_stats"]["median_time_us"]
-            normalized_score = total_time / hnf
-            print(f"Hardware Normalization Factor: {hnf:.2f} us")
+            normalized_score = total_time / rht
+            print(f"Reference Hardware Time (RHT): {rht:.2f} us")
             print(f"Normalized Score:             {normalized_score:.4f}")
 
         report = {
@@ -496,7 +496,7 @@ def main():
                 "date": datetime.datetime.now().isoformat(),
                 "machine_id": platform.node(),
                 "git_hash": get_git_hash(),
-                "hardware_normalization_factor_us": hnf,
+                "hardware_normalization_factor_us": rht,
                 "mode": "single-solver"
             },
             "benchmark_workload": " ".join(current_args),
@@ -547,7 +547,7 @@ def main():
                 "date": datetime.datetime.now().isoformat(),
                 "machine_id": platform.node(),
                 "git_hash": get_git_hash(),
-                "hardware_normalization_factor_us": hnf,
+                "hardware_normalization_factor_us": rht,
                 "mode": "paired-instances"
             },
             "benchmark_workload": workload_desc,
@@ -563,8 +563,8 @@ def main():
         print(f"Total instances matched: {len(combined_results)}\n")
         
         print(f"--- Hardware Normalized ---")
-        print(f"Reference Solver HNF:        {hnf:.2f} us")
-        print(f"Baseline Median Ratio:       {median_speedup:.4f}x (Relative to reference HNF if provided)")
+        print(f"Reference Hardware Time (RHT): {rht:.2f} us")
+        print(f"Baseline Median Ratio:       {median_speedup:.4f}x (Relative to reference RHT if provided)")
         
         print(f"\n--- Median Ratios (Across all instances) ---")
         color = "\033[91m" if median_speedup > 1.05 else ("\033[92m" if median_speedup < 0.95 else "")
@@ -588,8 +588,8 @@ def main():
         current_val = current_stats["median_time_us"]
 
         speedup_ratio = current_val / baseline_val if baseline_val > 0 else 1.0
-        normalized_sys_score = current_val / hnf if hnf > 0 else 0.0
-        baseline_normalized_score = baseline_val / hnf if hnf > 0 else 0.0
+        normalized_sys_score = current_val / rht if rht > 0 else 0.0
+        baseline_normalized_score = baseline_val / rht if rht > 0 else 0.0
 
         # Build workload description
         workload_desc = " ".join(current_args)
@@ -601,7 +601,7 @@ def main():
                 "date": datetime.datetime.now().isoformat(),
                 "machine_id": platform.node(),
                 "git_hash": get_git_hash(),
-                "hardware_normalization_factor_us": hnf,
+                "hardware_normalization_factor_us": rht,
                 "mode": "aggregate-median"
             },
             "benchmark_workload": workload_desc,
@@ -662,7 +662,7 @@ def main():
         print()
 
         print(f"--- Hardware Normalized ---")
-        print(f"Reference Solver HNF:        {hnf:.2f} us")
+        print(f"Reference Hardware Time (RHT): {rht:.2f} us")
         print(f"Baseline Normalized Score:   {baseline_normalized_score:.4f}")
         print(f"Current Normalized Score:    {normalized_sys_score:.4f}\n")
 
