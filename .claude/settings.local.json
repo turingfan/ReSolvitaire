@@ -12,7 +12,8 @@
       "Bash(./cmake-build-release/bin/solvitaire --benchmark-json tests/oracles/level1.json)",
       "Bash(tar -tzf build-archive/solvitaire-mac-dev-benchmark-enhancements-*.tar.gz)",
       "Bash(./cmake-build-release/bin/solvitaire --type klondike --benchmark)",
-      "Bash(./cmake-build-release/bin/solvitaire --type klondike --benchmark-seeds 1,5 --benchmark-iterations 1)"
+      "Bash(./cmake-build-release/bin/solvitaire --type klondike --benchmark-seeds 1,5 --benchmark-iterations 1)",
+      "Bash(./cmake-build-release/bin/solvitaire --type klondike --benchmark-seeds 1 5 --benchmark-iterations 1)"
     ]
   }
 }

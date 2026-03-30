@@ -79,9 +79,9 @@ command_line_helper::command_line_helper()
                           "supplied solitaire game. Must supply "
                           "either 'random', 'benchmark', 'solvability' or list of deals to be "
                           "solved.")
-            ("benchmark-seeds", po::value<string>(), "supply start and end seeds for benchmarking (format: start,end)")
-            ("benchmark-iterations", po::value<int>(), "iterations per seed")
-            ("benchmark-warmup", po::value<bool>(), "run warmup pass before benchmarking")
+            ("benchmark-seeds", po::value<vector<int>>()->multitoken(), "supply start and end seeds for benchmarking")
+            ("benchmark-iterations", po::value<int>()->default_value(1), "iterations per seed")
+            ("benchmark-warmup", po::value<bool>()->default_value(true), "run warmup pass before benchmarking")
             ("benchmark-json", po::value<string>(), "path to a regression json file to benchmark multiple instances")
             ("deal-only", "outputs the starting deal for a given game type & random seed as json");
 
@@ -195,22 +195,22 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
     benchmark = (vm.count("benchmark") != 0);
 
     if (vm.count("benchmark-seeds")) {
-        string seed_str = vm["benchmark-seeds"].as<string>();
-        size_t comma_pos = seed_str.find(',');
-        if (comma_pos != string::npos) {
-            benchmark_seeds.first = stoi(seed_str.substr(0, comma_pos));
-            benchmark_seeds.second = stoi(seed_str.substr(comma_pos + 1));
+        auto seeds = vm["benchmark-seeds"].as<vector<int>>();
+        if (seeds.size() >= 2) {
+            benchmark_seeds = {seeds[0], seeds[1]};
+        } else if (seeds.size() == 1) {
+            benchmark_seeds = {seeds[0], seeds[0]};
         }
         is_benchmark = true;
     }
 
-    if (vm.count("benchmark-iterations")) {
-        benchmark_iterations = vm["benchmark-iterations"].as<int>();
+    if (benchmark && !is_benchmark) {
+        benchmark_seeds = {1, 100};
+        is_benchmark = true;
     }
 
-    if (vm.count("benchmark-warmup")) {
-        benchmark_warmup = vm["benchmark-warmup"].as<bool>();
-    }
+    benchmark_iterations = vm["benchmark-iterations"].as<int>();
+    benchmark_warmup = vm["benchmark-warmup"].as<bool>();
 
     if (vm.count("benchmark-json")) {
         benchmark_json = vm["benchmark-json"].as<string>();
