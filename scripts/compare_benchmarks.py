@@ -290,22 +290,26 @@ def measure_standard_candle(reference_exe, calibration_workload, legacy_referenc
         total_us = payload["aggregate_stats"]["median_time_us"]
 
     # For modern solvers, capture all three memory metrics if available
-    solver_memory = None  # From getrusage (possibly virtual)
-    system_memory = None  # From /usr/bin/time (actual resident)
+    virtual_memory = None      # From getrusage virtual memory
+    resident_memory = None     # From getrusage resident (median)
+    system_memory = None       # From /usr/bin/time (actual resident)
 
     if isinstance(payload, list) and len(payload) > 0:
-        solver_memory = payload[0].get("median_memory_bytes")
+        virtual_memory = payload[0].get("median_virtual_memory_bytes")
+        resident_memory = payload[0].get("median_resident_memory_bytes")
         system_memory = payload[0].get("system_memory_bytes")
     elif not isinstance(payload, list):
         agg = payload.get("aggregate_stats", {})
-        solver_memory = agg.get("median_memory_bytes")
+        virtual_memory = agg.get("median_virtual_memory_bytes")
+        resident_memory = agg.get("median_resident_memory_bytes")
         system_memory = agg.get("system_memory_bytes")
 
     return {
         "hnf": total_us,
         "internal_time": total_us,
-        "solver_memory": solver_memory,  # From getrusage
-        "system_memory": system_memory   # From /usr/bin/time
+        "virtual_memory": virtual_memory,      # From getrusage
+        "resident_memory": resident_memory,    # From getrusage
+        "system_memory": system_memory         # From /usr/bin/time
     }
 
 def get_git_hash():
@@ -370,14 +374,17 @@ def main():
             # Legacy solver: only system-measured memory
             mem_mb = hnf_data['memory'] / (1024 * 1024)
             print(f"  Peak memory (system):   {mem_mb:.1f} MB")
-        elif hnf_data.get("solver_memory") or hnf_data.get("system_memory"):
-            # Modern solver: all three metrics
-            if hnf_data.get("solver_memory"):
-                solver_mb = hnf_data['solver_memory'] / (1024 * 1024)
-                print(f"  Memory (solver-reported): {solver_mb:.1f} MB")
+        else:
+            # Modern solver: report all three metrics if available
+            if hnf_data.get("virtual_memory"):
+                virtual_mb = hnf_data['virtual_memory'] / (1024 * 1024)
+                print(f"  Memory (getrusage virtual):  {virtual_mb:.1f} MB")
+            if hnf_data.get("resident_memory"):
+                resident_mb = hnf_data['resident_memory'] / (1024 * 1024)
+                print(f"  Memory (solver resident):    {resident_mb:.1f} MB")
             if hnf_data.get("system_memory"):
                 system_mb = hnf_data['system_memory'] / (1024 * 1024)
-                print(f"  Memory (system-measured):  {system_mb:.1f} MB")
+                print(f"  Memory (system resident):    {system_mb:.1f} MB")
 
         print()
     else:

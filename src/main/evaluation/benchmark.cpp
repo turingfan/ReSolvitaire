@@ -31,6 +31,7 @@
 #include <string> // Keep string for to_string and other string operations
 #include <memory> // Keep memory for unique_ptr
 #include <cmath> // Keep cmath for sqrt
+#include <cstdio> // For FILE operations on Linux /proc/self/status
 #include <sys/resource.h> // For getrusage() memory measurement
 
 #include "../game/sol_rules.h" // Keep this for sol_rules
@@ -54,8 +55,8 @@ using namespace std;
 
 static char benchmark_buffer[65536];
 
-// Helper function to get peak memory usage in bytes
-static uint64_t get_peak_memory_bytes() {
+// Helper function to get resident set size (actual physical memory)
+static uint64_t get_resident_memory_bytes() {
     struct rusage usage;
     if (getrusage(RUSAGE_SELF, &usage) == 0) {
         // ru_maxrss is in bytes on macOS, kilobytes on Linux
@@ -65,6 +66,35 @@ static uint64_t get_peak_memory_bytes() {
             return (uint64_t)usage.ru_maxrss * 1024;
         #endif
     }
+    return 0;
+}
+
+// Helper function to get virtual memory size
+static uint64_t get_virtual_memory_bytes() {
+    #ifdef __APPLE__
+        // On macOS, sum up memory usage components from rusage
+        struct rusage usage;
+        if (getrusage(RUSAGE_SELF, &usage) == 0) {
+            // ru_idrss (unshared data) + ru_ixrss (unshared stack) + ru_isrss (shared memory)
+            // These are in units of page*seconds, so convert to bytes
+            // Actually, on macOS these are deprecated. Use a simple heuristic: peak RSS is a good estimate
+            return (uint64_t)usage.ru_maxrss;
+        }
+    #else
+        // On Linux, read from /proc/self/status if available
+        FILE* f = fopen("/proc/self/status", "r");
+        if (f) {
+            char line[256];
+            uint64_t vm_peak = 0;
+            while (fgets(line, sizeof(line), f)) {
+                if (sscanf(line, "VmPeak: %lu", &vm_peak) == 1) {
+                    fclose(f);
+                    return vm_peak * 1024;  // Convert KB to bytes
+                }
+            }
+            fclose(f);
+        }
+    #endif
     return 0;
 }
 
@@ -100,18 +130,22 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
             auto start = chrono::high_resolution_clock::now();
             solver::result res = sol.run(chrono::milliseconds(timeout_ms));
             auto end = chrono::high_resolution_clock::now();
-            uint64_t peak_memory = get_peak_memory_bytes();
+            uint64_t resident_memory = get_resident_memory_bytes();
+            uint64_t virtual_memory = get_virtual_memory_bytes();
 
             if (!warmup || i > 0) {
                 double duration = chrono::duration_cast<chrono::microseconds>(end - start).count();
                 all_times.push_back(duration);
                 all_nodes.push_back((double)res.states_searched);
-                all_memory.push_back(peak_memory);
+                all_memory.push_back(resident_memory);
 
                 writer.StartObject();
                 writer.Key("time_us"); writer.Double(duration);
                 writer.Key("nodes"); writer.Double((double)res.states_searched);
-                writer.Key("peak_memory_bytes"); writer.Uint64(peak_memory);
+                writer.Key("resident_memory_bytes"); writer.Uint64(resident_memory);
+                if (virtual_memory > 0) {
+                    writer.Key("virtual_memory_bytes"); writer.Uint64(virtual_memory);
+                }
                 writer.EndObject();
             }
         }
@@ -142,7 +176,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         double sq_sum_nodes = inner_product(all_nodes.begin(), all_nodes.end(), all_nodes.begin(), 0.0);
         double stdev_nodes = sqrt(max(0.0, sq_sum_nodes / all_nodes.size() - mean_nodes * mean_nodes));
 
-        // Memory statistics
+        // Memory statistics (resident)
         sort(all_memory.begin(), all_memory.end());
         uint64_t max_memory = all_memory.back();
         uint64_t median_memory = all_memory[all_memory.size() / 2];
@@ -156,8 +190,8 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         writer.Key("nodes_per_second"); writer.Double(total_nodes / (max(1.0, total_time) / 1000000.0));
         writer.Key("min_time_us"); writer.Double(all_times.front());
         writer.Key("max_time_us"); writer.Double(all_times.back());
-        writer.Key("max_memory_bytes"); writer.Uint64(max_memory);
-        writer.Key("median_memory_bytes"); writer.Uint64(median_memory);
+        writer.Key("max_resident_memory_bytes"); writer.Uint64(max_memory);
+        writer.Key("median_resident_memory_bytes"); writer.Uint64(median_memory);
     }
 
     writer.EndObject(); // End of aggregate_stats
@@ -302,12 +336,12 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
             auto start = chrono::high_resolution_clock::now();
             solver::result res = sol.run(chrono::milliseconds(timeout_ms));
             auto end = chrono::high_resolution_clock::now();
-            uint64_t peak_memory = get_peak_memory_bytes();
+            uint64_t resident_memory = get_resident_memory_bytes();
 
             if (!benchmark_warmup || i > 0) {
                 times.push_back(chrono::duration_cast<chrono::microseconds>(end - start).count());
                 nodes_list.push_back((double)res.states_searched);
-                memory_list.push_back(peak_memory);
+                memory_list.push_back(resident_memory);
             }
         }
 
@@ -330,8 +364,8 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
         writer.Key("mean_time_us"); writer.Double(mean_time);
         writer.Key("median_nodes"); writer.Double(median_nodes);
         writer.Key("mean_nodes"); writer.Double(mean_nodes);
-        writer.Key("max_memory_bytes"); writer.Uint64(max_memory);
-        writer.Key("median_memory_bytes"); writer.Uint64(median_memory);
+        writer.Key("max_resident_memory_bytes"); writer.Uint64(max_memory);
+        writer.Key("median_resident_memory_bytes"); writer.Uint64(median_memory);
         writer.EndObject();
     };
 
