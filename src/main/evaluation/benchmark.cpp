@@ -56,6 +56,31 @@ uint64_t get_resident_memory_bytes() {
     return 0;
 }
 
+uint64_t get_virtual_memory_bytes() {
+    #ifdef __APPLE__
+        // On macOS, use ru_maxrss as estimate
+        struct rusage usage;
+        if (getrusage(RUSAGE_SELF, &usage) == 0) {
+            return (uint64_t)usage.ru_maxrss;
+        }
+    #else
+        // On Linux, read from /proc/self/status if available
+        FILE* f = fopen("/proc/self/status", "r");
+        if (f) {
+            char line[256];
+            uint64_t vm_peak = 0;
+            while (fgets(line, sizeof(line), f)) {
+                if (sscanf(line, "VmPeak: %lu", &vm_peak) == 1) {
+                    fclose(f);
+                    return vm_peak * 1024;  // Convert KB to bytes
+                }
+            }
+            fclose(f);
+        }
+    #endif
+    return 0;
+}
+
 void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state::streamliner_options str_opts,
                     pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms) {
     rapidjson::StringBuffer buffer;
@@ -68,6 +93,7 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
     vector<double> all_times;
     vector<double> all_nodes;
     vector<uint64_t> all_memory;
+    vector<solver::result::type> all_sol_types;
 
     for(int seed = seeds.first; seed <= seeds.second; seed++) {
         writer.Key(to_string(seed).c_str());
@@ -82,6 +108,7 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
             auto end = chrono::steady_clock::now();
             microsec elapsed_micros =
                     chrono::duration_cast<chrono::microseconds>(end - start);
+            uint64_t virtual_memory = get_virtual_memory_bytes();
 
             if (!warmup || i > 0) {
                 double duration = static_cast<double>(elapsed_micros.count());
@@ -90,11 +117,24 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
                 all_times.push_back(duration);
                 all_nodes.push_back(static_cast<double>(result.states_searched));
                 all_memory.push_back(memory);
+                all_sol_types.push_back(result.sol_type);
 
                 writer.StartObject();
                 writer.Key("time_us"); writer.Double(duration);
                 writer.Key("nodes"); writer.Double(static_cast<double>(result.states_searched));
+                writer.Key("unique_nodes"); writer.Uint64(result.unique_states_searched);
+                writer.Key("backtracks"); writer.Uint64(result.backtracks);
+                writer.Key("dominance_moves"); writer.Uint64(result.dominance_moves);
+                writer.Key("states_removed_from_cache"); writer.Uint64(result.states_removed_from_cache);
+                writer.Key("final_cache_size"); writer.Uint64(result.cache_size);
+                writer.Key("final_cache_buckets"); writer.Uint64(result.cache_bucket_count);
+                writer.Key("max_search_depth"); writer.Uint64(result.max_depth);
+                writer.Key("final_search_depth"); writer.Uint64(result.depth);
+                writer.Key("solution_type"); writer.String(boost::lexical_cast<std::string>(result.sol_type).c_str());
                 writer.Key("resident_memory_bytes"); writer.Uint64(memory);
+                if (virtual_memory > 0) {
+                    writer.Key("virtual_memory_bytes"); writer.Uint64(virtual_memory);
+                }
                 writer.EndObject();
             }
         }
