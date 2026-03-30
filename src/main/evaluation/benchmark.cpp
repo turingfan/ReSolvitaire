@@ -142,6 +142,15 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
                 writer.StartObject();
                 writer.Key("time_us"); writer.Double(duration);
                 writer.Key("nodes"); writer.Double((double)res.states_searched);
+                writer.Key("unique_nodes"); writer.Uint64(res.unique_states_searched);
+                writer.Key("backtracks"); writer.Uint64(res.backtracks);
+                writer.Key("dominance_moves"); writer.Uint64(res.dominance_moves);
+                writer.Key("states_removed_from_cache"); writer.Uint64(res.states_removed_from_cache);
+                writer.Key("final_cache_size"); writer.Uint64(res.cache_size);
+                writer.Key("final_cache_buckets"); writer.Uint64(res.cache_bucket_count);
+                writer.Key("max_search_depth"); writer.Uint64(res.max_depth);
+                writer.Key("final_search_depth"); writer.Uint64(res.depth);
+                writer.Key("solution_type"); writer.String(boost::lexical_cast<std::string>(res.sol_type).c_str());
                 writer.Key("resident_memory_bytes"); writer.Uint64(resident_memory);
                 if (virtual_memory > 0) {
                     writer.Key("virtual_memory_bytes"); writer.Uint64(virtual_memory);
