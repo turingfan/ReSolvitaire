@@ -111,7 +111,13 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
         double mean_time = total_time / all_times.size();
 
         sort(all_times.begin(), all_times.end());
-        double median_time = all_times[all_times.size() / 2];
+        // Median: for even-sized arrays, average the two middle elements
+        double median_time;
+        if (all_times.size() % 2 == 1) {
+            median_time = all_times[all_times.size() / 2];
+        } else {
+            median_time = (all_times[all_times.size() / 2 - 1] + all_times[all_times.size() / 2]) / 2.0;
+        }
 
         double sq_sum = inner_product(all_times.begin(), all_times.end(), all_times.begin(), 0.0);
         double stdev = sqrt(max(0.0, sq_sum / all_times.size() - mean_time * mean_time));
@@ -120,7 +126,13 @@ void benchmark::run(const sol_rules &rules, uint64_t cache_capacity, game_state:
         double mean_nodes = total_nodes / all_nodes.size();
 
         sort(all_nodes.begin(), all_nodes.end());
-        double median_nodes = all_nodes[all_nodes.size() / 2];
+        // Median: for even-sized arrays, average the two middle elements
+        double median_nodes;
+        if (all_nodes.size() % 2 == 1) {
+            median_nodes = all_nodes[all_nodes.size() / 2];
+        } else {
+            median_nodes = (all_nodes[all_nodes.size() / 2 - 1] + all_nodes[all_nodes.size() / 2]) / 2.0;
+        }
 
         double sq_sum_nodes = inner_product(all_nodes.begin(), all_nodes.end(), all_nodes.begin(), 0.0);
         double stdev_nodes = sqrt(max(0.0, sq_sum_nodes / all_nodes.size() - mean_nodes * mean_nodes));
@@ -276,12 +288,29 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int i
         sort(nodes_list.begin(), nodes_list.end());
         sort(memory_list.begin(), memory_list.end());
 
-        double median_time = times[times.size() / 2];
+        // Median: for even-sized arrays, average the two middle elements
+        double median_time;
+        if (times.size() % 2 == 1) {
+            median_time = times[times.size() / 2];
+        } else {
+            median_time = (times[times.size() / 2 - 1] + times[times.size() / 2]) / 2.0;
+        }
         double mean_time = accumulate(times.begin(), times.end(), 0.0) / times.size();
-        double median_nodes = nodes_list[nodes_list.size() / 2];
+
+        double median_nodes;
+        if (nodes_list.size() % 2 == 1) {
+            median_nodes = nodes_list[nodes_list.size() / 2];
+        } else {
+            median_nodes = (nodes_list[nodes_list.size() / 2 - 1] + nodes_list[nodes_list.size() / 2]) / 2.0;
+        }
         double mean_nodes = accumulate(nodes_list.begin(), nodes_list.end(), 0.0) / nodes_list.size();
         uint64_t max_memory = memory_list.back();
-        uint64_t median_memory = memory_list[memory_list.size() / 2];
+        uint64_t median_memory;
+        if (memory_list.size() % 2 == 1) {
+            median_memory = memory_list[memory_list.size() / 2];
+        } else {
+            median_memory = (memory_list[memory_list.size() / 2 - 1] + memory_list[memory_list.size() / 2]) / 2;
+        }
 
         writer.StartObject();
         writer.Key("instance"); writer.String(filename.c_str());
