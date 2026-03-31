@@ -84,39 +84,26 @@ Since XOR of uniformly random 64-bit values preserves randomness, **the low `n` 
 
 ---
 
-## 2. Generation-Based Cache Aging (Already Implemented)
+## 2. Other Potential Optimizations (Future Investigation)
 
-**Status:** ✓ Implemented in flat_cache via `age` field in compact_state
-
-The cache uses generation-based aging to defer expensive zeroing:
-- Each generation, increment a global counter instead of memset'ing the entire cache
-- Only clear entries when their generation is stale
-- O(1) logical clearing vs O(n) memset cost
-
-No further optimization needed here; this is already optimal.
-
----
-
-## 3. Other Potential Optimizations (Future Investigation)
-
-### 3.1 Cache Line Prefetching
+### 2.1 Cache Line Prefetching
 - Two-slot clusters (64 bytes = one cache line) already align with L1 cache behavior
 - Consider explicit `__builtin_prefetch()` on secondary cluster for collision chains
 - Impact: Likely negligible; CPU prefetchers already handle this well
 
-### 3.2 Sibling Hash Function
+### 2.2 Sibling Hash Function
 - Current open addressing probes `hash & (num_clusters - 1)`
 - Could use a different hash function for the second slot (e.g., `(hash >> 32) & (num_clusters - 1)`)
 - Impact: Reduce collision probability, but current two-slot design already mitigates well
 
-### 3.3 Adaptive Load Factor
+### 2.3 Adaptive Load Factor
 - Current design doesn't enforce load factor (insertion keeps going until memory exhausted)
 - Could track occupancy and warn/adjust when load factor exceeds threshold
 - Impact: Marginal; TwoBig1 replacement policy handles high load well
 
 ---
 
-## 4. Verification Checklist for Any Optimization
+## 3. Verification Checklist for Any Optimization
 
 Before committing to power-of-2 bit masking or other changes:
 
