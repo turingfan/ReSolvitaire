@@ -42,46 +42,112 @@ Benefits for single runs:
 
 ### macOS Considerations
 
-On macOS (Darwin), the relevant APIs are:
+### Platform-Specific APIs
+
+All three major platforms provide virtual memory allocation with deferred physical backing (demand paging). The key operations are: **allocate** (reserve virtual address space, zero-on-first-touch), **release** (return memory to OS), and **reset** (logically clear without physical zeroing — for cache reuse in benchmarking loops).
+
+#### macOS (Darwin) — Primary platform
+
 ```cpp
 #include <sys/mman.h>
 
+// Allocate: returns zero-filled virtual pages, physical allocation deferred
 void* buf = mmap(nullptr, total_bytes,
                  PROT_READ | PROT_WRITE,
                  MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-// Deferred zeroing — no physical pages allocated yet
+if (buf == MAP_FAILED) throw std::bad_alloc();
 
-// When done:
+// Release:
 munmap(buf, total_bytes);
+
+// Reset (logical clear — pages lazily reclaimed, return zeroes on next access):
+madvise(buf, total_bytes, MADV_FREE);
 ```
 
-To "clear" the cache between runs (e.g. in benchmarking) without re-allocating:
+`MADV_FREE` is preferred on macOS: it marks pages as reclaimable but doesn't immediately tear down page tables. The kernel reclaims them lazily under memory pressure. Subsequent reads return zeroes. `MADV_DONTNEED` also works but forces immediate page table invalidation, which is more expensive for the "clear between benchmark runs" use case.
+
+#### Linux
+
 ```cpp
-madvise(buf, total_bytes, MADV_FREE);  // macOS: mark pages reclaimable
+#include <sys/mman.h>
+
+// Allocate: identical API to macOS
+void* buf = mmap(nullptr, total_bytes,
+                 PROT_READ | PROT_WRITE,
+                 MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+if (buf == MAP_FAILED) throw std::bad_alloc();
+
+// Release:
+munmap(buf, total_bytes);
+
+// Reset — two options with different semantics:
+madvise(buf, total_bytes, MADV_DONTNEED);  // Immediate: pages freed, next access returns zeroes
+madvise(buf, total_bytes, MADV_FREE);      // Lazy (Linux 4.5+): pages freed under memory pressure
 ```
-`MADV_FREE` tells the kernel the pages can be lazily reclaimed and will return zeroes on next access. This is effectively O(1) from the application's perspective. (`MADV_DONTNEED` also works on macOS but `MADV_FREE` is preferred as it avoids immediate page table teardown.)
+
+On Linux, `MADV_DONTNEED` has stronger guarantees than on macOS: it immediately frees physical pages and guarantees zeroes on next access. `MADV_FREE` (available since kernel 4.5) is lazier and faster but pages may retain old data until the kernel needs the memory. **For transposition table clearing, `MADV_DONTNEED` is the safe choice on Linux** — it guarantees `is_occupied()` sees zero in reclaimed pages.
+
+#### Windows
+
+```cpp
+#include <windows.h>
+#include <memoryapi.h>
+
+// Allocate: reserve + commit (MEM_COMMIT defers physical allocation until first write)
+void* buf = VirtualAlloc(nullptr, total_bytes,
+                         MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+if (buf == nullptr) throw std::bad_alloc();
+
+// Release:
+VirtualFree(buf, 0, MEM_RELEASE);
+
+// Reset (discard physical pages, next access returns zeroes):
+// Option A — DiscardVirtualMemory (Win 8.1+, preferred):
+DiscardVirtualMemory(buf, total_bytes);
+
+// Option B — VirtualAlloc MEM_RESET + MEM_RESET_UNDO pattern:
+VirtualAlloc(buf, total_bytes, MEM_RESET, PAGE_READWRITE);
+```
+
+`DiscardVirtualMemory` is the closest Windows equivalent to `madvise(MADV_DONTNEED)`: it discards physical pages and guarantees zeroes on next access. It's available from Windows 8.1 onwards. The older `MEM_RESET` approach is weaker — it hints that pages are not needed but does **not** guarantee zeroed contents on re-read, so it is unsafe for our use case unless paired with an explicit re-commit.
+
+### Platform Abstraction
+
+A thin wrapper isolates the platform differences:
+
+```cpp
+// platform_memory.h
+namespace platform {
+    void* alloc_zeroed(size_t bytes);   // mmap / VirtualAlloc
+    void  release(void* ptr, size_t bytes);  // munmap / VirtualFree
+    void  reset_to_zero(void* ptr, size_t bytes);  // madvise / DiscardVirtualMemory
+}
+```
+
+Implementation via `#ifdef __APPLE__` / `#ifdef __linux__` / `#ifdef _WIN32`. All three paths guarantee:
+1. Freshly allocated memory reads as zero (demand paging)
+2. After reset, subsequent reads return zero (safe for `is_occupied()` check)
+3. Alignment ≥ page size (4096 bytes), satisfying `alignas(64)` cluster requirement
 
 ### Implementation Sketch
 
 ```cpp
 class flat_cache : public cache_interface {
-    cluster* clusters;       // raw pointer to mmap'd region
+    cluster* clusters;       // raw pointer to platform-allocated region
+    size_t   alloc_bytes;
     uint64_t num_clusters;
     // ...
 
     flat_cache(uint64_t max_entries) {
         num_clusters = std::max<uint64_t>(1, max_entries / 2);
-        size_t bytes = num_clusters * sizeof(cluster);
-        clusters = static_cast<cluster*>(
-            mmap(nullptr, bytes, PROT_READ | PROT_WRITE,
-                 MAP_ANONYMOUS | MAP_PRIVATE, -1, 0));
-        if (clusters == MAP_FAILED) throw std::bad_alloc();
+        alloc_bytes = num_clusters * sizeof(cluster);
+        clusters = static_cast<cluster*>(platform::alloc_zeroed(alloc_bytes));
     }
 
-    ~flat_cache() { munmap(clusters, num_clusters * sizeof(cluster)); }
+    ~flat_cache() { platform::release(clusters, alloc_bytes); }
 
     void clear() override {
-        madvise(clusters, num_clusters * sizeof(cluster), MADV_FREE);
+        platform::reset_to_zero(clusters, alloc_bytes);
         occupied_count = 0;
         eviction_count = 0;
     }
@@ -90,19 +156,20 @@ class flat_cache : public cache_interface {
 
 ### Estimated Impact
 
-| Scenario | Current (vector) | With mmap |
-|----------|-----------------|-----------|
+| Scenario | Current (vector) | With lazy allocation |
+|----------|-----------------|----------------------|
 | Short search (10K nodes, ~640 KB touched) | ~200–400 ms init + ~5 ms search | ~5 ms total |
 | Long search (100M nodes, full table) | ~200–400 ms init + search | ~same total (pages faulted during search) |
 
 **This is likely the single largest efficiency gain available**, especially for benchmarking workloads that repeatedly create and destroy caches.
 
-### Risks
+### Risks and Mitigations
 
-- Platform-specific (`mmap` is POSIX; Windows would need `VirtualAlloc`)
-- Must handle `MAP_FAILED` properly
-- `alignas(64)` alignment: `mmap` returns page-aligned memory (4096-byte), which satisfies the 64-byte cluster alignment
-- Cannot use `std::vector` features (bounds checking, RAII); need manual RAII wrapper or `unique_ptr` with custom deleter
+- **Platform-specific code**: Isolated behind `platform_memory.h` abstraction; each platform path is ~10 lines
+- **Error handling**: All three APIs have clear failure indicators (`MAP_FAILED`, `nullptr`); throw `std::bad_alloc`
+- **Alignment**: All platform allocators return page-aligned memory (≥4096 bytes), satisfying the 64-byte `alignas` requirement
+- **RAII**: Raw pointer requires manual cleanup; encapsulate in destructor (shown above) or `unique_ptr` with custom deleter
+- **Fallback**: If platform allocation fails (e.g. unsupported OS), fall back to `std::vector<cluster>` with eager zeroing — correctness is preserved, only startup performance degrades
 
 ---
 
