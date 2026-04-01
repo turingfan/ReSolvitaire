@@ -15,6 +15,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
 
+# GCC LTO support: ensure gcc-ar and gcc-ranlib are available on Linux
+if(NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_AR "gcc-ar")
+    set(CMAKE_RANLIB "gcc-ranlib")
+endif()
+
 ###############################################################################
 ## source files ###############################################################
 ###############################################################################
