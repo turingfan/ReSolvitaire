@@ -7,7 +7,11 @@
 IMAGE_NAME="solvitaire-dev"
 TEST_FLAG=""
 REGRESSION_FLAG=""
-NO_CACHE_FLAG=""
+# Default to --no-cache: the 'container' CLI v0.9 does not reliably
+# invalidate the COPY layer when source files change, so cached builds
+# silently use stale sources. Use --use-cache to opt in to caching
+# (saves ~30s on apt install, useful on slow networks).
+NO_CACHE_FLAG="--no-cache"
 
 print_usage() {
     cat << EOF
@@ -16,7 +20,7 @@ Usage: ./scripts/container-build.sh [OPTIONS]
 Options:
   --test        Run unit tests after build
   --regression  Run regression_level1 tests after build
-  --no-cache    Force clean rebuild (ignore cached layers)
+  --use-cache   Allow cached layers (faster on slow networks, but may use stale sources)
   (no options)  Build the container image only
 
 The container image is tagged as '$IMAGE_NAME' and requires a container
@@ -26,7 +30,7 @@ Examples:
   ./scripts/container-build.sh              # Build only
   ./scripts/container-build.sh --test       # Build and run unit tests
   ./scripts/container-build.sh --regression # Build and run Level 1 regression
-  ./scripts/container-build.sh --no-cache --test  # Clean rebuild then test
+  ./scripts/container-build.sh --use-cache --test  # Faster build using cached layers
 EOF
 }
 
@@ -35,7 +39,7 @@ for arg in "$@"; do
     case "$arg" in
         --test)       TEST_FLAG="1" ;;
         --regression) REGRESSION_FLAG="1" ;;
-        --no-cache)   NO_CACHE_FLAG="--no-cache" ;;
+        --use-cache)  NO_CACHE_FLAG="" ;;
         --help|-h)    print_usage; exit 0 ;;
         *)
             echo "Unknown argument: $arg"
