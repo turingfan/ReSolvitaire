@@ -12,6 +12,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
+
+# CACHEBUST ensures COPY and all subsequent layers are never cached.
+# Passed automatically by container-build.sh as a Unix timestamp.
+ARG CACHEBUST=1
+RUN echo "Build timestamp: $CACHEBUST"
+
 COPY . /workspace/
 
 # Remove any stale host build dirs (container CLI may not honour .dockerignore)

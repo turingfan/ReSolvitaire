@@ -64,9 +64,12 @@ fi
 
 echo "Using container runtime: $CONTAINER_CMD"
 
-# Build the image
+# Build the image.
+# CACHEBUST=$(date +%s) ensures the COPY layer and everything after it
+# is never reused from cache, so source changes are always picked up.
+# This works even on container CLI v0.9 which ignores --no-cache.
 echo "Building image '$IMAGE_NAME'..."
-$CONTAINER_CMD build $NO_CACHE_FLAG -t "$IMAGE_NAME" .
+$CONTAINER_CMD build $NO_CACHE_FLAG --build-arg CACHEBUST="$(date +%s)" -t "$IMAGE_NAME" .
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to build container image"
