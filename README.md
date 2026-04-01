@@ -6,7 +6,10 @@
 
 ## Building and Running
 
-Solvitaire requires a C++14 compiler, CMake 3.14+, and the Boost `program_options` library.
+Solvitaire requires a C++14 compiler, CMake 3.14+, and the Boost libraries.
+The compiled Boost component needed is `program_options`; several header-only components
+(`multi_index`, `optional`, `pool`, `property_tree`, `random`) are also used and are
+included automatically with any standard Boost installation.
 The primary development branch is `dev`, which is tested on macOS (Apple Silicon) and Linux (x86_64 / arm64).
 
 ---
