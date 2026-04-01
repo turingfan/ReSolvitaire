@@ -83,7 +83,7 @@ if [ -n "$TEST_FLAG" ]; then
     echo ""
     echo "Running unit tests inside container..."
     $CONTAINER_CMD run --rm "$IMAGE_NAME" \
-        bash -c "cd cmake-build-release && ctest -R unit_tests --output-on-failure"
+        bash -c "cd cmake-build-release && ctest -R '^unit_tests$' --output-on-failure"
 fi
 
 if [ -n "$REGRESSION_FLAG" ]; then

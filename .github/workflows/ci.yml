@@ -34,7 +34,7 @@ jobs:
         run: ./build.sh --release --unit-tests
 
       - name: Run unit tests
-        run: cd cmake-build-release && ctest -R unit_tests --output-on-failure
+        run: cd cmake-build-release && ctest -R '^unit_tests$' --output-on-failure
 
       - name: Run regression level 1
         run: cd cmake-build-release && ctest -R regression_level1 --output-on-failure
