@@ -7,23 +7,7 @@
 IMAGE_NAME="solvitaire-dev"
 TEST_FLAG=""
 REGRESSION_FLAG=""
-
-# Parse arguments
-for arg in "$@"; do
-    case "$arg" in
-        --test)
-            TEST_FLAG="1"
-            ;;
-        --regression)
-            REGRESSION_FLAG="1"
-            ;;
-        *)
-            echo "Unknown argument: $arg"
-            print_usage
-            exit 1
-            ;;
-    esac
-done
+NO_CACHE_FLAG=""
 
 print_usage() {
     cat << EOF
@@ -32,22 +16,34 @@ Usage: ./scripts/container-build.sh [OPTIONS]
 Options:
   --test        Run unit tests after build
   --regression  Run regression_level1 tests after build
+  --no-cache    Force clean rebuild (ignore cached layers)
   (no options)  Build the container image only
 
 The container image is tagged as '$IMAGE_NAME' and requires a container
-runtime (Docker, Podman, or container CLI) to be available on PATH.
+runtime (the 'container' CLI, Docker, or Podman) to be available on PATH.
 
 Examples:
   ./scripts/container-build.sh              # Build only
   ./scripts/container-build.sh --test       # Build and run unit tests
   ./scripts/container-build.sh --regression # Build and run Level 1 regression
+  ./scripts/container-build.sh --no-cache --test  # Clean rebuild then test
 EOF
 }
 
-# If no arguments provided, show brief usage
-if [ $# -eq 0 ]; then
-    echo "Building container image '$IMAGE_NAME'..."
-fi
+# Parse arguments
+for arg in "$@"; do
+    case "$arg" in
+        --test)       TEST_FLAG="1" ;;
+        --regression) REGRESSION_FLAG="1" ;;
+        --no-cache)   NO_CACHE_FLAG="--no-cache" ;;
+        --help|-h)    print_usage; exit 0 ;;
+        *)
+            echo "Unknown argument: $arg"
+            print_usage
+            exit 1
+            ;;
+    esac
+done
 
 # Determine which container runtime to use (try container, docker, podman in order)
 CONTAINER_CMD=""
@@ -66,7 +62,7 @@ echo "Using container runtime: $CONTAINER_CMD"
 
 # Build the image
 echo "Building image '$IMAGE_NAME'..."
-$CONTAINER_CMD build -t "$IMAGE_NAME" .
+$CONTAINER_CMD build $NO_CACHE_FLAG -t "$IMAGE_NAME" .
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to build container image"

@@ -14,8 +14,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /workspace
 COPY . /workspace/
 
-RUN ./build.sh --release
-RUN ./build.sh --release --unit-tests
-RUN cd cmake-build-release && ctest -R unit_tests --output-on-failure
+# Two separate RUN steps so cmake configure is cached independently of compile
+RUN cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
+RUN cmake --build cmake-build-release --target solvitaire \
+ && cmake --build cmake-build-release --target unit_tests
 
 CMD ["/workspace/cmake-build-release/bin/solvitaire"]
