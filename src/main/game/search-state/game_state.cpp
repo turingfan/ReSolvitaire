@@ -582,7 +582,7 @@ void game_state::make_built_group_move(move m) {
             bottom_cid, parent_cid, rules.build_pol,
             foundations_base, rules.max_rank);
         new_desc = (desc != 0) ? desc
-            : compact_state::ROOT;
+            : static_cast<uint8_t>(compact_state::ROOT);
     }
     update_card_descriptor(bottom_cid, new_desc);
 
@@ -997,7 +997,7 @@ void game_state::init_payload_and_hash() {
                     cid, parent_cid, rules.build_pol,
                     foundations_base, rules.max_rank);
                 new_desc = (desc != 0) ? desc
-                    : compact_state::ROOT;
+                    : static_cast<uint8_t>(compact_state::ROOT);
             }
             update_card_descriptor(cid, new_desc);
         }
@@ -1272,7 +1272,7 @@ compact_state game_state::recompute_payload_from_scratch() const {
                     uint8_t desc = parent_table::get_descriptor_for_parent(
                         cid, parent_cid, rules.build_pol,
                         foundations_base, rules.max_rank);
-                    new_desc = (desc != 0) ? desc : compact_state::ROOT;
+                    new_desc = (desc != 0) ? desc : static_cast<uint8_t>(compact_state::ROOT);
                 }
             }
             cp.set_descriptor(cid, new_desc);
