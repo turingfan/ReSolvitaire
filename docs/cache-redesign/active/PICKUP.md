@@ -1,8 +1,7 @@
 # Pickup Document: refactor-caching Branch
 
-**Date:** 2026-03-30
-**Branch Status:** 20 commits ahead of origin/refactor-caching
-**Parallel Status:** mac-dev contains all refactor-caching work plus benchmark integration
+**Date:** 2026-03-30 (updated 2026-04-03)
+**Branch Status:** Long-lived design branch — all M6–M8 code is in `dev`; unique content here is planning docs only
 
 ## Executive Summary
 
@@ -92,7 +91,7 @@ This elegantly solves the descriptor ambiguity problem: rather than asking "wher
 
 ### Issue #4: Benchmarks Incomplete
 - **Gap:** No flat-vs-LRU comparison for suit-symmetry games (Spanish Patience, Klondike+suit)
-- **Future:** Add to benchmarking branch once suit-canonical flat cache is ready
+- **Future:** Benchmark once suit-canonical flat cache is ready; `benchmark-python` framework is now in `dev`
 
 ### Issue #1: JSON Round-Trip Discrepancy (Minor)
 - **Root:** `json_helper::print_game_state_as_json` uses runtime-reordered piles instead of construction order
@@ -100,27 +99,27 @@ This elegantly solves the descriptor ambiguity problem: rather than asking "wher
 - **Workaround:** Levels 2–5 use seed-based runs, bypassing JSON export
 - **Fix:** One-line change documented in code comment (deferred)
 
-## Integration with mac-dev
+## Integration with `dev`
 
-**mac-dev** now contains:
+**`dev`** now contains:
 - All refactor-caching logic (dual cache, M6–M8)
-- Benchmark infrastructure integrated (added 10 commits after final merge)
+- Full Python/R benchmarking framework (`benchmark-python` branch, merged 2026-04-03)
 - All regression oracles regenerated
-- Benchmarking branch deleted (fully superseded)
 
 **Relationship:**
-- refactor-caching is **planning/design** branch for flat cache extensions
-- mac-dev is **production** branch with current solver + benchmarks
-- Future work: Implement roadmap items on a new branch from mac-dev, then rebase/merge back
+- `refactor-caching` is the **planning/design** branch for flat cache extensions
+- `dev` is the **production** branch with current solver + benchmarks
+- Future work: Implement roadmap items on a short-lived branch from `dev`, then merge back
+
+See `docs/cache-redesign/active/branch_workflow.md` for the full branching protocol.
 
 ## Next Steps for Future Work
 
 1. **Review the roadmap** (`flat_cache_extension_roadmap.md`): Decide which priority item to tackle first
 2. **Start with Priority 1 or 2b**: Lower complexity than chain-based representation
-3. **Create new branch from mac-dev**: `git checkout mac-dev && git checkout -b implement-tableau-dealing`
+3. **Create new branch from `dev`**: `git checkout dev && git checkout -b implement-tableau-dealing`
 4. **Implement, test, benchmark:** Use regression harness to validate (outcome-only policy)
-5. **Merge back to mac-dev** when ready
-6. **Optional:** Rebase refactor-caching onto latest mac-dev to keep design branch in sync
+5. **Merge back to `dev`** when ready, then sync `dev` back into `refactor-caching`
 
 ## Testing Workflow
 
@@ -135,7 +134,10 @@ cd cmake-build-release && ctest -R regression_level1 --output-on-failure
 cd cmake-build-release && ctest -R regression_level --output-on-failure
 
 # Benchmarking (if changes affect performance)
-./cmake-build-release/solvitaire --benchmark --type klondike --cache-capacity 1000000 --timeout 60000 --seeds 1 5
+python3 scripts/run_benchmark.py \
+    --solver cmake-build-release/bin/solvitaire \
+    --type klondike --seeds 1-20 --timeout 60000 \
+    --output results/test.csv
 ```
 
 ## Key Files for Future Work
@@ -148,14 +150,8 @@ cd cmake-build-release && ctest -R regression_level --output-on-failure
 - **Zobrist tables:** `src/main/game/zobrist.h/cpp`
 - **Regression harness:** `scripts/regression_runner.py`, `CMakeLists.txt` lines 225–288
 
-## Branch Status & Next Immediate Step
+## Branch Status
 
-This branch is **ready to pause**. The design is solid, tests pass, known issues are documented, and the roadmap is actionable.
+This branch is **actively maintained as a design branch**. All code is in `dev`. The unique content here — the optimization opportunities analysis, flat cache extension roadmap, and this pickup document — represents the planning layer for the next phase of work.
 
-**Next immediate action:** Push this document and wait for explicit direction on which roadmap item to implement.
-
-```bash
-git add docs/cache-redesign/active/PICKUP.md
-git commit -m "docs: add pickup document for refactor-caching branch"
-git push origin refactor-caching
-```
+When ready to implement a roadmap item, see `branch_workflow.md` for the branching protocol.
