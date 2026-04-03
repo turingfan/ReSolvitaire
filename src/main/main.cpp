@@ -19,6 +19,7 @@
 */
 #include <boost/program_options.hpp>
 #include <boost/optional.hpp>
+#include <sys/resource.h>
 
 #include "version.h"
 #include "../../lib/rapidjson/document.h"
@@ -221,6 +222,30 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
         writer.Uint64(s.second.backtracks);
         writer.Key("max_depth");
         writer.Uint64(s.second.max_depth);
+        writer.Key("dominance_moves");
+        writer.Uint64(s.second.dominance_moves);
+        writer.Key("states_removed_from_cache");
+        writer.Uint64(s.second.states_removed_from_cache);
+        writer.Key("cache_size");
+        writer.Uint64(s.second.cache_size);
+        writer.Key("cache_buckets");
+        writer.Uint64(s.second.cache_bucket_count);
+        writer.Key("final_depth");
+        writer.Uint64(s.second.depth);
+        // Memory measurement (getrusage RUSAGE_SELF)
+        {
+            struct rusage usage;
+            uint64_t rss_bytes = 0;
+            if (getrusage(RUSAGE_SELF, &usage) == 0) {
+#ifdef __APPLE__
+                rss_bytes = (uint64_t)usage.ru_maxrss;  // bytes on macOS
+#else
+                rss_bytes = (uint64_t)usage.ru_maxrss * 1024ULL;  // KB on Linux
+#endif
+            }
+            writer.Key("solver_resident_bytes");
+            writer.Uint64(rss_bytes);
+        }
         writer.EndObject();
         cout << sb.GetString() << endl;
     } else if (clh.get_classify()) {
