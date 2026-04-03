@@ -52,7 +52,9 @@ speedup_ci <- function(baseline_times, current_times, R = 1000) {
   ratios <- ratios[is.finite(ratios) & ratios > 0]
   if (length(ratios) < 2) return(list(estimate = NA, lower = NA, upper = NA))
   b <- boot::boot(ratios, function(x, i) geometric_mean(x[i]), R = R)
-  ci <- tryCatch(boot::boot.ci(b, type = "perc")$percent[4:5],
-                 error = function(e) c(NA, NA))
+  ci <- tryCatch({
+    result <- boot::boot.ci(b, type = "perc")$percent[4:5]
+    if (is.null(result) || length(result) < 2) c(NA_real_, NA_real_) else result
+  }, error = function(e) c(NA_real_, NA_real_))
   list(estimate = geometric_mean(ratios), lower = ci[1], upper = ci[2])
 }

@@ -6,32 +6,36 @@
 #            --output   results/comparison.html \
 #            [--metric time_us] [--timeout-ms 60000]
 
-suppressPackageStartupMessages({
-  library(optparse)
-  library(ggplot2)
-})
+suppressPackageStartupMessages(library(ggplot2))
 
 # Source functions relative to this script's location
 initial_options <- commandArgs(trailingOnly = FALSE)
-script_dir <- dirname(sub("--file=", "", initial_options[grep("--file=", initial_options)]))
-if (length(script_dir) == 0) script_dir <- "."
+script_dir <- dirname(normalizePath(sub("--file=", "", initial_options[grep("--file=", initial_options)])))
+if (length(script_dir) == 0 || script_dir == "") script_dir <- "."
 source(file.path(script_dir, "functions.R"))
 
-option_list <- list(
-  make_option("--baseline",   type = "character", help = "Baseline CSV or JSON"),
-  make_option("--current",    type = "character", help = "Current CSV or JSON"),
-  make_option("--output",     type = "character", default = "comparison.html",
-              help = "Output HTML report path"),
-  make_option("--metric",     type = "character", default = "time_us",
-              help = "Primary metric column [default: time_us]"),
-  make_option("--timeout-ms", type = "integer",   default = 60000,
-              help = "Timeout in ms for PAR2 [default: 60000]")
-)
+# Parse arguments manually (avoids optparse dependency)
+parse_args_simple <- function() {
+  args <- commandArgs(trailingOnly = TRUE)
+  opt <- list(baseline = NULL, current = NULL, output = "comparison.html",
+              metric = "time_us", `timeout-ms` = 60000L)
+  i <- 1
+  while (i <= length(args)) {
+    if (args[i] == "--baseline")   { opt$baseline      <- args[i+1]; i <- i+2 }
+    else if (args[i] == "--current")    { opt$current       <- args[i+1]; i <- i+2 }
+    else if (args[i] == "--output")     { opt$output        <- args[i+1]; i <- i+2 }
+    else if (args[i] == "--metric")     { opt$metric        <- args[i+1]; i <- i+2 }
+    else if (args[i] == "--timeout-ms") { opt$`timeout-ms`  <- as.integer(args[i+1]); i <- i+2 }
+    else i <- i+1
+  }
+  opt
+}
 
-opt <- parse_args(OptionParser(option_list = option_list))
+opt <- parse_args_simple()
 
 if (is.null(opt$baseline) || is.null(opt$current)) {
-  stop("--baseline and --current are required")
+  cat("Usage: Rscript analysis/benchmark.R --baseline FILE --current FILE [--output FILE] [--metric COL] [--timeout-ms N]\n")
+  quit(status = 1)
 }
 
 base_df <- read_benchmark(opt$baseline)
@@ -84,6 +88,8 @@ plot_path <- sub("\\.html$", "_scatter.png", opt$output)
 ggsave(plot_path, p, width = 6, height = 6, dpi = 150)
 
 # --- HTML report (simple, no rmarkdown dependency) ---
+fmt <- function(x, fmt = "%.3f", na = "N/A") ifelse(is.na(x), na, sprintf(fmt, x))
+
 html <- sprintf('<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <title>Benchmark Comparison</title>
@@ -97,45 +103,34 @@ html <- sprintf('<!DOCTYPE html>
 </style></head><body>
 <h1>Benchmark Comparison Report</h1>
 <p>Baseline: <code>%s</code><br>Current: <code>%s</code></p>
-
 <h2>Summary</h2>
 <table>
-<tr><th>Metric</th><th>Baseline</th><th>Current</th><th>Speedup</th></tr>
-<tr><td>Geometric mean %s</td><td>%.1f</td><td>%.1f</td>
-    <td>%.3fx [%.3f, %.3f]</td></tr>
-<tr><td>Median %s</td><td>%.1f</td><td>%.1f</td><td>—</td></tr>
-<tr><td>PAR2 score (us)</td><td>%.1f</td><td>%.1f</td><td>—</td></tr>
+<tr><th>Metric</th><th>Baseline</th><th>Current</th><th>Speedup (geo mean)</th></tr>
+<tr><td>Geometric mean %s</td><td>%s</td><td>%s</td><td>%sx [%s, %s]</td></tr>
+<tr><td>Median %s</td><td>%s</td><td>%s</td><td>-</td></tr>
+<tr><td>PAR2 score (us)</td><td>%s</td><td>%s</td><td>-</td></tr>
 </table>
-
 <h2>Statistical Test</h2>
-<p>Wilcoxon signed-rank test (paired): p = %.4f</p>
-<p>Geometric mean speedup: %.3fx (95%% CI: %.3f – %.3f)</p>
-
+<p>Wilcoxon signed-rank test (paired): p = %s</p>
+<p>Geometric mean speedup: %sx (95%% CI: %s - %s)</p>
 <h2>Solution Type Agreement</h2>
 <pre>%s</pre>
-
 <h2>Scatter Plot (%s, log scale)</h2>
 <img src="%s" style="max-width:100%%">
-
 </body></html>',
   opt$baseline, opt$current,
-  metric, b_gm, c_gm,
-  ifelse(is.na(speedup$estimate), NA, speedup$estimate),
-  ifelse(is.na(speedup$lower),    NA, speedup$lower),
-  ifelse(is.na(speedup$upper),    NA, speedup$upper),
-  metric, b_med, c_med,
-  b_par, c_par,
-  ifelse(is.na(wtest$p_value), NA, wtest$p_value),
-  ifelse(is.na(speedup$estimate), NA, speedup$estimate),
-  ifelse(is.na(speedup$lower),    NA, speedup$lower),
-  ifelse(is.na(speedup$upper),    NA, speedup$upper),
+  metric, fmt(b_gm,"%.1f"), fmt(c_gm,"%.1f"),
+  fmt(speedup$estimate), fmt(speedup$lower), fmt(speedup$upper),
+  metric, fmt(b_med,"%.1f"), fmt(c_med,"%.1f"),
+  fmt(b_par,"%.1f"), fmt(c_par,"%.1f"),
+  fmt(wtest$p_value,"%.4f"),
+  fmt(speedup$estimate), fmt(speedup$lower), fmt(speedup$upper),
   paste(capture.output(print(sol_comp)), collapse = "\n"),
-  metric,
-  basename(plot_path)
+  metric, basename(plot_path)
 )
 
 writeLines(html, opt$output)
 cat(sprintf("Report written to: %s\n", opt$output))
-cat(sprintf("Geometric mean speedup: %.3fx [%.3f, %.3f]\n",
-    speedup$estimate, speedup$lower, speedup$upper))
-cat(sprintf("Wilcoxon p-value: %.4f\n", wtest$p_value))
+cat(sprintf("Geometric mean speedup: %sx [%s, %s]\n",
+    fmt(speedup$estimate), fmt(speedup$lower), fmt(speedup$upper)))
+cat(sprintf("Wilcoxon p-value: %s\n", fmt(wtest$p_value, "%.4f")))

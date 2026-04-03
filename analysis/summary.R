@@ -3,7 +3,10 @@
 # Called automatically by run_benchmark.py; also usable manually.
 # Usage: Rscript analysis/summary.R <results.csv|results.json>
 
-source(file.path(dirname(sys.frame(1)$ofile), "functions.R"), chdir = TRUE)
+initial_options <- commandArgs(trailingOnly = FALSE)
+script_dir <- dirname(normalizePath(sub("--file=", "", initial_options[grep("--file=", initial_options)])))
+if (length(script_dir) == 0 || script_dir == "") script_dir <- "."
+source(file.path(script_dir, "functions.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 1) {
