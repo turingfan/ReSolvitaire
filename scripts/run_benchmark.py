@@ -57,23 +57,56 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, float]:
     """
     Run solver subprocess, measure time in microseconds.
     Returns (success, stdout, time_us).
+
+    The solver's own --timeout flag is the primary time enforcer.
+    Python's safety valve fires at 3× that limit for truly hung processes:
+      1. Send SIGTERM, wait up to 5 s for the process to exit and emit output.
+      2. If still alive, send SIGKILL.
+    Whatever stdout is available after SIGTERM is returned so the caller can
+    write a partial row rather than losing the run entirely.
     """
+    import signal
+
+    safety_timeout_s = timeout_ms / 1000.0 * 3
+
     t0 = time.perf_counter()
     try:
-        result = subprocess.run(
+        proc = subprocess.Popen(
             cmd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout_ms / 1000.0 * 3  # safety valve only; solver's --timeout is primary
         )
-        t1 = time.perf_counter()
-        time_us = (t1 - t0) * 1_000_000
-        return result.returncode == 0, result.stdout, time_us
-    except subprocess.TimeoutExpired:
-        t1 = time.perf_counter()
-        time_us = (t1 - t0) * 1_000_000
-        return False, "", time_us
-    except Exception as e:
+        try:
+            stdout, _ = proc.communicate(timeout=safety_timeout_s)
+            t1 = time.perf_counter()
+            time_us = (t1 - t0) * 1_000_000
+            return proc.returncode == 0, stdout, time_us
+
+        except subprocess.TimeoutExpired:
+            # Safety valve fired — solver appears hung.
+            # Step 1: SIGTERM, give it 5 s to finish and flush output.
+            try:
+                proc.send_signal(signal.SIGTERM)
+            except OSError:
+                pass
+            try:
+                stdout, _ = proc.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                # Step 2: force kill.
+                try:
+                    proc.kill()
+                except OSError:
+                    pass
+                stdout, _ = proc.communicate()
+
+            t1 = time.perf_counter()
+            time_us = (t1 - t0) * 1_000_000
+            # Return success=False; stdout may contain partial JSON the caller
+            # can try to parse.
+            return False, stdout, time_us
+
+    except Exception:
         t1 = time.perf_counter()
         time_us = (t1 - t0) * 1_000_000
         return False, "", time_us
@@ -238,8 +271,26 @@ def main():
                     max_depth = solver_data["max_depth"]
                     final_depth = solver_data["final_depth"]
                     solver_rss = solver_data["solver_resident_bytes"]
+                elif json_output.strip():
+                    # Process was killed but emitted partial/complete JSON — try to parse it.
+                    solver_data = parse_solver_json(json_output)
+                    # Mark as TERMINATED unless solver already set a type.
+                    if solver_data["solution_type"] == "UNKNOWN":
+                        solver_data["solution_type"] = "TERMINATED"
+                    solution_type = solver_data["solution_type"]
+                    nodes = solver_data["states_searched"]
+                    unique_nodes = solver_data["unique_states"]
+                    backtracks = solver_data["backtracks"]
+                    dominance_moves = solver_data["dominance_moves"]
+                    states_removed = solver_data["states_removed_from_cache"]
+                    cache_size = solver_data["cache_size"]
+                    cache_buckets = solver_data["cache_buckets"]
+                    max_depth = solver_data["max_depth"]
+                    final_depth = solver_data["final_depth"]
+                    solver_rss = solver_data["solver_resident_bytes"]
                 else:
-                    solution_type = "ERROR"
+                    # No output at all — hard kill with no data.
+                    solution_type = "KILLED"
                     nodes = 0
                     unique_nodes = 0
                     backtracks = 0
