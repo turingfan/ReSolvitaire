@@ -1,7 +1,7 @@
 # Benchmarking Framework Design
 
 **Branch:** `benchmark-python`
-**Status:** Active design — implementation in progress
+**Status:** Implementation complete
 **Last revised:** 2026-04-03
 
 ---
@@ -51,10 +51,11 @@
    concise statistical summary to stdout. Full comparison reports are produced
    separately via `analysis/benchmark.R`.
 
-6. **Memory tracking is multi-source.** Python measures RSS via the `resource`
-   module after each subprocess; this is the primary metric. C++ also reports
-   `getrusage` RSS in its JSON output as a secondary diagnostic; internal C++
-   memory tracking has historically been unreliable on macOS.
+6. **Memory tracking uses `/usr/bin/time`.** Python wraps each solver invocation
+   with `/usr/bin/time -l` (macOS) or `/usr/bin/time -v` (Linux) to capture
+   per-run peak RSS from stderr. This gives accurate, per-run isolation.
+   C++ also self-reports RSS in its `--json` output as a secondary diagnostic
+   (`solver_resident_bytes`), which is 0 for legacy solver runs.
 
 7. **HDF5 deferred.** Not needed at current scale; revisit above ~100k runs.
 
@@ -100,10 +101,10 @@ solvitaire --json --type klondike --random 42 --timeout 60000
 run_benchmark.py
     for each (seed, run_index):
         t0 = time.perf_counter()
-        result = subprocess.run([solver, "--json", "--type", ..., "--random", seed])
+        result = subprocess.run([/usr/bin/time -l/-v, solver, "--json", ...])
         t1 = time.perf_counter()
-        rss = resource.getrusage(RUSAGE_CHILDREN).ru_maxrss
-        parse result JSON
+        rss = parse /usr/bin/time stderr output  (per-run peak RSS, in bytes)
+        parse result JSON (or --classify CSV for --legacy mode)
         append CSV row
     on completion:
         Rscript analysis/summary.R results.csv   → stdout summary
@@ -163,17 +164,28 @@ python3 scripts/run_benchmark.py \
     --instances "tests/resources/level1/klondike/*.json" \
     --timeout 60000 \
     --output results/level1_current.csv
+
+# Legacy solver (pre-ReSolvitaire binary, uses --classify instead of --json)
+python3 scripts/run_benchmark.py \
+    --solver /path/to/old/solvitaire \
+    --type klondike \
+    --seeds 1-150 \
+    --timeout 60000 \
+    --legacy \
+    --output results/klondike_legacy.csv
 ```
 
 ### Behaviour
 
-- Calls `solvitaire --json` once per `(instance, run_index)` pair.
+- Calls solver once per `(instance, run_index)` pair, using `--json` (default)
+  or `--classify` with `--legacy`.
 - Warmup runs execute but are not written to output.
 - CSV column headers written on first row by default.
 - Rows flushed to disk incrementally — partial results preserved on interruption.
 - `solver_commit` captured from `git rev-parse --short HEAD` at startup.
 - Wall-clock time measured in Python around each subprocess call.
-- RSS measured via `resource.getrusage(RUSAGE_CHILDREN).ru_maxrss` after each call.
+- Peak RSS measured per-run via `/usr/bin/time -l` (macOS) or `/usr/bin/time -v`
+  (Linux) wrapped around the solver subprocess. Falls back to 0 if unavailable.
 - On completion: invokes `Rscript analysis/summary.R <output.csv>` if `Rscript`
   is on PATH. Prints summary table to stdout. Skipped gracefully if R not found.
 
@@ -307,9 +319,8 @@ One row per run. Column headers always present by default.
 | `cache_buckets` | int | Total cache bucket count |
 | `max_depth` | int | Maximum search depth reached |
 | `final_depth` | int | Final search depth |
-| `resident_memory_bytes` | int | RSS after run, Python `resource` module (primary) |
-| `virtual_memory_bytes` | int | Virtual memory, Python `resource` module |
-| `solver_resident_bytes` | int | RSS from C++ `getrusage` (diagnostic; may be unreliable) |
+| `resident_memory_bytes` | int | Per-run peak RSS via `/usr/bin/time` (primary; bytes) |
+| `solver_resident_bytes` | int | RSS from C++ `getrusage` in `--json` output (diagnostic; 0 for legacy) |
 | `streamliner` | string | Streamliner setting (e.g. `none`, `auto-foundations`) |
 | `cache_capacity` | int | `--cache-capacity` value |
 | `timeout_ms` | int | Timeout used |

@@ -11,17 +11,19 @@ Usage:
 """
 
 import argparse
+import functools
 import json
 import os
 import platform
 import re
-import resource
 import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+_CSV_LINE_RE = re.compile(r'^\d+\s*,')
 
 def get_solver_commit() -> str:
     """Get short commit hash of the solver repository."""
@@ -53,10 +55,50 @@ def glob_expand(patterns: List[str]) -> List[str]:
         files.extend([str(p) for p in paths])
     return sorted(files)
 
-def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, float]:
+def parse_rss_from_time_output(stderr: str) -> int:
     """
-    Run solver subprocess, measure time in microseconds.
-    Returns (success, stdout, time_us).
+    Extract peak RSS in bytes from /usr/bin/time stderr output.
+
+    macOS (-l flag):   '  3202760704  maximum resident set size'  → bytes
+    Linux  (-v flag):  'Maximum resident set size (kbytes): 3127296' → KB * 1024
+    """
+    # macOS format
+    m = re.search(r'(\d+)\s+maximum resident set size', stderr)
+    if m:
+        return int(m.group(1))
+    # Linux format
+    m = re.search(r'Maximum resident set size \(kbytes\): (\d+)', stderr)
+    if m:
+        return int(m.group(1)) * 1024
+    return 0
+
+
+@functools.lru_cache(maxsize=None)
+def time_prefix() -> List[str]:
+    """
+    Return the /usr/bin/time prefix appropriate for this platform, or [] if unavailable.
+
+    macOS: /usr/bin/time -l   (BSD time, outputs to stderr, RSS in bytes)
+    Linux: /usr/bin/time -v   (GNU time, outputs to stderr, RSS in KB)
+
+    Result is cached — platform and binary presence don't change mid-run.
+    """
+    time_bin = "/usr/bin/time"
+    if not os.path.isfile(time_bin):
+        return []
+    if platform.system() == "Darwin":
+        return [time_bin, "-l"]
+    else:
+        return [time_bin, "-v"]
+
+
+def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, float, int]:
+    """
+    Run solver subprocess, measure wall-clock time and peak RSS.
+    Returns (success, stdout, time_us, rss_bytes).
+
+    Wraps the command with /usr/bin/time (platform-appropriate) to get
+    per-run peak RSS from stderr. Falls back to rss_bytes=0 if unavailable.
 
     The solver's own --timeout flag is the primary time enforcer.
     Python's safety valve fires at 3× that limit for truly hung processes:
@@ -68,74 +110,141 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, float]:
     import signal
 
     safety_timeout_s = timeout_ms / 1000.0 * 3
+    prefix = time_prefix()
+    full_cmd = prefix + cmd
 
     t0 = time.perf_counter()
     try:
         proc = subprocess.Popen(
-            cmd,
+            full_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
         try:
-            stdout, _ = proc.communicate(timeout=safety_timeout_s)
+            stdout, stderr = proc.communicate(timeout=safety_timeout_s)
             t1 = time.perf_counter()
             time_us = (t1 - t0) * 1_000_000
-            return proc.returncode == 0, stdout, time_us
+            rss_bytes = parse_rss_from_time_output(stderr) if prefix else 0
+            return proc.returncode == 0, stdout, time_us, rss_bytes
 
         except subprocess.TimeoutExpired:
-            # Safety valve fired — solver appears hung.
-            # Step 1: SIGTERM, give it 5 s to finish and flush output.
             try:
                 proc.send_signal(signal.SIGTERM)
             except OSError:
                 pass
             try:
-                stdout, _ = proc.communicate(timeout=5)
+                stdout, stderr = proc.communicate(timeout=5)
             except subprocess.TimeoutExpired:
-                # Step 2: force kill.
                 try:
                     proc.kill()
                 except OSError:
                     pass
-                stdout, _ = proc.communicate()
+                stdout, stderr = proc.communicate()
 
             t1 = time.perf_counter()
             time_us = (t1 - t0) * 1_000_000
-            # Return success=False; stdout may contain partial JSON the caller
-            # can try to parse.
-            return False, stdout, time_us
+            rss_bytes = parse_rss_from_time_output(stderr) if prefix else 0
+            return False, stdout, time_us, rss_bytes
 
     except Exception:
         t1 = time.perf_counter()
         time_us = (t1 - t0) * 1_000_000
-        return False, "", time_us
+        return False, "", time_us, 0
 
-def get_rss_bytes() -> int:
-    """Get peak RSS for children in bytes (platform-normalized)."""
-    try:
-        ru = resource.getrusage(resource.RUSAGE_CHILDREN)
-        rss = ru.ru_maxrss
-        if platform.system() == "Darwin":
-            return int(rss)  # macOS: already bytes
-        else:
-            return int(rss * 1024)  # Linux: KB → bytes
-    except Exception:
-        return 0
+def parse_legacy_classify(text: str) -> Dict:
+    """
+    Parse --classify CSV output from either legacy or current solver.
 
-def get_vms_bytes() -> int:
-    """Get virtual memory for children in bytes (if available)."""
-    try:
-        ru = resource.getrusage(resource.RUSAGE_CHILDREN)
-        vms = ru.ru_ixrss  # shared memory size
-        if vms == 0:
+    Non-smart (13 columns):
+      seed, sol_type, time_ms, states, unique, backtracks, dom_moves,
+      removed, cache_size, cache_buckets, max_depth, depth, final_sol
+
+    Smart-solvability (24 columns, always — second pass may be empty):
+      seed, sol1_type, time1, states1, unique1, backtracks1, dom1,
+      removed1, cache_size1, cache_buckets1, max_depth1, depth1,
+      [sol1_type_repeat OR empty], [10 second-pass stats OR 10 empty],
+      final_sol
+
+    Strategy: always use the final column for solution_type.
+    For stats: use second-pass columns if second pass ran (col 12 non-empty),
+    else use first-pass columns.
+    """
+    defaults = {
+        "solution_type": "UNKNOWN",
+        "states_searched": 0,
+        "unique_states": 0,
+        "backtracks": 0,
+        "max_depth": 0,
+        "dominance_moves": 0,
+        "states_removed_from_cache": 0,
+        "cache_size": 0,
+        "cache_buckets": 0,
+        "final_depth": 0,
+        "solver_resident_bytes": 0,
+    }
+
+    def map_sol_type(s: str) -> str:
+        s = s.strip().lower()
+        if s == "solved":
+            return "SOLVED"
+        if s == "timed-out":
+            return "TIMEOUT"
+        if "unsolvable" in s:
+            return "UNWINNABLE"
+        return "UNKNOWN"
+
+    def safe_int(s: str) -> int:
+        try:
+            return int(s.strip())
+        except (ValueError, AttributeError):
             return 0
-        if platform.system() == "Darwin":
-            return int(vms)
+
+    try:
+        # Find the first CSV line with content (skip any noise before it)
+        csv_line = ""
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped and _CSV_LINE_RE.match(stripped):
+                csv_line = stripped
+                break
+        if not csv_line:
+            return defaults
+
+        parts = [p.strip() for p in csv_line.split(',')]
+        n = len(parts)
+
+        result = dict(defaults)
+
+        def assign_stats(base: int) -> None:
+            keys = ["states_searched", "unique_states", "backtracks", "dominance_moves",
+                    "states_removed_from_cache", "cache_size", "cache_buckets", "max_depth", "final_depth"]
+            for i, key in enumerate(keys):
+                result[key] = safe_int(parts[base + i])
+
+        if n == 13:
+            # Non-smart: straightforward
+            result["solution_type"] = map_sol_type(parts[12])
+            assign_stats(3)
+
+        elif n == 24:
+            # Smart-solvability: col 23 is always the final result
+            result["solution_type"] = map_sol_type(parts[23])
+            # Use second-pass stats if second pass ran (col 12 non-empty)
+            if parts[12].strip():
+                assign_stats(14)  # Second pass ran: cols 14-22
+            else:
+                assign_stats(3)   # No second pass: use first-pass stats, cols 3-11
+
         else:
-            return int(vms * 1024)
+            # Unknown format — return defaults with whatever solution type we can find
+            result["solution_type"] = map_sol_type(parts[-1]) if parts else "UNKNOWN"
+
+        return result
+
     except Exception:
-        return 0
+        return defaults
+
 
 def parse_solver_json(json_str: str) -> Dict:
     """Parse solver JSON output, with defaults for missing fields."""
@@ -186,8 +295,9 @@ def main():
     parser.add_argument("--type", help="Game type (required for --seeds mode)")
     parser.add_argument("--seeds", help="Seed range N-M (inclusive)")
     parser.add_argument("--instances", nargs="+", help="Glob patterns for instance files")
+    parser.add_argument("--legacy", action="store_true", help="Use --classify flag for legacy Solvitaire solver")
     parser.add_argument("--streamliner", default="none",
-                        choices=["none", "auto-foundations", "suit-symmetry", "both", "smart"],
+                        choices=["none", "auto-foundations", "suit-symmetry", "both", "smart-solvability"],
                         help="Streamliner mode")
     parser.add_argument("--cache-capacity", type=int, default=None, help="Cache capacity in bytes")
     parser.add_argument("--timeout", type=int, default=60000, help="Timeout per instance in ms")
@@ -224,7 +334,7 @@ def main():
     # Open CSV and write header
     csv_file = open(args.output, "w")
     if not args.no_header:
-        header = "instance,seed,run,solution_type,time_us,nodes,unique_nodes,backtracks,dominance_moves,states_removed_from_cache,cache_size,cache_buckets,max_depth,final_depth,resident_memory_bytes,virtual_memory_bytes,solver_resident_bytes,streamliner,cache_capacity,timeout_ms,solver_commit"
+        header = "instance,seed,run,solution_type,time_us,nodes,unique_nodes,backtracks,dominance_moves,states_removed_from_cache,cache_size,cache_buckets,max_depth,final_depth,resident_memory_bytes,solver_resident_bytes,streamliner,cache_capacity,timeout_ms,solver_commit"
         csv_file.write(header + "\n")
         csv_file.flush()
 
@@ -235,7 +345,11 @@ def main():
     try:
         for instance_idx, (instance, seed) in enumerate(zip(instances, seeds)):
             # Build solver command
-            cmd = [args.solver, "--json", "--timeout", str(args.timeout)]
+            if args.legacy:
+                cmd = [args.solver, "--classify", "--timeout", str(args.timeout)]
+            else:
+                cmd = [args.solver, "--json", "--timeout", str(args.timeout)]
+
             if seed_mode:
                 cmd += ["--type", args.type, "--random", str(seed)]
             else:
@@ -253,30 +367,20 @@ def main():
 
             # Run timed runs
             for run_num in range(1, args.iterations + 1):
-                success, json_output, time_us = run_solver(cmd, args.timeout)
+                success, json_output, time_us, rss_bytes = run_solver(cmd, args.timeout)
 
-                rss_bytes = get_rss_bytes()
-                vms_bytes = get_vms_bytes()
-
+                parse = parse_legacy_classify if args.legacy else parse_solver_json
                 if success:
-                    solver_data = parse_solver_json(json_output)
-                    solution_type = solver_data["solution_type"]
-                    nodes = solver_data["states_searched"]
-                    unique_nodes = solver_data["unique_states"]
-                    backtracks = solver_data["backtracks"]
-                    dominance_moves = solver_data["dominance_moves"]
-                    states_removed = solver_data["states_removed_from_cache"]
-                    cache_size = solver_data["cache_size"]
-                    cache_buckets = solver_data["cache_buckets"]
-                    max_depth = solver_data["max_depth"]
-                    final_depth = solver_data["final_depth"]
-                    solver_rss = solver_data["solver_resident_bytes"]
+                    solver_data = parse(json_output)
                 elif json_output.strip():
-                    # Process was killed but emitted partial/complete JSON — try to parse it.
-                    solver_data = parse_solver_json(json_output)
-                    # Mark as TERMINATED unless solver already set a type.
+                    # Process was killed but emitted partial/complete output — try to parse it.
+                    solver_data = parse(json_output)
                     if solver_data["solution_type"] == "UNKNOWN":
                         solver_data["solution_type"] = "TERMINATED"
+                else:
+                    solver_data = None
+
+                if solver_data is not None:
                     solution_type = solver_data["solution_type"]
                     nodes = solver_data["states_searched"]
                     unique_nodes = solver_data["unique_states"]
@@ -291,20 +395,13 @@ def main():
                 else:
                     # No output at all — hard kill with no data.
                     solution_type = "KILLED"
-                    nodes = 0
-                    unique_nodes = 0
-                    backtracks = 0
-                    dominance_moves = 0
-                    states_removed = 0
-                    cache_size = 0
-                    cache_buckets = 0
-                    max_depth = 0
-                    final_depth = 0
-                    solver_rss = 0
+                    nodes = unique_nodes = backtracks = dominance_moves = 0
+                    states_removed = cache_size = cache_buckets = 0
+                    max_depth = final_depth = solver_rss = 0
 
                 # Write CSV row
                 seed_str = str(seed) if seed is not None else ""
-                csv_row = f"{instance},{seed_str},{run_num},{solution_type},{time_us:.0f},{nodes},{unique_nodes},{backtracks},{dominance_moves},{states_removed},{cache_size},{cache_buckets},{max_depth},{final_depth},{rss_bytes},{vms_bytes},{solver_rss},{args.streamliner},{args.cache_capacity if args.cache_capacity is not None else ''},{args.timeout},{solver_commit}"
+                csv_row = f"{instance},{seed_str},{run_num},{solution_type},{time_us:.0f},{nodes},{unique_nodes},{backtracks},{dominance_moves},{states_removed},{cache_size},{cache_buckets},{max_depth},{final_depth},{rss_bytes},{solver_rss},{args.streamliner},{args.cache_capacity if args.cache_capacity is not None else ''},{args.timeout},{solver_commit}"
                 csv_file.write(csv_row + "\n")
                 csv_file.flush()
 
@@ -325,7 +422,6 @@ def main():
                     "max_depth": max_depth,
                     "final_depth": final_depth,
                     "resident_memory_bytes": rss_bytes,
-                    "virtual_memory_bytes": vms_bytes,
                     "solver_resident_bytes": solver_rss,
                     "streamliner": args.streamliner,
                     "cache_capacity": args.cache_capacity,

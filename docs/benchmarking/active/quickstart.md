@@ -77,7 +77,27 @@ head -5 results/klondike_current.csv
 Columns: `instance, seed, run, solution_type, time_us, nodes, ...` — see
 [csv_schema.md](csv_schema.md) for the full reference.
 
-## 6. Manual R summary
+## 6. Compare current vs legacy solver
+
+```bash
+# Legacy binary (uses --classify flag, no --json support)
+python3 scripts/run_benchmark.py \
+    --solver /path/to/old/solvitaire \
+    --type klondike --seeds 1-150 --timeout 60000 \
+    --legacy --output results/klondike_legacy.csv
+
+# Full comparison
+Rscript analysis/benchmark.R \
+    --baseline results/klondike_legacy.csv \
+    --current  results/klondike_current.csv \
+    --output   results/legacy_vs_current.html
+```
+
+Note: `solver_resident_bytes` is 0 in legacy runs (the old solver has no
+`--json` output). `resident_memory_bytes` (from `/usr/bin/time`) is still
+captured accurately. All 20 CSV columns are populated.
+
+## 7. Manual R summary
 
 ```bash
 Rscript analysis/summary.R results/klondike_current.csv
@@ -89,8 +109,9 @@ Rscript analysis/summary.R results/klondike_current.csv
 |---|---|---|
 | `--iterations N` | 1 | Timed runs per instance |
 | `--warmup N` | 0 | Warmup runs (excluded from output) |
-| `--streamliner X` | `none` | `none`, `auto-foundations`, `suit-symmetry`, `both`, `smart` |
+| `--streamliner X` | `none` | `none`, `auto-foundations`, `suit-symmetry`, `both`, `smart-solvability` |
 | `--cache-capacity N` | 100000000 | Cache entry limit |
+| `--legacy` | off | Use `--classify` output (for pre-ReSolvitaire solver binaries) |
 | `--output-json FILE` | off | Also write JSON output |
 | `--no-summary` | off | Skip automatic R summary at end |
 | `--no-header` | off | Suppress CSV column headers |

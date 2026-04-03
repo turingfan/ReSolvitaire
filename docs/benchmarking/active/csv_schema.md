@@ -38,14 +38,10 @@ One row per run. Column headers always present by default (`--no-header` to supp
 
 ## Memory
 
-Memory tracking is multi-source. Internal C++ tracking has historically been
-unreliable on macOS; Python-measured RSS is the primary metric.
-
 | Column | Type | Source | Notes |
 |---|---|---|---|
-| `resident_memory_bytes` | int | Python `resource.getrusage(RUSAGE_CHILDREN).ru_maxrss` | Primary. Peak RSS of the solver subprocess. Unit is bytes on Linux, kilobytes on macOS — normalised to bytes by the script. |
-| `virtual_memory_bytes` | int | Python `resource` module | Virtual memory size. Less meaningful for cache-heavy workloads; included for completeness. |
-| `solver_resident_bytes` | int | C++ `getrusage(RUSAGE_SELF)` in solver `--json` output | Diagnostic. May undercount on macOS (reports only physical pages, not reserved). Compare against `resident_memory_bytes` to detect discrepancies. |
+| `resident_memory_bytes` | int | `/usr/bin/time -l` (macOS) or `/usr/bin/time -v` (Linux) | Primary. Per-run peak RSS of the solver subprocess, in bytes. Accurate and isolated per run. Falls back to 0 if `/usr/bin/time` is unavailable. |
+| `solver_resident_bytes` | int | C++ `getrusage(RUSAGE_SELF)` in solver `--json` output | Diagnostic. From solver's own self-reported RSS. 0 for legacy solver runs (no `--json` output). |
 
 ## Configuration
 
