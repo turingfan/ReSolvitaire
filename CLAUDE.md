@@ -160,3 +160,26 @@ Oracle files are JSON arrays; each entry stores `outcome`, `states_searched`, `b
 - **Release:** `-O3 -flto -DNDEBUG`, strict warnings: `-pedantic -Wall -Wextra -Werror`
 - **Debug:** `-O0 -g`
 - External deps: Boost (system install), RapidJSON (header-only in `lib/`), GoogleTest (CMake FetchContent v1.14.0)
+
+## Benchmarking
+
+Run benchmarks via the Python orchestration script (branch: `benchmark-python`):
+
+```bash
+# Run on 150 seeds, write CSV
+python3 scripts/run_benchmark.py \
+    --solver cmake-build-release/bin/solvitaire \
+    --type klondike --seeds 1-150 --timeout 60000 \
+    --output results/current.csv
+
+# Quick R summary (also runs automatically at end of run_benchmark.py)
+Rscript analysis/summary.R results/current.csv
+
+# Full comparison report
+Rscript analysis/benchmark.R \
+    --baseline results/baseline.csv \
+    --current  results/current.csv \
+    --output   results/comparison.html
+```
+
+See `docs/benchmarking/active/quickstart.md` for more.

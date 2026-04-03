@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# DEPRECATED: This script is superseded by run_benchmark.py + analysis/benchmark.R
+# See docs/benchmarking/active/design.md §7 for the replacement workflow.
+# This file will be removed in a future cleanup.
+
 import argparse
 import subprocess
 import json
