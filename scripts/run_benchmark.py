@@ -64,7 +64,7 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, float]:
             cmd,
             capture_output=True,
             text=True,
-            timeout=timeout_ms / 1000.0 + 10  # 10s grace above solver's own timeout
+            timeout=timeout_ms / 1000.0 * 3  # safety valve only; solver's --timeout is primary
         )
         t1 = time.perf_counter()
         time_us = (t1 - t0) * 1_000_000
