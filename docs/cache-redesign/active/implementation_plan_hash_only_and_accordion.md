@@ -73,12 +73,12 @@ private:
 ```
 
 Key design decisions:
-- **2-way TwoBig1, same as existing flat_cache.** The density gain comes from 8-byte
-  entries (4× more clusters than the 32-byte flat_cache for the same memory), not from
-  higher associativity. More clusters = better hash distribution. Same proven replacement
-  policy. No depth field available in an 8-byte entry, so TwoBig1 simplifies to:
-  slot 0 = always-replace with preference for the entry that has been there longer
-  (approximating depth preference), slot 1 = always-replace.
+- **2-way, following flat_cache pattern.** The density gain comes from 8-byte entries
+  (4× more clusters than the 32-byte flat_cache for the same memory), not from higher
+  associativity. More clusters = better hash distribution. No depth field available in
+  an 8-byte entry, so replacement simplifies to: slot 0 is preferred (only overwritten
+  when both slots are full), slot 1 is always-replace. This is a degenerate TwoBig1
+  without the depth comparison.
 - **Empty sentinel:** hash value 0 means empty. If a game state hashes to 0, store 1
   instead (one bit of discrimination lost, negligible impact).
 - **No payload access:** `insert()` and `contains()` call only `gs.get_zobrist_hash()`,
