@@ -47,9 +47,11 @@ existing LRU cache to measure false-positive rate.
 ```cpp
 class hash_only_cache : public cache_interface {
 public:
-    // 64-byte cache line holds 8 × 8-byte hash entries
-    struct alignas(64) cluster {
-        uint64_t hashes[8];  // 0 = empty slot
+    // 2-way cluster, same structure as flat_cache but with 8-byte hash entries
+    // instead of 32-byte compact_state entries. 16 bytes per cluster.
+    // Multiple clusters share a 64-byte cache line but are independently indexed.
+    struct cluster {
+        uint64_t hashes[2];  // 2 × 8 bytes = 16 bytes; 0 = empty slot
     };
 
     explicit hash_only_cache(uint64_t max_entries);
@@ -71,11 +73,14 @@ private:
 ```
 
 Key design decisions:
+- **2-way TwoBig1, same as existing flat_cache.** The density gain comes from 8-byte
+  entries (4× more clusters than the 32-byte flat_cache for the same memory), not from
+  higher associativity. More clusters = better hash distribution. Same proven replacement
+  policy. No depth field available in an 8-byte entry, so TwoBig1 simplifies to:
+  slot 0 = always-replace with preference for the entry that has been there longer
+  (approximating depth preference), slot 1 = always-replace.
 - **Empty sentinel:** hash value 0 means empty. If a game state hashes to 0, store 1
   instead (one bit of discrimination lost, negligible impact).
-- **Replacement policy:** Within 8 slots, use simple sequential scan. No depth tracking
-  (no payload to store it). Replace the oldest entry (circular index per cluster) or
-  the first empty slot.
 - **No payload access:** `insert()` and `contains()` call only `gs.get_zobrist_hash()`,
   never `gs.get_payload()`. This is the key performance win — no payload construction.
 
