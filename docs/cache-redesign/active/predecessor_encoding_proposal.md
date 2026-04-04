@@ -414,42 +414,51 @@ O(1). (Human contribution #7.)
 
 ## Verification Strategies (Human Contributions #27, #28)
 
-### In-Payload Hash for Fast-Reject (Contribution #27)
+### In-Payload Hash for Fast-Reject (Contribution #27) — LOW VALUE
 
-Store the full 64-bit Zobrist hash inside the payload entry. On a cache probe:
+Store the full 64-bit Zobrist hash inside the payload entry. On a cache probe,
+compare the 8-byte hash word first; if it mismatches, skip the full payload
+comparison. Cost: 8 bytes of payload space.
 
-1. Compare the 8-byte hash word (single cycle)
-2. If mismatch → guaranteed different state → skip full payload comparison
-3. If match → compare full payload for correctness (~1/2^64 false match rate)
-
-This moves the common case (bucket occupied by a different state) from a 52-byte
-`memcmp` to a single 64-bit word comparison. Cost: 8 bytes of payload space.
-
-In the 128-byte hash-guarded bucket layout, this is compatible with storing
-Entry 2's hash in Entry 1's cache line (#25) — they serve different purposes.
-The hash guard avoids *fetching* the second cache line; the in-payload hash
-avoids *comparing* the full payload once fetched.
-
-If 8 bytes of payload cannot be spared, this can be traded off against the
-hash-guarded second cache line — either optimisation independently provides
-fast rejection, but at different levels (DRAM fetch vs comparison).
+**Assessment: Not worth implementing at current payload sizes.** On modern
+hardware (Apple Silicon ARM64, x86-64 with SSE2/AVX2), compilers inline 32–64
+byte comparisons as fully branchless straight-line code. On ARM64, Clang emits
+`ldp`/`ccmp` chains that complete in ~5–8 cycles with all bytes loaded
+unconditionally — there is no early-exit behaviour at these sizes. The entire
+payload comparison is cheaper than a single branch misprediction and is dwarfed
+by the DRAM fetch cost of loading the cache line in the first place. The
+hash-guarded second cache line (#25) is the valuable optimisation because it
+avoids a **DRAM fetch**, not a comparison. This idea would only become relevant
+for payloads exceeding ~128 bytes, where compilers emit loop-based comparisons
+with genuine early exit.
 
 ### Hash-Only Cache Streamliner (Contribution #28)
 
 Each cache entry stores *only* the 64-bit Zobrist hash — no payload at all.
 
-**Density:** 8 entries per 64-byte cache line (8× over full-payload entries).
+**Density gain depends on the baseline entry size:**
+
+| Baseline | Baseline entries/64B | Hash-only entries/64B | Density gain |
+|---|---|---|---|
+| 32-byte descriptor cache (current) | 2 | 8 | 4× |
+| 64-byte predecessor encoding (proposed) | 1 | 8 | 8× |
+
 The entire cache probe becomes:
 ```
 bucket = hash % num_buckets
-for each of 8 slots in cache_line[bucket]:
+for each slot in cache_line[bucket]:   // 8 slots of 8 bytes
     if slot == hash: return HIT
 return MISS
 ```
 
-**No payload computation:** The cache never constructs or compares predecessor
-arrays. Only the Zobrist hash (already maintained incrementally for bucket
-selection) is used. This eliminates all payload overhead from the hot path.
+**Two sources of speedup:**
+
+1. **Higher density** — 4× or 8× more entries in the same memory → fewer
+   evictions → less re-search of already-visited states.
+2. **No payload computation** — the cache never constructs, maintains, or
+   compares payload arrays. Only the Zobrist hash (already maintained
+   incrementally for bucket selection) is used. This eliminates all payload
+   overhead from the hot path.
 
 **Correctness:**
 
@@ -467,7 +476,8 @@ verification strategy below.
 
 **Two-phase strategy for batch solvability surveys:**
 
-1. **Phase 1:** Run with hash-only cache (fast, 8× density, no payload overhead)
+1. **Phase 1:** Run with hash-only cache (fast, higher density, no payload
+   overhead)
 2. **Phase 2:** For games classified as unsolvable, re-run with full payload
    verification
 
@@ -476,7 +486,7 @@ The proportion requiring re-verification depends on the game (e.g., ~20% for
 Klondike, ~0.001% for FreeCell). Critically, the full-payload re-run is
 the baseline cost that would have been paid without the streamliner. The actual
 overhead of the two-phase strategy is only the initial hash-only run, which is
-*cheaper* than baseline (no payload computation, 8× cache density → fewer
+*cheaper* than baseline (no payload computation, higher cache density → fewer
 evictions → less re-search). **The streamliner is therefore strictly better in
 expected cost than a single full-payload run.**
 
@@ -484,8 +494,8 @@ expected cost than a single full-payload run.**
 
 | Mode | Entry size | Entries/64B | Payload | Use case |
 |---|---|---|---|---|
-| Full payload | 56–64 B | 1 | Predecessor array | Production / oracle |
-| Hash-in-payload | 56–64 B | 1 | Hash + predecessors | Faster probes (same density) |
+| Full payload (descriptor) | 32 B | 2 | Descriptor array | Current production |
+| Full payload (predecessor) | 56–64 B | 1 | Predecessor array | Future production |
 | Hash-only | 8 B | 8 | None | Batch surveys / streamliner |
 
 ---
