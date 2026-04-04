@@ -7,15 +7,24 @@
 #include "../input-output/output/state_printer.h"
 #include <cassert>
 #include <iostream>
+#include <memory>
+#include <string>
 
-// Wraps both lru_cache and flat_cache, asserting agreement on every operation.
+// Wraps two cache_interface implementations, asserting agreement on every operation.
 // Pre-eviction: insert() and contains() must return identical results.
 // Used for metamorphic testing only — not for production.
 class dual_cache : public cache_interface {
 public:
-    dual_cache(const game_state& gs, uint64_t capacity)
-        : lru(gs, capacity)
-        , flat(capacity)
+    // Primary is the cache whose result drives the solver (returned from insert/contains).
+    // Reference is compared against primary; mismatches are logged.
+    dual_cache(std::unique_ptr<cache_interface> primary,
+               std::unique_ptr<cache_interface> reference,
+               const std::string& primary_name = "primary",
+               const std::string& reference_name = "reference")
+        : primary_(std::move(primary))
+        , reference_(std::move(reference))
+        , primary_name_(primary_name)
+        , reference_name_(reference_name)
         , ops(0)
         , first_eviction_op(0)
         , eviction_occurred(false)
@@ -39,58 +48,60 @@ public:
 
     bool insert(const game_state& gs) override {
         ops++;
-        bool lru_result = lru.insert(gs);
-        bool flat_result = flat.insert(gs);
+        bool primary_result = primary_->insert(gs);
+        bool reference_result = reference_->insert(gs);
 
         if (!eviction_occurred) {
-            if (lru.get_states_removed_from_cache() > 0 ||
-                flat.get_states_removed_from_cache() > 0) {
+            if (primary_->get_states_removed_from_cache() > 0 ||
+                reference_->get_states_removed_from_cache() > 0) {
                 eviction_occurred = true;
                 first_eviction_op = ops;
             }
         }
 
-        if (!eviction_occurred && lru_result != flat_result) {
-            bool lru_hit = !lru_result;
-            bool flat_hit = !flat_result;
+        if (!eviction_occurred && primary_result != reference_result) {
+            bool primary_hit = !primary_result;
+            bool reference_hit = !reference_result;
 
-            if (lru_hit && !flat_hit) {
+            // lru_only_hits / flat_only_hits names kept for backward compatibility
+            // with existing test accessors. "lru" = reference, "flat" = primary.
+            if (reference_hit && !primary_hit) {
                 lru_only_hits++;
-            } else if (!lru_hit && flat_hit) {
+            } else if (!reference_hit && primary_hit) {
                 flat_only_hits++;
             }
 
             std::cerr << "MISMATCH [" << context() << "] at op " << ops
-                      << ": insert() " << (lru_hit ? "LRU=HIT" : "LRU=MISS")
-                      << ", " << (flat_hit ? "flat=HIT" : "flat=MISS") << std::endl;
+                      << ": insert() " << (reference_hit ? (reference_name_ + "=HIT") : (reference_name_ + "=MISS"))
+                      << ", " << (primary_hit ? (primary_name_ + "=HIT") : (primary_name_ + "=MISS")) << std::endl;
 
             if (first_mismatch_op == 0) {
                 first_mismatch_op = ops;
                 mismatch_zobrist_hash = gs.get_zobrist_hash();
-                mismatch_lru_hit = lru_hit;
-                mismatch_flat_hit = flat_hit;
+                mismatch_lru_hit = reference_hit;
+                mismatch_flat_hit = primary_hit;
             }
         }
 
-        return flat_result; // Return flat result to drive testing
+        return primary_result;
     }
 
     bool contains(const game_state& gs) const override {
-        bool lru_hit = lru.contains(gs);
-        bool flat_hit = flat.contains(gs);
+        bool primary_hit = primary_->contains(gs);
+        bool reference_hit = reference_->contains(gs);
 
-        if (!eviction_occurred && lru_hit != flat_hit) {
+        if (!eviction_occurred && primary_hit != reference_hit) {
             std::cerr << "MISMATCH [" << context() << "] at op " << ops
-                      << ": contains() " << (lru_hit ? "LRU=HIT" : "LRU=MISS")
-                      << ", " << (flat_hit ? "flat=HIT" : "flat=MISS") << std::endl;
+                      << ": contains() " << (reference_hit ? (reference_name_ + "=HIT") : (reference_name_ + "=MISS"))
+                      << ", " << (primary_hit ? (primary_name_ + "=HIT") : (primary_name_ + "=MISS")) << std::endl;
         }
 
-        return flat_hit;
+        return primary_hit;
     }
 
     void clear() override {
-        lru.clear();
-        flat.clear();
+        primary_->clear();
+        reference_->clear();
         ops = 0;
         eviction_occurred = false;
         lru_only_hits = 0;
@@ -98,15 +109,15 @@ public:
     }
 
     uint64_t size() const override {
-        return flat.size();
+        return primary_->size();
     }
 
     uint64_t get_states_removed_from_cache() const override {
-        return flat.get_states_removed_from_cache();
+        return primary_->get_states_removed_from_cache();
     }
 
     uint64_t bucket_count() const override {
-        return flat.bucket_count();
+        return primary_->bucket_count();
     }
 
     // Diagnostic accessors
@@ -117,8 +128,10 @@ public:
     uint64_t get_flat_only_hits() const { return flat_only_hits; }
 
 private:
-    lru_cache lru;
-    flat_cache flat;
+    std::unique_ptr<cache_interface> primary_;
+    std::unique_ptr<cache_interface> reference_;
+    std::string primary_name_;
+    std::string reference_name_;
     uint64_t ops;
     uint64_t first_eviction_op;
     bool eviction_occurred;

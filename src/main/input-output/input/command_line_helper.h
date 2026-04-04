@@ -59,6 +59,7 @@ public:
     bool get_reveal_hidden() const;
     bool get_debug() const;
     bool get_force_lru_cache() const;
+    const std::string& get_cache_type() const;
     bool get_version();
     static game_state::streamliner_options convert_streamliners(streamliner_opt);
 
@@ -104,6 +105,7 @@ private:
     bool reveal_hidden = false;
     bool debug = false;
     bool force_lru_cache = false;
+    std::string cache_type = "auto";
 };
 
 #endif //SOLVITAIRE_COMMAND_LINE_HELPER_H

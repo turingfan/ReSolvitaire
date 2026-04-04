@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 #include <fstream>
+#include <memory>
 #include "../../main/game/dual_cache.h"
+#include "../../main/game/flat_cache.h"
+#include "../../main/game/global_cache.h"
 #include "../../main/game/zobrist.h"
 #include "../../main/game/search-state/game_state.h"
 #include "../../main/solver/solver.h"
@@ -15,7 +18,11 @@ protected:
     void analyze_mismatch(const std::string& preset, int seed) {
         sol_rules rules = rules_parser::from_preset(preset);
         game_state gs(rules, seed, game_state::streamliner_options::NONE);
-        dual_cache cache(gs, 10000000);
+        dual_cache cache(
+            std::make_unique<flat_cache>(10000000),
+            std::make_unique<lru_cache>(gs, 10000000),
+            "flat", "lru"
+        );
         solver sol(gs, cache);
         sol.run(boost::optional<std::chrono::milliseconds>(10000));
 

@@ -29,6 +29,7 @@
 #include "../solver/solver.h"
 #include "../game/global_cache.h"
 #include "../game/flat_cache.h"
+#include "../game/hash_only_cache.h"
 #include "binomial_ci.h"
 #include <memory>
 
@@ -42,8 +43,8 @@ typedef std::chrono::milliseconds millisec;
 // SETUP METHODS //
 ///////////////////
 
-solvability_calc::solvability_calc(const sol_rules& r, uint64_t cache_capacity_) :
-        rules(r), cache_capacity(cache_capacity_) {
+solvability_calc::solvability_calc(const sol_rules& r, uint64_t cache_capacity_, const std::string& cache_type) :
+        rules(r), cache_capacity(cache_capacity_), cache_type_val(cache_type) {
 }
 
 //////////////////////
@@ -97,12 +98,12 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
         boost::optional<seed_result> stream_res, no_stream_res, final_res;
 
         if (sc->stream_opt == cmd_sos::SMART) {
-            stream_res = solve_seed(my_seed, (sc->timeout/10), sc->rules, sc->cache_capacity, sos::BOTH);
+            stream_res = solve_seed(my_seed, (sc->timeout/10), sc->rules, sc->cache_capacity, sos::BOTH, false, sc->cache_type_val);
 
             switch (stream_res->second.sol_type) {
                 case solver::result::type::UNSOLVABLE:
                 case solver::result::type::TIMEOUT:
-                    no_stream_res = solve_seed(my_seed, sc->timeout, sc->rules, sc->cache_capacity, sos::NONE);
+                    no_stream_res = solve_seed(my_seed, sc->timeout, sc->rules, sc->cache_capacity, sos::NONE, false, sc->cache_type_val);
                     final_res = *no_stream_res;
                     break;
                 default:
@@ -111,7 +112,7 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
             }
         } else {
             no_stream_res = solve_seed(my_seed, sc->timeout, sc->rules, sc->cache_capacity,
-                                       command_line_helper::convert_streamliners(sc->stream_opt));
+                                       command_line_helper::convert_streamliners(sc->stream_opt), false, sc->cache_type_val);
             final_res = *no_stream_res;
         }
 
@@ -145,13 +146,16 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
 solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec timeout, const sol_rules& rules,
                                                           uint64_t cache_capacity,
                                                           game_state::streamliner_options stream_opt,
-                                                          bool force_lru) {
+                                                          bool force_lru,
+                                                          const std::string& cache_type) {
     game_state gs(rules, seed, stream_opt, force_lru);
 
     std::unique_ptr<cache_interface> cache_ptr;
     bool suit_sym = stream_opt == game_state::streamliner_options::SUIT_SYMMETRY
                  || stream_opt == game_state::streamliner_options::BOTH;
-    if (use_new_cache(rules, suit_sym) && !force_lru) {
+    if (cache_type == "hash-only") {
+        cache_ptr = std::make_unique<hash_only_cache>(cache_capacity);
+    } else if (use_new_cache(rules, suit_sym) && !force_lru) {
         cache_ptr = std::make_unique<flat_cache>(cache_capacity);
     } else {
         cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
