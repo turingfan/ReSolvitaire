@@ -131,6 +131,11 @@ From a prompt:
 **Insight**: Two sub-insights: (a) The predecessor encoding makes zone separators unnecessary. Each card's predecessor value implicitly encodes which zone/pile it belongs to (a card with predecessor IN_SPACE is at the bottom of a tableau pile; a card with predecessor IN_CELL is in a cell; etc.). This eliminates the separator tokens that legacy Solvitaire needed between zones. (b) In a 128-byte bucket with two 64-byte entries (two cache lines), the last 8 bytes of the first cache line can store the full Zobrist hash of the second entry. On lookup, after checking Entry 1, the CPU can compare the probe hash against this stored hash — already in L1, zero cost — before deciding whether to fetch the second cache line. Since a random 64-bit hash collision probability is ~1/2^64, this eliminates the second DRAM fetch for virtually all non-matching probes. The full payload verification on the second entry is still performed for correctness when the hash matches. This makes the 128-byte bucket nearly equivalent to the current 64-byte bucket in terms of memory access cost for the common case (misses).
 **Evidence**: Design discussion on 2026-04-03.
 
+## 26. Hybrid Zobrist combining for duplicate cards
+
+**Insight**: For games with duplicate cards (two-deck games, suit-reduced representations), pure XOR Zobrist hashing fails because identical cards in identical positions cancel out. The fix: use modular addition (not XOR) to combine Zobrist values *within* each equivalence class of duplicate cards, then XOR *across* equivalence classes. This gives `hash = XOR over all classes C of (SUM over members m in C of Z[C][pred_m])`. Addition is order-independent (commutative, associative) so duplicates within a class can be in any order, but two identical cards with the same predecessor produce `2 * Z[C][pred]` rather than the XOR result of `0`. XOR across classes preserves the fast mixing properties of standard Zobrist. Incremental updates remain O(1): XOR out the old class sum, update the member, XOR in the new class sum. When no duplicates exist (all classes are singletons), this degenerates exactly to standard Zobrist XOR hashing.
+**Evidence**: Design discussion on 2026-04-04, building on predecessor encoding (#24) and existing Zobrist infrastructure.
+
 ---
 
 ## Source Documents and Abbreviations

@@ -324,30 +324,80 @@ extend it with a third option for predecessor-based flat cache.
 
 ## Zobrist Hashing Details
 
-### Standard (no symmetry)
+### Hybrid Combining: Add Within Classes, XOR Across (Human Contribution #26)
 
-Table: `Z_pred[52][110]` — card ID × predecessor value (52 cards + 58 zone markers,
-covering up to 52 tableau piles). In practice only ~60 predecessor values are used
-for any given game, but allocating for the full range is fine.
-Combine: XOR. All cards distinguishable, no cancellation risk.
-Table size: 52 × 110 × 8 = ~46 KB. Fits in L1/L2.
+The Zobrist hash uses a **hybrid combining strategy** that surgically applies
+modular addition only where needed to prevent XOR cancellation, while preserving
+XOR's efficiency and mixing properties everywhere else:
 
-**Optimisation:** For games with few tableau piles (e.g., 7 in Klondike), the table
-can be trimmed to `Z_pred[52][58 + num_piles]`. Even the worst case (52 piles) is
-well under 64 KB.
+```
+hash = XOR over all equivalence classes C of (
+    SUM (modular addition) over members m in C of Z[C][predecessor_m]
+)
+```
 
-### Suit symmetry (colour: H↔D, S↔C)
+**Why this works:**
 
-Table: `Z_pred[26][110]` — equivalence class × predecessor value (using same zone
-marker space, but predecessor card IDs also reduced to 26 classes).
-Combine: modular addition. Commutative within class.
+- **Within a class (addition):** Two equivalent cards (e.g., two copies of AS in
+  a two-deck game, or AH and AD under colour symmetry) may have the same
+  predecessor. XOR would cancel: `Z[x] ^ Z[x] = 0`. Addition doesn't:
+  `Z[x] + Z[x] = 2*Z[x] ≠ 0`. Addition is also commutative, so the hash is
+  invariant under permutation of equivalent cards within a class.
+
+- **Across classes (XOR):** Different equivalence classes have independent Z
+  tables. Their sums are independent random 64-bit values, so XOR provides
+  excellent mixing with no cancellation risk. XOR is faster than addition and
+  has better theoretical properties for combining independent hash values.
+
+- **Degenerates cleanly:** When every class has exactly one member (no
+  duplicates — the standard single-deck no-symmetry case), the "sum" is just
+  the single Z value, and XOR combines them. Identical to the current approach.
+
+**Incremental update** when card `a` in class `C` changes predecessor:
+
+```
+// Look up sibling's predecessor (O(1) from predecessor array)
+old_sum = Z[C][old_pred_a] + Z[C][pred_b]
+new_sum = Z[C][new_pred_a] + Z[C][pred_b]
+hash ^= old_sum ^ new_sum
+```
+
+A single-card move touches at most 3 cards' predecessors (moved card, old
+successor, destination's old top card). Each update requires looking up the
+sibling copy's predecessor — O(1). Total cost: 3 class-sum recomputations per
+move.
+
+For classes with >2 members (suit-irrelevant: 4 per class), the sum includes
+all members. The sibling lookup generalises to reading all members' current
+predecessors from the array.
+
+### Zobrist Tables
+
+**Standard (no symmetry):**
+Table: `Z_pred[52][110]` — card ID × predecessor value (52 cards + up to 58 zone
+markers). Combine: pure XOR (each class has 1 member).
+Table size: 52 × 110 × 8 = ~46 KB.
+
+**Suit symmetry (colour: H↔D, S↔C):**
+Table: `Z_pred[26][110]` — equivalence class × predecessor value (predecessor
+card IDs also reduced to 26 classes + zone markers).
+Combine: hybrid (add within 26 classes of 2, XOR across classes).
 Table size: 26 × 110 × 8 = ~23 KB.
 
-### Suit-irrelevant (4 equivalent per rank)
-
+**Suit-irrelevant (4 equivalent per rank):**
 Table: `Z_pred[13][110]` — rank × predecessor value.
-Combine: modular addition.
+Combine: hybrid (add within 13 classes of 4, XOR across classes).
 Table size: 13 × 110 × 8 = ~11 KB.
+
+**Two-deck (2 copies per card):**
+Table: `Z_pred[52][162]` — card identity × predecessor value (104 card IDs reduced
+to 52 classes + zone markers — predecessor values need the full 104 + markers range
+or can use reduced 52 + markers if copies are interchangeable).
+Combine: hybrid (add within 52 classes of 2, XOR across classes).
+Table size: 52 × 162 × 8 = ~67 KB.
+
+**Optimisation:** For games with few tableau piles, the second dimension can be
+trimmed to `58 + num_piles` (single-deck) or `110 + num_piles` (two-deck).
 
 ### Move Update Cost
 
