@@ -3,7 +3,7 @@
 **Date:** 2026-04-03
 **Branch:** `refactor-caching`
 **Status:** Proposal — evaluation of human idea
-**Origin:** Ian Gent (human contributions #24, #25)
+**Origin:** Ian Gent (human contributions #24, #25, #26, #27, #28)
 
 ---
 
@@ -409,6 +409,84 @@ Multi-card group move: only the bottom card of the group changes predecessor
 (to the new destination's top card or IN_SPACE), and the destination's old top
 card changes successor. Interior cards keep their within-group predecessors.
 O(1). (Human contribution #7.)
+
+---
+
+## Verification Strategies (Human Contributions #27, #28)
+
+### In-Payload Hash for Fast-Reject (Contribution #27)
+
+Store the full 64-bit Zobrist hash inside the payload entry. On a cache probe:
+
+1. Compare the 8-byte hash word (single cycle)
+2. If mismatch → guaranteed different state → skip full payload comparison
+3. If match → compare full payload for correctness (~1/2^64 false match rate)
+
+This moves the common case (bucket occupied by a different state) from a 52-byte
+`memcmp` to a single 64-bit word comparison. Cost: 8 bytes of payload space.
+
+In the 128-byte hash-guarded bucket layout, this is compatible with storing
+Entry 2's hash in Entry 1's cache line (#25) — they serve different purposes.
+The hash guard avoids *fetching* the second cache line; the in-payload hash
+avoids *comparing* the full payload once fetched.
+
+If 8 bytes of payload cannot be spared, this can be traded off against the
+hash-guarded second cache line — either optimisation independently provides
+fast rejection, but at different levels (DRAM fetch vs comparison).
+
+### Hash-Only Cache Streamliner (Contribution #28)
+
+Each cache entry stores *only* the 64-bit Zobrist hash — no payload at all.
+
+**Density:** 8 entries per 64-byte cache line (8× over full-payload entries).
+The entire cache probe becomes:
+```
+bucket = hash % num_buckets
+for each of 8 slots in cache_line[bucket]:
+    if slot == hash: return HIT
+return MISS
+```
+
+**No payload computation:** The cache never constructs or compares predecessor
+arrays. Only the Zobrist hash (already maintained incrementally for bucket
+selection) is used. This eliminates all payload overhead from the hot path.
+
+**Correctness:**
+
+- **Solution found → definitely correct.** The solver has the actual move
+  sequence. False positives can only prune branches, never fabricate a solution.
+
+- **No solution found → almost certainly correct.** False positive probability
+  per probe is ~1/2^64. Over a full search of ~10^8 states, the expected number
+  of false positives is ~10^8 / 2^64 ≈ 5×10^-12. Essentially zero.
+
+**Relationship to #16 (1-bit payload):** This refines the 1-bit idea with
+full 64-bit hash discrimination (vastly better false positive rate — 1/2^64 vs
+dependent on bucket collision rate for 1-bit) and adds the two-phase
+verification strategy below.
+
+**Two-phase strategy for batch solvability surveys:**
+
+1. **Phase 1:** Run with hash-only cache (fast, 8× density, no payload overhead)
+2. **Phase 2:** For games classified as unsolvable, re-run with full payload
+   verification
+
+Games classified as solvable need no re-verification — the solution is proof.
+The proportion requiring re-verification depends on the game (e.g., ~20% for
+Klondike, ~0.001% for FreeCell). Critically, the full-payload re-run is
+the baseline cost that would have been paid without the streamliner. The actual
+overhead of the two-phase strategy is only the initial hash-only run, which is
+*cheaper* than baseline (no payload computation, 8× cache density → fewer
+evictions → less re-search). **The streamliner is therefore strictly better in
+expected cost than a single full-payload run.**
+
+**Implementation modes:**
+
+| Mode | Entry size | Entries/64B | Payload | Use case |
+|---|---|---|---|---|
+| Full payload | 56–64 B | 1 | Predecessor array | Production / oracle |
+| Hash-in-payload | 56–64 B | 1 | Hash + predecessors | Faster probes (same density) |
+| Hash-only | 8 B | 8 | None | Batch surveys / streamliner |
 
 ---
 
