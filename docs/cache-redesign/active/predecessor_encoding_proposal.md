@@ -43,49 +43,45 @@ Possible predecessor values:
 - **Card ID (0–51):** The card sits on another specific card on a pile.
 - **Zone marker:** The card is at a position that has no card predecessor.
 
-### Zone Markers Needed
+### Zone Markers: 8-Bit Encoding
 
-The predecessor must distinguish positions that have different strategic meaning.
-Considering all single-deck game types:
+With 8 bits per card (256 possible values), there is abundant space for card IDs,
+zone markers, and per-pile identifiers. No bit-packing needed.
 
-| Zone marker | Meaning | When used |
+| Range | Value(s) | Meaning |
 |---|---|---|
-| IN_SPACE | Bottom of a tableau pile (empty space below) | All games with tableau |
-| IN_CELL | In a freecell | Games with cells |
-| IN_STOCK | In the stock pile | Games with stock |
-| IN_WASTE | In the waste pile | Games with waste |
-| IN_RESERVE | In a reserve pile | Games with reserve |
-| IN_FOUNDATION | On a foundation pile | All foundation games |
-| IN_HOLE | On the hole pile | Hole games (Black Hole, etc.) |
-| BURIED | Not visible (Accordion: card under another) | Accordion |
-| STARTING | Face-down, unmoved (hidden card) | Games with hidden cards |
+| 0–51 | Card IDs | Predecessor is another specific card |
+| 52 | FINAL | Card is in a final position: foundation, hole, or buried (Accordion). Will not move again. |
+| 53 | IN_CELL | Card is in a freecell |
+| 54 | IN_STOCK | Card is in the stock |
+| 55 | IN_WASTE | Card is in the waste |
+| 56 | IN_RESERVE | Card is in a reserve pile |
+| 57 | STARTING | Face-down, unmoved (hidden card) |
+| 58–109 | PILE_0 through PILE_51 | Bottom of a specific tableau pile |
+| 110–255 | *(spare)* | 146 values available for future use |
 
-That's 9 zone markers + 52 card IDs = 61 values. **Fits in 6 bits (64 values).**
+**Key design decisions:**
 
-Three spare values remain for future use. If any game type requires more
-fine-grained distinction (e.g., specific pile identifiers for tableau-dealing
-games), we still fit.
+- **FINAL collapses three old markers into one.** Foundation, hole, and buried
+  cards all share the property that they are done — they will not be moved or
+  examined again. The foundation top ranks (stored separately in metadata bytes)
+  distinguish foundation state; the predecessor encoding doesn't need to.
+
+- **Per-pile PILE_N markers for tableau.** Tableau-dealing games (east-haven,
+  spiderette, will-o-the-wisp) deal cards to specific piles, so pile identity
+  matters. A card at the bottom of tableau pile 3 gets predecessor `PILE_3`
+  (value 61). Up to 52 distinct tableau piles are supported, covering every
+  preset game type and any conceivable custom game.
+
+- **For non-tableau-dealing games**, all PILE_N values are interchangeable (any
+  empty pile is equivalent). This is handled at a higher level — either accept
+  the slight deduplication loss (current flat cache behaviour) or apply pile
+  sorting (legacy Solvitaire approach).
 
 Note: cards in stock, waste, reserve, and foundations are often in their starting
 positions (human contribution #4). Their predecessors don't change during play,
 so the predecessor array for these cards is static — set once at init, never
-updated. Only tableau, cell, hole, and accordion predecessors change during search.
-
-### 6-Bit vs 8-Bit Per Card
-
-**6-bit encoding:** 52 × 6 = 312 bits = 39 bytes. Tight packing, slightly awkward
-bit manipulation (shift/mask across byte boundaries), but leaves 25 bytes free in
-a 64-byte payload.
-
-**8-bit encoding:** 52 × 8 = 52 bytes. Byte-aligned, trivial access
-(`predecessor[card_id]`), leaves 12 bytes free in a 64-byte payload. 12 bytes is
-still ample for foundation ranks (2 bytes), waste pointer (1 byte), occupied flag
-(1 byte), depth (2 bytes), and spare capacity.
-
-**Recommendation:** Start with 8-bit for simplicity. The 12 remaining bytes are
-sufficient for all metadata. If space pressure arises (e.g., for two-deck games),
-switch to 6-bit packing. For single-deck games, the simpler access pattern is
-worth the extra 13 bytes.
+updated. Only tableau, cell, and accordion predecessors change during search.
 
 ### Payload Layout (8-bit, 64 bytes)
 
@@ -100,6 +96,10 @@ Bytes 58–63:  spare (6 bytes)
 Comparison region: bytes 3–57 (55 bytes)
 ```
 
+The 8-bit encoding gives trivial access (`predecessor[card_id]`), 12 bytes of
+metadata, and 6 bytes of spare capacity. If space pressure arises for two-deck
+games (104 cards), 6-bit packing (52 × 6 = 39 bytes) remains an option.
+
 ---
 
 ## 128-Byte Bucket Design: Hash-Guarded Second Entry
@@ -113,18 +113,48 @@ line in almost all cases** (human contribution #25):
 
 ```
 Cache line 1 (bytes 0–63):
-  Bytes 0–55:   Entry 1 payload (56 bytes: occupied + depth + 52-byte comparison region + spare)
+  Bytes 0–55:   Entry 1 payload (56 bytes)
   Bytes 56–63:  Zobrist hash of Entry 2 (8 bytes)
 
 Cache line 2 (bytes 64–127):
   Bytes 64–119: Entry 2 payload (56 bytes)
-  Bytes 120–127: Zobrist hash of Entry 1 (8 bytes — for symmetry, optional)
+  Bytes 120–127: Zobrist hash of Entry 1 (8 bytes)
 ```
+
+Each entry gets 56 bytes of payload. The 8-bit predecessor array needs 52 bytes,
+plus 6 bytes of metadata (occupied, depth, foundation, waste) = 58 bytes total.
+That's 2 bytes over the 56-byte slot.
+
+**Resolution: depth is not part of the comparison region.** Depth (2 bytes) is used
+only for the TwoBig1 replacement policy, not for state matching. It does not need
+to be inside the entry's 56-byte slot — it can be stored in the spare bytes or in
+the hash-guard region alongside the other entry's hash. Alternatively, depth can
+share the occupied-flag byte (using fewer bits) or be stored in the 6 spare bytes
+of the full 64-byte layout and simply excluded from the hash-guarded path.
+
+**Practical layout per entry (56 bytes):**
+
+```
+Entry (56 bytes):
+  Byte 0:      occupied flag + depth (pack: 1 bit occupied, 15 bits depth,
+               or use byte 0 = occupied, byte 1 = depth as uint8 0–255)
+  Bytes 1–2:   foundation ranks (4 bits × 4 suits) or hole top card
+  Byte 3:      waste pointer
+  Bytes 4–55:  predecessor array (52 × 8 bits = 52 bytes)
+
+Comparison region: bytes 1–55 (55 bytes)
+```
+
+This fits. Depth is capped to 8 bits (max 255), which is sufficient — solitaire
+search depths rarely exceed 200. If more depth range is needed, steal one spare
+byte from the predecessor array (only 51 cards use predecessors in most games —
+cards on foundations have FINAL and could be inferred from foundation metadata
+rather than stored).
 
 ### Lookup Protocol
 
 1. **Load cache line 1** (bytes 0–63). This is the mandatory DRAM fetch.
-2. **Check Entry 1:** Compare bytes 3–55 against the probe state (53 bytes).
+2. **Check Entry 1:** Compare bytes 1–55 against the probe state (55 bytes).
    If match → hit. Done.
 3. **Check Entry 2 hash:** Compare the probe's Zobrist hash against bytes 56–63
    (Entry 2's stored hash). **This check is free** — the data is already in L1
@@ -144,61 +174,6 @@ never for misses, almost always for actual matches) do we pay for the second fet
 
 This makes the 128-byte bucket nearly as fast as the current 64-byte bucket for
 lookup-dominated workloads, while doubling the payload capacity.
-
-### Entry Payload with Hash Guard
-
-Each entry has 56 bytes of payload (not 64), because 8 bytes per cache line are
-used for the other entry's hash. With the 8-bit predecessor encoding:
-
-```
-Entry 1 (56 bytes):
-  Byte 0:      occupied flag
-  Bytes 1–2:   depth (excluded from comparison)
-  Bytes 3–4:   foundation ranks or hole top card
-  Byte 5:      waste pointer
-  Bytes 6–53:  predecessor array (48 cards × 8 bits)
-  Bytes 54–55: remaining 4 predecessors (packed) or spare
-```
-
-Hmm — 48 cards in bytes 6–53, but we need 52. That's 4 short. Options:
-
-**Option A:** Use 6-bit packing for the predecessor array after all: 52 × 6 = 39
-bytes, fitting in bytes 6–44, leaving bytes 45–55 for metadata and spare. This is
-the best fit for the hash-guarded design.
-
-**Option B:** Reduce metadata. We need: occupied (1 byte), depth (2 bytes),
-foundation (2 bytes), waste (1 byte) = 6 bytes of overhead. Predecessor array =
-52 bytes. Total = 58 bytes > 56. So 8-bit encoding doesn't fit with the hash guard
-in 56 bytes. **6-bit packing is needed for the hash-guarded design.**
-
-### Revised Layout with 6-Bit Predecessors + Hash Guard
-
-```
-Cache line 1 (bytes 0–63):
-  Byte 0:      occupied flag
-  Bytes 1–2:   depth
-  Bytes 3–4:   foundation ranks (4 bits × 4 suits) or hole top card
-  Byte 5:      waste pointer
-  Bytes 6–44:  predecessor array (52 × 6 bits = 39 bytes)
-  Bytes 45–55: spare (11 bytes — enough for any future metadata)
-  Bytes 56–63: Zobrist hash of Entry 2
-
-Cache line 2 (bytes 64–127):
-  Byte 64:     occupied flag
-  Bytes 65–66: depth
-  Bytes 67–68: foundation ranks / hole top
-  Byte 69:     waste pointer
-  Bytes 70–108: predecessor array (52 × 6 bits = 39 bytes)
-  Bytes 109–119: spare
-  Bytes 120–127: Zobrist hash of Entry 1
-
-Comparison region per entry: 42 bytes (bytes 3–44 / 67–108)
-```
-
-This gives: 6-bit predecessor packing, 11 bytes of spare per entry (generous), and
-the hash-guard optimisation. The comparison region (42 bytes) is larger than the
-current 29-byte comparison but well within acceptable bounds — the DRAM fetch
-dominates, not the memcmp.
 
 ---
 
@@ -351,21 +326,28 @@ extend it with a third option for predecessor-based flat cache.
 
 ### Standard (no symmetry)
 
-Table: `Z_pred[52][64]` — card ID × predecessor value (52 cards + 12 zone markers).
+Table: `Z_pred[52][110]` — card ID × predecessor value (52 cards + 58 zone markers,
+covering up to 52 tableau piles). In practice only ~60 predecessor values are used
+for any given game, but allocating for the full range is fine.
 Combine: XOR. All cards distinguishable, no cancellation risk.
-Table size: 52 × 64 × 8 = ~26 KB. Fits comfortably in L1.
+Table size: 52 × 110 × 8 = ~46 KB. Fits in L1/L2.
+
+**Optimisation:** For games with few tableau piles (e.g., 7 in Klondike), the table
+can be trimmed to `Z_pred[52][58 + num_piles]`. Even the worst case (52 piles) is
+well under 64 KB.
 
 ### Suit symmetry (colour: H↔D, S↔C)
 
-Table: `Z_pred[26][32]` — equivalence class × predecessor class (26 classes + ~6
-zone markers). Combine: modular addition. Commutative within class.
-Table size: 26 × 32 × 8 = ~6.5 KB. Tiny.
+Table: `Z_pred[26][110]` — equivalence class × predecessor value (using same zone
+marker space, but predecessor card IDs also reduced to 26 classes).
+Combine: modular addition. Commutative within class.
+Table size: 26 × 110 × 8 = ~23 KB.
 
 ### Suit-irrelevant (4 equivalent per rank)
 
-Table: `Z_pred[13][16]` — rank × predecessor rank/zone.
+Table: `Z_pred[13][110]` — rank × predecessor value.
 Combine: modular addition.
-Table size: 13 × 16 × 8 = ~1.6 KB.
+Table size: 13 × 110 × 8 = ~11 KB.
 
 ### Move Update Cost
 
@@ -389,18 +371,23 @@ O(1). (Human contribution #7.)
 2. **Foundation canonicalization under symmetry.** Must sort foundation ranks
    within colour groups. Straightforward but must be implemented and tested.
 
-3. **Two-deck games.** 104 cards × 6 bits = 78 bytes; × 8 bits = 104 bytes.
-   Doesn't fit in 56 bytes. Options: 128-byte payload, or hybrid with chain
-   model for tableau + predecessor for other zones. Deferred.
+3. **Two-deck games.** 104 cards × 8 bits = 104 bytes — doesn't fit in 56 bytes.
+   Options: 6-bit packing (104 × 6 = 78 bytes — still too large for one entry),
+   128-byte payload (3 cache lines per bucket), or a hybrid approach. Deferred.
 
 4. **Face-down cards.** Cards that are face-down and unrevealed have STARTING
    as their predecessor and never change. Their predecessor value is static.
-   When revealed, the predecessor transitions to IN_SPACE or a card ID depending
+   When revealed, the predecessor transitions to PILE_N or a card ID depending
    on position. Needs careful testing for Klondike-type games.
 
 5. **Interaction with `use_new_cache()`.** Extend the routing function with a
    third mode: `use_predecessor_cache()` for games excluded from the descriptor
    cache but supported by the predecessor encoding.
+
+6. **Depth bit-width in hash-guarded layout.** With depth packed into 1 byte
+   (max 255), extremely deep searches could overflow. In practice solitaire
+   search depths rarely exceed ~200, but this should be validated against
+   worst-case games (e.g., Spider).
 
 ---
 
