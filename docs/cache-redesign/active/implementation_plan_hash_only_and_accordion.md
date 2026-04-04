@@ -122,7 +122,7 @@ private:
 };
 ```
 
-This allows testing any pair: hash-only vs LRU, hash-only vs flat, flat vs LRU.
+This allows testing any pair: hash-only vs flat, hash-only vs LRU, flat vs LRU, etc.
 
 **Note:** The current `dual_cache` constructor takes `const game_state& gs` for
 `lru_cache` construction. The parameterised version receives pre-constructed caches,
@@ -133,9 +133,11 @@ so this dependency moves to the caller. Existing unit tests must be updated.
 **File:** `src/test/unit_tests/hash_only_cache_test.cpp`
 
 - Basic insert/contains/eviction for hash_only_cache
-- Dual-cache test: hash-only vs LRU on Klondike seeds, checking agreement pre-eviction
-- Dual-cache test: hash-only vs flat on same seeds (should agree perfectly pre-eviction
-  since both use the same Zobrist hash for lookup)
+- **Primary dual-cache test: hash-only vs flat** on Klondike seeds, checking agreement
+  pre-eviction. These use the same Zobrist hash for both bucket selection and matching,
+  so they should agree perfectly pre-eviction. Any disagreement indicates a bug.
+- Secondary: hash-only vs LRU for cross-validation (different hashing, so expect some
+  divergence from hash collisions — informational, not a correctness gate)
 
 #### A5. Benchmarking
 
@@ -286,23 +288,40 @@ void update_predecessor(uint8_t card_id, uint8_t new_pred) {
 
 **File:** `src/main/game/predecessor_flat_cache.h/cpp`
 
-Same structure as `flat_cache` but with `predecessor_state` entries. Since
-`predecessor_state` is 64 bytes, each cluster is one entry per cache line (or two
-entries per 128-byte cluster with hash guard #25 — start with single-entry for
-simplicity, optimise later).
+Same structure as `flat_cache` but with `predecessor_state` entries and 2-way
+128-byte clusters with hash guard (#25). Each cluster spans two cache lines:
+
+- **Cache line 1 (bytes 0–63):** Entry 0 payload (56 bytes) + Entry 1 Zobrist hash (8 bytes)
+- **Cache line 2 (bytes 64–127):** Entry 1 payload (56 bytes) + Entry 0 Zobrist hash (8 bytes)
+
+On probe, the CPU loads cache line 1. If Entry 0 doesn't match, it compares the
+probe hash against the stored Entry 1 hash (already in L1, zero cost). Only if
+that matches (~1/2^64 false positive rate) does it fetch cache line 2 for full
+payload verification. This gives 2-way associativity with virtually no extra
+memory access cost over 1-way.
 
 ```cpp
 class predecessor_flat_cache : public cache_interface {
 public:
-    struct alignas(64) cluster {
-        predecessor_state entry;  // 64 bytes = one cache line
+    struct alignas(64) cache_line {
+        uint8_t payload[56];    // predecessor_state payload (excluding occupied/depth from header)
+        uint64_t other_hash;    // Zobrist hash of the OTHER entry in this cluster
+    };
+    struct alignas(128) cluster {
+        cache_line lines[2];    // 2 × 64 bytes = 128 bytes
     };
     // ... same interface as flat_cache
 };
 ```
 
-Replacement policy: single-entry per cluster, always-replace. Simpler than TwoBig1
-but sufficient for validation. Can upgrade to 128-byte two-entry clusters later.
+Replacement policy: TwoBig1, same as existing flat_cache — slot 0 is
+depth-preferred, slot 1 is always-replace. Proven approach, and the 2-way
+design means the same eviction logic applies directly.
+
+**Rationale for 2-way over 1-way:** The hash guard (#25) was designed precisely
+for this — it eliminates the second cache line fetch for non-matching probes,
+so 2-way 128-byte clusters have the memory access profile of 1-way 64-byte
+clusters but with 2× the entries and depth-preferred retention.
 
 #### B4. Wire into game_state for accordion games
 
@@ -351,7 +370,8 @@ Use existing accordion test seeds. Verify outcomes match LRU cache results.
 - **predecessor_state.h/cpp:** ~100 lines. Straightforward data structure.
 - **Zobrist table + update logic:** ~80 lines in game_state. Follows existing patterns
   but requires understanding of accordion move mechanics.
-- **predecessor_flat_cache.h/cpp:** ~100 lines. Simpler than flat_cache (single entry).
+- **predecessor_flat_cache.h/cpp:** ~120 lines. Follows flat_cache pattern with 2-way
+  TwoBig1 clusters; hash guard adds ~15 lines for storing/checking the cross-entry hash.
 - **game_state wiring:** ~60 lines. Must correctly identify the 4 cards affected per
   accordion merge. Requires careful reading of existing accordion move code.
 - **Cache routing:** ~15 lines across 3 files. Mechanical.
@@ -388,7 +408,7 @@ git checkout -b implement-accordion-predecessor
 | **A5** Benchmarking | Manual | Run benchmarks, analyse results |
 | **B1** predecessor_state class | Sonnet | Straightforward data structure |
 | **B2** Zobrist hash + accordion wiring | **Opus** | Must correctly identify the 4-card update per merge; interacts with existing accordion move semantics in game_state.cpp |
-| **B3** predecessor_flat_cache class | Sonnet | Follows flat_cache pattern |
+| **B3** predecessor_flat_cache class | Sonnet | Follows flat_cache pattern; 128-byte cluster with hash guard adds modest complexity |
 | **B4** game_state + cache routing | **Opus** | Wiring predecessor updates into do_move/undo_move; correctness-critical |
 | **B5-B6** Tests | Sonnet (after B2/B4) | Test patterns are established; correctness verified by dual cache |
 
@@ -413,8 +433,8 @@ git checkout -b implement-accordion-predecessor
 ### Stream A
 
 - [ ] `hash_only_cache` passes all unit tests
-- [ ] Dual-cache (hash-only vs LRU) shows zero pre-eviction mismatches on Level 1
-      regression seeds
+- [ ] Dual-cache (hash-only vs flat) shows zero pre-eviction mismatches on Level 1
+      regression seeds (same Zobrist hash → must agree perfectly)
 - [ ] Benchmark shows measurable speedup (expect 10–30% from payload elimination +
       density improvement combined)
 - [ ] Zero outcome divergences on 1000 Klondike seeds (confirms false positive rate
@@ -435,8 +455,6 @@ git checkout -b implement-accordion-predecessor
 
 - **Extend predecessor encoding to tableau-dealing games** (east-haven, spiderette,
   will-o-the-wisp) — builds directly on B's infrastructure
-- **128-byte hash-guarded bucket** for predecessor cache — optimises B's single-entry
-  clusters to two-entry with hash guard (#25)
 - **Hash-only mode for predecessor cache** — combines A's hash-only concept with B's
   predecessor Zobrist hash
 - **Gaps games** — predecessor encoding with grid-position markers
