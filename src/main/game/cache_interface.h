@@ -39,4 +39,10 @@ inline bool use_new_cache(const sol_rules& rules, bool suit_symmetry_active = fa
         && (rules.stock_size == 0 || rules.stock_deal_t != sol_rules::stock_deal_type::TABLEAU_PILES);
 }
 
+// Helper function to determine if a game should use the predecessor cache
+// (predecessor_state + predecessor Zobrist). This applies to accordion games.
+inline bool use_predecessor_cache(const sol_rules& rules) {
+    return rules.accordion_size > 0;
+}
+
 #endif

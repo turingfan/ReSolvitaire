@@ -32,6 +32,7 @@
 #include "input-output/output/log_helper.h"
 #include "game/global_cache.h"
 #include "game/flat_cache.h"
+#include "game/predecessor_flat_cache.h"
 #include "game/zobrist.h"
 #include "solver/solver.h"
 #include "evaluation/solvability_calc.h"
@@ -286,7 +287,9 @@ pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout
     std::unique_ptr<cache_interface> cache_ptr;
     bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                  || str_opts == game_state::streamliner_options::BOTH;
-    if (use_new_cache(rules, suit_sym) && !force_lru) {
+    if (use_predecessor_cache(rules) && !force_lru) {
+        cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
+    } else if (use_new_cache(rules, suit_sym) && !force_lru) {
         cache_ptr = std::make_unique<flat_cache>(cache_capacity);
     } else {
         cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);

@@ -38,6 +38,7 @@
 #include "../game/search-state/game_state.h" // Keep this for game_state
 #include "../game/global_cache.h"
 #include "../game/flat_cache.h"
+#include "../game/predecessor_flat_cache.h"
 #include "../solver/solver.h"
 #include "../input-output/input/json-parsing/rules_parser.h"
 #include "../input-output/input/json-parsing/deal_parser.h"
@@ -121,7 +122,9 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
             std::unique_ptr<cache_interface> cache_ptr;
             bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                          || str_opts == game_state::streamliner_options::BOTH;
-            if (use_new_cache(rules, suit_sym) && !force_lru) {
+            if (use_predecessor_cache(rules) && !force_lru) {
+                cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
+            } else if (use_new_cache(rules, suit_sym) && !force_lru) {
                 cache_ptr = std::make_unique<flat_cache>(cache_capacity);
             } else {
                 cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
@@ -390,7 +393,9 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
             std::unique_ptr<cache_interface> cache_ptr;
             bool suit_sym_json = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                               || str_opts == game_state::streamliner_options::BOTH;
-            if (use_new_cache(rules, suit_sym_json)) {
+            if (use_predecessor_cache(rules)) {
+                cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
+            } else if (use_new_cache(rules, suit_sym_json)) {
                 cache_ptr = std::make_unique<flat_cache>(cache_capacity);
             } else {
                 cache_ptr = std::make_unique<lru_cache>(*gs, cache_capacity);
