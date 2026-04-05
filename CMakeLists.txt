@@ -218,6 +218,7 @@ set(GCC_WARNING_FLAGS
 # Clang-specific warning flags
 set(CLANG_WARNING_FLAGS
     -Wno-unknown-warning-option
+    -Wno-nontrivial-memcall
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
