@@ -80,16 +80,50 @@ TEST_F(PredecessorCacheTest, UndoRestoresToCachedState) {
     predecessor_flat_cache cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
+    uint64_t hash_before = gs.get_predecessor_zobrist_hash();
+    predecessor_state payload_before = gs.get_predecessor_payload();
+
     cache.insert(gs);
 
     auto moves = gs.get_legal_moves();
-    if (!moves.empty()) {
-        gs.make_move(moves[0]);
-        EXPECT_FALSE(cache.contains(gs));
+    ASSERT_FALSE(moves.empty()) << "No legal moves for accordion seed 1";
 
-        gs.undo_move(moves[0]);
-        EXPECT_TRUE(cache.contains(gs));
+    gs.make_move(moves[0]);
+
+    uint64_t hash_after_move = gs.get_predecessor_zobrist_hash();
+    predecessor_state payload_after_move = gs.get_predecessor_payload();
+
+    // Diagnostic: check the move changed something
+    bool hash_changed = (hash_after_move != hash_before);
+    bool payload_changed = !payload_after_move.matches(payload_before);
+    // Note: if move is not accordion type, predecessor state won't change,
+    // and contains should still return true
+    if (!hash_changed && !payload_changed) {
+        // Predecessor state unchanged — contains should still find it
+        EXPECT_TRUE(cache.contains(gs))
+            << "Predecessor state unchanged by move but contains fails";
+    } else {
+        EXPECT_FALSE(cache.contains(gs))
+            << "Predecessor state changed but contains still finds old state";
     }
+
+    gs.undo_move(moves[0]);
+
+    uint64_t hash_after_undo = gs.get_predecessor_zobrist_hash();
+    predecessor_state payload_after_undo = gs.get_predecessor_payload();
+
+    EXPECT_EQ(hash_before, hash_after_undo)
+        << "Hash not restored: before=" << hash_before << " after_undo=" << hash_after_undo;
+
+    // Check each predecessor byte
+    for (int i = 0; i < 52; i++) {
+        EXPECT_EQ(payload_before.get_predecessor(i), payload_after_undo.get_predecessor(i))
+            << "Predecessor mismatch at card " << i
+            << ": before=" << (int)payload_before.get_predecessor(i)
+            << " after_undo=" << (int)payload_after_undo.get_predecessor(i);
+    }
+
+    EXPECT_TRUE(cache.contains(gs));
 }
 
 // Test 8: Predecessor hash changes after accordion move
