@@ -8,6 +8,10 @@ and memory statistics, and optionally generates R summary statistics.
 Usage:
     python3 run_benchmark.py --solver PATH --seeds N-M --type TYPE --output results.csv
     python3 run_benchmark.py --solver PATH --instances '*.json' --output results.csv
+
+TODO: Add a passthrough mechanism (e.g. --solver-args or trailing -- args) so that
+arbitrary solver flags (like --cache-type) can be forwarded to the solvitaire
+invocation without modifying this script each time a new flag is added.
 """
 
 import argparse
