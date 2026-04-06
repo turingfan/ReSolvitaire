@@ -33,6 +33,7 @@
 #include "game/global_cache.h"
 #include "game/flat_cache.h"
 #include "game/predecessor_flat_cache.h"
+#include "game/hash_only_cache.h"
 #include "game/zobrist.h"
 #include "solver/solver.h"
 #include "evaluation/solvability_calc.h"
@@ -55,7 +56,8 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
                                         optional<int> seed, optional<const Document&> in_doc,
-                                        bool force_lru = false);
+                                        bool force_lru = false,
+                                        const std::string& cache_type = "auto");
 void print_version();
 
 // Decides what to do given supplied command-line options
@@ -104,18 +106,18 @@ int main(int argc, const char* argv[]) {
 
     // If the user has asked for a solvability percentage, calculates it
     if (clh.get_solvability() > 0) {
-        solvability_calc solv_c(*rules, clh.get_cache_capacity());
+        solvability_calc solv_c(*rules, clh.get_cache_capacity(), clh.get_cache_type());
         solv_c.calculate_solvability_percentage(clh.get_timeout(), clh.get_solvability(), clh.get_cores(),
                                                 clh.get_streamliners(), clh.get_resume());
     }
     // If the benchmark option has been supplied, generates it
     if (!clh.get_benchmark_json().empty()) {
-        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout());
+        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_cache_type());
         return EXIT_SUCCESS;
     }
 
     if (clh.get_benchmark() || clh.get_is_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_force_lru_cache());
+        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_force_lru_cache(), clh.get_cache_type());
         return EXIT_SUCCESS;
     }
     
@@ -194,14 +196,14 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
         timeout = clh.get_timeout();
         str_opt = clh.get_streamliners_game_state();
     }
-    solve_sol solution = solve_game(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache());
+    solve_sol solution = solve_game(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type());
 
     bool run_again = smart && solution.second.sol_type != solver::result::type::SOLVED;
     cout.flush();
     if (run_again)
         if (!clh.get_classify() && !clh.get_json_output()) cout << "Unsolvable using streamliner. Running again...\n";
     optional<solve_sol> streamliner_solution = run_again
-            ? solve_game(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache())
+            ? solve_game(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type())
             : optional<solve_sol>();
 
     if (clh.get_json_output()) {
@@ -280,14 +282,17 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
                                         optional<int> seed, optional<const Document&> in_doc,
-                                        bool force_lru) {
+                                        bool force_lru,
+                                        const std::string& cache_type) {
     game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru) : game_state(rules, *in_doc, str_opts, force_lru);
 
     // Use unique_ptr for polymorphic ownership
     std::unique_ptr<cache_interface> cache_ptr;
     bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                  || str_opts == game_state::streamliner_options::BOTH;
-    if (use_predecessor_cache(rules) && !force_lru) {
+    if (cache_type == "hash-only") {
+        cache_ptr = std::make_unique<hash_only_cache>(cache_capacity);
+    } else if (use_predecessor_cache(rules) && !force_lru) {
         cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
     } else if (use_new_cache(rules, suit_sym) && !force_lru) {
         cache_ptr = std::make_unique<flat_cache>(cache_capacity);

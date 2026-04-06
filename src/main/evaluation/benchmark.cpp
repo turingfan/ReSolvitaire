@@ -39,6 +39,7 @@
 #include "../game/global_cache.h"
 #include "../game/flat_cache.h"
 #include "../game/predecessor_flat_cache.h"
+#include "../game/hash_only_cache.h"
 #include "../solver/solver.h"
 #include "../input-output/input/json-parsing/rules_parser.h"
 #include "../input-output/input/json-parsing/deal_parser.h"
@@ -76,9 +77,6 @@ static uint64_t get_virtual_memory_bytes() {
         // On macOS, sum up memory usage components from rusage
         struct rusage usage;
         if (getrusage(RUSAGE_SELF, &usage) == 0) {
-            // ru_idrss (unshared data) + ru_ixrss (unshared stack) + ru_isrss (shared memory)
-            // These are in units of page*seconds, so convert to bytes
-            // Actually, on macOS these are deprecated. Use a simple heuristic: peak RSS is a good estimate
             return (uint64_t)usage.ru_maxrss;
         }
     #else
@@ -99,7 +97,7 @@ static uint64_t get_virtual_memory_bytes() {
     return 0;
 }
 
-void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms, bool force_lru) {
+void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms, bool force_lru, const std::string& cache_type) {
     rapidjson::FileWriteStream os(stdout, benchmark_buffer, sizeof(benchmark_buffer));
     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
 
@@ -122,7 +120,9 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
             std::unique_ptr<cache_interface> cache_ptr;
             bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                          || str_opts == game_state::streamliner_options::BOTH;
-            if (use_predecessor_cache(rules) && !force_lru) {
+            if (cache_type == "hash-only") {
+                cache_ptr = std::make_unique<hash_only_cache>(cache_capacity);
+            } else if (use_predecessor_cache(rules) && !force_lru) {
                 cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
             } else if (use_new_cache(rules, suit_sym) && !force_lru) {
                 cache_ptr = std::make_unique<flat_cache>(cache_capacity);
@@ -265,7 +265,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
     os.Flush();
 }
 
-void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int benchmark_iterations, bool benchmark_warmup, uint64_t timeout_ms) {
+void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int benchmark_iterations, bool benchmark_warmup, uint64_t timeout_ms, const std::string& cache_type) {
     ifstream f(json_path);
     if (!f) {
         cerr << "Error: Could not open benchmark JSON: " << json_path << endl;
@@ -393,7 +393,9 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
             std::unique_ptr<cache_interface> cache_ptr;
             bool suit_sym_json = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                               || str_opts == game_state::streamliner_options::BOTH;
-            if (use_predecessor_cache(rules)) {
+            if (cache_type == "hash-only") {
+                cache_ptr = std::make_unique<hash_only_cache>(cache_capacity);
+            } else if (use_predecessor_cache(rules)) {
                 cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
             } else if (use_new_cache(rules, suit_sym_json)) {
                 cache_ptr = std::make_unique<flat_cache>(cache_capacity);
