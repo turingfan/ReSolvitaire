@@ -261,34 +261,33 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
         }
     }
 
-    // This only occurs during testing
-    if (rules.tableau_pile_count == 0) return;
+    // Deals to the tableau piles (row-by-row) if any exist
+    if (rules.tableau_pile_count > 0) {
+        for (int t = 0; !deck.empty(); t++) {
+            card c = deck.back();
 
-    // Deals to the tableau piles (row-by-row)
-    for (int t = 0; !deck.empty(); t++) {
-        card c = deck.back();
+            // If only the top cards are face up, initially deals all face down
+            if (rules.face_up == fu::TOP_CARDS) c.turn_face_down();
 
-        // If only the top cards are face up, initially deals all face down
-        if (rules.face_up == fu::TOP_CARDS) c.turn_face_down();
+            // Adds the randomly generated card to the tableau piles
+            auto p = t % original_tableau_piles.size();
 
-        // Adds the randomly generated card to the tableau piles
-        auto p = t % original_tableau_piles.size();
+            // If we are doing a diagonal deal, each row should have one fewer card.
+            // Leftover cards are dealt normally in full rows.
+            auto row_idx = t / original_tableau_piles.size();
+            if (rules.diagonal_deal && row_idx < original_tableau_piles.size()) {
+                p = original_tableau_piles.size()-p-1;
+                pile::ref tableau_pile = original_tableau_piles[p];
 
-        // If we are doing a diagonal deal, each row should have one fewer card.
-        // Leftover cards are dealt normally in full rows.
-        auto row_idx = t / original_tableau_piles.size();
-        if (rules.diagonal_deal && row_idx < original_tableau_piles.size()) {
-            p = original_tableau_piles.size()-p-1;
-            pile::ref tableau_pile = original_tableau_piles[p];
-
-            if (p >= row_idx) {
+                if (p >= row_idx) {
+                    place_card(tableau_pile, c);
+                    deck.pop_back();
+                }
+            } else {
+                pile::ref tableau_pile = original_tableau_piles[p];
                 place_card(tableau_pile, c);
                 deck.pop_back();
             }
-        } else {
-            pile::ref tableau_pile = original_tableau_piles[p];
-            place_card(tableau_pile, c);
-            deck.pop_back();
         }
     }
 
