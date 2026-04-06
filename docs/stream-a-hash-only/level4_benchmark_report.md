@@ -4,7 +4,7 @@
 
 To isolate algorithmic speedup from memory initialization overhead, we benchmarked the experimental `hash_only_cache` against the baseline `flat_cache` using Level 4 regression instances (harder instances selected from oracles).
 
-The results confirm that while memory initialization (~175ms difference) dominates "easy" instances, the `hash_only_cache` provides a sustained **~10-15% throughput gain** (NPS) and can provide massive wins (>2x) on very long instances where its **4x density** significantly reduces cache eviction rates.
+The results confirm that while memory initialization (~175ms difference) dominates "easy" instances, the `hash_only_cache` provides a sustained **~10-15% throughput gain** (NPS).
 
 ---
 
@@ -20,9 +20,9 @@ Instances were grouped by their baseline oracle time to observe how speedup scal
 | **> 10s** | 5 | **2.227x** |
 
 ### Observations:
-- **Small instances (<1s)** are heavily skewed by the ~175ms advantage in zeroing out a 1.6GB (hash-only) vs 6.4GB (flat) memory block.
+- **Small instances (<1s)** are heavily skewed by the ~175ms advantage in zeroing out a 0.8GB (hash-only) vs 3.2GB (flat) memory block.
 - **Medium instances (1-10s)** show a consistent **10-14% speedup**. Since initialization overhead is <10% of the total runtime here, this reflects the raw performance gain of skipping state payload construction and better cache line utility.
-- **Large instances (>10s)** saw a jump back to **>2x speedup**. This is likely where the **4x density** of the hash-only cache (which fits 100M entries in 1.6GB) prevents evictions that occur in the more "bloated" flat-cache.
+- **Large instances (>10s)** saw a jump back to **>2x speedup**.
 
 ---
 
@@ -45,15 +45,15 @@ This 14% improvement in nodes per second is a direct result of the reduced work-
 
 ---
 
-## 4. Resource Usage
+### Resource Usage
 
-| Cache Type | Max Resident MB (approx) | Capacity (Entries) |
+| Cache Type | Max Allocated GB | Capacity (Entries) |
 | :--- | :--- | :--- |
-| **Flat Cache** | ~3,200 MB | 100 M |
-| **Hash-Only** | ~800 MB | 100 M |
+| **Flat Cache** | 3.2 GB | 100 M |
+| **Hash-Only** | 0.8 GB | 100 M |
 
-*(Note: Actual resident memory is lower than the theoretical allocation of 6.4GB/1.6GB because the OS only commits pages as they are touched by the solver).*
+*(Note: Actual resident memory is lower than the allocation because the OS only commits pages as they are touched by the solver).*
 
 ## Conclusion
 
-The `hash_only_cache` is a superior implementation for single-deck solitaire games. It uses 75% less memory, is 14% faster in raw throughput, and significantly more resilient to evictions in high-depth searches due to its 4x density.
+The `hash_only_cache` is a superior implementation for single-deck solitaire games. It uses 75% less allocated memory and is 14% faster in raw throughput.
