@@ -73,6 +73,7 @@ set(sources_game
         src/main/game/predecessor_state.cpp
         src/main/game/predecessor_flat_cache.h
         src/main/game/predecessor_flat_cache.cpp
+        src/main/game/predecessor_dual_cache.h
 )
 
 set(sources_solver
@@ -137,6 +138,7 @@ set(sources_test_unit
         src/test/unit_tests/mismatch_analyzer.cpp
         src/test/unit_tests/mismatch_diagnostic.cpp
         src/test/unit_tests/predecessor_cache_test.cpp
+        src/test/unit_tests/predecessor_dual_cache_test.cpp
 )
 
 set(sources_test_helper

@@ -36,6 +36,7 @@
 #include "../game/flat_cache.h"
 #include "../game/predecessor_flat_cache.h"
 #include "../game/dual_cache.h"
+#include "../game/predecessor_dual_cache.h"
 #include "../input-output/output/log_helper.h"
 #include "../input-output/output/state_printer.h"
 #include "../input-output/input/command_line_helper.h"
@@ -69,7 +70,8 @@ solver::solver(const game_state& gs, cache_interface& c)
         , current_node() {
     using_flat_cache = (dynamic_cast<flat_cache*>(&cache) != nullptr)
                     || (dynamic_cast<predecessor_flat_cache*>(&cache) != nullptr)
-                    || (dynamic_cast<dual_cache*>(&cache) != nullptr);
+                    || (dynamic_cast<dual_cache*>(&cache) != nullptr)
+                    || (dynamic_cast<predecessor_dual_cache*>(&cache) != nullptr);
     frontier.push_back(root);
     current_node = begin(frontier);
     res.states_searched = 0;
