@@ -36,10 +36,7 @@
 
 #include "../game/sol_rules.h" // Keep this for sol_rules
 #include "../game/search-state/game_state.h" // Keep this for game_state
-#include "../game/global_cache.h"
-#include "../game/flat_cache.h"
-#include "../game/predecessor_flat_cache.h"
-#include "../game/hash_only_cache.h"
+#include "../game/cache_factory.h"
 #include "../solver/solver.h"
 #include "../input-output/input/json-parsing/rules_parser.h"
 #include "../input-output/input/json-parsing/deal_parser.h"
@@ -117,18 +114,9 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
 
         for (int i = 0; i < iterations + (warmup ? 1 : 0); ++i) {
             game_state gs(rules, (int)seed, str_opts, force_lru);
-            std::unique_ptr<cache_interface> cache_ptr;
             bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                          || str_opts == game_state::streamliner_options::BOTH;
-            if (cache_type == "hash-only") {
-                cache_ptr = std::make_unique<hash_only_cache>(cache_capacity);
-            } else if (use_predecessor_cache(rules) && !force_lru) {
-                cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
-            } else if (use_new_cache(rules, suit_sym) && !force_lru) {
-                cache_ptr = std::make_unique<flat_cache>(cache_capacity);
-            } else {
-                cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
-            }
+            std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, gs, cache_capacity, cache_type, force_lru, suit_sym);
             solver sol(gs, *cache_ptr);
 
             auto start = chrono::high_resolution_clock::now();
@@ -390,18 +378,10 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
                 continue;
             }
 
-            std::unique_ptr<cache_interface> cache_ptr;
             bool suit_sym_json = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                               || str_opts == game_state::streamliner_options::BOTH;
-            if (cache_type == "hash-only") {
-                cache_ptr = std::make_unique<hash_only_cache>(cache_capacity);
-            } else if (use_predecessor_cache(rules)) {
-                cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
-            } else if (use_new_cache(rules, suit_sym_json)) {
-                cache_ptr = std::make_unique<flat_cache>(cache_capacity);
-            } else {
-                cache_ptr = std::make_unique<lru_cache>(*gs, cache_capacity);
-            }
+            // force_lru not available in run_json (known issue: benchmark.cpp KNOWN_ISSUES #2)
+            std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, *gs, cache_capacity, cache_type, false, suit_sym_json);
             solver sol(*gs, *cache_ptr);
             auto start = chrono::high_resolution_clock::now();
             solver::result res = sol.run(chrono::milliseconds(timeout_ms));

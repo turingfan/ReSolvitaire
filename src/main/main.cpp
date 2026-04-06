@@ -30,10 +30,7 @@
 #include "input-output/input/json-parsing/json_helper.h"
 #include "input-output/input/json-parsing/rules_parser.h"
 #include "input-output/output/log_helper.h"
-#include "game/global_cache.h"
-#include "game/flat_cache.h"
-#include "game/predecessor_flat_cache.h"
-#include "game/hash_only_cache.h"
+#include "game/cache_factory.h"
 #include "game/zobrist.h"
 #include "solver/solver.h"
 #include "evaluation/solvability_calc.h"
@@ -286,19 +283,9 @@ pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout
                                         const std::string& cache_type) {
     game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru) : game_state(rules, *in_doc, str_opts, force_lru);
 
-    // Use unique_ptr for polymorphic ownership
-    std::unique_ptr<cache_interface> cache_ptr;
     bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                  || str_opts == game_state::streamliner_options::BOTH;
-    if (cache_type == "hash-only") {
-        cache_ptr = std::make_unique<hash_only_cache>(cache_capacity);
-    } else if (use_predecessor_cache(rules) && !force_lru) {
-        cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
-    } else if (use_new_cache(rules, suit_sym) && !force_lru) {
-        cache_ptr = std::make_unique<flat_cache>(cache_capacity);
-    } else {
-        cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
-    }
+    std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, gs, cache_capacity, cache_type, force_lru, suit_sym);
 
     solver sol(gs, *cache_ptr);
     solver::result res = sol.run(std::chrono::milliseconds(timeout));

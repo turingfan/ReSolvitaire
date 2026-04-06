@@ -27,10 +27,7 @@
 
 #include "solvability_calc.h"
 #include "../solver/solver.h"
-#include "../game/global_cache.h"
-#include "../game/flat_cache.h"
-#include "../game/predecessor_flat_cache.h"
-#include "../game/hash_only_cache.h"
+#include "../game/cache_factory.h"
 #include "binomial_ci.h"
 #include <memory>
 
@@ -151,18 +148,9 @@ solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec ti
                                                           const std::string& cache_type) {
     game_state gs(rules, seed, stream_opt, force_lru);
 
-    std::unique_ptr<cache_interface> cache_ptr;
     bool suit_sym = stream_opt == game_state::streamliner_options::SUIT_SYMMETRY
                  || stream_opt == game_state::streamliner_options::BOTH;
-    if (cache_type == "hash-only") {
-        cache_ptr = std::make_unique<hash_only_cache>(cache_capacity);
-    } else if (use_predecessor_cache(rules) && !force_lru) {
-        cache_ptr = std::make_unique<predecessor_flat_cache>(cache_capacity);
-    } else if (use_new_cache(rules, suit_sym) && !force_lru) {
-        cache_ptr = std::make_unique<flat_cache>(cache_capacity);
-    } else {
-        cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
-    }
+    std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, gs, cache_capacity, cache_type, force_lru, suit_sym);
 
     solver sol(gs, *cache_ptr);
     return seed_result(seed, sol.run(boost::optional<std::chrono::milliseconds>(timeout)));
