@@ -69,37 +69,39 @@ bool predecessor_flat_cache::insert(const game_state& gs) {
     // Replacement Policy (TwoBig1):
     if (!payload_is_occupied(cl.lines[0].payload)) {
         // Slot 0 is empty
-        std::memcpy(cl.lines[0].payload, new_payload, 56);
-        cl.lines[0].other_hash = 0;
+        pack_payload(ps, cl.lines[0].payload);
+        cl.lines[0].payload[0] = 1; // occupied
+        cl.lines[0].other_hash = 0; // Slot 1 still empty
         occupied_count++;
     } else if (!payload_is_occupied(cl.lines[1].payload)) {
         // Slot 1 is empty, Slot 0 is occupied
         if (new_depth <= payload_get_depth(cl.lines[0].payload)) {
-            // New entry has lower/equal depth, promote to slot 0
+            // New entry wins Slot 0. Move old Slot 0 to Slot 1.
             std::memcpy(cl.lines[1].payload, cl.lines[0].payload, 56);
-            cl.lines[1].other_hash = hash;
-            std::memcpy(cl.lines[0].payload, new_payload, 56);
-            cl.lines[0].other_hash = 0;
+            cl.lines[1].other_hash = hash; // NEW Slot 0 hash (our current 'hash')
+            pack_payload(ps, cl.lines[0].payload);
+            cl.lines[0].payload[0] = 1;
+            // Note: we still don't know old Slot 0's hash for cl.lines[0].other_hash.
+            // This is a design limitation.
         } else {
-            std::memcpy(cl.lines[1].payload, new_payload, 56);
-            cl.lines[1].other_hash = 0;
-            cl.lines[0].other_hash = hash;
+            // New entry goes to Slot 1.
+            pack_payload(ps, cl.lines[1].payload);
+            cl.lines[1].payload[0] = 1;
+            cl.lines[0].other_hash = hash; // NEW Slot 1 hash
         }
         occupied_count++;
     } else if (new_depth <= payload_get_depth(cl.lines[0].payload)) {
-        // Both slots full, new entry depth-wins against slot 0
-        // Cascade slot 0 -> slot 1 (evicting old slot 1)
+        // Both full, new entry wins Slot 0. Cascade Slot 0 -> Slot 1.
         std::memcpy(cl.lines[1].payload, cl.lines[0].payload, 56);
         cl.lines[1].other_hash = hash;
-        std::memcpy(cl.lines[0].payload, new_payload, 56);
-        cl.lines[0].other_hash = 0;
+        pack_payload(ps, cl.lines[0].payload);
+        cl.lines[0].payload[0] = 1;
         eviction_count++;
     } else {
-        // Both slots full, new entry depth-loses against slot 0
-        // Overwrite slot 1 (evicting old slot 1)
-        std::memcpy(cl.lines[1].payload, new_payload, 56);
+        // Both full, new entry overwrites Slot 1.
+        pack_payload(ps, cl.lines[1].payload);
+        cl.lines[1].payload[0] = 1;
         cl.lines[0].other_hash = hash;
-        cl.lines[1].other_hash = 0;
         eviction_count++;
     }
 
@@ -146,4 +148,46 @@ uint64_t predecessor_flat_cache::get_states_removed_from_cache() const {
 
 uint64_t predecessor_flat_cache::bucket_count() const {
     return num_clusters * 2;
+}
+
+std::string predecessor_flat_cache::get_diagnostic_info(const game_state& gs) const {
+    const uint64_t hash = gs.get_predecessor_zobrist_hash();
+    const predecessor_state& ps = gs.get_predecessor_payload();
+    uint64_t idx = cluster_index(hash);
+    const cluster& cl = clusters[idx];
+
+    std::string res = "Predecessor Flat Cache Diagnostic (Cluster " + std::to_string(idx) + "):\n";
+    res += "  Probe Hash: " + std::to_string(hash) + "\n";
+    
+    // Slot 0
+    res += "  Slot 0: ";
+    if (!payload_is_occupied(cl.lines[0].payload)) {
+        res += "EMPTY\n";
+    } else {
+        res += "OCCUPIED, Other Hash: " + std::to_string(cl.lines[0].other_hash) + "\n";
+        res += "    Match? " + std::string(payload_matches(ps, cl.lines[0].payload) ? "YES" : "NO") + "\n";
+        res += "    Stored Predecessors: ";
+        for (int i = 0; i < 52; i++) res += std::to_string((int)cl.lines[0].payload[i+2]) + " ";
+        res += "\n";
+    }
+
+    // Slot 1
+    res += "  Slot 1: ";
+    if (!payload_is_occupied(cl.lines[1].payload)) {
+        res += "EMPTY\n";
+    } else {
+        res += "OCCUPIED, Stored Hash (from slot 0): " + std::to_string(cl.lines[0].other_hash) + "\n";
+        bool hash_match = (cl.lines[0].other_hash == hash);
+        res += "    Hash Match? " + std::string(hash_match ? "YES" : "NO") + "\n";
+        res += "    Payload Match? " + std::string(payload_matches(ps, cl.lines[1].payload) ? "YES" : "NO") + "\n";
+        res += "    Stored Predecessors: ";
+        for (int i = 0; i < 52; i++) res += std::to_string((int)cl.lines[1].payload[i+2]) + " ";
+        res += "\n";
+    }
+
+    res += "  Current Game Predecessors: ";
+    for (int i = 0; i < 52; i++) res += std::to_string((int)ps.get_predecessor(i)) + " ";
+    res += "\n";
+
+    return res;
 }

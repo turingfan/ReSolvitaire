@@ -291,6 +291,14 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
         }
     }
 
+    init_payload_and_hash();
+    if (rules.accordion_size > 0) {
+        init_predecessor_zobrist();
+        init_predecessor_state();
+    }
+
+    if (rules.tableau_pile_count == 0) return;
+
     // Now if necessary, turns the top cards face up
     if (rules.face_up == fu::TOP_CARDS)
         for (pile::ref pr = 0; pr < static_cast<pile::ref>(piles.size()); ++pr)
@@ -303,12 +311,6 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
     for (auto& p : piles) piles_sz += p.size();
     if (piles_sz != rules.max_rank * (rules.two_decks ? 8:4)) {
         throw runtime_error("Error: incorrect number of cards in starting piles");
-    }
-
-    init_payload_and_hash();
-    if (rules.accordion_size > 0) {
-        init_predecessor_zobrist();
-        init_predecessor_state();
     }
 }
 
@@ -900,19 +902,23 @@ void game_state::make_accordion_move(move m) {
     pred_undo_entries.push_back({from_cid, old_from_pred});
     frame.count++;
 
-    // 3. If there's a pile to the right of from, its top card pointed at from's card.
-    //    After from is removed, update it to point at from's old predecessor.
+    // 3. If there's a pile to the right of from (pile 'N'), its top card pointed at from's card.
+    //    If from moves to its immediate left neighbor (pile 'to'), it is still N's left neighbor.
+    //    If from moves further (3-left), N now points to from's old left neighbor.
     auto from_it = std::find(accordion.begin(), accordion.end(), m.from);
     assert(from_it != accordion.end());
     auto right_it = std::next(from_it);
-    if (right_it != accordion.end() && *right_it != m.to) {
-        // right_it is not 'to' — need to update its top card's predecessor
-        card right_top = piles[*right_it].top_card();
-        uint8_t right_cid = zobrist_hash::card_id(right_top.get_suit(), right_top.get_rank());
-        uint8_t old_right_pred = predecessor_array[right_cid];
-        update_predecessor(right_cid, old_from_pred);
-        pred_undo_entries.push_back({right_cid, old_right_pred});
-        frame.count++;
+    if (right_it != accordion.end()) {
+        auto from_left_it = (from_it == accordion.begin()) ? accordion.end() : std::prev(from_it);
+        if (from_left_it == accordion.end() || *from_left_it != m.to) {
+            // from did NOT move to its immediate left neighbor — its right neighbor's pred changes
+            card right_top = piles[*right_it].top_card();
+            uint8_t right_cid = zobrist_hash::card_id(right_top.get_suit(), right_top.get_rank());
+            uint8_t old_right_pred = predecessor_array[right_cid];
+            update_predecessor(right_cid, old_from_pred);
+            pred_undo_entries.push_back({right_cid, old_right_pred});
+            frame.count++;
+        }
     }
 
     // Also: if to is to the right of from and they are not adjacent,
