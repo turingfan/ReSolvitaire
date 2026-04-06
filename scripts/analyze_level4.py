@@ -90,5 +90,52 @@ def analyze():
         for m in mismatches:
             print(f"  - {m}")
 
+    print("\n## 4. Node Count Ratio Analysis (Collision Detection)")
+    print("Ratio = flat_nodes / hash_nodes. Expected ~1.000 if no collisions.")
+    print("Ratio > 1.5  => potential FALSE POSITIVE (hash-only skipped too many nodes)")
+    print("Ratio < 0.9  => potential FALSE NEGATIVE / eviction difference (hash-only searched more nodes)")
+    print()
+    print("| Instance | Flat Nodes | Hash Nodes | Ratio | Flag |")
+    print("| :--- | ---: | ---: | :--- | :--- |")
+
+    false_positives = []
+    false_negatives = []
+
+    for r in rows:
+        flat_nodes = int(r['flat_nodes'])
+        hash_nodes = int(r['hash_nodes'])
+        # Only compare non-timeout definitive instances on both sides
+        if r['flat_outcome'] == 'timeout' or r['hash_outcome'] == 'timeout':
+            continue
+        if hash_nodes == 0:
+            continue
+        ratio = flat_nodes / hash_nodes
+        if ratio > 1.5:
+            flag = "*** FALSE POSITIVE (collision)"
+            false_positives.append((r['instance'], flat_nodes, hash_nodes, ratio))
+        elif ratio < 0.9:
+            flag = "* false negative / eviction"
+            false_negatives.append((r['instance'], flat_nodes, hash_nodes, ratio))
+        else:
+            flag = ""
+        if flag:
+            print(f"| {r['instance']} | {flat_nodes:,} | {hash_nodes:,} | {ratio:.3f}x | {flag} |")
+
+    if not false_positives and not false_negatives:
+        print("| (none flagged) | | | | |")
+
+    print()
+    if false_positives:
+        print(f"WARNING: {len(false_positives)} instance(s) flagged as potential false positives (ratio > 1.5x):")
+        for inst, fn, hn, ratio in false_positives:
+            print(f"  {inst}: flat={fn:,}, hash={hn:,}, ratio={ratio:.3f}x")
+    else:
+        print("No false positives detected (ratio <= 1.5 for all non-timeout instances).")
+
+    if false_negatives:
+        print(f"NOTE: {len(false_negatives)} instance(s) flagged as potential false negatives / eviction differences (ratio < 0.9):")
+        for inst, fn, hn, ratio in false_negatives:
+            print(f"  {inst}: flat={fn:,}, hash={hn:,}, ratio={ratio:.3f}x")
+
 if __name__ == "__main__":
     analyze()

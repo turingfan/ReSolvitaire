@@ -33,7 +33,16 @@ For instances where the baseline search took at least 1 second, the speedup is m
 
 - The hash-only cache provides a significant speedup on average (1.8x to 3x) and a dramatic 4x reduction in memory footprint.
 - For long searches (>=1s), the gain is reduced to ~1.18x. This suggests that for very deep searches, the overhead of payload construction becomes less dominant compared to other bottle-necks (e.g., search tree logic, cache miss rates, or memory bandwidth).
-- Given that outcomes were identical and 0 collisions were found in 28.5 million states, the `hash_only_cache` is a highly efficient and safe alternative for single-deck games.
+- The `hash_only_cache` delivers ~14% throughput gain and 4x memory reduction, making it attractive for performance-oriented benchmarking and exploration. However, Level 4 benchmarking (see Section 4) revealed that hash collisions do occur at low frequency (~1.8% of hard instances), causing silent incorrect pruning. It is therefore **not suitable for provably-correct solving** without an additional collision-detection mechanism.
 
-## 4. Known Issues
+## 4. Hash Collision Evidence
+
+Post-hoc analysis of Level 4 benchmark node counts (flat_nodes vs hash_nodes per instance) surfaced direct evidence of hash collisions:
+
+- **Node count agreement in 112 of 114 instances**: The ratio `flat_nodes / hash_nodes` is within a few nodes of 1.000, confirming the hash-only cache is functionally equivalent to the flat cache in the vast majority of cases.
+- **Two clear outliers confirm false-positive collisions**: raglan seed 1202 searched 6.14x fewer nodes in hash-only (26,850,474 flat vs 4,374,208 hash-only), and east-haven seed 871030 searched 3.30x fewer nodes (11,474,478 vs 3,473,070). These ratios are far outside normal noise and indicate that the cache falsely reported states as already visited, causing the solver to skip large subtrees.
+- **Correct outcomes were preserved in both cases**, but this is coincidental — in general, false-positive collisions can cause the solver to return an incorrect Solved/Unsolvable verdict.
+- **A handful of instances show hash-only searching slightly more nodes than flat** (ratio as low as ~0.894x), most likely due to eviction differences between the two implementations rather than false negatives.
+
+## 5. Known Issues
 See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for details on benchmarking script limitations discovered during this run.
