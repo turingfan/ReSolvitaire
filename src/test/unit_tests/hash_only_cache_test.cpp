@@ -137,29 +137,47 @@ TEST_F(HashOnlyCacheTest, StressConsistency) {
     EXPECT_LE(cache.size(), cache.bucket_count());
 }
 
+// Helper to get game_state for a seed
+static game_state gs_for_seed(const sol_rules& rules, int seed) {
+    return game_state(rules, seed, game_state::streamliner_options::NONE);
+}
+
 // Test 9: DualCacheAgreementWithFlatOnKlondike
 // hash_only_cache uses the same Zobrist hash as flat_cache for state identity.
 // Pre-eviction, both must agree perfectly on insert() results (both miss or both hit).
 TEST_F(HashOnlyCacheTest, DualCacheAgreementWithFlatOnKlondike) {
     sol_rules klondike_rules = rules_parser::from_preset("klondike-deal-1");
+    uint64_t total_states = 0;
 
-    for (int seed = 1; seed <= 5; ++seed) {
+    for (int seed = 1; seed <= 50; ++seed) {
         dual_cache::context() = "klondike-deal-1 (seed " + std::to_string(seed) + ")";
 
-        // Primary = hash_only, reference = flat_cache
-        game_state gs(klondike_rules, seed, game_state::streamliner_options::NONE);
+        // Primary = hash_only (denser), reference = flat_cache (payload-verified)
+        // Capacity: 200M states ensures no evictions for most Klondike runs
         dual_cache cache(
-            std::make_unique<hash_only_cache>(10000000),
-            std::make_unique<flat_cache>(10000000),
+            std::make_unique<hash_only_cache>(200000000),
+            std::make_unique<flat_cache>(200000000),
             "hash-only", "flat"
         );
-        solver sol(gs, cache);
-        sol.run(boost::optional<std::chrono::milliseconds>(10000));
+        solver sol(gs_for_seed(klondike_rules, seed), cache);
+        sol.run(boost::optional<std::chrono::milliseconds>(5000)); // 5s per seed to keep it fast
 
-        // hash-only can only miss states that flat hits (hash-only has no payload check,
-        // so it should never report a hit when flat misses). Both use Zobrist hash, so
-        // pre-eviction flat_only_hits (reference=flat hit, primary=hash-only miss) should be 0.
+        total_states += cache.get_ops();
+
+        // Any primary-only hit is a hash collision (false positive)
         EXPECT_EQ(cache.get_flat_only_hits(), 0u)
-            << "hash-only MISSED a state that flat HIT in klondike-deal-1 at seed " << seed;
+            << "hash-only COLLISION (false positive) in klondike-deal-1 at seed " << seed 
+            << " (occurred at or before op " << cache.get_first_eviction_op() << ")";
+        
+        // Any reference-only hit is a logic error (hash-only missed something flat saw)
+        EXPECT_EQ(cache.get_lru_only_hits(), 0u)
+            << "hash-only MISSED a state that flat HIT in klondike-deal-1 at seed " << seed
+            << " (occurred at or before op " << cache.get_first_eviction_op() << ")";
+
+        if (cache.had_eviction()) {
+            // We still got some useful coverage before eviction
+            // std::cout << "[          ] Seed " << seed << " evicted at op " << cache.get_first_eviction_op() << std::endl;
+        }
     }
+    std::cout << "[          ] Total state operations in DualCacheAgreement: " << total_states << std::endl;
 }
