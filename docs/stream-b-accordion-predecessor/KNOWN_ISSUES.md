@@ -2,6 +2,12 @@
 
 This document tracks subtle issues identified during the implementation and validation of the Accordion Predecessor Cache (Stream B).
 
+## Resolved Issues
+
+The following tests were failing during earlier development but are now fixed (commit bfc9365):
+- `PredecessorCacheTest.UndoRestoresToCachedState` — was failing because the `game_state` seed constructor exited early via `if (rules.tableau_pile_count == 0) return;` before reaching `init_predecessor_state()`. Fixed by wrapping the tableau-dealing loop in `if (rules.tableau_pile_count > 0)` instead of using an early return.
+- `PredecessorCacheTest.MultipleMovesAndUndos` — same root cause, same fix.
+
 ## 1. Force LRU Argument Dropped in `game_state` Constructors
 
 The `game_state` constructors take a `bool force_lru` argument which is intended to signal if only the legacy LRU cache should be used. Currently, this flag is:

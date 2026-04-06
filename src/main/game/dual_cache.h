@@ -63,7 +63,7 @@ public:
         flat_only_hits++;
       }
 
-      std::cerr << "!!! MISMATCH !!! [" << context() << "] at op " << ops
+      std::cerr << "MISMATCH [" << context() << "] at op " << ops
                 << ": insert() "
                 << (reference_hit ? (reference_name_ + "=HIT")
                                   : (reference_name_ + "=MISS"))
@@ -71,18 +71,6 @@ public:
                 << (primary_hit ? (primary_name_ + "=HIT")
                                 : (primary_name_ + "=MISS"))
                 << std::endl;
-
-      // Detailed mismatch dump
-      std::cerr << "--- MISMATCH DETAILS ---" << std::endl;
-      std::cerr << "Game State:\n" << gs << std::endl;
-      std::cerr << "Zobrist Hash: " << gs.get_zobrist_hash() << std::endl;
-      std::cerr << "Predecessor Hash: " << gs.get_predecessor_zobrist_hash()
-                << std::endl;
-      std::cerr << reference_name_ << " Info:\n"
-                << reference_->get_diagnostic_info(gs) << std::endl;
-      std::cerr << primary_name_ << " Info:\n"
-                << primary_->get_diagnostic_info(gs) << std::endl;
-      std::cerr << "------------------------" << std::endl;
 
       if (first_mismatch_op == 0) {
         first_mismatch_op = ops;
