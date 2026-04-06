@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <iomanip>
 #include "../../main/game/zobrist.h"
@@ -63,7 +64,11 @@ class RecordingDiagnosticCache : public dual_cache {
 public:
     RecordingDiagnosticCache(const game_state& gs, uint64_t capacity, std::ofstream& out,
                               const sol_rules& rules)
-        : dual_cache(gs, capacity), out_stream(out),
+        : dual_cache(
+            std::make_unique<flat_cache>(capacity),
+            std::make_unique<lru_cache>(gs, capacity),
+            "flat", "lru"
+          ), out_stream(out),
           op_count(0),
           rules_ref(rules),
           has_hole(rules.hole),
