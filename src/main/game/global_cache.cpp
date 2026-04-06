@@ -281,3 +281,17 @@ void lru_cache::set_non_live(item_list::iterator state_iter) {
 uint64_t lru_cache::get_states_removed_from_cache() const {
     return states_removed_from_cache;
 }
+
+std::string lru_cache::get_diagnostic_info(const game_state& gs) const {
+    std::string res = "LRU Cache Diagnostic:\n";
+    cached_game_state cgs(gs);
+    bool present = cache.get<1>().count(cgs) > 0;
+    res += "  Status: " + std::string(present ? "HIT" : "MISS") + "\n";
+    res += "  Stored Data (Card IDs): ";
+    for (card c : cgs.data) {
+        if (c == card::divider) res += "| ";
+        else res += std::to_string((int)zobrist_hash::card_id(c.get_suit(), c.get_rank())) + " ";
+    }
+    res += "\n";
+    return res;
+}

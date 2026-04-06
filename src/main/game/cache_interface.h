@@ -20,6 +20,9 @@ public:
     virtual uint64_t size() const = 0;
     virtual uint64_t get_states_removed_from_cache() const = 0;
     virtual uint64_t bucket_count() const = 0;
+    virtual std::string get_diagnostic_info(const game_state&) const {
+        return "No specialized diagnostic info available for this cache.\n";
+    }
 };
 
 // Helper function to determine if a game should use the new cache (compact_state + descriptor zobrist)

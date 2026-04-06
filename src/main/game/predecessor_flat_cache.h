@@ -47,6 +47,7 @@ public:
     uint64_t size() const override;
     uint64_t get_states_removed_from_cache() const override;
     uint64_t bucket_count() const override;
+    std::string get_diagnostic_info(const game_state& gs) const override;
 
 private:
     uint64_t cluster_index(uint64_t hash) const;
