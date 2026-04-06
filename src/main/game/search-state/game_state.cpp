@@ -59,6 +59,10 @@ typedef sol_rules::face_up_policy fu;
 typedef game_state::streamliner_options sos;
 typedef sol_rules::foundations_init_type fit;
 
+// Static predecessor Zobrist table
+uint64_t game_state::Z_pred[52][110];
+bool game_state::Z_pred_initialised = false;
+
 //////////////////
 // CONSTRUCTORS //
 //////////////////
@@ -69,9 +73,11 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
         : rules(s_rules)
         , stream_opts(stream_opts_)
         , foundations_base(card::rank_t(1))
+        , predecessor_zobrist_hash(0)
         , stock(255)
         , waste(255)
         , hole (255) {
+    std::memset(predecessor_array, 0, 52);
     // If there is a hole, creates pile
     if (rules.hole) {
         piles.emplace_back();
@@ -152,6 +158,10 @@ game_state::game_state(const sol_rules& s_rules, const Document& doc, streamline
         : game_state(s_rules, s_opts, force_lru) {
     deal_parser::parse(*this, doc);
     init_payload_and_hash();
+    if (rules.accordion_size > 0) {
+        init_predecessor_zobrist();
+        init_predecessor_state();
+    }
 }
 
 // Constructs an initial game state from a seed
@@ -251,36 +261,43 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
         }
     }
 
-    // This only occurs during testing
-    if (rules.tableau_pile_count == 0) return;
+    // Deals to the tableau piles (row-by-row) if any exist
+    if (rules.tableau_pile_count > 0) {
+        for (int t = 0; !deck.empty(); t++) {
+            card c = deck.back();
 
-    // Deals to the tableau piles (row-by-row)
-    for (int t = 0; !deck.empty(); t++) {
-        card c = deck.back();
+            // If only the top cards are face up, initially deals all face down
+            if (rules.face_up == fu::TOP_CARDS) c.turn_face_down();
 
-        // If only the top cards are face up, initially deals all face down
-        if (rules.face_up == fu::TOP_CARDS) c.turn_face_down();
+            // Adds the randomly generated card to the tableau piles
+            auto p = t % original_tableau_piles.size();
 
-        // Adds the randomly generated card to the tableau piles
-        auto p = t % original_tableau_piles.size();
+            // If we are doing a diagonal deal, each row should have one fewer card.
+            // Leftover cards are dealt normally in full rows.
+            auto row_idx = t / original_tableau_piles.size();
+            if (rules.diagonal_deal && row_idx < original_tableau_piles.size()) {
+                p = original_tableau_piles.size()-p-1;
+                pile::ref tableau_pile = original_tableau_piles[p];
 
-        // If we are doing a diagonal deal, each row should have one fewer card.
-        // Leftover cards are dealt normally in full rows.
-        auto row_idx = t / original_tableau_piles.size();
-        if (rules.diagonal_deal && row_idx < original_tableau_piles.size()) {
-            p = original_tableau_piles.size()-p-1;
-            pile::ref tableau_pile = original_tableau_piles[p];
-
-            if (p >= row_idx) {
+                if (p >= row_idx) {
+                    place_card(tableau_pile, c);
+                    deck.pop_back();
+                }
+            } else {
+                pile::ref tableau_pile = original_tableau_piles[p];
                 place_card(tableau_pile, c);
                 deck.pop_back();
             }
-        } else {
-            pile::ref tableau_pile = original_tableau_piles[p];
-            place_card(tableau_pile, c);
-            deck.pop_back();
         }
     }
+
+    init_payload_and_hash();
+    if (rules.accordion_size > 0) {
+        init_predecessor_zobrist();
+        init_predecessor_state();
+    }
+
+    if (rules.tableau_pile_count == 0) return;
 
     // Now if necessary, turns the top cards face up
     if (rules.face_up == fu::TOP_CARDS)
@@ -295,8 +312,6 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
     if (piles_sz != rules.max_rank * (rules.two_decks ? 8:4)) {
         throw runtime_error("Error: incorrect number of cards in starting piles");
     }
-
-    init_payload_and_hash();
 }
 
 game_state::game_state(const sol_rules& s_rules,
@@ -321,6 +336,10 @@ game_state::game_state(const sol_rules& s_rules,
     }
 
     init_payload_and_hash();
+    if (rules.accordion_size > 0) {
+        init_predecessor_zobrist();
+        init_predecessor_state();
+    }
 }
 
 // Generates a randomly ordered vector of cards
@@ -582,7 +601,7 @@ void game_state::make_built_group_move(move m) {
             bottom_cid, parent_cid, rules.build_pol,
             foundations_base, rules.max_rank);
         new_desc = (desc != 0) ? desc
-            : compact_state::ROOT;
+            : static_cast<uint8_t>(compact_state::ROOT);
     }
     update_card_descriptor(bottom_cid, new_desc);
 
@@ -863,13 +882,102 @@ void game_state::undo_sequence_move(const move m) {
 }
 
 void game_state::make_accordion_move(move m) {
+    // --- Predecessor updates (before pile move changes the board) ---
+    predecessor_undo_frame frame = {0};
+
+    card from_top = piles[m.from].top_card();
+    uint8_t from_cid = zobrist_hash::card_id(from_top.get_suit(), from_top.get_rank());
+    card to_top = piles[m.to].top_card();
+    uint8_t to_cid = zobrist_hash::card_id(to_top.get_suit(), to_top.get_rank());
+
+    // 1. to's top card becomes buried → FINAL
+    uint8_t old_to_pred = predecessor_array[to_cid];
+    update_predecessor(to_cid, predecessor_state::FINAL);
+    pred_undo_entries.push_back({to_cid, old_to_pred});
+    frame.count++;
+
+    // 2. from's top card inherits to's old predecessor (takes to's chain position)
+    uint8_t old_from_pred = predecessor_array[from_cid];
+    update_predecessor(from_cid, old_to_pred);
+    pred_undo_entries.push_back({from_cid, old_from_pred});
+    frame.count++;
+
+    // 3. If there's a pile to the right of from (pile 'N'), its top card pointed at from's card.
+    //    If from moves to its immediate left neighbor (pile 'to'), it is still N's left neighbor.
+    //    If from moves further (3-left), N now points to from's old left neighbor.
+    auto from_it = std::find(accordion.begin(), accordion.end(), m.from);
+    assert(from_it != accordion.end());
+    auto right_it = std::next(from_it);
+    if (right_it != accordion.end()) {
+        auto from_left_it = (from_it == accordion.begin()) ? accordion.end() : std::prev(from_it);
+        if (from_left_it == accordion.end() || *from_left_it != m.to) {
+            // from did NOT move to its immediate left neighbor — its right neighbor's pred changes
+            card right_top = piles[*right_it].top_card();
+            uint8_t right_cid = zobrist_hash::card_id(right_top.get_suit(), right_top.get_rank());
+            uint8_t old_right_pred = predecessor_array[right_cid];
+            update_predecessor(right_cid, old_from_pred);
+            pred_undo_entries.push_back({right_cid, old_right_pred});
+            frame.count++;
+        }
+    }
+
+    // Also: if to is to the right of from and they are not adjacent,
+    // the pile right of to still points at to's old top card, which is now buried.
+    // After the merge, from's card is on top of to, so the pile right of to
+    // should point to from's card. But we need to check this case.
+    if (m.to != m.from) {
+        auto to_it = std::find(accordion.begin(), accordion.end(), m.to);
+        auto to_right_it = std::next(to_it);
+        if (to_right_it != accordion.end() && *to_right_it != m.from) {
+            card to_right_top = piles[*to_right_it].top_card();
+            uint8_t to_right_cid = zobrist_hash::card_id(to_right_top.get_suit(), to_right_top.get_rank());
+            if (predecessor_array[to_right_cid] == to_cid) {
+                uint8_t old_tr_pred = predecessor_array[to_right_cid];
+                update_predecessor(to_right_cid, from_cid);
+                pred_undo_entries.push_back({to_right_cid, old_tr_pred});
+                frame.count++;
+            }
+        }
+    }
+
+    pred_undo_frames.push_back(frame);
+
+    // Update predecessor payload
+    pred_payload.clear();
+    pred_payload.set_occupied(true);
+    for (uint8_t i = 0; i < 52; i++) {
+        pred_payload.set_predecessor(i, predecessor_array[i]);
+    }
+
+    // --- Standard accordion move (pile operations + existing Zobrist) ---
     make_built_group_move(m);
     accordion.remove(m.from);
 }
 
 void game_state::undo_accordion_move(move m) {
+    // --- Standard accordion undo (pile operations + existing Zobrist) ---
     accordion.insert(upper_bound(begin(accordion), end(accordion), m.from), m.from);
     undo_built_group_move(m);
+
+    // --- Predecessor undo ---
+    assert(!pred_undo_frames.empty());
+    predecessor_undo_frame frame = pred_undo_frames.back();
+    pred_undo_frames.pop_back();
+
+    // Replay undo entries in reverse order
+    for (uint8_t i = 0; i < frame.count; i++) {
+        assert(!pred_undo_entries.empty());
+        predecessor_undo entry = pred_undo_entries.back();
+        pred_undo_entries.pop_back();
+        update_predecessor(entry.card_id, entry.old_pred);
+    }
+
+    // Rebuild predecessor payload from array
+    pred_payload.clear();
+    pred_payload.set_occupied(true);
+    for (uint8_t i = 0; i < 52; i++) {
+        pred_payload.set_predecessor(i, predecessor_array[i]);
+    }
 }
 
 // Places a card on a pile and if it is on a tableau, cell or reserve pile,
@@ -997,7 +1105,7 @@ void game_state::init_payload_and_hash() {
                     cid, parent_cid, rules.build_pol,
                     foundations_base, rules.max_rank);
                 new_desc = (desc != 0) ? desc
-                    : compact_state::ROOT;
+                    : static_cast<uint8_t>(compact_state::ROOT);
             }
             update_card_descriptor(cid, new_desc);
         }
@@ -1272,7 +1380,7 @@ compact_state game_state::recompute_payload_from_scratch() const {
                     uint8_t desc = parent_table::get_descriptor_for_parent(
                         cid, parent_cid, rules.build_pol,
                         foundations_base, rules.max_rank);
-                    new_desc = (desc != 0) ? desc : compact_state::ROOT;
+                    new_desc = (desc != 0) ? desc : static_cast<uint8_t>(compact_state::ROOT);
                 }
             }
             cp.set_descriptor(cid, new_desc);
@@ -1312,6 +1420,87 @@ void game_state::assert_payload_consistent() const {
            "make_move/undo_move descriptor update bug");
 }
 #endif
+
+////////////////////////////////////
+// PREDECESSOR ZOBRIST (ACCORDION) //
+////////////////////////////////////
+
+void game_state::init_predecessor_zobrist() {
+    if (Z_pred_initialised) return;
+
+    std::mt19937_64 rng(0xDEADBEEF42ULL);  // Fixed seed for reproducibility
+    for (int cid = 0; cid < 52; cid++) {
+        for (int pred = 0; pred < 110; pred++) {
+            Z_pred[cid][pred] = rng();
+        }
+    }
+    Z_pred_initialised = true;
+}
+
+void game_state::init_predecessor_state() {
+    // Clear everything
+    std::memset(predecessor_array, 0, 52);
+    predecessor_zobrist_hash = 0;
+    pred_payload.clear();
+    pred_payload.set_occupied(true);
+
+    // For accordion games: walk the accordion list left to right.
+    // Each pile's top card has predecessor = previous pile's top card (or PILE_0).
+    // Buried cards (non-top) get FINAL.
+    // Cards not in the accordion (not dealt yet) get STARTING.
+
+    // First, mark all cards as STARTING
+    for (uint8_t i = 0; i < 52; i++) {
+        predecessor_array[i] = predecessor_state::STARTING;
+        predecessor_zobrist_hash ^= Z_pred[i][predecessor_state::STARTING];
+    }
+
+    // Now process accordion piles
+    uint8_t prev_top_cid = 255;  // no previous pile yet
+    for (auto pr : accordion) {
+        if (piles[pr].empty()) continue;
+
+        // Top card: predecessor is previous pile's top card or PILE_0
+        card top = piles[pr].top_card();
+        uint8_t top_cid = zobrist_hash::card_id(top.get_suit(), top.get_rank());
+
+        uint8_t new_pred = (prev_top_cid == 255)
+            ? static_cast<uint8_t>(predecessor_state::PILE_0)
+            : prev_top_cid;
+
+        // Remove STARTING, add new_pred
+        predecessor_zobrist_hash ^= Z_pred[top_cid][predecessor_state::STARTING];
+        predecessor_array[top_cid] = new_pred;
+        predecessor_zobrist_hash ^= Z_pred[top_cid][new_pred];
+
+        // Buried cards (below top): FINAL
+        for (pile::size_type idx = 1; idx < piles[pr].size(); idx++) {
+            card c = piles[pr][idx];
+            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+            predecessor_zobrist_hash ^= Z_pred[cid][predecessor_state::STARTING];
+            predecessor_array[cid] = predecessor_state::FINAL;
+            predecessor_zobrist_hash ^= Z_pred[cid][predecessor_state::FINAL];
+        }
+
+        prev_top_cid = top_cid;
+    }
+
+    // Copy into payload
+    for (uint8_t i = 0; i < 52; i++) {
+        pred_payload.set_predecessor(i, predecessor_array[i]);
+    }
+}
+
+void game_state::update_predecessor(uint8_t card_id, uint8_t new_pred) {
+    uint8_t old_pred = predecessor_array[card_id];
+    predecessor_zobrist_hash ^= Z_pred[card_id][old_pred];
+    predecessor_array[card_id] = new_pred;
+    predecessor_zobrist_hash ^= Z_pred[card_id][new_pred];
+}
+
+void game_state::set_predecessor_payload_depth(uint8_t depth) {
+    pred_payload.set_depth(depth);
+}
 
 ///////////
 // PRINT //

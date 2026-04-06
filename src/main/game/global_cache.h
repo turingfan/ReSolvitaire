@@ -88,6 +88,7 @@ public:
     uint64_t size() const override;
     uint64_t bucket_count() const override;
     uint64_t get_states_removed_from_cache() const override;
+    std::string get_diagnostic_info(const game_state& gs) const override;
 
     void set_non_live(item_list::iterator);
     item_list::size_type cached_size() const;

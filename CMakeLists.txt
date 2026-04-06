@@ -15,6 +15,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
 
+# GCC LTO support: ensure gcc-ar and gcc-ranlib are available on Linux
+if(NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_AR "gcc-ar")
+    set(CMAKE_RANLIB "gcc-ranlib")
+endif()
+
 ###############################################################################
 ## source files ###############################################################
 ###############################################################################
@@ -62,7 +68,13 @@ set(sources_game
         src/main/game/parent_table.cpp
         src/main/game/flat_cache.h
         src/main/game/flat_cache.cpp
+        src/main/game/hash_only_cache.h
+        src/main/game/hash_only_cache.cpp
         src/main/game/dual_cache.h
+        src/main/game/predecessor_state.h
+        src/main/game/predecessor_state.cpp
+        src/main/game/predecessor_flat_cache.h
+        src/main/game/predecessor_flat_cache.cpp
 )
 
 set(sources_solver
@@ -122,10 +134,13 @@ set(sources_test_unit
         src/test/unit_tests/k_plus_stock_test.cpp
         src/test/unit_tests/zobrist_test.cpp
         src/test/unit_tests/flat_cache_test.cpp
+        src/test/unit_tests/hash_only_cache_test.cpp
         src/test/unit_tests/solver_cache_selection_test.cpp
         src/test/unit_tests/dual_cache_test.cpp
         src/test/unit_tests/mismatch_analyzer.cpp
         src/test/unit_tests/mismatch_diagnostic.cpp
+        src/test/unit_tests/predecessor_cache_test.cpp
+        src/test/unit_tests/predecessor_dual_cache_test.cpp
 )
 
 set(sources_test_helper
@@ -207,6 +222,7 @@ set(GCC_WARNING_FLAGS
 # Clang-specific warning flags
 set(CLANG_WARNING_FLAGS
     -Wno-unknown-warning-option
+    -Wno-nontrivial-memcall
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

@@ -6,125 +6,120 @@
 
 ## Building and Running
 
-Solvitaire can be built natively using CMake and a C++ compiler that supports C++14. It also requires the Boost libraries.
+Solvitaire requires a C++14 compiler, CMake 3.14+, and the Boost libraries.
+The compiled Boost component needed is `program_options`; several header-only components
+(`multi_index`, `optional`, `pool`, `property_tree`, `random`) are also used and are
+included automatically with any standard Boost installation.
+The primary development branch is `dev`, which is tested on macOS (Apple Silicon) and Linux (x86_64 / arm64).
 
-### Prerequisites
+---
 
-- A C++ compiler (GCC 7+, Clang 5+, or MSVC 2017+)
-- CMake 3.10 or higher
-- Boost libraries (system, filesystem, program_options, unit_test_framework)
+### (a) macOS
 
-On macOS (using Homebrew):
-```
-$ brew install cmake boost
-```
-
-On Ubuntu/Debian:
-```
-$ sudo apt-get install cmake libboost-all-dev
+**Prerequisites** (Homebrew):
+```bash
+brew install cmake boost
 ```
 
-### Build
-
-To build Solvitaire, you can use the provided `build.sh` script or run CMake commands manually.
-
-Using `build.sh`:
-```
-$ ./build.sh [--release|--debug] [--solvitaire|--unit-tests]
-(default args = "--release" "--solvitaire")
+**Build:**
+```bash
+./build.sh                          # release build (default)
+./build.sh --release --unit-tests   # also build test binary
 ```
 
-Manually with CMake:
-```
-$ cmake -B build -DCMAKE_BUILD_TYPE=Release
-$ cmake --build build
-```
-
-### Run
-
-The built binary will be located in the root directory (if using `build.sh`) or in the `build` directory (if manual).
-
-To run Solvitaire:
-```
-$ ./solvitaire --help
+**Test:**
+```bash
+cd cmake-build-release
+ctest -R '^unit_tests$' --output-on-failure
 ```
 
-For unit tests:
-```
-$ cd src/test
-$ ../../unit-tests
-```
-
-to see what solvitaire can do, use the `--help` command:
-
-```
-$ ./enter-container.sh "./solvitaire --help"
-Usage: solvitaire [options] input-file1 input-file2 ...
-options:
-  --help                    produce help message
-  --type arg                specify the type of the solitaire game to be solved
-                            from the list of preset games. Must supply either 
-                            this 'type' option, or the 'custom-rules' option
-  --available-game-types    outputs a list of the different preset game types 
-                            that can be solved
-  --describe-game-rules arg outputs the JSON that describes the rules of the 
-                            supplied preset game type
-  --custom-rules arg        the path to a JSON file describing the rules of the
-                            solitaire to be solved. Must supply either 'type' 
-                            or 'custom-rules' option
-  --random arg              create and solve a random solitaire deal based on a
-                            seed. Must supply either 'random','solvability', 
-                            'benchmark' or list of deals to be solved.
-  ... etc ...
+**Run:**
+```bash
+./cmake-build-release/bin/solvitaire --type klondike --random 42
 ```
 
-...
-for example, if you wish to generate a random deal (with seed 1) of the game Klondike
-and attempt to solve it, run:
+---
 
-```
-$ ./solvitaire --type klondike --random 1
-```
-  [info] Attempting to solve with seed: 1...
-  Deal:
-  --- Foundations ---------
-  []	[]	[]	[]	
-  --- Tableau Piles -------
-  9D	##	##	##	##	##	##	
-  	AS	##	##	##	##	##	
-  		JC	##	##	##	##	
-  			6D	##	##	##	
-  				JH	##	##	
-  					AH	##	
-  						JD	
-  --- Stock | Waste -------
-  6H	[]	
-  KS		
-  10C		
-  QH		
-  ...	
-  ===================================
-  Solution Type: unsolvable
-  States Searched: 417235
-  Unique States Searched: 164359
-  Backtracks: 417234
-  Dominance Moves: 63707
-  States Removed From Cache: 0
-  Final States In Cache: 100652
-  Final Buckets In Cache: 196613
-  Maximum Search Depth: 46
-  Final Search Depth: 0
-  Time Taken (milliseconds): 903
+### (b) Linux
+
+**Prerequisites** (Ubuntu 22.04 / Debian):
+```bash
+sudo apt-get install build-essential cmake libboost-program-options-dev git python3
 ```
 
-...
-full documentation of solvitaire is not yet available, but information can be provided
-to those who reach out over email (see below).
+**Build:**
+```bash
+./build.sh                          # release build
+./build.sh --release --unit-tests   # also build test binary
+```
+
+**Test:**
+```bash
+cd cmake-build-release
+ctest -R '^unit_tests$' --output-on-failure
+```
+
+**Run:**
+```bash
+./cmake-build-release/bin/solvitaire --type klondike --random 42
+```
+
+---
+
+### (c) Container (Linux build on macOS or any host)
+
+Requires the [Apple container CLI](https://developer.apple.com/documentation/virtualization), Docker, or Podman.
+
+**Build image and run unit tests:**
+```bash
+./scripts/container-build.sh --test
+```
+
+**Build image and run Level 1 regression suite:**
+```bash
+./scripts/container-build.sh --regression
+```
+
+**Build image only:**
+```bash
+./scripts/container-build.sh
+```
+
+**Interactive shell inside the container:**
+```bash
+container run --rm -it solvitaire-dev bash
+```
+
+By default the script forces a clean build on every run (to avoid stale-cache issues with container CLI v0.9). Pass `--use-cache` to reuse the apt install layer when on a slow network.
+
+---
+
+### Usage
+
+List supported game types:
+```bash
+./cmake-build-release/bin/solvitaire --available-game-types
+```
+
+Solve a random Klondike deal (seed 42):
+```bash
+./cmake-build-release/bin/solvitaire --type klondike --random 42
+```
+
+Solve from a JSON deal file:
+```bash
+./cmake-build-release/bin/solvitaire --type free-cell path/to/deal.json
+```
+
+Key options: `--type`, `--random <seed>`, `--json`, `--timeout <ms>`,
+`--cache-capacity <n>`, `--streamliners {none|auto-foundations|suit-symmetry|both|smart}`,
+`--solvability <N>`.
+
+---
 
 ## Help
 
-If you have any problems getting these steps to work, don't hesitate to get in
-touch via <thecharlieblake@gmail.com>
+If you have any problems, please open an issue on GitHub.
 
 ## Contributors ✨
 

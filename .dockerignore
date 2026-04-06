@@ -1,0 +1,21 @@
+# Build outputs — must be excluded so the container gets a clean configure
+# with its own paths (not the host macOS paths baked into CTestTestfile.cmake)
+cmake-build-debug/
+cmake-build-release/
+build/
+build-archive/
+
+# Benchmark data and results (large, not needed for build)
+benchmarks/
+tmp/
+results*/
+output-*.txt
+
+# Editor and IDE
+.idea/
+.DS_Store
+*~
+.aider*
+
+# Claude memory
+.claude/

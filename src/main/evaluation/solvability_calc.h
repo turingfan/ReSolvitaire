@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <set>
+#include <string>
 #include <chrono>
 #include <mutex>
 
@@ -35,7 +36,7 @@
 
 class solvability_calc {
 public:
-    explicit solvability_calc(const sol_rules&, uint64_t);
+    explicit solvability_calc(const sol_rules&, uint64_t, const std::string& cache_type = "auto");
 
     void calculate_solvability_percentage(uint64_t, int, uint, command_line_helper::streamliner_opt, const std::vector<int>&);
 
@@ -57,10 +58,11 @@ private:
 
     // Solving methods
     static void solver_thread(solvability_calc*, uint core);
-    static seed_result solve_seed(int, std::chrono::milliseconds, const sol_rules&, uint64_t, game_state::streamliner_options, bool force_lru = false);
+    static seed_result solve_seed(int, std::chrono::milliseconds, const sol_rules&, uint64_t, game_state::streamliner_options, bool force_lru = false, const std::string& cache_type = "auto");
 
     const sol_rules& rules;
     const uint64_t cache_capacity;
+    std::string cache_type_val;
     std::chrono::milliseconds timeout;
     std::mutex results_mutex;
     seed_results seed_res;

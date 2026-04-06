@@ -8,6 +8,8 @@ ReSolvitaire is a general-purpose DFS solver for perfect-information solitaire g
 
 ## Build Commands
 
+**Primary Development Branch:** `dev` — cross-platform (macOS + Linux) with full CI/CD.
+
 **Prerequisites:** C++14 compiler, CMake 3.10+, Boost 1.53.0+ (program_options)
 
 ```bash
@@ -40,6 +42,48 @@ cd cmake-build-release && ctest -R regression_level2 --output-on-failure
 ```
 
 Tests are compiled into the `unit_tests` binary (GoogleTest). CTest definitions are in `CMakeLists.txt` lines 225–288.
+
+## Linux / Container Testing
+
+The `dev` branch includes a working `Dockerfile` and helper script for building and testing on Linux without native dependencies.
+
+### Using the container-build.sh script (macOS / container CLI)
+
+```bash
+# Build the Linux image
+./scripts/container-build.sh
+
+# Build and run unit tests inside the container
+./scripts/container-build.sh --test
+
+# Build and run Level 1 regression inside the container
+./scripts/container-build.sh --regression
+
+# Interactive shell in container
+container run --rm -it solvitaire-dev bash
+```
+
+The script auto-detects the available container runtime: `container` CLI (recommended), `docker`, or `podman`.
+
+### Direct Docker / Podman usage
+
+```bash
+# Build the image
+docker build -t solvitaire-dev .
+
+# Run unit tests
+docker run --rm solvitaire-dev \
+    bash -c "cd cmake-build-release && ctest -R unit_tests --output-on-failure"
+
+# Run Level 1 regression
+docker run --rm solvitaire-dev \
+    bash -c "cd cmake-build-release && ctest -R regression_level1 --output-on-failure"
+
+# Interactive shell
+docker run --rm -it solvitaire-dev bash
+```
+
+**Note:** The Dockerfile uses `ubuntu:22.04` and installs only essential build dependencies (`build-essential`, `cmake`, `libboost-program-options-dev`, `git`, `python3`, `ca-certificates`). The build runs `./build.sh --release` and `./build.sh --release --unit-tests`, including a smoke test of unit tests, before producing the image.
 
 ## Running the Solver
 
@@ -116,3 +160,26 @@ Oracle files are JSON arrays; each entry stores `outcome`, `states_searched`, `b
 - **Release:** `-O3 -flto -DNDEBUG`, strict warnings: `-pedantic -Wall -Wextra -Werror`
 - **Debug:** `-O0 -g`
 - External deps: Boost (system install), RapidJSON (header-only in `lib/`), GoogleTest (CMake FetchContent v1.14.0)
+
+## Benchmarking
+
+Run benchmarks via the Python orchestration script (branch: `benchmark-python`):
+
+```bash
+# Run on 150 seeds, write CSV
+python3 scripts/run_benchmark.py \
+    --solver cmake-build-release/bin/solvitaire \
+    --type klondike --seeds 1-150 --timeout 60000 \
+    --output results/current.csv
+
+# Quick R summary (also runs automatically at end of run_benchmark.py)
+Rscript analysis/summary.R results/current.csv
+
+# Full comparison report
+Rscript analysis/benchmark.R \
+    --baseline results/baseline.csv \
+    --current  results/current.csv \
+    --output   results/comparison.html
+```
+
+See `docs/benchmarking/active/quickstart.md` for more.

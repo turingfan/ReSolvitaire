@@ -53,10 +53,10 @@ RM = /opt/homebrew/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking
+CMAKE_SOURCE_DIR = /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build
+CMAKE_BINARY_DIR = /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/solvitaire.dir/depend.make
@@ -73,284 +73,340 @@ CMakeFiles/solvitaire.dir/codegen:
 .PHONY : CMakeFiles/solvitaire.dir/codegen
 
 CMakeFiles/solvitaire.dir/src/main/main.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/main.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/main.cpp
+CMakeFiles/solvitaire.dir/src/main/main.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/main.cpp
 CMakeFiles/solvitaire.dir/src/main/main.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/solvitaire.dir/src/main/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/main.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/main.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/main.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/solvitaire.dir/src/main/main.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/main.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/main.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/main.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/main.cpp
 
 CMakeFiles/solvitaire.dir/src/main/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/main.cpp > CMakeFiles/solvitaire.dir/src/main/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/main.cpp > CMakeFiles/solvitaire.dir/src/main/main.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/main.cpp -o CMakeFiles/solvitaire.dir/src/main/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/main.cpp -o CMakeFiles/solvitaire.dir/src/main/main.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/command_line_helper.cpp
+CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/command_line_helper.cpp
 CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/command_line_helper.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/command_line_helper.cpp
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/command_line_helper.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/command_line_helper.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/command_line_helper.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/command_line_helper.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/command_line_helper.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/deal_parser.cpp
+CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/deal_parser.cpp
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/deal_parser.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/deal_parser.cpp
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/deal_parser.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/deal_parser.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/deal_parser.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/deal_parser.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/deal_parser.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/json_helper.cpp
+CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/json_helper.cpp
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/json_helper.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/json_helper.cpp
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/json_helper.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/json_helper.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/json_helper.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/json_helper.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/json_helper.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/sol_preset_types.cpp
+CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/sol_preset_types.cpp
 CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/sol_preset_types.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/sol_preset_types.cpp
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/sol_preset_types.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/sol_preset_types.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/sol_preset_types.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/sol_preset_types.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/sol_preset_types.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/rules_parser.cpp
+CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/rules_parser.cpp
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/rules_parser.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/rules_parser.cpp
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/rules_parser.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/rules_parser.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/input/json-parsing/rules_parser.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/input/json-parsing/rules_parser.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/input/json-parsing/rules_parser.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/output/state_printer.cpp
+CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/output/state_printer.cpp
 CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/output/state_printer.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/output/state_printer.cpp
 
 CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/output/state_printer.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/output/state_printer.cpp > CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/input-output/output/state_printer.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/input-output/output/state_printer.cpp -o CMakeFiles/solvitaire.dir/src/main/input-output/output/state_printer.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/card.cpp
+CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/card.cpp
 CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/card.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/card.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/card.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/card.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/card.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/card.cpp > CMakeFiles/solvitaire.dir/src/main/game/card.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/card.cpp > CMakeFiles/solvitaire.dir/src/main/game/card.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/card.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/card.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/card.cpp -o CMakeFiles/solvitaire.dir/src/main/game/card.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/card.cpp -o CMakeFiles/solvitaire.dir/src/main/game/card.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.cpp
+CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.cpp
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.cpp > CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.cpp > CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.cpp -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.cpp -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/pile.cpp
+CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/pile.cpp
 CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/pile.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/pile.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/pile.cpp > CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/pile.cpp > CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/pile.cpp -o CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/pile.cpp -o CMakeFiles/solvitaire.dir/src/main/game/pile.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/global_cache.cpp
+CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/global_cache.cpp
 CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/global_cache.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/global_cache.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/global_cache.cpp > CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/global_cache.cpp > CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/global_cache.cpp -o CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/global_cache.cpp -o CMakeFiles/solvitaire.dir/src/main/game/global_cache.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/sol_rules.cpp
+CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/sol_rules.cpp
 CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/sol_rules.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/sol_rules.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/sol_rules.cpp > CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/sol_rules.cpp > CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/sol_rules.cpp -o CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/sol_rules.cpp -o CMakeFiles/solvitaire.dir/src/main/game/sol_rules.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.legal_moves.cpp
+CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.legal_moves.cpp
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.legal_moves.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.legal_moves.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.legal_moves.cpp > CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.legal_moves.cpp > CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.legal_moves.cpp -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.legal_moves.cpp -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.legal_moves.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.dominance_moves.cpp
+CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.dominance_moves.cpp
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.dominance_moves.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.dominance_moves.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.dominance_moves.cpp > CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.dominance_moves.cpp > CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.dominance_moves.cpp -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.dominance_moves.cpp -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.pile_order.cpp
+CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.pile_order.cpp
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.pile_order.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.pile_order.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.pile_order.cpp > CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.pile_order.cpp > CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/search-state/game_state.pile_order.cpp -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/search-state/game_state.pile_order.cpp -o CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/move.cpp
+CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/move.cpp
 CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/move.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/move.cpp
 
 CMakeFiles/solvitaire.dir/src/main/game/move.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/move.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/move.cpp > CMakeFiles/solvitaire.dir/src/main/game/move.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/move.cpp > CMakeFiles/solvitaire.dir/src/main/game/move.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/game/move.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/move.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/game/move.cpp -o CMakeFiles/solvitaire.dir/src/main/game/move.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/move.cpp -o CMakeFiles/solvitaire.dir/src/main/game/move.cpp.s
+
+CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o: CMakeFiles/solvitaire.dir/flags.make
+CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/zobrist.cpp
+CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/zobrist.cpp
+
+CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/zobrist.cpp > CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.i
+
+CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/zobrist.cpp -o CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.s
+
+CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o: CMakeFiles/solvitaire.dir/flags.make
+CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/compact_state.cpp
+CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/compact_state.cpp
+
+CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/compact_state.cpp > CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.i
+
+CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/compact_state.cpp -o CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.s
+
+CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o: CMakeFiles/solvitaire.dir/flags.make
+CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/parent_table.cpp
+CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/parent_table.cpp
+
+CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/parent_table.cpp > CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.i
+
+CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/parent_table.cpp -o CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.s
+
+CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o: CMakeFiles/solvitaire.dir/flags.make
+CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/flat_cache.cpp
+CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/flat_cache.cpp
+
+CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/flat_cache.cpp > CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.i
+
+CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/game/flat_cache.cpp -o CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/solvability_calc.cpp
+CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/solvability_calc.cpp
 CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/solvability_calc.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/solvability_calc.cpp
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/solvability_calc.cpp > CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/solvability_calc.cpp > CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/solvability_calc.cpp -o CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/solvability_calc.cpp -o CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/benchmark.cpp
+CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/benchmark.cpp
 CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/benchmark.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/benchmark.cpp
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/benchmark.cpp > CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/benchmark.cpp > CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/benchmark.cpp -o CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/benchmark.cpp -o CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/binomial_ci.cpp
+CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/binomial_ci.cpp
 CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/binomial_ci.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/binomial_ci.cpp
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/binomial_ci.cpp > CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/binomial_ci.cpp > CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/evaluation/binomial_ci.cpp -o CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/evaluation/binomial_ci.cpp -o CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.s
 
 CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: CMakeFiles/solvitaire.dir/flags.make
-CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/solver.cpp
+CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/solver.cpp
 CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o: CMakeFiles/solvitaire.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/solver.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o -MF CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o.d -o CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o -c /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/solver.cpp
 
 CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/solver.cpp > CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/solver.cpp > CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.i
 
 CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/src/main/solver/solver.cpp -o CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/src/main/solver/solver.cpp -o CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.s
 
 # Object files for target solvitaire
 solvitaire_OBJECTS = \
@@ -370,6 +426,10 @@ solvitaire_OBJECTS = \
 "CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o" \
 "CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o" \
 "CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o" \
+"CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o" \
+"CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o" \
+"CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o" \
+"CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o" \
 "CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o" \
 "CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o" \
 "CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o" \
@@ -394,6 +454,10 @@ bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.
 bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.dominance_moves.cpp.o
 bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/game/search-state/game_state.pile_order.cpp.o
 bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/game/move.cpp.o
+bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/game/zobrist.cpp.o
+bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/game/compact_state.cpp.o
+bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/game/parent_table.cpp.o
+bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/game/flat_cache.cpp.o
 bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/evaluation/solvability_calc.cpp.o
 bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/evaluation/benchmark.cpp.o
 bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/evaluation/binomial_ci.cpp.o
@@ -401,7 +465,7 @@ bin/solvitaire: CMakeFiles/solvitaire.dir/src/main/solver/solver.cpp.o
 bin/solvitaire: CMakeFiles/solvitaire.dir/build.make
 bin/solvitaire: /opt/homebrew/lib/libboost_program_options.dylib
 bin/solvitaire: CMakeFiles/solvitaire.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Linking CXX executable bin/solvitaire"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Linking CXX executable bin/solvitaire"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/solvitaire.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -413,6 +477,6 @@ CMakeFiles/solvitaire.dir/clean:
 .PHONY : CMakeFiles/solvitaire.dir/clean
 
 CMakeFiles/solvitaire.dir/depend:
-	cd /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-Benchmarking/build/CMakeFiles/solvitaire.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/build/CMakeFiles/solvitaire.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/solvitaire.dir/depend
 

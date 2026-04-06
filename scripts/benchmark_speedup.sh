@@ -65,24 +65,24 @@ for game in "${GAMES[@]}"; do
         --timeout ${TIMEOUT_MS} \
         --force-lru 2>/dev/null)
 
-    flat_mean_us=$(extract "$flat_json" "mean_time_us")
-    lru_mean_us=$(extract  "$lru_json"  "mean_time_us")
-    flat_nps=$(extract     "$flat_json" "nodes_per_second")
-    lru_nps=$(extract      "$lru_json"  "nodes_per_second")
+    geo_mean_us=$(extract "$flat_json" "geometric_mean_time_us")
+    lru_geo_us=$(extract  "$lru_json"  "geometric_mean_time_us")
+    flat_median_us=$(extract "$flat_json" "median_time_us")
+    lru_median_us=$(extract  "$lru_json"  "median_time_us")
+    flat_nps=$(extract     "$flat_json" "mean_nps")
+    lru_nps=$(extract      "$lru_json"  "mean_nps")
 
-    python3 - "$game" "$flat_mean_us" "$lru_mean_us" "$flat_nps" "$lru_nps" <<'PYEOF'
+    python3 - "$game" "$flat_median_us" "$lru_median_us" "$geo_mean_us" "$lru_geo_us" "$flat_nps" "$lru_nps" <<'PYEOF'
 import sys
-game, flat_us, lru_us, flat_nps, lru_nps = sys.argv[1:]
-flat_us  = float(flat_us);  lru_us  = float(lru_us)
-flat_nps = float(flat_nps); lru_nps = float(lru_nps)
-flat_ms  = flat_us / 1000;  lru_ms  = lru_us / 1000
-speedup  = lru_ms / flat_ms if flat_ms > 0 else float('nan')
-flat_mn  = flat_nps / 1e6;  lru_mn  = lru_nps / 1e6
-print(f"{game:<20} {flat_ms:>12.1f} {lru_ms:>12.1f} {speedup:>10.2f}x {flat_mn:>14.2f} {lru_mn:>14.2f}")
+game, f_med, l_med, f_geo, l_geo, f_nps, l_nps = sys.argv[1:]
+f_med=float(f_med); l_med=float(l_med); f_geo=float(f_geo); l_geo=float(l_geo)
+f_nps=float(f_nps); l_nps=float(l_nps)
+speedup = l_geo / f_geo if f_geo > 0 else float('nan')
+print(f"{game:<20} {f_med/1000:>12.1f} {l_med/1000:>12.1f} {speedup:>10.2f}x {f_nps/1e6:>14.2f} {l_nps/1e6:>14.2f}")
 PYEOF
 done
 
 printf '\n'
 printf 'Seeds %d-%d, %d iteration(s) per seed, timeout %dms, streamliners=none\n' \
     ${SEED_START} ${SEED_END} ${ITERATIONS} ${TIMEOUT_MS}
-printf 'Speedup = LRU mean time / flat mean time (>1x = flat is faster)\n'
+printf 'Speedup = LRU geo-mean / flat geo-mean (>1x = flat is faster)\n'

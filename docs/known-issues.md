@@ -93,6 +93,48 @@ cache (see issue #3), so they are absent from any flat-vs-LRU performance compar
 The benchmarking work on a future branch should explicitly include a suit-symmetry game
 type once suit-canonical hashing is implemented in the flat cache.
 
+### 5. Benchmarking Infrastructure Untested on Linux
+
+**Affected file:** `scripts/compare_benchmarks.py`
+**Status:** Open; code paths implemented but untested
+**Impact:** Cross-platform benchmark comparisons may fail on Linux systems
+
+The enhanced benchmarking system uses `/usr/bin/time` for external timing and memory measurement:
+- macOS path uses `time -l` format (verified working)
+- Linux path uses `time -v` format (code written but untested)
+
+**What needs testing:**
+- `/usr/bin/time -v` output parsing for user/system/wall times
+- Memory extraction from "Maximum resident set size (kbytes)" format
+- Verification that KB→bytes conversion is correct
+- Integration with legacy reference solver calibration on Linux
+
+**Workaround:** Use `--legacy-reference` flag is discouraged on Linux until tested.
+
+### 6. Internal Memory Metrics Unreliable for Modern Solver
+
+**Affected file:** `src/main/evaluation/benchmark.cpp`
+**Status:** Open; metrics recorded but accuracy questionable
+**Impact:** In-process memory reporting may overestimate actual RAM usage
+
+The benchmark engine uses `getrusage().ru_maxrss` for per-iteration memory reporting:
+- macOS: reports ~3.2 GB (virtual memory) for Klondike benchmarks
+- Actual resident set size (from `/usr/bin/time`): ~1.1 MB
+
+**Root cause:** `ru_maxrss` on macOS reports virtual address space, not physical RAM.
+
+**Current impact:** Memory metrics in individual iteration results are inflated but consistent.
+
+**Recommendation:** For accurate memory profiling, compare system-reported values:
+```bash
+python3 scripts/compare_benchmarks.py \
+    --reference-exe <stable_solver> \
+    -- <benchmark_args>
+# Check HNF calibration output for system-measured "Peak memory"
+```
+
+**Future fix:** Could add `/usr/bin/time` measurement to modern solver benchmarks for accuracy.
+
 ---
 
 ## Resolved Issues (for reference)

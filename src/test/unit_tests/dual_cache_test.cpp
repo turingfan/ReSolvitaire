@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 #include <chrono>
+#include <memory>
 #include "../../main/game/dual_cache.h"
+#include "../../main/game/flat_cache.h"
+#include "../../main/game/global_cache.h"
 #include "../../main/game/zobrist.h"
 #include "../../main/game/search-state/game_state.h"
 #include "../../main/solver/solver.h"
@@ -17,13 +20,17 @@ protected:
         for (int seed = 1; seed <= seeds; ++seed) {
             dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
             game_state gs(rules, seed, game_state::streamliner_options::NONE, true);
-            dual_cache cache(gs, cap);
+            dual_cache cache(
+                std::make_unique<flat_cache>(cap),
+                std::make_unique<lru_cache>(gs, cap),
+                "flat", "lru"
+            );
             solver sol(gs, cache);
             sol.run(boost::optional<std::chrono::milliseconds>(10000));
-            
-            EXPECT_EQ(cache.get_lru_only_hits(), 0) 
+
+            EXPECT_EQ(cache.get_lru_only_hits(), 0)
                 << "Unacceptable LRU=HIT, flat=MISS in " << preset << " at seed " << seed;
-            EXPECT_EQ(cache.get_flat_only_hits(), 0) 
+            EXPECT_EQ(cache.get_flat_only_hits(), 0)
                 << "Unacceptable LRU=MISS, flat=HIT in " << preset << " at seed " << seed;
         }
     }
@@ -33,11 +40,15 @@ protected:
         for (int seed = 1; seed <= seeds; ++seed) {
             dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
             game_state gs(rules, seed, game_state::streamliner_options::NONE, true);
-            dual_cache cache(gs, cap);
+            dual_cache cache(
+                std::make_unique<flat_cache>(cap),
+                std::make_unique<lru_cache>(gs, cap),
+                "flat", "lru"
+            );
             solver sol(gs, cache);
             sol.run(boost::optional<std::chrono::milliseconds>(10000));
-            
-            EXPECT_EQ(cache.get_lru_only_hits(), 0) 
+
+            EXPECT_EQ(cache.get_lru_only_hits(), 0)
                 << "Unacceptable LRU=HIT, flat=MISS in " << preset << " at seed " << seed;
         }
     }
@@ -47,11 +58,15 @@ protected:
         for (int seed = 1; seed <= seeds; ++seed) {
             dual_cache::context() = preset + " (seed " + std::to_string(seed) + ")";
             game_state gs(rules, seed, game_state::streamliner_options::NONE, true);
-            dual_cache cache(gs, cap);
+            dual_cache cache(
+                std::make_unique<flat_cache>(cap),
+                std::make_unique<lru_cache>(gs, cap),
+                "flat", "lru"
+            );
             solver sol(gs, cache);
             sol.run(boost::optional<std::chrono::milliseconds>(10000));
-            
-            EXPECT_EQ(cache.get_flat_only_hits(), 0) 
+
+            EXPECT_EQ(cache.get_flat_only_hits(), 0)
                 << "Unacceptable LRU=MISS, flat=HIT in " << preset << " at seed " << seed;
         }
     }
@@ -79,7 +94,7 @@ protected:
 };
 
 // --- Node Agreement Tests (Streamliner: NONE) ---
-// These games do NOT have a hole and we use no streamliners, 
+// These games do NOT have a hole and we use no streamliners,
 // so legacy symmetry should be disabled. Nodes must match exactly.
 
 TEST_F(DualCacheTest, FreeCellAgreement) {

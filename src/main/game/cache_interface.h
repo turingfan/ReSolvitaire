@@ -20,6 +20,9 @@ public:
     virtual uint64_t size() const = 0;
     virtual uint64_t get_states_removed_from_cache() const = 0;
     virtual uint64_t bucket_count() const = 0;
+    virtual std::string get_diagnostic_info(const game_state&) const {
+        return "No specialized diagnostic info available for this cache.\n";
+    }
 };
 
 // Helper function to determine if a game should use the new cache (compact_state + descriptor zobrist)
@@ -37,6 +40,12 @@ inline bool use_new_cache(const sol_rules& rules, bool suit_symmetry_active = fa
         && rules.sequence_count == 0
         && rules.accordion_size == 0
         && (rules.stock_size == 0 || rules.stock_deal_t != sol_rules::stock_deal_type::TABLEAU_PILES);
+}
+
+// Helper function to determine if a game should use the predecessor cache
+// (predecessor_state + predecessor Zobrist). This applies to accordion games.
+inline bool use_predecessor_cache(const sol_rules& rules) {
+    return rules.accordion_size > 0;
 }
 
 #endif
