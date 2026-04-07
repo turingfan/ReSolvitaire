@@ -25,6 +25,15 @@ Step 4 (the DRAM fetch) dominates when the working set exceeds L3 cache. Everyth
 
 ---
 
+## 1. Memory Allocation: Lazy Initialisation via `mmap` ✅ DONE (2026-04-07)
+
+> **Status:** Implemented on `refactor-caching` (commit `fe98157`). Applied to all three
+> flat caches: `flat_cache`, `hash_only_cache`, `predecessor_flat_cache`. The final
+> implementation uses a `platform::lazy_buffer` RAII wrapper in `platform_memory.h`
+> rather than the raw-pointer sketch below. macOS uses `MAP_FIXED` remap for `reset()`
+> (not `MADV_FREE`) to guarantee zeroes. Linux uses `MADV_DONTNEED`.
+> Container tests require `-m 8g` due to virtual address reservation at 200M-entry capacity.
+
 ## 1. Memory Allocation: Lazy Initialisation via `mmap`
 
 ### The Problem
@@ -359,7 +368,7 @@ Low priority. Would require exposing the hash computation separately from `inser
 
 | Optimization | Expected Impact | Effort | Priority |
 |---|---|---|---|
-| **1. mmap lazy allocation** | Major for short runs (10–100× faster startup) | Medium (platform-specific RAII) | **High** |
+| **1. mmap lazy allocation** | Major for short runs (10–100× faster startup) | Medium (platform-specific RAII) | ~~High~~ **DONE** |
 | **2. Power-of-2 bit masking** | ~2–3 cycles/access (~1–3% NPS for large searches) | Low | **Medium** |
 | **3. Huge pages** | ~2–5% NPS for large searches | Medium (macOS-specific API) | **Medium** |
 | **4. matches() alignment** | Negligible (dominated by DRAM latency) | Low | Low |

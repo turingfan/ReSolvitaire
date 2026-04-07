@@ -1,7 +1,7 @@
 # Pickup Document: refactor-caching Branch
 
-**Date:** 2026-03-30 (updated 2026-04-03)
-**Branch Status:** Long-lived design branch — all M6–M8 code is in `dev`; unique content here is planning docs only
+**Date:** 2026-03-30 (updated 2026-04-07)
+**Branch Status:** Active development branch — contains `hash_only_cache`, `predecessor_flat_cache`, `cache_factory.h`, and mmap lazy allocation for all three flat caches. These are **not yet merged to `dev`**.
 
 ## Executive Summary
 
@@ -36,6 +36,16 @@ All 5-level regression oracles have been regenerated post-M6 (pile ordering remo
 - Level 1: 150 instances, ~2 min runtime
 - Levels 2–5: ~160 instances each; timeouts acceptable (soft passes)
 - Python harness (`scripts/regression_runner.py`) validates outcomes only
+
+## Completed Optimizations (on `refactor-caching`)
+
+### mmap Lazy Allocation (2026-04-07, commit `fe98157`)
+All three flat caches (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`) now use
+`platform::lazy_buffer` RAII for demand-paged allocation on macOS/Linux. Physical pages
+are committed only on first write. `clear()` uses a single syscall (`MAP_FIXED` remap on
+macOS, `MADV_DONTNEED` on Linux) rather than iterating over all clusters.
+- See `optimization-opportunities.md` §1 (marked DONE)
+- Container tests require `-m 8g` due to 200M-entry test caches reserving large virtual space
 
 ## What Remains: Flat Cache Extension Roadmap
 
@@ -99,17 +109,28 @@ This elegantly solves the descriptor ambiguity problem: rather than asking "wher
 - **Workaround:** Levels 2–5 use seed-based runs, bypassing JSON export
 - **Fix:** One-line change documented in code comment (deferred)
 
+## What's on `refactor-caching` but NOT yet in `dev`
+
+As of 2026-04-07, `refactor-caching` has ~41 commits ahead of `dev` including:
+
+- `hash_only_cache` — hash-only flat cache (16-byte clusters, no payload)
+- `predecessor_flat_cache` — accordion/predecessor-encoded cache (128-byte clusters)
+- `cache_factory.h` — centralised `make_cache()` replacing 4 duplicated selection blocks
+- `platform::lazy_buffer` RAII wrapper + mmap lazy allocation for all three flat caches
+- `dual_cache.h` — comparison harness for correctness testing
+- Full unit test suites for all of the above
+
+**Relationship:**
+- `refactor-caching` is the **active development** branch for new cache types and optimizations
+- `dev` is the **production** branch with current solver + benchmarks
+- Plan: merge `refactor-caching` into `dev` once the new caches have passed Level 1 regression
+
 ## Integration with `dev`
 
 **`dev`** now contains:
-- All refactor-caching logic (dual cache, M6–M8)
+- All original refactor-caching logic (dual cache, M6–M8)
 - Full Python/R benchmarking framework (`benchmark-python` branch, merged 2026-04-03)
 - All regression oracles regenerated
-
-**Relationship:**
-- `refactor-caching` is the **planning/design** branch for flat cache extensions
-- `dev` is the **production** branch with current solver + benchmarks
-- Future work: Implement roadmap items on a short-lived branch from `dev`, then merge back
 
 See `docs/cache-redesign/active/branch_workflow.md` for the full branching protocol.
 
