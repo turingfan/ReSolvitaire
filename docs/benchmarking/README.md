@@ -1,25 +1,40 @@
-# Benchmarking Documentation
+# ReSolvitaire Remote Benchmarking Infrastructure
 
-## Structure
+This directory contains scripts and tools designed to facilitate large-scale, automated benchmarking of the ReSolvitaire solver on remote compute instances.
 
-```
-docs/benchmarking/
-├── active/          Current design and how-to docs for the benchmark-python branch
-├── archive/         Superseded docs from mac-dev-benchmark-enhancements era
-└── results/         Sample / reference result files (gitignored for generated output)
-```
+## 🚀 Quick Start (Remote Execution)
 
-## Active Documents
+1.  **Setup**: Run `setup_remote.sh` to prepare a fresh compute instance (clones the repo, installs dependencies like R/CMake/Boost, and builds the solver).
+    ```bash
+    bash scripts/setup_remote.sh --repo <github-url> --branch dev
+    ```
+2.  **Benchmark**: Use the `benchmark_orchestrator.py` to run parallel tests. It automatically handles seed chunking and worker allocation.
+    ```bash
+    # Run a quick validation (5 games, 50 seeds each)
+    python3 scripts/benchmark_orchestrator.py --solver cmake-build-release/bin/solvitaire --workers 32 --quick
+    
+    # Run a full production benchmark
+    python3 scripts/benchmark_orchestrator.py --solver cmake-build-release/bin/solvitaire --workers 32 --output-dir results/$(date +%Y%m%d)
+    ```
+3.  **Collect**: Bundle and retrieve your results using `collect_results.sh`.
+    ```bash
+    bash scripts/collect_results.sh results/my_run
+    ```
 
-| Document | Purpose |
-|---|---|
-| [active/design.md](active/design.md) | Architecture, data flow, CSV schema, R integration |
-| [active/quickstart.md](active/quickstart.md) | Run your first benchmark in 5 minutes |
-| [active/csv_schema.md](active/csv_schema.md) | Full column reference for CSV output |
-| [active/r_analysis.md](active/r_analysis.md) | R scripts: what they do, how to extend them |
+## 📊 Analysis Tools
 
-## Archive
+- **`analysis/compare_labels.R`**: The primary tool for comparing different solver configurations (e.g., `auto` vs `hash-only`).
+    - Outputs **Geometric Mean** for time and nodes.
+    - Calculates **PAR2 scores** and **Aggregate NPS**.
+    - Reports **Result Differences** between configurations on matched seeds.
+    ```bash
+    Rscript analysis/compare_labels.R results/my_run/combined.csv
+    ```
 
-The `archive/` folder contains documents from the `mac-dev-benchmark-enhancements`
-branch which implemented orchestration in C++ (`--benchmark-seeds` etc.). That
-approach has been superseded. The docs are retained for historical reference.
+## 🛠 File Overview
+
+- **`scripts/run_benchmark.py`**: The core single-threaded benchmark runner. Supports `--label` for tagging runs and `--` for passing arbitrary flags to the solver.
+- **`scripts/benchmark_orchestrator.py`**: High-level wrapper that manages parallel clusters of `run_benchmark.py` invocations.
+- **`scripts/setup_remote.sh`**: Idempotent setup script for remote environments.
+- **`scripts/collect_results.sh`**: Helper for results retrieval.
+- **`analysis/compare_labels.R`**: Statistical comparison engine across labeled runs.
