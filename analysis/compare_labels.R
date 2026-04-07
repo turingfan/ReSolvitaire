@@ -1,9 +1,14 @@
 #!/usr/bin/env Rscript
 # compare_labels.R — Compare benchmark configurations based on the 'label' column.
-# Uses base R only — no package dependencies.
+# Uses shared functions from analysis/functions.R for consistency (geo-mean, par2, nps).
 #
 # Usage:
 #   Rscript analysis/compare_labels.R results/20260407/combined.csv
+
+initial_options <- commandArgs(trailingOnly = FALSE)
+script_dir <- dirname(normalizePath(sub("--file=", "", initial_options[grep("--file=", initial_options)])))
+if (length(script_dir) == 0 || script_dir == "") script_dir <- "."
+source(file.path(script_dir, "functions.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
@@ -17,140 +22,140 @@ if (!file.exists(file_path)) {
     quit(status = 1)
 }
 
-df <- read.csv(file_path, stringsAsFactors = FALSE)
+df <- read_benchmark(file_path)
 cat(sprintf("Loaded %d rows from %s\n\n", nrow(df), file_path))
 
-# Convert numeric columns
+# Ensure numeric columns
 df$nodes   <- suppressWarnings(as.numeric(df$nodes))
 df$time_us <- suppressWarnings(as.numeric(df$time_us))
-
-# Convert time from microseconds to milliseconds for readability
 df$wall_ms <- df$time_us / 1000
 
 # Normalise outcome
 df$outcome <- tolower(df$solution_type)
-df$outcome[df$outcome == "winnable"]   <- "solved"
-df$outcome[df$outcome == "unsolvable"] <- "unsolved"
+df$outcome[df$outcome == "winnable"]   <- "SOLVED"
+df$outcome[df$outcome == "unsolvable"] <- "UNWINNABLE"
+df$outcome[df$outcome == "timeout"]    <- "TIMEOUT"
+df$outcome <- toupper(df$outcome)
 
 # Extract base game name from instance (e.g., 'free-cell_10' -> 'free-cell')
-df$game <- sub("_[0-9]+$", "", df$instance)
+# Logic: if seed is present, use game field if it exists, otherwise strip suffix
+if (!"game" %in% names(df)) {
+    df$game <- sub("_[0-9]+$", "", df$instance)
+}
 
 games  <- sort(unique(df$game))
 labels <- sort(unique(df$label))
 
-# ── Helper ────────────────────────────────────────────────────────────────────
-med <- function(x) round(median(x, na.rm = TRUE))
+# Only look at first run per instance
+df1 <- df[df$run == 1 | is.na(df$run), ]
 
 # ── 1. Outcome summary ────────────────────────────────────────────────────────
 cat("=== Outcome Summary (% solved) ===\n")
 rows <- list()
 for (g in games) {
     for (l in labels) {
-        sub <- df[df$game == g & df$label == l, ]
+        sub <- df1[df1$game == g & df1$label == l, ]
         if (nrow(sub) == 0) next
-        solved <- sum(sub$outcome == "solved")
+        n_total   <- nrow(sub)
+        n_solved  <- sum(sub$outcome == "SOLVED", na.rm = TRUE)
+        n_unwin   <- sum(sub$outcome == "UNWINNABLE", na.rm = TRUE)
+        n_timeout <- sum(sub$outcome == "TIMEOUT", na.rm = TRUE)
+        
         rows[[length(rows)+1]] <- data.frame(
-            game=g, label=l, n=nrow(sub), solved=solved,
-            pct_solved=round(100*solved/nrow(sub), 1),
-            timed_out=sum(sub$outcome %in% c("timeout","unsolved")),
+            game=g, label=l, n=n_total, 
+            solved=sprintf("%d (%.1f%%)", n_solved, 100*n_solved/n_total),
+            unwin=sprintf("%d (%.1f%%)", n_unwin, 100*n_unwin/n_total),
+            timeout=sprintf("%d (%.1f%%)", n_timeout, 100*n_timeout/n_total),
             stringsAsFactors=FALSE)
     }
 }
 if (length(rows) > 0) print(do.call(rbind, rows), row.names=FALSE)
 cat("\n")
 
-# ── 2. Speed on solved instances ──────────────────────────────────────────────
-cat("=== Speed: Median Wall Time on Solved Instances (ms) ===\n")
+# ── 2. Detailed Stats per Game & Label ────────────────────────────────────────
+cat("=== Detailed Statistics (Geometric Mean, PAR2, NPS) ===\n")
 rows <- list()
 for (g in games) {
     for (l in labels) {
-        sub <- df[df$game == g & df$label == l & df$outcome == "solved", ]
+        sub <- df1[df1$game == g & df1$label == l, ]
         if (nrow(sub) == 0) next
+        
+        timeout_ms <- if ("timeout_ms" %in% names(sub)) max(sub$timeout_ms, na.rm = TRUE) else 60000
+        
         rows[[length(rows)+1]] <- data.frame(
-            game=g, label=l, n_solved=nrow(sub),
-            median_ms=med(sub$wall_ms),
-            p75_ms=round(quantile(sub$wall_ms, 0.75, na.rm=TRUE)),
-            p95_ms=round(quantile(sub$wall_ms, 0.95, na.rm=TRUE)),
+            game=g, label=l,
+            time_geo_ms=round(geometric_mean(sub$time_us)/1000, 1),
+            par2_ms=round(par2_score(sub$time_us, sub$outcome, timeout_ms)/1000, 1),
+            nodes_geo=round(geometric_mean(sub$nodes)),
+            agg_nps=round(aggregate_nps(sub$nodes, sub$time_us)),
             stringsAsFactors=FALSE)
     }
 }
 if (length(rows) > 0) print(do.call(rbind, rows), row.names=FALSE)
 cat("\n")
 
-# ── 3. Pairwise Speedup against Baseline ──────────────────────────────────────
-# Automatically select "auto" as baseline if it exists, otherwise the first label.
+# ── 3. Pairwise Comparison relative to Baseline ──────────────────────────────
 baseline_label <- if ("auto" %in% labels) "auto" else labels[1]
 other_labels   <- labels[labels != baseline_label]
 
 if (length(other_labels) > 0) {
-    cat(sprintf("=== Speedups relative to baseline: '%s' ===\n", baseline_label))
-    cat("Metric: Speedup = (Median Ms of Baseline) / (Median Ms of Label)\n\n")
+    cat(sprintf("=== Comparison against baseline: '%s' ===\n", baseline_label))
+    cat("Metric ratios: > 1.0 means improvement (labels are faster/higher NPS, or fewer nodes)\n\n")
     
     rows <- list()
     for (g in games) {
-        base_df <- df[df$game == g & df$label == baseline_label & df$outcome == "solved", "wall_ms"]
-        if (length(base_df) == 0) next
-        base_ms <- med(base_df)
+        base_sub <- df1[df1$game == g & df1$label == baseline_label, ]
+        if (nrow(base_sub) == 0) next
+        
+        base_time <- geometric_mean(base_sub$time_us)
+        base_nodes <- geometric_mean(base_sub$nodes)
+        base_nps <- aggregate_nps(base_sub$nodes, base_sub$time_us)
         
         for (l in other_labels) {
-            tgt_df <- df[df$game == g & df$label == l & df$outcome == "solved", "wall_ms"]
-            if (length(tgt_df) == 0) next
-            tgt_ms <- med(tgt_df)
+            tgt_sub <- df1[df1$game == g & df1$label == l, ]
+            if (nrow(tgt_sub) == 0) next
             
+            tgt_time <- geometric_mean(tgt_sub$time_us)
+            tgt_nodes <- geometric_mean(tgt_sub$nodes)
+            tgt_nps <- aggregate_nps(tgt_sub$nodes, tgt_sub$time_us)
+            
+            # Outcome difference check (on matched seeds)
+            merged <- merge(base_sub[, c("instance", "outcome")], 
+                          tgt_sub[, c("instance", "outcome")], 
+                          by="instance", suffixes=c("_b", "_t"))
+            diff_count <- sum(merged$outcome_b != merged$outcome_t, na.rm=TRUE)
+
             rows[[length(rows)+1]] <- data.frame(
-                game=g, comparison=sprintf("%s vs %s", l, baseline_label),
-                baseline_ms=base_ms, label_ms=tgt_ms,
-                speedup=round(base_ms / tgt_ms, 2),
+                game=g, label=l,
+                time_speedup=round(base_time / tgt_time, 2),
+                node_reduction=round(base_nodes / tgt_nodes, 2),
+                nps_gain=round(tgt_nps / base_nps, 2),
+                result_diffs=diff_count,
                 stringsAsFactors=FALSE)
         }
     }
-    if (length(rows) == 0) { cat("(no data for speedup comparison)\n\n") } else {
-        out <- do.call(rbind, rows)
-        print(out[order(-out$speedup), ], row.names=FALSE)
-        cat("\n")
+    if (length(rows) > 0) {
+        print(do.call(rbind, rows), row.names=FALSE)
+    } else {
+        cat("(no matched instances for comparison)\n")
     }
+    cat("\n")
 }
 
-# ── 4. States searched relative to baseline ───────────────────────────────────
-if (length(other_labels) > 0) {
-    cat(sprintf("=== States Searched relative to baseline: '%s' ===\n", baseline_label))
-    cat("Metric: Ratio = (Median States of Label) / (Median States of Baseline)\n\n")
-    
-    rows <- list()
-    for (g in games) {
-        base_df <- df[df$game == g & df$label == baseline_label & df$outcome == "solved" & !is.na(df$nodes), "nodes"]
-        if (length(base_df) == 0) next
-        base_st <- med(base_df)
-        
-        for (l in other_labels) {
-            tgt_df <- df[df$game == g & df$label == l & df$outcome == "solved" & !is.na(df$nodes), "nodes"]
-            if (length(tgt_df) == 0) next
-            tgt_st <- med(tgt_df)
-            
-            rows[[length(rows)+1]] <- data.frame(
-                game=g, comparison=sprintf("%s vs %s", l, baseline_label),
-                baseline_nodes=base_st, label_nodes=tgt_st,
-                ratio=round(tgt_st / base_st, 2),
-                stringsAsFactors=FALSE)
-        }
-    }
-    if (length(rows) == 0) { cat("(no data for node comparison)\n\n") } else {
-        out <- do.call(rbind, rows)
-        print(out[order(-out$ratio), ], row.names=FALSE)
-        cat("\n")
-    }
-}
-
-# ── 5. Overall totals ─────────────────────────────────────────────────────────
+# ── 4. Overall totals ─────────────────────────────────────────────────────────
 cat("=== Overall Totals by Label ===\n")
 rows <- list()
 for (l in labels) {
-    sub <- df[df$label == l, ]
-    solved <- sub[sub$outcome == "solved", ]
+    sub <- df1[df1$label == l, ]
+    if (nrow(sub) == 0) next
+    timeout_ms <- if ("timeout_ms" %in% names(sub)) max(sub$timeout_ms, na.rm = TRUE) else 60000
+    
     rows[[length(rows)+1]] <- data.frame(
-        label=l, total=nrow(sub), solved=nrow(solved),
-        pct_solved=round(100*nrow(solved)/nrow(sub), 1),
-        median_ms=med(solved$wall_ms),
+        label=l, n=nrow(sub), 
+        pct_solved=round(100*sum(sub$outcome == "SOLVED", na.rm=TRUE)/nrow(sub), 1),
+        geo_time_ms=round(geometric_mean(sub$time_us)/1000, 1),
+        par2_ms=round(par2_score(sub$time_us, sub$outcome, timeout_ms)/1000, 1),
+        agg_nps=round(aggregate_nps(sub$nodes, sub$time_us)),
         stringsAsFactors=FALSE)
 }
 if (length(rows) > 0) print(do.call(rbind, rows), row.names=FALSE)
