@@ -49,16 +49,40 @@ inline void reset_to_zero(void *ptr, size_t bytes) {
 
 inline constexpr bool has_lazy_alloc() { return true; }
 
+// RAII wrapper for a lazy-allocated memory region.
+// Owns the allocation; destructor calls release().
+// Not copyable — intended as a direct member of cache classes.
+struct lazy_buffer {
+    void*  ptr;
+    size_t bytes;
+
+    explicit lazy_buffer(size_t n) : ptr(alloc_zeroed(n)), bytes(n) {}
+    ~lazy_buffer() { release(ptr, bytes); }
+
+    // Reset: logically zeroes the region; subsequent reads return zero.
+    void reset() { reset_to_zero(ptr, bytes); }
+
+    // Typed access to the buffer contents.
+    template<typename T> T*       as()       { return static_cast<T*>(ptr); }
+    template<typename T> const T* as() const { return static_cast<const T*>(ptr); }
+
+private:
+    lazy_buffer(const lazy_buffer&);
+    lazy_buffer& operator=(const lazy_buffer&);
+};
+
 #else
 
-// Fallback for unsupported platforms (Windows, etc.).
-// flat_cache will use std::vector<cluster> with eager zeroing on these
-// platforms. Stubs present so platform_memory.h can be included
-// unconditionally.
+// Fallback stubs for unsupported platforms (Windows, etc.).
+// Cache classes fall back to std::vector on these platforms.
+// Stubs allow platform_memory.h to be included unconditionally.
 inline void *alloc_zeroed(size_t) { return nullptr; }
 inline void release(void *, size_t) {}
 inline void reset_to_zero(void *, size_t) {}
 inline constexpr bool has_lazy_alloc() { return false; }
+
+// lazy_buffer is not defined on unsupported platforms; caches use #if guards
+// to select std::vector instead.
 
 #endif
 

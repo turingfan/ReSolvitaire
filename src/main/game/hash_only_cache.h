@@ -2,6 +2,7 @@
 #define SOLVITAIRE_HASH_ONLY_CACHE_H
 
 #include "cache_interface.h"
+#include "platform_memory.h"
 #include <vector>
 #include <cstdint>
 #include <algorithm>
@@ -34,6 +35,7 @@ public:
     // max_entries: approximate number of entries the cache should hold.
     // Internally sets num_clusters = max(1, max_entries / 2).
     explicit hash_only_cache(uint64_t max_entries);
+    ~hash_only_cache() override;
 
     // cache_interface implementation
     bool insert(const game_state& gs) override;
@@ -52,10 +54,16 @@ private:
         return hash == 0u ? 1u : hash;
     }
 
-    std::vector<cluster> clusters;
+    // num_clusters must be declared before buf (initialised in declaration order)
     uint64_t num_clusters;
     uint64_t occupied_count;
     uint64_t eviction_count;
+#if defined(__APPLE__) || defined(__linux__)
+    platform::lazy_buffer buf;
+    cluster* clusters;
+#else
+    std::vector<cluster> clusters;
+#endif
 };
 
 #endif // SOLVITAIRE_HASH_ONLY_CACHE_H

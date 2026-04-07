@@ -12,8 +12,19 @@ hash_only_cache::hash_only_cache(uint64_t max_entries)
     : num_clusters(std::max<uint64_t>(1, max_entries / 2))
     , occupied_count(0)
     , eviction_count(0)
+#if defined(__APPLE__) || defined(__linux__)
+    , buf(num_clusters * sizeof(cluster))
+    , clusters(buf.as<cluster>())
+#endif
 {
-    clusters.resize(num_clusters);  // zero-initialised; 0 == empty sentinel
+#if !defined(__APPLE__) && !defined(__linux__)
+    clusters.resize(num_clusters);  // eager zero-fill on unsupported platforms
+#endif
+}
+
+hash_only_cache::~hash_only_cache() {
+    // buf destructor handles release on lazy-alloc platforms.
+    // std::vector destructor handles the fallback path.
 }
 
 uint64_t hash_only_cache::cluster_index(uint64_t hash) const {
@@ -66,10 +77,14 @@ bool hash_only_cache::contains(const game_state& gs) const {
 }
 
 void hash_only_cache::clear() {
+#if defined(__APPLE__) || defined(__linux__)
+    buf.reset();
+#else
     for (auto& cl : clusters) {
         cl.hashes[0] = 0u;
         cl.hashes[1] = 0u;
     }
+#endif
     occupied_count = 0;
     eviction_count = 0;
 }

@@ -9,8 +9,19 @@ predecessor_flat_cache::predecessor_flat_cache(uint64_t max_entries)
     : num_clusters(std::max<uint64_t>(1, max_entries / 2))
     , occupied_count(0)
     , eviction_count(0)
+#if defined(__APPLE__) || defined(__linux__)
+    , buf(num_clusters * sizeof(cluster))
+    , clusters(buf.as<cluster>())
+#endif
 {
+#if !defined(__APPLE__) && !defined(__linux__)
     clusters.resize(num_clusters);  // zero-initialised
+#endif
+}
+
+predecessor_flat_cache::~predecessor_flat_cache() {
+    // buf destructor handles release on lazy-alloc platforms.
+    // std::vector destructor handles the fallback path.
 }
 
 uint64_t predecessor_flat_cache::cluster_index(uint64_t hash) const {
@@ -131,9 +142,13 @@ bool predecessor_flat_cache::contains(const game_state& gs) const {
 }
 
 void predecessor_flat_cache::clear() {
+#if defined(__APPLE__) || defined(__linux__)
+    buf.reset();
+#else
     for (auto& cl : clusters) {
         std::memset(&cl, 0, sizeof(cluster));
     }
+#endif
     occupied_count = 0;
     eviction_count = 0;
 }

@@ -41,15 +41,17 @@ private:
     // Maps a 64-bit hash to a cluster index in [0, num_clusters)
     uint64_t cluster_index(uint64_t hash) const;
 
-#if defined(__APPLE__) || defined(__linux__)
-    cluster* clusters;
-    size_t   alloc_bytes;
-#else
-    std::vector<cluster> clusters;
-#endif
+    // num_clusters must be declared before buf so it is initialised first
+    // (C++ initialises members in declaration order, not MIL order).
     uint64_t num_clusters;
     uint64_t occupied_count;
     uint64_t eviction_count;
+#if defined(__APPLE__) || defined(__linux__)
+    platform::lazy_buffer buf;
+    cluster* clusters;
+#else
+    std::vector<cluster> clusters;
+#endif
 };
 
 #endif // SOLVITAIRE_FLAT_CACHE_H

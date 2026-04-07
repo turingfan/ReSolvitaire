@@ -2,6 +2,7 @@
 #define SOLVITAIRE_PREDECESSOR_FLAT_CACHE_H
 
 #include "cache_interface.h"
+#include "platform_memory.h"
 #include "predecessor_state.h"
 #include <vector>
 #include <cstdint>
@@ -39,6 +40,7 @@ public:
     };
 
     explicit predecessor_flat_cache(uint64_t max_entries);
+    ~predecessor_flat_cache() override;
 
     // cache_interface implementation
     bool insert(const game_state& gs) override;
@@ -61,10 +63,16 @@ private:
     // Get depth from a payload
     static uint8_t payload_get_depth(const uint8_t* payload);
 
-    std::vector<cluster> clusters;
+    // num_clusters must be declared before buf (initialised in declaration order)
     uint64_t num_clusters;
     uint64_t occupied_count;
     uint64_t eviction_count;
+#if defined(__APPLE__) || defined(__linux__)
+    platform::lazy_buffer buf;
+    cluster* clusters;
+#else
+    std::vector<cluster> clusters;
+#endif
 };
 
 #endif // SOLVITAIRE_PREDECESSOR_FLAT_CACHE_H
