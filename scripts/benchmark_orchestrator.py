@@ -34,18 +34,19 @@ from datetime import datetime
 # ---------------------------------------------------------------------------
 # Each entry: (game_type, seeds_tuple, timeout_ms, streamliner, notes)
 GAME_CONFIGS_FULL = [
-    ("free-cell",                  (1, 200),  60000,   "auto-foundations", "Fast, well-studied"),
-    ("klondike-deal-1",            (1, 200),  60000,   "auto-foundations", "Popular Klondike"),
-    ("klondike-deal-3-nospace",    (1, 150),  60000,   "auto-foundations", "Harder Klondike"),
-    ("bakers-game",                (1, 150),  60000,   "auto-foundations", "Baker's Game"),
-    ("accordion",                  (1, 200),  60000,   "none",             "Uses predecessor cache"),
-    ("seahaven-towers",            (1, 150),  60000,   "auto-foundations", "Seahaven Towers"),
-    ("simple-simon",               (1, 150),  60000,   "auto-foundations", "Simple Simon"),
-    ("golf",                       (1, 200),  30000,   "none",             "Golf (fast)"),
-    ("black-hole",                 (1, 200),  30000,   "auto-foundations", "Black Hole"),
-    ("spanish-patience",           (1, 100),  120000,  "auto-foundations", "Hard; long runs"),
-    ("gaps-one-deal",              (1, 150),  60000,   "none",             "Gaps"),
-    ("eight-off",                  (1, 150),  60000,   "auto-foundations", "Eight Off"),
+    ("free-cell",                  (1, 200),  1200000,   "none", "well-studied"),
+    ("klondike",                   (1, 200),  1200000,   "none", "Classic Klondike"),
+    ("klondike-deal-1",            (1, 200),  1200000,   "none", "Klondike Variant"),
+    ("klondike-deal-3-nospace",    (1, 200),  1200000,   "none", "Harder Klondike"),
+    ("bakers-game",                (1, 200),  1200000,   "none", "Baker's Game"),
+    ("accordion",                  (1, 200),  1200000,   "none",             "Uses predecessor cache"),
+    ("seahaven-towers",            (1, 200),  1200000,   "auto-foundations", "Seahaven Towers"),
+    ("simple-simon",               (1, 200),  1200000,   "auto-foundations", "Simple Simon"),
+    ("golf",                       (1, 200),  1200000,   "none",             "Golf (fast)"),
+    ("black-hole",                 (1, 200),  1200000,   "auto-foundations", "Black Hole"),
+    ("spanish-patience",           (1, 200),  120000,  "auto-foundations", "Hard; long runs"),
+    ("gaps-one-deal",              (1, 200),  1200000,   "none",             "Gaps"),
+    ("eight-off",                  (1, 200),  1200000,   "auto-foundations", "Eight Off"),
 ]
 
 GAME_CONFIGS_QUICK = [
