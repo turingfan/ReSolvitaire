@@ -2,8 +2,8 @@
 # setup_remote.sh — Clone/pull ReSolvitaire and build on a remote machine.
 #
 # Usage:
-#   First time:  bash setup_remote.sh --repo <github-url> [--dir <path>]
-#   Subsequent:  bash setup_remote.sh [--dir <path>]
+#   First time:  bash setup_remote.sh --repo <github-url> [--dir <path>] [--branch dev] [--commit HEAD]
+#   Subsequent:  bash setup_remote.sh [--dir <path>] [--branch dev] [--commit HEAD]
 #
 # The script is idempotent: safe to rerun. If the directory exists it pulls
 # instead of cloning. Then builds release + unit-test binaries.
@@ -12,21 +12,26 @@ set -euo pipefail
 
 REPO_URL=""
 WORK_DIR="$HOME/ReSolvitaire-caching"
+BRANCH="dev"
+COMMIT="HEAD"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --repo)   REPO_URL="$2"; shift 2 ;;
-        --dir)    WORK_DIR="$2"; shift 2 ;;
-        *)        echo "Unknown arg: $1"; exit 1 ;;
+        --repo)    REPO_URL="$2";   shift 2 ;;
+        --dir)     WORK_DIR="$2";   shift 2 ;;
+        --branch)  BRANCH="$2";     shift 2 ;;
+        --commit)  COMMIT="$2";     shift 2 ;;
+        *)         echo "Unknown arg: $1"; exit 1 ;;
     esac
 done
 
 echo "[setup] Target directory: $WORK_DIR"
+echo "[setup] Branch: $BRANCH  Commit: $COMMIT"
 
 # ── Clone or pull ─────────────────────────────────────────────────────────────
 if [[ -d "$WORK_DIR/.git" ]]; then
-    echo "[setup] Repository exists — pulling latest..."
-    git -C "$WORK_DIR" pull
+    echo "[setup] Repository exists — fetching latest..."
+    git -C "$WORK_DIR" fetch origin
 else
     if [[ -z "$REPO_URL" ]]; then
         echo "Error: --repo <url> required for first-time clone"
@@ -38,9 +43,17 @@ fi
 
 cd "$WORK_DIR"
 
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-COMMIT=$(git rev-parse --short HEAD)
-echo "[setup] Branch: $BRANCH  Commit: $COMMIT"
+git checkout "$BRANCH"
+if [[ "$COMMIT" != "HEAD" ]]; then
+    git checkout "$COMMIT"
+    echo "[setup] Checked out commit $COMMIT"
+else
+    git pull origin "$BRANCH"
+fi
+
+ACTUAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+ACTUAL_COMMIT=$(git rev-parse --short HEAD)
+echo "[setup] At: branch=$ACTUAL_BRANCH  commit=$ACTUAL_COMMIT"
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
 if command -v apt-get &>/dev/null; then
@@ -53,6 +66,11 @@ elif command -v brew &>/dev/null; then
 fi
 
 # ── Build ─────────────────────────────────────────────────────────────────────
+# Unset CMAKE_GENERATOR in case the remote environment has it set (e.g. from a
+# CLion install). build.sh does not pass -G, so an ambient CMAKE_GENERATOR would
+# be picked up by cmake and can cause "Ignoring extra path" warnings or failures.
+unset CMAKE_GENERATOR CMAKE_GENERATOR_PLATFORM CMAKE_GENERATOR_TOOLSET
+
 echo "[setup] Building release..."
 ./build.sh --release
 
