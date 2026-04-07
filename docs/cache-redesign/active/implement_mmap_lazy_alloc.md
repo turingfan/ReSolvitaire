@@ -297,6 +297,28 @@ Run in this order. Stop and report on failure; do not proceed to the next step.
    ```
 
 3. **Linux container (verifies MADV_DONTNEED path):**
+
+   > **Known issue — container memory requirement.** With lazy mmap allocation, the
+   > virtual address space reserved at construction time is proportional to the cache
+   > capacity (default 100M entries = 3.2 GB for `flat_cache`). Even though physical
+   > pages are demand-paged, some container runtimes apply a virtual memory limit that
+   > causes `mmap` to fail with `ENOMEM`, throwing `std::bad_alloc` and crashing the
+   > tests. The default container memory limit (typically 1 GB) is insufficient.
+   >
+   > **Workaround:** pass at least 2 GB to the container runtime:
+   > ```bash
+   > # If using container CLI / docker / podman directly:
+   > docker run --rm -m 2g solvitaire-dev \
+   >     bash -c "cd cmake-build-release && ctest -R unit_tests --output-on-failure"
+   > ```
+   > Or if using the helper script, check whether it accepts a `--memory` flag, or run
+   > the container manually with `-m 2g` as above.
+   >
+   > **Future consideration:** reduce the default cache capacity used in unit tests (e.g.
+   > a `--small-cache` test mode using 10M entries = 320 MB) so that the full test suite
+   > fits within 1 GB. This would also make CI faster. This is a follow-on task; for now,
+   > `-m 2g` is the required workaround when running in a container.
+
    ```bash
    ./scripts/container-build.sh --test
    ```
