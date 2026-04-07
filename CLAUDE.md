@@ -103,7 +103,7 @@ Key CLI options: `--type`, `--random <seed>`, `--json`, `--reveal-hidden`, `--st
 1. `main.cpp` parses CLI args via `command_line_helper`, constructs `sol_rules` (from preset or JSON), and dispatches to solver, benchmarking, or solvability modes.
 2. `solver.cpp` runs DFS. At each node it calls `game_state::get_dominance_move()` (free simplifications), then `game_state::get_legal_moves()`, then recurses. States are hashed and checked against the transposition table to avoid revisiting.
 3. `game_state` manages pile state with copy/restore semantics for backtracking. It holds multiple pile arrays: `foundations`, `tableau`, `cells`, `reserve`, `waste`, `stock`.
-4. Cache selection (`cache_interface.h:use_new_cache()`): most single-deck games use `flat_cache` (descriptor-based Zobrist hash, O(1) amortised); two-deck, spider-stock, and suit-symmetry games fall back to `lru_cache` (Boost MultiIndex, pile-order canonicalised).
+4. Cache selection (`cache_factory.h:make_cache()`): 4-way selection — Accordion games use `predecessor_flat_cache` (128-byte clusters, predecessor-encoded state); most single-deck games use `flat_cache` (descriptor-based Zobrist, 64-byte clusters) or `hash_only_cache` (hash-only, 16-byte clusters); two-deck, spider-stock, and suit-symmetry games fall back to `lru_cache` (Boost MultiIndex, pile-order canonicalised).
 
 ### Key Classes
 
@@ -111,8 +111,12 @@ Key CLI options: `--type`, `--random <seed>`, `--json`, `--reveal-hidden`, `--st
 |---|---|---|
 | `solver` | `src/main/solver/solver.h/cpp` | DFS engine, result reporting |
 | `game_state` | `src/main/game/search-state/game_state.h/cpp` | State, move generation, undo |
-| `flat_cache` | `src/main/game/flat_cache.h/cpp` | Fast transposition table (descriptor Zobrist hash) |
+| `flat_cache` | `src/main/game/flat_cache.h/cpp` | Fast transposition table (descriptor Zobrist, 64-byte clusters) |
+| `hash_only_cache` | `src/main/game/hash_only_cache.h/cpp` | Hash-only flat cache (16-byte clusters, no payload) |
+| `predecessor_flat_cache` | `src/main/game/predecessor_flat_cache.h/cpp` | Accordion predecessor-encoded cache (128-byte clusters) |
+| `cache_factory.h` | `src/main/game/cache_factory.h` | Centralised `make_cache()` — 4-way cache selection |
 | `lru_cache` | `src/main/game/global_cache.h/cpp` | Transposition table with LRU eviction (Boost MultiIndex) |
+| `platform_memory.h` | `src/main/game/platform_memory.h` | mmap lazy allocation RAII (`platform::lazy_buffer`) |
 | `sol_rules` | `src/main/game/sol_rules.h/cpp` | Game rule enums (build policy, space policy, etc.) |
 | `card` | `src/main/game/card.h/cpp` | Card value, suit, face-down flag |
 | `pile` | `src/main/game/pile.h/cpp` | Vector-based card stack; `pile[0]` = top |
