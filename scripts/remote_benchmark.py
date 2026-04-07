@@ -72,6 +72,20 @@ CACHE_CONFIGS = [
     ("force-lru",  ["--force-lru"]),
 ]
 
+# Games where hash-only is NOT safe to use.
+# hash_only_cache relies on the flat-cache Zobrist hash; games that fall back to
+# lru_cache in auto mode (two-deck, spider-stock, suit-symmetry, accordion) either
+# don't have a meaningful Zobrist hash or use a different one (predecessor hash).
+# Passing --cache-type hash-only to these games would silently give wrong results.
+HASH_ONLY_INELIGIBLE = {
+    "accordion",         # uses predecessor Zobrist, not flat-cache Zobrist
+    "spider",            # two-deck or spider-stock
+    "spider-one-suit",   # spider-stock
+    "spider-two-suits",  # spider-stock
+}
+# Note: suit-symmetry streamliner also makes hash-only unsafe, but none of the
+# game configs above use suit-symmetry, so no additional exclusion needed here.
+
 # ---------------------------------------------------------------------------
 # Worker function — runs one (game, config, seed) triple
 # ---------------------------------------------------------------------------
@@ -168,13 +182,21 @@ def main():
 
     # Build task list
     tasks = []
+    skipped_combos = []
     for game_type, (seed_lo, seed_hi), timeout_ms, streamliner, _ in game_configs:
         for cache_name, cache_args in cache_configs:
+            # hash-only is only safe for flat-cache-eligible games
+            if cache_name == "hash-only" and game_type in HASH_ONLY_INELIGIBLE:
+                skipped_combos.append((game_type, cache_name))
+                continue
             for seed in range(seed_lo, seed_hi + 1):
                 tasks.append((
                     args.solver, game_type, seed, timeout_ms, streamliner,
                     cache_name, cache_args, args.cache_capacity
                 ))
+    if skipped_combos:
+        print(f"  Skipped hash-only for ineligible games: "
+              f"{sorted(set(g for g,_ in skipped_combos))}")
 
     total = len(tasks)
     print(f"[{datetime.now():%H:%M:%S}] Starting {total} tasks on {args.workers} workers")

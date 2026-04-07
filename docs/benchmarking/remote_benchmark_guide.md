@@ -112,7 +112,7 @@ The R script prints:
 | Config name | Solver flags | Description |
 |---|---|---|
 | `auto` | _(none)_ | Default: predecessor cache for accordion, flat cache for most games, lru fallback |
-| `hash-only` | `--cache-type hash-only` | Hash-only flat cache (16-byte clusters, no payload verification) |
+| `hash-only` | `--cache-type hash-only` | Hash-only flat cache (16-byte clusters, no payload verification). **Only valid for flat-cache-eligible games** — skipped automatically for accordion and spider variants. |
 | `force-lru` | `--force-lru` | Legacy LRU cache (Boost MultiIndex) — baseline comparison |
 
 ## Game Types in Full Run
