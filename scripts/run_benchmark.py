@@ -9,9 +9,7 @@ Usage:
     python3 run_benchmark.py --solver PATH --seeds N-M --type TYPE --output results.csv
     python3 run_benchmark.py --solver PATH --instances '*.json' --output results.csv
 
-TODO: Add a passthrough mechanism (e.g. --solver-args or trailing -- args) so that
-arbitrary solver flags (like --cache-type) can be forwarded to the solvitaire
-invocation without modifying this script each time a new flag is added.
+
 """
 
 import argparse
@@ -311,6 +309,8 @@ def main():
     parser.add_argument("--output-json", help="Optional JSON output file")
     parser.add_argument("--no-header", action="store_true", help="Don't write CSV header")
     parser.add_argument("--no-summary", action="store_true", help="Skip automatic R summary")
+    parser.add_argument("--label", default="", help="Label for this benchmark run (e.g., cache config)")
+    parser.add_argument("solver_args", nargs=argparse.REMAINDER, help="Additional arguments to pass to the solver")
 
     args = parser.parse_args()
 
@@ -338,7 +338,7 @@ def main():
     # Open CSV and write header
     csv_file = open(args.output, "w")
     if not args.no_header:
-        header = "instance,seed,run,solution_type,time_us,nodes,unique_nodes,backtracks,dominance_moves,states_removed_from_cache,cache_size,cache_buckets,max_depth,final_depth,resident_memory_bytes,solver_resident_bytes,streamliner,cache_capacity,timeout_ms,solver_commit"
+        header = "instance,seed,run,solution_type,time_us,nodes,unique_nodes,backtracks,dominance_moves,states_removed_from_cache,cache_size,cache_buckets,max_depth,final_depth,resident_memory_bytes,solver_resident_bytes,streamliner,cache_capacity,timeout_ms,solver_commit,label"
         csv_file.write(header + "\n")
         csv_file.flush()
 
@@ -364,6 +364,11 @@ def main():
 
             if args.cache_capacity is not None:
                 cmd += ["--cache-capacity", str(args.cache_capacity)]
+
+            if args.solver_args:
+                # Remove the '--' separator if argparse left it as the first element
+                trailing = args.solver_args[1:] if args.solver_args[0] == '--' else args.solver_args
+                cmd += trailing
 
             # Run warmup runs
             for warmup_run in range(args.warmup):
@@ -405,7 +410,7 @@ def main():
 
                 # Write CSV row
                 seed_str = str(seed) if seed is not None else ""
-                csv_row = f"{instance},{seed_str},{run_num},{solution_type},{time_us:.0f},{nodes},{unique_nodes},{backtracks},{dominance_moves},{states_removed},{cache_size},{cache_buckets},{max_depth},{final_depth},{rss_bytes},{solver_rss},{args.streamliner},{args.cache_capacity if args.cache_capacity is not None else ''},{args.timeout},{solver_commit}"
+                csv_row = f"{instance},{seed_str},{run_num},{solution_type},{time_us:.0f},{nodes},{unique_nodes},{backtracks},{dominance_moves},{states_removed},{cache_size},{cache_buckets},{max_depth},{final_depth},{rss_bytes},{solver_rss},{args.streamliner},{args.cache_capacity if args.cache_capacity is not None else ''},{args.timeout},{solver_commit},{args.label}"
                 csv_file.write(csv_row + "\n")
                 csv_file.flush()
 
@@ -431,6 +436,7 @@ def main():
                     "cache_capacity": args.cache_capacity,
                     "timeout_ms": args.timeout,
                     "solver_commit": solver_commit,
+                    "label": args.label,
                 }
                 json_results.append(json_record)
 
