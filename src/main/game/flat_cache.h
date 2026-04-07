@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdint>
 #include <algorithm>
+#include "platform_memory.h"
 
 /**
  * flat_cache: A flat, open-addressed hash table with two-slot clusters.
@@ -26,6 +27,7 @@ public:
     // max_entries: approximate number of entries the cache should hold.
     // Internally rounded to determine cluster count.
     explicit flat_cache(uint64_t max_entries);
+    ~flat_cache() override;
 
     // cache_interface implementation
     bool insert(const game_state& gs) override;
@@ -39,7 +41,12 @@ private:
     // Maps a 64-bit hash to a cluster index in [0, num_clusters)
     uint64_t cluster_index(uint64_t hash) const;
 
+#if defined(__APPLE__) || defined(__linux__)
+    cluster* clusters;
+    size_t   alloc_bytes;
+#else
     std::vector<cluster> clusters;
+#endif
     uint64_t num_clusters;
     uint64_t occupied_count;
     uint64_t eviction_count;
