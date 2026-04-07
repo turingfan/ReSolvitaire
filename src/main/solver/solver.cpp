@@ -34,6 +34,8 @@
 #include "solver.h"
 #include "../game/move.h"
 #include "../game/flat_cache.h"
+#include "../game/predecessor_flat_cache.h"
+#include "../game/hash_only_cache.h"
 #include "../game/dual_cache.h"
 #include "../input-output/output/log_helper.h"
 #include "../input-output/output/state_printer.h"
@@ -67,6 +69,8 @@ solver::solver(const game_state& gs, cache_interface& c)
         , root(move(move::mtype::null))
         , current_node() {
     using_flat_cache = (dynamic_cast<flat_cache*>(&cache) != nullptr)
+                    || (dynamic_cast<predecessor_flat_cache*>(&cache) != nullptr)
+                    || (dynamic_cast<hash_only_cache*>(&cache) != nullptr)
                     || (dynamic_cast<dual_cache*>(&cache) != nullptr);
     frontier.push_back(root);
     current_node = begin(frontier);
@@ -128,6 +132,10 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
                 if (using_flat_cache) {
                     state.set_payload_depth(static_cast<uint16_t>(
                         min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
+                    if (state.uses_predecessor_cache()) {
+                        state.set_predecessor_payload_depth(static_cast<uint8_t>(
+                            min(res.depth, static_cast<uint64_t>(UINT8_MAX))));
+                    }
                     is_new_state = cache.insert(state);
 #ifndef NDEBUG
                     state.assert_payload_consistent();

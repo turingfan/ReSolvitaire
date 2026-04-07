@@ -87,7 +87,10 @@ command_line_helper::command_line_helper()
             ("json", "outputs the result of the search as a machine-readable JSON object")
             ("reveal-hidden", "reveals identity of face-down cards in JSON output (e.g. 'ah' instead of '##')")
             ("debug", "outputs debug information to clog")
-            ("force-lru", "Force use of LRU cache even for flat-cache games");
+            ("force-lru", "Force use of LRU cache even for flat-cache games")
+            ("cache-type", po::value<string>()->default_value("auto"),
+             "Select cache implementation. Options: 'auto' (default, chooses flat or lru based on game), "
+             "'hash-only' (stores only Zobrist hash — no payload, faster but weaker deduplication).");
 
     po::options_description hidden_options("Hidden options");
     hidden_options.add_options()
@@ -235,6 +238,12 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
     reveal_hidden = (vm.count("reveal-hidden") != 0);
     debug = (vm.count("debug") != 0);
     force_lru_cache = (vm.count("force-lru") != 0);
+
+    cache_type = vm["cache-type"].as<string>();
+    if (cache_type != "auto" && cache_type != "hash-only") {
+        LOG_ERROR ("Error: invalid --cache-type: " + cache_type + ". Must be 'auto' or 'hash-only'.");
+        return false;
+    }
 
     // Handle logic error scenarios
     return assess_errors();
@@ -420,6 +429,10 @@ bool command_line_helper::get_debug() const {
 
 bool command_line_helper::get_force_lru_cache() const {
     return force_lru_cache;
+}
+
+const std::string& command_line_helper::get_cache_type() const {
+    return cache_type;
 }
 
 bool command_line_helper::get_version() {

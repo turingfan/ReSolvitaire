@@ -41,6 +41,7 @@
 #include "../move.h"
 #include "../zobrist.h"
 #include "../compact_state.h"
+#include "../predecessor_state.h"
 #include "../parent_table.h"
 
 class game_state {
@@ -83,6 +84,12 @@ public:
     const compact_state& get_payload() const { return payload; }
     void set_payload_depth(uint16_t depth);
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
+
+    /* Predecessor-based Zobrist (accordion games) */
+    uint64_t get_predecessor_zobrist_hash() const { return predecessor_zobrist_hash; }
+    const predecessor_state& get_predecessor_payload() const { return pred_payload; }
+    void set_predecessor_payload_depth(uint8_t depth);
+    bool uses_predecessor_cache() const { return rules.accordion_size > 0; }
 
 #ifndef NDEBUG
     compact_state recompute_payload_from_scratch() const;  // Debug: rebuild payload from board state
@@ -212,6 +219,28 @@ private:
     uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
     bool is_foundation_pile(pile::ref pr) const;
     uint8_t get_foundation_suit(pile::ref pr) const;
+
+    /* Predecessor-based Zobrist hash and payload (accordion games) */
+    static uint64_t Z_pred[52][110];   // card_id x predecessor_value
+    static bool Z_pred_initialised;
+    uint8_t predecessor_array[52];     // current predecessor for each card
+    uint64_t predecessor_zobrist_hash; // incrementally maintained
+    predecessor_state pred_payload;    // current payload
+
+    void init_predecessor_zobrist();    // fill Z_pred table (once)
+    void init_predecessor_state();      // compute initial predecessor array from game layout
+    void update_predecessor(uint8_t card_id, uint8_t new_pred);  // XOR-based incremental update
+
+    // Undo record for predecessor updates during accordion moves
+    struct predecessor_undo {
+        uint8_t card_id;
+        uint8_t old_pred;
+    };
+    struct predecessor_undo_frame {
+        uint8_t count;  // number of predecessor_undo entries in this frame
+    };
+    std::vector<predecessor_undo> pred_undo_entries;
+    std::vector<predecessor_undo_frame> pred_undo_frames;
 
     /* Pile references */
 

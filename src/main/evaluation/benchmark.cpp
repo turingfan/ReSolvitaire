@@ -36,8 +36,7 @@
 
 #include "../game/sol_rules.h" // Keep this for sol_rules
 #include "../game/search-state/game_state.h" // Keep this for game_state
-#include "../game/global_cache.h"
-#include "../game/flat_cache.h"
+#include "../game/cache_factory.h"
 #include "../solver/solver.h"
 #include "../input-output/input/json-parsing/rules_parser.h"
 #include "../input-output/input/json-parsing/deal_parser.h"
@@ -75,9 +74,6 @@ static uint64_t get_virtual_memory_bytes() {
         // On macOS, sum up memory usage components from rusage
         struct rusage usage;
         if (getrusage(RUSAGE_SELF, &usage) == 0) {
-            // ru_idrss (unshared data) + ru_ixrss (unshared stack) + ru_isrss (shared memory)
-            // These are in units of page*seconds, so convert to bytes
-            // Actually, on macOS these are deprecated. Use a simple heuristic: peak RSS is a good estimate
             return (uint64_t)usage.ru_maxrss;
         }
     #else
@@ -98,7 +94,7 @@ static uint64_t get_virtual_memory_bytes() {
     return 0;
 }
 
-void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms, bool force_lru) {
+void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms, bool force_lru, const std::string& cache_type) {
     rapidjson::FileWriteStream os(stdout, benchmark_buffer, sizeof(benchmark_buffer));
     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
 
@@ -118,14 +114,9 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
 
         for (int i = 0; i < iterations + (warmup ? 1 : 0); ++i) {
             game_state gs(rules, (int)seed, str_opts, force_lru);
-            std::unique_ptr<cache_interface> cache_ptr;
             bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                          || str_opts == game_state::streamliner_options::BOTH;
-            if (use_new_cache(rules, suit_sym) && !force_lru) {
-                cache_ptr = std::make_unique<flat_cache>(cache_capacity);
-            } else {
-                cache_ptr = std::make_unique<lru_cache>(gs, cache_capacity);
-            }
+            std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, gs, cache_capacity, cache_type, force_lru, suit_sym);
             solver sol(gs, *cache_ptr);
 
             auto start = chrono::high_resolution_clock::now();
@@ -262,7 +253,7 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
     os.Flush();
 }
 
-void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int benchmark_iterations, bool benchmark_warmup, uint64_t timeout_ms) {
+void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int benchmark_iterations, bool benchmark_warmup, uint64_t timeout_ms, const std::string& cache_type) {
     ifstream f(json_path);
     if (!f) {
         cerr << "Error: Could not open benchmark JSON: " << json_path << endl;
@@ -387,14 +378,10 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
                 continue;
             }
 
-            std::unique_ptr<cache_interface> cache_ptr;
             bool suit_sym_json = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                               || str_opts == game_state::streamliner_options::BOTH;
-            if (use_new_cache(rules, suit_sym_json)) {
-                cache_ptr = std::make_unique<flat_cache>(cache_capacity);
-            } else {
-                cache_ptr = std::make_unique<lru_cache>(*gs, cache_capacity);
-            }
+            // force_lru not available in run_json (known issue: benchmark.cpp KNOWN_ISSUES #2)
+            std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, *gs, cache_capacity, cache_type, false, suit_sym_json);
             solver sol(*gs, *cache_ptr);
             auto start = chrono::high_resolution_clock::now();
             solver::result res = sol.run(chrono::milliseconds(timeout_ms));
