@@ -8,7 +8,11 @@ macOS and Linux. Full implementation details are in
 ## Repository
 
 Working directory: the root of the ReSolvitaire-caching repository.
-Current branch: `dev` (you will create a new branch from here).
+Current branch: `refactor-caching` (you will create a new branch from here).
+
+**Important:** The code to be modified (`flat_cache`, `hash_only_cache`,
+`predecessor_flat_cache`, `cache_factory.h`) lives on `refactor-caching` and has not
+yet been merged to `dev`. Always cut from `refactor-caching`.
 
 ## Your task
 
@@ -17,7 +21,7 @@ Current branch: `dev` (you will create a new branch from here).
 
 2. **Create branch:**
    ```bash
-   git checkout dev && git pull
+   git checkout refactor-caching && git pull
    git checkout -b implement-mmap-cache
    ```
 
@@ -67,6 +71,9 @@ Current branch: `dev` (you will create a new branch from here).
    ```bash
    git push origin implement-mmap-cache
    ```
+
+   The human reviewer will merge `implement-mmap-cache` back to `refactor-caching`
+   after approving. Do not merge it yourself.
 
 ## Constraints
 

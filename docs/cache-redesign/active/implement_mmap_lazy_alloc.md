@@ -35,9 +35,14 @@ first touch** (demand paging). A 3.2 GB allocation that is only 1% accessed incu
 
 ## Branch Workflow
 
+The implementation work (`hash_only_cache`, `predecessor_flat_cache`, `cache_factory.h`,
+and the updated `flat_cache.cpp`) lives on `refactor-caching` but has **not yet been
+merged to `dev`**. Cut the feature branch from `refactor-caching`, not from `dev`.
+
 ```bash
-# 1. Cut from dev (NOT from refactor-caching — dev has the actual code)
-git checkout dev
+# 1. Cut from refactor-caching (flat_cache + hash_only + predecessor + cache_factory
+#    are all here; dev does not have them yet)
+git checkout refactor-caching
 git pull
 git checkout -b implement-mmap-cache
 
@@ -49,17 +54,12 @@ cd cmake-build-release && ctest -R unit_tests --output-on-failure
 cd cmake-build-release && ctest -R regression_level1 --output-on-failure
 ./scripts/container-build.sh --test   # verifies Linux path
 
-# 4. If all pass, merge back to dev
-git checkout dev
+# 4. If all pass, merge back to refactor-caching
+git checkout refactor-caching
 git merge implement-mmap-cache --no-ff
-git push origin dev
+git push origin refactor-caching
 git branch -d implement-mmap-cache
 git push origin --delete implement-mmap-cache
-
-# 5. Sync design branch
-git checkout refactor-caching
-git merge dev
-git push origin refactor-caching
 ```
 
 ---
