@@ -1,10 +1,11 @@
 # Phase 1: Incremental Inline Undo Implementation (DESIGN PHASE)
 
 **Date:** 2026-04-10
-**Status:** DESIGN IN PROGRESS
+**Status:** STRATEGY DEFINED, AWAITING IMPLEMENTATION ORDERING DECISIONS
 **Scope:** Zobrist hash + compact_state payload inline undo. Excludes predecessor/accordion.
 **Branch:** `feature/refactoring-phases`
 **Prerequisite:** Phase 0 scaffolding complete (see `phase0_plan.md`)
+**Approach:** Parallel computation with fallback copies; incremental per-component implementation
 **Related:** `descriptor_undo_analysis.md` (in this directory)
 
 ---
@@ -21,126 +22,153 @@ At the end of Phase 1, the 10-byte `zobrist_undo` struct and its stack are **eli
 
 ### High-Level Approach
 
-Each step below replaces ONE component of the undo record with inline computation. The pattern for each step is:
+Each move in the game happens **once**, with two independent hash/payload updates running in **parallel**:
 
-1. Write the inline computation code inside the `#ifdef VALIDATE_INLINE_UNDO` block
-2. Assert that the inline result matches the undo-stack result
-3. Run unit tests + Level 1 regression with the validation build
-4. When the assert passes on all tests, the component is proven correct
-5. Commit and move to the next component
+1. **Existing path (primary):** The current undo code modifies `zobrist_hash_value` and `payload` as before
+2. **New inline path:** Protected by `#ifdef VALIDATE_INLINE_UNDO`, a separate `inline_hash` and `inline_payload` are computed alongside
+3. **For unimplemented move types:** The new path simply copies the reference values (fallback), allowing incremental implementation
+4. **End-of-move assertion:** Assert that `inline_hash == zobrist_hash_value` and `inline_payload.matches(payload)`
+5. **Incremental building:** Implement one move type at a time; once a move type's inline code is complete, remove the fallback copy
 
-After all components are validated, the final step replaces the existing undo code with the inline code and removes the undo stack.
+The pattern for each move type step is:
 
-### The Dual-State Approach
+1. Write the inline computation code inside the `#ifdef VALIDATE_INLINE_UNDO` block for one move type (e.g., `undo_regular_move`)
+2. Initially, for unimplemented components within that move type, copy the reference values
+3. Implement one component of that move type (e.g., "pile operations")
+4. Assert that the inline computation still matches the reference
+5. Run unit tests + Level 1 regression with the validation build
+6. When the assert passes on all tests, that component is proven correct
+7. Commit and move to the next component
+8. Repeat until all components for that move type are implemented, then move to the next move type
 
-The key challenge is that the existing undo code modifies hash/payload as it runs, so we can't simply "run both paths." Instead, we use a snapshot approach:
+### The Parallel Computation Approach
+
+The key insight is that we run both paths during the **same forward motion** through the undo operation:
 
 **For each undo function:**
-1. Record `pre_undo_hash` and `pre_undo_payload` (the state before ANY undo happens)
-2. Run the existing undo code → produces `expected_hash` and `expected_payload`
-3. Restore `pre_undo_hash` and `pre_undo_payload` (reset to pre-undo state)
-4. Run the new inline code → produces `inline_hash` and `inline_payload`
-5. Assert `inline_hash == expected_hash` and `inline_payload.matches(expected_payload)`
-6. Leave the state as the existing code left it (so the rest of the solver works)
+1. After the existing undo code completes (hash and payload are now updated):
+   - Save the reference: `uint64_t expected_hash = zobrist_hash_value;` and `compact_state expected_payload = payload;`
+2. Compute the inline path (protected by `#ifdef VALIDATE_INLINE_UNDO`):
+   ```cpp
+   uint64_t inline_hash = ...; // compute from scratch
+   compact_state inline_payload = ...; // compute from scratch
+   // For unimplemented components: copy the reference
+   if (!inline_path_fully_implemented_for_this_move_type) {
+       inline_hash = expected_hash;
+       inline_payload = expected_payload;
+   }
+   ```
+3. Assert the two paths agree:
+   ```cpp
+   assert(inline_hash == expected_hash && "INLINE UNDO: hash mismatch");
+   assert(inline_payload.matches(expected_payload) && "INLINE UNDO: payload mismatch");
+   ```
+4. State remains as the existing code left it (correct for solver to continue)
 
-Step 6 means after validation, we restore to the expected state:
-```cpp
-zobrist_hash_value = expected_hash;
-payload = expected_payload;
-```
-
-This approach lets us validate incrementally: as each component is added to the inline path, the assert catches any divergence.
-
----
-
-## Implementation Strategy (To Be Defined)
-
-**User input needed:** Ian, please describe your idea for Phase 1 implementation.
-
-Key questions to address:
-1. What is the granularity of inline implementation? (per-component, per-undo-function, or a different strategy?)
-2. What is the implementation order? (which components first?)
-3. Are there architectural constraints or simplifications you'd like to apply?
-4. How do you want to handle the reveal_move complexity noted in the initial analysis?
-5. Any specific testing or validation strategy beyond the dual-state approach?
+This approach is clean because:
+- No replay/undo/restore cycles — each move happens once
+- Both paths update independently during the single forward pass
+- Incremental implementation via fallback copies for unimplemented components
+- Assertions catch divergence as components are added
 
 ---
 
-## Open Design Questions
+## Design Decisions & Remaining Questions
 
-### 1. Factoring Pile Operations
+### 1. Component Implementation Order
 
-The initial analysis notes that pile operations can be factored out and shared between the undo-stack path and inline path, avoiding redundant computation. Should Phase 1:
+Within each move type, which components should be implemented first? Candidates:
 
-- Keep pile operations in the existing path and only inline hash/payload updates?
-- Or restructure to explicitly factor out and share pile operations?
+1. **Pile operations** — determine card movement (in/out of piles)
+2. **Reveal undo** — if turning card face-down, update descriptor (STARTING_FACE_UP → STARTING)
+3. **Foundation undo** — restore old foundation ranks in hash
+4. **Hole top undo** — restore old hole top card in hash (if game has holes)
+5. **Waste pointer undo** — restore old waste ptr in hash (if game has waste pile)
+6. **Moved card descriptor undo** — restore old descriptor in payload
 
-**Impact:** Affects code clarity and whether we can validate hash/payload independently from pile state changes.
+**Considerations:**
+- Should order follow the existing code's logic, or a cleaner dependency graph?
+- Are some components always required together (e.g., foundation + hole top)?
+- Should we implement "easiest first" (highest confidence) or "riskiest first" (to validate early)?
 
 ### 2. Reveal Move Handling
 
-The reveal_move mechanism involves turning cards face-down (`piles[m.from][0].turn_face_down()`) as part of undo. This happens before pile operations in the current code. The inline path needs to:
+The reveal_move mechanism turns a card face-down during undo (`piles[m.from][0].turn_face_down()`). The inline path needs to:
 
 - Compute the new descriptor for a revealed card (STARTING_FACE_UP → STARTING)
-- Know when to apply this (reveal_move flag)
-- Handle the interaction with pile state ordering
+- Know when to apply this (reveal_move flag in the move struct)
+- Ensure interaction with pile state is correct
 
-**Question:** Should reveal undo be a separate component step, or merged with another component?
+**Decision needed:** How should reveal descriptor updates be integrated with the component ordering above?
 
-### 3. Component Ordering
+### 3. Move Type Implementation Order
 
-Candidates for inline implementation (in some order):
-1. Pile operations (reverse of card movement)
-2. Reveal undo (if moving card face-down, update descriptor)
-3. Foundation undo (restore old foundation ranks in hash)
-4. Hole top undo (restore old hole top card in hash)
-5. Waste pointer undo (restore old waste ptr in hash)
-6. Moved card descriptor undo (restore old descriptor in payload)
-
-**Question:** What is the natural/optimal order? Should it follow the existing code's order, or a different dependency graph?
-
-### 4. Validation Scope
-
-Currently Phase 0 scaffolding covers:
+Currently Phase 0 scaffolding covers four move types:
 - `undo_regular_move`
 - `undo_built_group_move`
 - `undo_stock_k_plus_move`
 - `undo_stock_to_all_tableau_move`
 
-**Question:** Should all four be implemented in lockstep, or can they proceed independently?
+**Decision needed:**
+- Implement all four in parallel, or tackle them sequentially?
+- If sequential, which move type first (simplest, or most-used)?
+- If parallel, do they share component implementations, or are they independent?
 
 ---
 
-## Placeholder: Implementation Steps
+## Implementation Steps (To Be Defined)
 
-(To be defined based on user input)
+Once component and move-type ordering are finalized, the implementation will follow this pattern:
 
-### Step 1.0: [Define initial component to inline]
+### Step 1.X: Implement component C in move type M
 
-### Step 1.1: [Inline first component]
+**Process:**
+1. Open `undo_M` function in `game_state.cpp`
+2. Inside the `#ifdef VALIDATE_INLINE_UNDO` block, add inline computation for component C
+3. For any components not yet implemented in this move type, keep the fallback copy: `inline_hash = expected_hash;` etc.
+4. Add assertion: `assert(inline_hash == expected_hash && "...")` and `assert(inline_payload.matches(expected_payload) && "...")`
+5. Compile with `-DVALIDATE_INLINE_UNDO=ON`
+6. Run unit tests + Level 1 regression
+7. Commit with message: `feat: inline component C for move type M`
 
-### Step 1.2: [Inline second component]
+### Step 1.Y: Implement component D in move type M
 
-... (and so on)
+Repeat the process above for the next component in the same move type.
+
+### Step 1.Z: Switch to next move type
+
+Once all components for move type M are implemented and passing, move to the next move type and repeat.
+
+### Final Step: Clean-up and remove undo stack
+
+Once all components for all move types are validated:
+1. Remove `#ifdef VALIDATE_INLINE_UNDO` guards (keep inline code, remove assertions and reference copies)
+2. Remove `zobrist_undo_stack` and related cleanup code
+3. Run full regression suite (Levels 1–5)
+4. Commit with message: `refactor: eliminate zobrist_undo_stack, inline all undo computation`
 
 ---
 
-## Exit Criteria (To Be Defined)
+## Exit Criteria
 
-- [ ] All inline components pass validation tests
-- [ ] No runtime performance regression
-- [ ] undo_undo_stack can be safely removed (if final step includes cleanup)
-- [ ] All regression tests pass
-- [ ] Documentation updated to reflect new undo mechanism
+- [ ] Inline computation implemented for all components in all four move types
+- [ ] `#ifdef VALIDATE_INLINE_UNDO` assertions pass on all unit tests
+- [ ] Level 1 regression passes with validation enabled
+- [ ] Level 2 regression passes with validation enabled (longer test suite)
+- [ ] `zobrist_undo_stack` removed and cleanup code eliminated
+- [ ] Assertions removed, `#ifdef` guards stripped from final code
+- [ ] No runtime performance regression (measured via Level 2+ regression timeouts)
+- [ ] All regression tests pass (Levels 1–5)
 
 ---
 
 ## Success Metrics
 
-- Reduced memory footprint (10-byte undo struct * millions of states → zero)
-- Simplified code path (no undo stack management)
-- Maintained correctness (validation harness proves equivalence)
-- Reasonable performance (likely neutral or slightly faster due to reduced memory traffic)
+- **Memory footprint:** Eliminated 10-byte `zobrist_undo` struct × millions of states, reducing per-solve memory usage
+- **Code clarity:** Removed undo stack management; inline undo computation is self-contained and easier to reason about
+- **Correctness:** Parallel-path assertions provide 100% confidence that inline computation matches reference across all test instances
+- **Performance:** Expected to be neutral or slightly faster due to reduced memory allocation/deallocation and better cache locality
+- **Maintainability:** Future changes to Zobrist encoding only need updates in one place (inline code), not in both move and undo paths
 
 ---
 
