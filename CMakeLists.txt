@@ -248,6 +248,12 @@ endif()
 # For profiling (uncomment and comment the above):
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O -fno-inline -fno-inline-functions -g")
 
+# Phase 0: Validation infrastructure for Zobrist undo inlining
+option(VALIDATE_INLINE_UNDO "Enable dual-path Zobrist undo validation" OFF)
+if(VALIDATE_INLINE_UNDO)
+    add_definitions(-DVALIDATE_INLINE_UNDO)
+endif()
+
 # Default to building the 'Debug' configuration
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "The build configuration" FORCE)

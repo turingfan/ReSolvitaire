@@ -527,6 +527,12 @@ void game_state::make_regular_move(const move m) {
 }
 
 void game_state::undo_regular_move(const move m) {
+#ifdef VALIDATE_INLINE_UNDO
+    // Snapshot pre-undo state
+    uint64_t pre_hash = zobrist_hash_value;
+    compact_state pre_payload = payload;
+#endif
+
     assert(m.to < piles.size());
 
     // Pop undo info
@@ -566,6 +572,27 @@ void game_state::undo_regular_move(const move m) {
 
     // Pile operations
     place_card(m.from, take_card(m.to));
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Snapshot expected result
+    uint64_t expected_hash = zobrist_hash_value;
+    compact_state expected_payload = payload;
+
+    // Restore hash/payload to pre-undo state for inline path validation
+    zobrist_hash_value = pre_hash;
+    payload = pre_payload;
+
+    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
+    // For now, just copy expected result to pass validation trivially
+    zobrist_hash_value = expected_hash;
+    payload = expected_payload;
+
+    // === VALIDATE ===
+    assert(zobrist_hash_value == expected_hash
+        && "INLINE UNDO: hash mismatch in undo_regular_move");
+    assert(payload.matches(expected_payload)
+        && "INLINE UNDO: payload mismatch in undo_regular_move");
+#endif
 }
 
 void game_state::make_built_group_move(move m) {
@@ -636,6 +663,12 @@ void game_state::make_built_group_move(move m) {
 }
 
 void game_state::undo_built_group_move(move m) {
+#ifdef VALIDATE_INLINE_UNDO
+    // Snapshot pre-undo state
+    uint64_t pre_hash = zobrist_hash_value;
+    compact_state pre_payload = payload;
+#endif
+
     assert(m.to < piles.size());
 
     // Pop undo info
@@ -662,6 +695,27 @@ void game_state::undo_built_group_move(move m) {
     for (uint8_t rem_count = 0; rem_count < m.count; rem_count++) {
         take_card(m.to);
     }
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Snapshot expected result
+    uint64_t expected_hash = zobrist_hash_value;
+    compact_state expected_payload = payload;
+
+    // Restore hash/payload to pre-undo state for inline path validation
+    zobrist_hash_value = pre_hash;
+    payload = pre_payload;
+
+    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
+    // For now, just copy expected result to pass validation trivially
+    zobrist_hash_value = expected_hash;
+    payload = expected_payload;
+
+    // === VALIDATE ===
+    assert(zobrist_hash_value == expected_hash
+        && "INLINE UNDO: hash mismatch in undo_built_group_move");
+    assert(payload.matches(expected_payload)
+        && "INLINE UNDO: payload mismatch in undo_built_group_move");
+#endif
 }
 
 void game_state::make_stock_k_plus_move(const move m) {
@@ -747,6 +801,12 @@ void game_state::make_stock_k_plus_move(const move m) {
 }
 
 void game_state::undo_stock_k_plus_move(move m) {
+#ifdef VALIDATE_INLINE_UNDO
+    // Snapshot pre-undo state
+    uint64_t pre_hash = zobrist_hash_value;
+    compact_state pre_payload = payload;
+#endif
+
 #ifndef NDEBUG
     assert(rules.stock_deal_t == sdt::WASTE);
     assert(m.from == stock);
@@ -801,6 +861,27 @@ void game_state::undo_stock_k_plus_move(move m) {
     assert(!(rules.stock_size > 0 && rules.stock_redeal && piles[stock].empty() && !piles[waste].empty()));
     assert(piles[stock].size() <= rules.stock_size);
 #endif
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Snapshot expected result
+    uint64_t expected_hash = zobrist_hash_value;
+    compact_state expected_payload = payload;
+
+    // Restore hash/payload to pre-undo state for inline path validation
+    zobrist_hash_value = pre_hash;
+    payload = pre_payload;
+
+    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
+    // For now, just copy expected result to pass validation trivially
+    zobrist_hash_value = expected_hash;
+    payload = expected_payload;
+
+    // === VALIDATE ===
+    assert(zobrist_hash_value == expected_hash
+        && "INLINE UNDO: hash mismatch in undo_stock_k_plus_move");
+    assert(payload.matches(expected_payload)
+        && "INLINE UNDO: payload mismatch in undo_stock_k_plus_move");
+#endif
 }
 
 void game_state::make_stock_to_all_tableau_move(move m) {
@@ -836,6 +917,12 @@ void game_state::make_stock_to_all_tableau_move(move m) {
 }
 
 void game_state::undo_stock_to_all_tableau_move(move) {
+#ifdef VALIDATE_INLINE_UNDO
+    // Snapshot pre-undo state
+    uint64_t pre_hash = zobrist_hash_value;
+    compact_state pre_payload = payload;
+#endif
+
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
 
     // Pop undo info
@@ -852,6 +939,27 @@ void game_state::undo_stock_to_all_tableau_move(move) {
 
         place_card(stock, take_card(tab_pr));
     }
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Snapshot expected result
+    uint64_t expected_hash = zobrist_hash_value;
+    compact_state expected_payload = payload;
+
+    // Restore hash/payload to pre-undo state for inline path validation
+    zobrist_hash_value = pre_hash;
+    payload = pre_payload;
+
+    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
+    // For now, just copy expected result to pass validation trivially
+    zobrist_hash_value = expected_hash;
+    payload = expected_payload;
+
+    // === VALIDATE ===
+    assert(zobrist_hash_value == expected_hash
+        && "INLINE UNDO: hash mismatch in undo_stock_to_all_tableau_move");
+    assert(payload.matches(expected_payload)
+        && "INLINE UNDO: payload mismatch in undo_stock_to_all_tableau_move");
+#endif
 }
 
 void game_state::make_sequence_move(const move m) {
