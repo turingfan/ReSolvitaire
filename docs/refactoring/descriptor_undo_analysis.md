@@ -1,7 +1,7 @@
 # Descriptor Undo Reconstruction: Semantic Analysis
 
 **Date:** 2026-04-10
-**Status:** Analysis for human review before implementation
+**Status:** REVISED — STARTING_FACE_UP is now proven recoverable (see Section "Resolution")
 
 ---
 
@@ -285,7 +285,85 @@ This is common in Klondike-style games with face-down cards in the tableau. It w
 
 ---
 
-## Proposed Solutions
+## Resolution: STARTING_FACE_UP IS Recoverable
+
+### The Key Invariant
+
+`check_face_down_consistent()` enforces that **the top card of every non-empty tableau pile is face-up**. This is not just a debug assertion — it is a structural invariant of the game state:
+
+```cpp
+// From game_state.cpp:
+assert(!piles[p].top_card().is_face_down());
+// face-down cards never above face-up ones
+```
+
+This means: **you can never place a card on top of a face-down card**. When a move is made to a tableau pile, the pile's top card is face-up (or the pile is empty). The moved card is placed on top of that face-up card (or on an empty pile).
+
+### The Proof
+
+The only way a face-up card can sit directly above a face-down card is through a **reveal**: the card above was moved away, and this card (previously face-down) was turned face-up in place. It was never moved — it was revealed.
+
+**Therefore, at undo time (after pile undo + reveal undo), if `piles[m.from][1].is_face_down()`, the moved card at `piles[m.from][0]` was REVEALED here, not MOVED here.** Its descriptor was:
+- **STARTING_FACE_UP** (if there are face-down cards below it, i.e., pile size > 1 at the time)
+- **IN_SPACE** (if it's the bottom card — but this can't happen with a face-down card at index 1)
+
+Since we already know that IN_SPACE is recoverable (pile size == 1 after undo means the card was alone on the pile), the remaining case is:
+
+> After pile undo + reveal undo: if `piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()`, then `old_desc = STARTING_FACE_UP`.
+
+Otherwise, `old_desc = determine_destination_descriptor(m.from, moved)`.
+
+### The Complete Descriptor Reconstruction Rule
+
+```cpp
+uint8_t compute_old_descriptor(pile::ref from, card moved) {
+    // After pile undo (and reveal undo if applicable), the card is at piles[from][0].
+
+    // Check if the card was revealed here (face-down card below it)
+    if (piles[from].size() >= 2 && piles[from][1].is_face_down()) {
+        return compact_state::STARTING_FACE_UP;
+    }
+
+    // Otherwise, compute from pile context (handles IN_SPACE, ROOT, PARENT_x, etc.)
+    return determine_destination_descriptor(from, moved);
+}
+```
+
+### Why This Is Complete
+
+| Pile State After Undo | Card Was... | Descriptor | Method |
+|---|---|---|---|
+| Pile size == 1 | Alone on pile (bottom) | IN_SPACE | `determine_destination_descriptor` |
+| Index 1 is face-down | Revealed in place | STARTING_FACE_UP | Face-down check |
+| Index 1 is face-up, legal parent | Moved onto legal parent | PARENT_0..3 | `determine_destination_descriptor` |
+| Index 1 is face-up, non-legal parent | Moved onto non-legal parent | ROOT | `determine_destination_descriptor` |
+| Foundation/cell/hole/etc. | In non-tableau pile | STARTING/IN_CELL/IN_HOLE | `determine_destination_descriptor` |
+
+Every case is covered. No stored state is needed.
+
+### What About Built-Group Moves?
+
+For built-group moves, the bottom card of the group is the one whose descriptor changes. After pile undo, it's at `piles[m.from][m.count - 1]`. The card below it is at `piles[m.from][m.count]`. The same face-down check applies:
+
+```cpp
+if (piles[from].size() > m.count && piles[from][m.count].is_face_down()) {
+    return compact_state::STARTING_FACE_UP;
+}
+```
+
+### Conclusion: No Undo Stack Needed At All
+
+With this face-down check, ALL descriptor values are recoverable from pile state. The 1-byte `descriptor_undo_stack` proposed earlier is **not needed**. The undo stack can be eliminated entirely.
+
+---
+
+## Earlier Analysis (Superseded)
+
+The analysis below was written before the face-down invariant was identified. It is kept for reference but its conclusion (that STARTING_FACE_UP requires stored state) is now superseded.
+
+---
+
+## Proposed Solutions (Superseded)
 
 ### Solution A: Store the moved card's old descriptor in the move struct
 
@@ -450,11 +528,11 @@ Only STARTING_FACE_UP is problematic. All other descriptors are recoverable.
 
 ---
 
-## Summary
+## Summary (REVISED)
 
 | Component | Recoverable from pile state? | Notes |
 |---|---|---|
-| Moved card descriptor | **MOSTLY** — all except STARTING_FACE_UP | Need 1 byte stored |
+| Moved card descriptor | **YES** — all cases including STARTING_FACE_UP | Face-down invariant resolves the ambiguity |
 | Revealed card identity | YES | Read from `piles[m.from][1]` (or `[m.count]` for built groups) |
 | Revealed card old descriptor | YES | Always STARTING (face-down cards) |
 | Foundation top rank | YES | Read pile top after undo |
@@ -462,4 +540,4 @@ Only STARTING_FACE_UP is problematic. All other descriptors are recoverable.
 | Waste pointer | YES | Call `effective_waste_ptr()` after pile undo |
 | sat_count | YES | Available from `move.count` |
 
-**Bottom line:** We can reduce the undo record from 10 bytes to 1 byte. We cannot eliminate it entirely because STARTING_FACE_UP is not recoverable from pile state.
+**Bottom line:** The entire `zobrist_undo_stack` can be eliminated. ALL values are recoverable from pile state after undo. The key insight is the face-down card invariant: a face-up card sitting directly above a face-down card was necessarily revealed in place (descriptor = STARTING_FACE_UP), never moved there, because moves can only place cards on face-up tops or empty piles.
