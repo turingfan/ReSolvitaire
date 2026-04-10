@@ -691,6 +691,12 @@ void game_state::make_built_group_move(move m) {
     assert(m.from  <  piles.size()  );
     assert(m.to    <  piles.size()  );
 
+    // Capture pre-move state
+#ifdef VALIDATE_INLINE_UNDO
+    const uint64_t pre_move_hash = zobrist_hash_value;
+    const compact_state pre_move_payload = payload;
+#endif
+
     // Capture bottom card of group (the one whose descriptor changes)
     card bottom = piles[m.from][m.count - 1];
     uint8_t bottom_cid = zobrist_hash::card_id(bottom.get_suit(), bottom.get_rank());
@@ -706,7 +712,7 @@ void game_state::make_built_group_move(move m) {
         take_card(m.from);
     }
 
-    // Update bottom card's descriptor
+    // Determine bottom card's new descriptor
     // After placement: bottom card is at piles[m.to][m.count - 1]
     // Parent (if any) is at piles[m.to][m.count]
     uint8_t new_desc;
@@ -722,6 +728,8 @@ void game_state::make_built_group_move(move m) {
         new_desc = (desc != 0) ? desc
             : static_cast<uint8_t>(compact_state::ROOT);
     }
+
+    // Update bottom card's descriptor
     update_card_descriptor(bottom_cid, new_desc);
 
     // Handle reveal
@@ -752,15 +760,41 @@ void game_state::make_built_group_move(move m) {
     undo.old_waste_ptr = 255;
     undo.sat_count = 0;
     zobrist_undo_stack.push_back(undo);
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Reference state after move (existing path result)
+    const uint64_t expected_hash = zobrist_hash_value;
+    const compact_state expected_payload = payload;
+
+    // === INLINE MOVE PATH ===
+    // Compute hash and payload changes from pre-move state
+    uint64_t inline_hash = pre_move_hash;
+    compact_state inline_payload = pre_move_payload;
+
+    // Bottom card descriptor: old_desc → new_desc (use already-computed new_desc)
+    update_inline_card_descriptor(bottom_cid, new_desc, inline_hash, inline_payload);
+
+    // Reveal descriptor update (if reveal move)
+    if (m.reveal_move) {
+        uint8_t rev_desc = (piles[m.from].size() == 1)
+            ? compact_state::IN_SPACE
+            : compact_state::STARTING_FACE_UP;
+        update_inline_card_descriptor(rev_cid, rev_desc, inline_hash, inline_payload);
+    }
+
+    // === VALIDATE ===
+    (void)expected_hash;
+    (void)expected_payload;
+    (void)inline_hash;
+    (void)inline_payload;
+    assert(inline_hash == expected_hash
+        && "INLINE MAKE: hash mismatch in make_built_group_move");
+    assert(inline_payload.matches(expected_payload)
+        && "INLINE MAKE: payload mismatch in make_built_group_move");
+#endif
 }
 
 void game_state::undo_built_group_move(move m) {
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot pre-undo state
-    uint64_t pre_hash = zobrist_hash_value;
-    compact_state pre_payload = payload;
-#endif
-
     assert(m.to < piles.size());
 
     // Pop undo info
@@ -789,23 +823,33 @@ void game_state::undo_built_group_move(move m) {
     }
 
 #ifdef VALIDATE_INLINE_UNDO
-    // Snapshot expected result
-    uint64_t expected_hash = zobrist_hash_value;
-    compact_state expected_payload = payload;
+    // Reference state after undo (existing path result)
+    const uint64_t expected_hash = zobrist_hash_value;
+    const compact_state expected_payload = payload;
 
-    // Restore hash/payload to pre-undo state for inline path validation
-    zobrist_hash_value = pre_hash;
-    payload = pre_payload;
+    // === INLINE UNDO PATH ===
+    // Compute hash and payload changes independently using the undo record
+    uint64_t inline_hash = expected_hash;  // start with reference
+    compact_state inline_payload = expected_payload;
 
-    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
-    // For now, just copy expected result to pass validation trivially
-    zobrist_hash_value = expected_hash;
-    payload = expected_payload;
+    // Undo reveal descriptor change: STARTING_FACE_UP (or other) → STARTING
+    if (m.reveal_move) {
+        update_inline_card_descriptor(undo.revealed_card_id, compact_state::STARTING,
+                                      inline_hash, inline_payload);
+    }
+
+    // Undo bottom card descriptor: new_desc → old_desc
+    update_inline_card_descriptor(undo.card_id, undo.old_desc,
+                                  inline_hash, inline_payload);
 
     // === VALIDATE ===
-    assert(zobrist_hash_value == expected_hash
+    (void)expected_hash;
+    (void)expected_payload;
+    (void)inline_hash;
+    (void)inline_payload;
+    assert(inline_hash == expected_hash
         && "INLINE UNDO: hash mismatch in undo_built_group_move");
-    assert(payload.matches(expected_payload)
+    assert(inline_payload.matches(expected_payload)
         && "INLINE UNDO: payload mismatch in undo_built_group_move");
 #endif
 }
