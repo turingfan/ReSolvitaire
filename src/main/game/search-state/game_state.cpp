@@ -597,12 +597,71 @@ void game_state::undo_regular_move(const move m) {
     zobrist_undo undo = zobrist_undo_stack.back();
     zobrist_undo_stack.pop_back();
 
-    // Undo reveal descriptor
+    // Save pre-undo state for reference
+    uint64_t reference_hash = zobrist_hash_value;
+    compact_state reference_payload = payload;
+
+    // Undo reveal descriptor (physical change, before pile ops to match original)
     if (m.reveal_move) {
         assert(!piles[m.from].empty());
         assert(!piles[m.from][0].is_face_down());
-        update_card_descriptor(undo.revealed_card_id, compact_state::STARTING);
         piles[m.from][0].turn_face_down();
+    }
+
+    // Pile operations
+    place_card(m.from, take_card(m.to));
+
+    // === PRIMARY INLINE UNDO PATH ===
+    uint64_t inline_hash = reference_hash;
+    compact_state inline_payload = reference_payload;
+
+    // Undo reveal descriptor change: STARTING_FACE_UP (or other) → STARTING
+    if (m.reveal_move) {
+        update_inline_card_descriptor(undo.revealed_card_id, compact_state::STARTING,
+                                      inline_hash, inline_payload);
+    }
+
+    // Undo hole header
+    if (undo.old_hole_top != 255) {
+        update_inline_hole_top_in_hash(undo.old_hole_top,
+                                       inline_hash, inline_payload);
+    }
+
+    // Undo waste pointer (if move was from waste)
+    if (undo.old_waste_ptr != 255) {
+        update_inline_waste_ptr_in_hash(undo.old_waste_ptr,
+                                        inline_hash, inline_payload);
+    }
+
+    // Undo destination foundation header
+    if (undo.to_found_suit != 255) {
+        update_inline_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank,
+                                         inline_hash, inline_payload);
+    }
+
+    // Undo source foundation header
+    if (undo.from_found_suit != 255) {
+        update_inline_foundation_in_hash(undo.from_found_suit, undo.old_from_found_rank,
+                                         inline_hash, inline_payload);
+    }
+
+    // Undo moved card descriptor: new_desc → old_desc
+    update_inline_card_descriptor(undo.card_id, undo.old_desc,
+                                  inline_hash, inline_payload);
+
+    // Update global state with inline results (PRIMARY)
+    zobrist_hash_value = inline_hash;
+    payload = inline_payload;
+
+#ifdef VALIDATE_INLINE_UNDO
+    // === VALIDATION PATH (OLD APPROACH) ===
+    // Restore reference and recompute using old helpers
+    zobrist_hash_value = reference_hash;
+    payload = reference_payload;
+
+    // Undo reveal descriptor
+    if (m.reveal_move) {
+        update_card_descriptor(undo.revealed_card_id, compact_state::STARTING);
     }
 
     // Undo hole header
@@ -628,62 +687,21 @@ void game_state::undo_regular_move(const move m) {
     // Restore moved card's descriptor
     update_card_descriptor(undo.card_id, undo.old_desc);
 
-    // Pile operations
-    place_card(m.from, take_card(m.to));
+    // Verify validation path matches inline
+    uint64_t validation_hash = zobrist_hash_value;
+    compact_state validation_payload = payload;
 
-#ifdef VALIDATE_INLINE_UNDO
-    // Reference state after undo (existing path result)
-    const uint64_t expected_hash = zobrist_hash_value;
-    const compact_state expected_payload = payload;
+    // Restore inline as primary
+    zobrist_hash_value = inline_hash;
+    payload = inline_payload;
 
-    // === INLINE UNDO PATH ===
-    // Compute hash and payload changes independently using the undo record
-    uint64_t inline_hash = expected_hash;  // start with reference
-    compact_state inline_payload = expected_payload;
-
-    // Undo reveal descriptor change: STARTING_FACE_UP (or other) → STARTING
-    if (m.reveal_move) {
-        update_inline_card_descriptor(undo.revealed_card_id, compact_state::STARTING,
-                                      inline_hash, inline_payload);
-    }
-
-    // Undo hole header: cid → old hole top
-    if (undo.old_hole_top != 255) {
-        update_inline_hole_top_in_hash(undo.old_hole_top,
-                                       inline_hash, inline_payload);
-    }
-
-    // Undo waste pointer: current → old
-    if (undo.old_waste_ptr != 255) {
-        update_inline_waste_ptr_in_hash(undo.old_waste_ptr,
-                                        inline_hash, inline_payload);
-    }
-
-    // Undo destination foundation: new_rank → old_rank
-    if (undo.to_found_suit != 255) {
-        update_inline_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank,
-                                         inline_hash, inline_payload);
-    }
-
-    // Undo source foundation: new_rank → old_rank
-    if (undo.from_found_suit != 255) {
-        update_inline_foundation_in_hash(undo.from_found_suit, undo.old_from_found_rank,
-                                         inline_hash, inline_payload);
-    }
-
-    // Undo moved card descriptor: new_desc → old_desc
-    update_inline_card_descriptor(undo.card_id, undo.old_desc,
-                                  inline_hash, inline_payload);
-
-    // === VALIDATE ===
-    (void)expected_hash;
-    (void)expected_payload;
-    (void)inline_hash;
-    (void)inline_payload;
-    assert(inline_hash == expected_hash
-        && "INLINE UNDO: hash mismatch in undo_regular_move");
-    assert(inline_payload.matches(expected_payload)
-        && "INLINE UNDO: payload mismatch in undo_regular_move");
+    // Assert validation matches
+    (void)validation_hash;
+    (void)validation_payload;
+    assert(validation_hash == inline_hash
+        && "ROLE SWAP: validation hash mismatch in undo_regular_move");
+    assert(validation_payload.matches(inline_payload)
+        && "ROLE SWAP: validation payload mismatch in undo_regular_move");
 #endif
 }
 
@@ -1509,8 +1527,7 @@ void game_state::update_hole_top_in_hash(uint8_t new_cid) {
     payload.set_hole_top(new_cid);
 }
 
-#ifdef VALIDATE_INLINE_UNDO
-// Inline versions of hash/payload update functions (for validation path only)
+// Inline versions of hash/payload update functions (always available)
 // These modify local hash/payload variables instead of global state
 
 void game_state::update_inline_card_descriptor(uint8_t cid, uint8_t new_desc,
@@ -1548,7 +1565,6 @@ void game_state::update_inline_hole_top_in_hash(uint8_t new_cid,
                  ^ zobrist_hash::hole_top_key(new_cid);
     inline_payload.set_hole_top(new_cid);
 }
-#endif
 
 bool game_state::is_foundation_pile(pile::ref pr) const {
     return !foundations.empty()
