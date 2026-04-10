@@ -1331,6 +1331,22 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
     return compact_state::STARTING;
 }
 
+// Recover the descriptor a card had before it was moved FROM `from`.
+// Called after pile undo (card is back at piles[from][0]).
+// Uses the face-down invariant: if piles[from][1] is face-down, the card
+// was revealed in place (STARTING_FACE_UP), never moved there.
+uint8_t game_state::recover_pre_move_descriptor(pile::ref from, card moved_card) const {
+    if (!original_tableau_piles.empty()) {
+        pile::ref first_tab = original_tableau_piles.front();
+        pile::ref last_tab = original_tableau_piles.back();
+        if (from >= first_tab && from <= last_tab
+            && piles[from].size() >= 2 && piles[from][1].is_face_down()) {
+            return compact_state::STARTING_FACE_UP;
+        }
+    }
+    return determine_destination_descriptor(from, moved_card);
+}
+
 void game_state::set_payload_depth(uint16_t depth) {
     payload.set_depth(depth);
 }
