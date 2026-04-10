@@ -445,7 +445,13 @@ void game_state::make_regular_move(const move m) {
     assert(m.from < piles.size());
     assert(m.to   < piles.size());
 
-    // Capture pre-move state for descriptor updates
+#ifdef VALIDATE_INLINE_UNDO
+    // Capture pre-move state for inline computation
+    uint64_t pre_move_hash = zobrist_hash_value;
+    compact_state pre_move_payload = payload;
+#endif
+
+    // Capture pre-move state for undo record
     card moved = piles[m.from].top_card();
     uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
     uint8_t old_desc = payload.get_descriptor(cid);
@@ -492,8 +498,10 @@ void game_state::make_regular_move(const move m) {
     }
 
     // Update waste pointer when playing from waste (top card removed, pointer changes)
+    uint8_t new_waste_ptr = 255;
     if (m.from == waste) {
-        update_waste_ptr_in_hash(effective_waste_ptr());
+        new_waste_ptr = effective_waste_ptr();
+        update_waste_ptr_in_hash(new_waste_ptr);
     }
 
     // Handle reveal
@@ -524,15 +532,75 @@ void game_state::make_regular_move(const move m) {
     undo.old_waste_ptr = old_waste_ptr;
     undo.sat_count = 0;
     zobrist_undo_stack.push_back(undo);
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Reference state after move (existing path result)
+    const uint64_t expected_hash = zobrist_hash_value;
+    const compact_state expected_payload = payload;
+
+    // === INLINE MOVE PATH ===
+    // Compute hash and payload changes from pre-move state
+    uint64_t inline_hash = pre_move_hash;
+    compact_state inline_payload = pre_move_payload;
+
+    // Moved card descriptor: old_desc → new_desc
+    inline_hash ^= zobrist_hash::card_key(cid, old_desc)
+                 ^ zobrist_hash::card_key(cid, new_desc);
+    inline_payload.set_descriptor(cid, new_desc);
+
+    // Source foundation header (if applicable)
+    if (from_fs != 255) {
+        uint8_t new_from_rank = piles[m.from].empty()
+            ? uint8_t(0) : piles[m.from].top_card().get_rank();
+        inline_hash ^= zobrist_hash::foundation_key(from_fs, old_from_fr)
+                     ^ zobrist_hash::foundation_key(from_fs, new_from_rank);
+        inline_payload.set_foundation(from_fs, new_from_rank);
+    }
+
+    // Destination foundation header (if applicable)
+    if (to_fs != 255) {
+        inline_hash ^= zobrist_hash::foundation_key(to_fs, old_to_fr)
+                     ^ zobrist_hash::foundation_key(to_fs, moved.get_rank());
+        inline_payload.set_foundation(to_fs, moved.get_rank());
+    }
+
+    // Hole header update (if destination is hole)
+    if (old_ht != 255) {
+        inline_hash ^= zobrist_hash::hole_top_key(old_ht)
+                     ^ zobrist_hash::hole_top_key(cid);
+        inline_payload.set_hole_top(cid);
+    }
+
+    // Waste pointer update (if source is waste)
+    if (old_waste_ptr != 255) {
+        inline_hash ^= zobrist_hash::waste_key(old_waste_ptr)
+                     ^ zobrist_hash::waste_key(new_waste_ptr);
+        inline_payload.set_waste_ptr(new_waste_ptr);
+    }
+
+    // Reveal descriptor update (if reveal move)
+    if (m.reveal_move) {
+        uint8_t rev_desc = (piles[m.from].size() == 1)
+            ? compact_state::IN_SPACE
+            : compact_state::STARTING_FACE_UP;
+        inline_hash ^= zobrist_hash::card_key(rev_cid, compact_state::STARTING)
+                     ^ zobrist_hash::card_key(rev_cid, rev_desc);
+        inline_payload.set_descriptor(rev_cid, rev_desc);
+    }
+
+    // === VALIDATE ===
+    (void)expected_hash;
+    (void)expected_payload;
+    (void)inline_hash;
+    (void)inline_payload;
+    assert(inline_hash == expected_hash
+        && "INLINE MAKE: hash mismatch in make_regular_move");
+    assert(inline_payload.matches(expected_payload)
+        && "INLINE MAKE: payload mismatch in make_regular_move");
+#endif
 }
 
 void game_state::undo_regular_move(const move m) {
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot pre-undo state
-    uint64_t pre_hash = zobrist_hash_value;
-    compact_state pre_payload = payload;
-#endif
-
     assert(m.to < piles.size());
 
     // Pop undo info
@@ -574,23 +642,68 @@ void game_state::undo_regular_move(const move m) {
     place_card(m.from, take_card(m.to));
 
 #ifdef VALIDATE_INLINE_UNDO
-    // Snapshot expected result
-    uint64_t expected_hash = zobrist_hash_value;
-    compact_state expected_payload = payload;
+    // Reference state after undo (existing path result)
+    const uint64_t expected_hash = zobrist_hash_value;
+    const compact_state expected_payload = payload;
 
-    // Restore hash/payload to pre-undo state for inline path validation
-    zobrist_hash_value = pre_hash;
-    payload = pre_payload;
+    // === INLINE UNDO PATH ===
+    // Compute hash and payload changes independently using the undo record
+    uint64_t inline_hash = expected_hash;  // start with reference
+    compact_state inline_payload = expected_payload;
 
-    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
-    // For now, just copy expected result to pass validation trivially
-    zobrist_hash_value = expected_hash;
-    payload = expected_payload;
+    // Undo reveal descriptor change: STARTING_FACE_UP (or other) → STARTING
+    if (m.reveal_move) {
+        uint8_t reveal_old_desc = compact_state::STARTING_FACE_UP;
+        inline_hash ^= zobrist_hash::card_key(undo.revealed_card_id, reveal_old_desc)
+                     ^ zobrist_hash::card_key(undo.revealed_card_id, compact_state::STARTING);
+        inline_payload.set_descriptor(undo.revealed_card_id, compact_state::STARTING);
+    }
+
+    // Undo hole header: cid → old hole top
+    if (undo.old_hole_top != 255) {
+        uint8_t hole_old_cid = payload.get_hole_top();
+        inline_hash ^= zobrist_hash::hole_top_key(hole_old_cid)
+                     ^ zobrist_hash::hole_top_key(undo.old_hole_top);
+        inline_payload.set_hole_top(undo.old_hole_top);
+    }
+
+    // Undo waste pointer: current → old
+    if (undo.old_waste_ptr != 255) {
+        uint8_t waste_old_ptr = payload.get_waste_ptr();
+        inline_hash ^= zobrist_hash::waste_key(waste_old_ptr)
+                     ^ zobrist_hash::waste_key(undo.old_waste_ptr);
+        inline_payload.set_waste_ptr(undo.old_waste_ptr);
+    }
+
+    // Undo destination foundation: new_rank → old_rank
+    if (undo.to_found_suit != 255) {
+        uint8_t to_new_rank = payload.get_foundation(undo.to_found_suit);
+        inline_hash ^= zobrist_hash::foundation_key(undo.to_found_suit, to_new_rank)
+                     ^ zobrist_hash::foundation_key(undo.to_found_suit, undo.old_to_found_rank);
+        inline_payload.set_foundation(undo.to_found_suit, undo.old_to_found_rank);
+    }
+
+    // Undo source foundation: new_rank → old_rank
+    if (undo.from_found_suit != 255) {
+        uint8_t from_new_rank = payload.get_foundation(undo.from_found_suit);
+        inline_hash ^= zobrist_hash::foundation_key(undo.from_found_suit, from_new_rank)
+                     ^ zobrist_hash::foundation_key(undo.from_found_suit, undo.old_from_found_rank);
+        inline_payload.set_foundation(undo.from_found_suit, undo.old_from_found_rank);
+    }
+
+    // Undo moved card descriptor: new_desc → old_desc
+    inline_hash ^= zobrist_hash::card_key(undo.card_id, payload.get_descriptor(undo.card_id))
+                 ^ zobrist_hash::card_key(undo.card_id, undo.old_desc);
+    inline_payload.set_descriptor(undo.card_id, undo.old_desc);
 
     // === VALIDATE ===
-    assert(zobrist_hash_value == expected_hash
+    (void)expected_hash;
+    (void)expected_payload;
+    (void)inline_hash;
+    (void)inline_payload;
+    assert(inline_hash == expected_hash
         && "INLINE UNDO: hash mismatch in undo_regular_move");
-    assert(payload.matches(expected_payload)
+    assert(inline_payload.matches(expected_payload)
         && "INLINE UNDO: payload mismatch in undo_regular_move");
 #endif
 }
