@@ -13,7 +13,7 @@
 
 **Phase 1** incrementally replaces each component of `zobrist_undo_stack` with inline computation, one component at a time. Each step is validated exhaustively before proceeding to the next.
 
-At the end of Phase 1, the 10-byte `zobrist_undo` struct is replaced by a 1-byte `descriptor_undo_stack` (see `descriptor_undo_analysis.md` for why 1 byte is still needed).
+At the end of Phase 1, the 10-byte `zobrist_undo` struct and its stack are **eliminated entirely** — no stored undo state is needed. See `descriptor_undo_analysis.md` for the proof that all values, including STARTING_FACE_UP, are recoverable from pile state using the face-down card invariant.
 
 ---
 
@@ -570,42 +570,54 @@ if (m.from == waste) {
 
 ### Step 1.5: Inline moved card descriptor undo for `undo_regular_move`
 
-**What we implement:** This is the component that requires stored state (see `descriptor_undo_analysis.md`).
-
-**For the validation phase**, we still have the undo stack available. We use `undo.old_desc` as the source of truth. But we add an additional diagnostic that tests whether `determine_destination_descriptor` would have given the right answer:
+**What we implement:** Compute the moved card's pre-move descriptor from restored pile state. This uses the face-down card invariant discovered in `descriptor_undo_analysis.md`: a face-up card directly above a face-down card was revealed in place (STARTING_FACE_UP), because moves can only place cards on face-up tops or empty piles.
 
 ```cpp
-// In the inline path, after pile undo:
+// In the inline path, after pile undo AND reveal undo:
 card moved = piles[m.from].top_card();
 uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
 
-// The old descriptor: must be stored (see descriptor_undo_analysis.md)
-// For validation, we use the undo stack value
-uint8_t old_desc = undo.old_desc;
-
-// Diagnostic: check if determine_destination_descriptor would have worked
-uint8_t computed_desc = determine_destination_descriptor(m.from, moved);
-if (computed_desc != old_desc) {
-    // Log but don't assert — this is expected for STARTING_FACE_UP
-    std::cerr << "DESCRIPTOR DIVERGENCE: card " << (int)cid
-              << " old_desc=" << (int)old_desc
-              << " computed=" << (int)computed_desc
-              << " (expected divergence for STARTING_FACE_UP)" << std::endl;
-    // Verify it's the known case
-    assert(old_desc == compact_state::STARTING_FACE_UP
-        && "UNEXPECTED descriptor divergence (not STARTING_FACE_UP)");
+// Determine old descriptor using the face-down invariant
+uint8_t old_desc;
+if (piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()) {
+    // Face-down card below → this card was revealed here, not moved here
+    old_desc = compact_state::STARTING_FACE_UP;
+} else {
+    // Normal case: compute from pile context
+    old_desc = determine_destination_descriptor(m.from, moved);
 }
 
 update_card_descriptor(cid, old_desc);
 ```
 
-This step validates two things:
-1. The 1-byte stored descriptor approach works correctly
-2. STARTING_FACE_UP is indeed the ONLY case where `determine_destination_descriptor` diverges
+**IMPORTANT: Ordering constraint.** The face-down check MUST happen AFTER reveal undo (Step 1.1). If this move had `reveal_move=true`, the reveal undo turns `piles[m.from][1]` face-down. That card is the one revealed during THIS move — it's a different card from the moved card. The face-down check for the MOVED card looks at `piles[m.from][1]` which, after reveal undo, reflects the pre-move state. The moved card's pile context is:
+- `piles[m.from][0]` = the moved card (returned by pile undo)
+- `piles[m.from][1]` = what was below the moved card before the move
 
-**Validation:** Run unit tests + Level 1 + Level 2.
+If THIS move had `reveal_move=true`, then `piles[m.from][1]` was the card that got revealed (it's now face-down again after reveal undo). But that card was BELOW the moved card originally — the moved card was on TOP of a face-up card before THIS move. Wait — if `reveal_move=true` for the CURRENT move, the card at index 1 (after pile undo) was face-down BEFORE the current move. But the moved card was on top of it at index 0, face-up. That means... the moved card was sitting on a face-down card. So `piles[m.from][1].is_face_down()` would be true, and we'd assign STARTING_FACE_UP.
 
-**Exit criteria:** Level 2 passes. Diagnostic logging confirms STARTING_FACE_UP is the only divergence case. If any other divergence appears, investigate and document.
+**But is this correct?** If the current move has `reveal_move=true`, then:
+- Before this move: `piles[m.from] = [moved_card(face-up), card_below(face-down), ...]`
+- `turn_face_down_cards` set `reveal_move=true` because `piles[m.from][1].is_face_down()` was true
+- The moved card IS sitting on a face-down card → it WAS revealed here → STARTING_FACE_UP is correct!
+
+Actually wait. The moved card could have been MOVED here previously and placed on top of a card that was THEN face-up but has SINCE been turned face-down by... no. Cards are never turned face-down during normal play. They're only turned face-down during undo of reveals. The face-down status is set during init and preserved until reveal.
+
+**So the invariant holds.** If `piles[m.from][1].is_face_down()` after full undo, the moved card was revealed in place. STARTING_FACE_UP is correct.
+
+**Validation:** Compare against `undo.old_desc` from the existing undo stack:
+
+```cpp
+// Diagnostic: verify our computation matches the oracle
+assert(old_desc == undo.old_desc
+    && "INLINE UNDO: descriptor reconstruction failed");
+```
+
+Run unit tests + Level 1 + Level 2.
+
+**What to check if assert fires:** Log `old_desc`, `undo.old_desc`, `piles[m.from][1].is_face_down()`, and the card identities. This would indicate either the face-down invariant is violated for some game type, or the ordering of reveal undo vs. descriptor computation is wrong.
+
+**Exit criteria:** Level 2 passes with zero assertion failures. This proves the face-down invariant holds across all tested game types.
 
 ---
 
@@ -687,26 +699,23 @@ The stock_to_all_tableau undo is simpler:
 
 After all components pass validation across Level 1 + Level 2:
 
-1. **Replace `zobrist_undo_stack` with `descriptor_undo_stack`:**
+1. **Delete `zobrist_undo_stack` entirely from `game_state.h`:**
 
 ```cpp
-// In game_state.h, replace:
+// DELETE all of this:
 struct zobrist_undo { /* 10 bytes */ };
 std::vector<zobrist_undo> zobrist_undo_stack;
-
-// With:
-std::vector<uint8_t> descriptor_undo_stack;
 ```
 
-2. **Rewrite each undo function** to use the inline path (without the `#ifdef`). The make functions push only `old_desc`:
+No replacement data structure is needed. All undo values are computed from pile state.
+
+2. **Simplify `make_regular_move`** — remove the pre-move captures and undo record push:
 
 ```cpp
 void game_state::make_regular_move(const move m) {
+    // Capture moved card identity before pile ops
     card moved = piles[m.from].top_card();
     uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
-
-    // Store old descriptor (1 byte — the only thing we can't recompute)
-    descriptor_undo_stack.push_back(payload.get_descriptor(cid));
 
     // Pile operations
     place_card(m.to, take_card(m.from));
@@ -749,13 +758,11 @@ void game_state::make_regular_move(const move m) {
             : compact_state::STARTING_FACE_UP;
         update_card_descriptor(rev_cid, rev_desc);
     }
+
+    // NO UNDO RECORD PUSHED — everything computed at undo time
 }
 
 void game_state::undo_regular_move(const move m) {
-    // Pop stored old descriptor
-    uint8_t old_desc = descriptor_undo_stack.back();
-    descriptor_undo_stack.pop_back();
-
     // Pile operations FIRST
     place_card(m.from, take_card(m.to));
 
@@ -763,7 +770,7 @@ void game_state::undo_regular_move(const move m) {
     card moved = piles[m.from].top_card();
     uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
 
-    // Undo reveal
+    // Undo reveal (must happen before descriptor computation)
     if (m.reveal_move) {
         // Revealed card is at piles[m.from][1] after pile undo
         card rev = piles[m.from][1];
@@ -799,8 +806,17 @@ void game_state::undo_regular_move(const move m) {
         update_waste_ptr_in_hash(effective_waste_ptr());
     }
 
-    // Undo moved card descriptor (from stored value)
+    // Undo moved card descriptor (computed from pile state)
+    uint8_t old_desc;
+    if (piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()) {
+        // Face-down card below → card was revealed here → STARTING_FACE_UP
+        old_desc = compact_state::STARTING_FACE_UP;
+    } else {
+        old_desc = determine_destination_descriptor(m.from, moved);
+    }
     update_card_descriptor(cid, old_desc);
+
+    // NO UNDO STACK — all values computed from restored pile state
 }
 ```
 
@@ -822,19 +838,19 @@ ctest -R regression_level2 --output-on-failure
 
 ---
 
-## Summary: What's Stored vs What's Computed
+## Summary: Everything Is Computed — Nothing Is Stored
 
-| Component | Make_move Stores | Undo_move Computes From |
-|---|---|---|
-| Old card descriptor | **1 byte** (descriptor_undo_stack) | Stored value |
-| Revealed card ID | Nothing | `piles[m.from][1]` (or `[m.count]` for built groups) |
-| Revealed card old desc | Nothing | Always STARTING |
-| Old foundation ranks | Nothing | Pile tops after undo |
-| Old hole top | Nothing | Pile top after undo (0 if empty) |
-| Old waste pointer | Nothing | `effective_waste_ptr()` after undo |
-| sat_count | Nothing | `move.count` |
+| Component | Undo_move Computes From |
+|---|---|
+| Old card descriptor | Face-down check + `determine_destination_descriptor()` |
+| Revealed card ID | `piles[m.from][1]` (or `[m.count]` for built groups) |
+| Revealed card old desc | Always STARTING |
+| Old foundation ranks | Pile tops after undo |
+| Old hole top | Pile top after undo (0 if empty) |
+| Old waste pointer | `effective_waste_ptr()` after undo |
+| sat_count | `move.count` |
 
-**Total per move: 1 byte** (down from 10 bytes).
+**Total per move: 0 bytes** (down from 10 bytes). The `zobrist_undo_stack` is eliminated entirely.
 
 ---
 
@@ -842,7 +858,7 @@ ctest -R regression_level2 --output-on-failure
 
 | Risk | Detection | Response |
 |---|---|---|
-| STARTING_FACE_UP not the only divergence | Step 1.5 diagnostic assert | Investigate; may need more stored state |
+| Face-down invariant violated for some game type | Step 1.5 assert comparing inline vs undo stack | Fall back to 1-byte stored descriptor for that game type |
 | Revealed card at wrong pile index | Step 1.1 assert + comparison with `undo.revealed_card_id` | Fix index calculation |
 | Foundation rank wrong after pile undo | Step 1.2 assert + comparison with `undo.old_from_found_rank` | Check pile undo ordering |
 | Hole top wrong for empty hole | Step 1.3 assert on hole-game seeds (Level 2) | Verify empty sentinel value |
