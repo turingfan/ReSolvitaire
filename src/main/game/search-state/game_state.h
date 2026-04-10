@@ -216,6 +216,23 @@ private:
     uint8_t effective_waste_ptr() const;
     void update_waste_ptr_in_hash(uint8_t new_ptr);
     void update_hole_top_in_hash(uint8_t new_cid);
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Inline versions for validation path (modify local hash/payload, not global)
+    void update_inline_card_descriptor(uint8_t cid, uint8_t new_desc,
+                                       uint64_t& inline_hash,
+                                       compact_state& inline_payload) const;
+    void update_inline_foundation_in_hash(uint8_t suit, uint8_t new_rank,
+                                          uint64_t& inline_hash,
+                                          compact_state& inline_payload) const;
+    void update_inline_waste_ptr_in_hash(uint8_t new_ptr,
+                                         uint64_t& inline_hash,
+                                         compact_state& inline_payload) const;
+    void update_inline_hole_top_in_hash(uint8_t new_cid,
+                                        uint64_t& inline_hash,
+                                        compact_state& inline_payload) const;
+#endif
+
     uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
     bool is_foundation_pile(pile::ref pr) const;
     uint8_t get_foundation_suit(pile::ref pr) const;

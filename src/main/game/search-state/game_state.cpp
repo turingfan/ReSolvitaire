@@ -542,38 +542,31 @@ void game_state::make_regular_move(const move m) {
     compact_state inline_payload = pre_move_payload;
 
     // Moved card descriptor: old_desc → new_desc
-    inline_hash ^= zobrist_hash::card_key(cid, old_desc)
-                 ^ zobrist_hash::card_key(cid, new_desc);
-    inline_payload.set_descriptor(cid, new_desc);
+    update_inline_card_descriptor(cid, new_desc, inline_hash, inline_payload);
 
     // Source foundation header (if applicable)
     if (from_fs != 255) {
         uint8_t new_from_rank = piles[m.from].empty()
             ? uint8_t(0) : piles[m.from].top_card().get_rank();
-        inline_hash ^= zobrist_hash::foundation_key(from_fs, old_from_fr)
-                     ^ zobrist_hash::foundation_key(from_fs, new_from_rank);
-        inline_payload.set_foundation(from_fs, new_from_rank);
+        update_inline_foundation_in_hash(from_fs, new_from_rank,
+                                         inline_hash, inline_payload);
     }
 
     // Destination foundation header (if applicable)
     if (to_fs != 255) {
-        inline_hash ^= zobrist_hash::foundation_key(to_fs, old_to_fr)
-                     ^ zobrist_hash::foundation_key(to_fs, moved.get_rank());
-        inline_payload.set_foundation(to_fs, moved.get_rank());
+        update_inline_foundation_in_hash(to_fs, moved.get_rank(),
+                                         inline_hash, inline_payload);
     }
 
     // Hole header update (if destination is hole)
     if (old_ht != 255) {
-        inline_hash ^= zobrist_hash::hole_top_key(old_ht)
-                     ^ zobrist_hash::hole_top_key(cid);
-        inline_payload.set_hole_top(cid);
+        update_inline_hole_top_in_hash(cid, inline_hash, inline_payload);
     }
 
     // Waste pointer update (if source is waste)
     if (old_waste_ptr != 255) {
-        inline_hash ^= zobrist_hash::waste_key(old_waste_ptr)
-                     ^ zobrist_hash::waste_key(new_waste_ptr);
-        inline_payload.set_waste_ptr(new_waste_ptr);
+        update_inline_waste_ptr_in_hash(new_waste_ptr,
+                                        inline_hash, inline_payload);
     }
 
     // Reveal descriptor update (if reveal move)
@@ -581,9 +574,8 @@ void game_state::make_regular_move(const move m) {
         uint8_t rev_desc = (piles[m.from].size() == 1)
             ? compact_state::IN_SPACE
             : compact_state::STARTING_FACE_UP;
-        inline_hash ^= zobrist_hash::card_key(rev_cid, compact_state::STARTING)
-                     ^ zobrist_hash::card_key(rev_cid, rev_desc);
-        inline_payload.set_descriptor(rev_cid, rev_desc);
+        update_inline_card_descriptor(rev_cid, rev_desc,
+                                      inline_hash, inline_payload);
     }
 
     // === VALIDATE ===
@@ -651,48 +643,37 @@ void game_state::undo_regular_move(const move m) {
 
     // Undo reveal descriptor change: STARTING_FACE_UP (or other) → STARTING
     if (m.reveal_move) {
-        uint8_t reveal_old_desc = compact_state::STARTING_FACE_UP;
-        inline_hash ^= zobrist_hash::card_key(undo.revealed_card_id, reveal_old_desc)
-                     ^ zobrist_hash::card_key(undo.revealed_card_id, compact_state::STARTING);
-        inline_payload.set_descriptor(undo.revealed_card_id, compact_state::STARTING);
+        update_inline_card_descriptor(undo.revealed_card_id, compact_state::STARTING,
+                                      inline_hash, inline_payload);
     }
 
     // Undo hole header: cid → old hole top
     if (undo.old_hole_top != 255) {
-        uint8_t hole_old_cid = payload.get_hole_top();
-        inline_hash ^= zobrist_hash::hole_top_key(hole_old_cid)
-                     ^ zobrist_hash::hole_top_key(undo.old_hole_top);
-        inline_payload.set_hole_top(undo.old_hole_top);
+        update_inline_hole_top_in_hash(undo.old_hole_top,
+                                       inline_hash, inline_payload);
     }
 
     // Undo waste pointer: current → old
     if (undo.old_waste_ptr != 255) {
-        uint8_t waste_old_ptr = payload.get_waste_ptr();
-        inline_hash ^= zobrist_hash::waste_key(waste_old_ptr)
-                     ^ zobrist_hash::waste_key(undo.old_waste_ptr);
-        inline_payload.set_waste_ptr(undo.old_waste_ptr);
+        update_inline_waste_ptr_in_hash(undo.old_waste_ptr,
+                                        inline_hash, inline_payload);
     }
 
     // Undo destination foundation: new_rank → old_rank
     if (undo.to_found_suit != 255) {
-        uint8_t to_new_rank = payload.get_foundation(undo.to_found_suit);
-        inline_hash ^= zobrist_hash::foundation_key(undo.to_found_suit, to_new_rank)
-                     ^ zobrist_hash::foundation_key(undo.to_found_suit, undo.old_to_found_rank);
-        inline_payload.set_foundation(undo.to_found_suit, undo.old_to_found_rank);
+        update_inline_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank,
+                                         inline_hash, inline_payload);
     }
 
     // Undo source foundation: new_rank → old_rank
     if (undo.from_found_suit != 255) {
-        uint8_t from_new_rank = payload.get_foundation(undo.from_found_suit);
-        inline_hash ^= zobrist_hash::foundation_key(undo.from_found_suit, from_new_rank)
-                     ^ zobrist_hash::foundation_key(undo.from_found_suit, undo.old_from_found_rank);
-        inline_payload.set_foundation(undo.from_found_suit, undo.old_from_found_rank);
+        update_inline_foundation_in_hash(undo.from_found_suit, undo.old_from_found_rank,
+                                         inline_hash, inline_payload);
     }
 
     // Undo moved card descriptor: new_desc → old_desc
-    inline_hash ^= zobrist_hash::card_key(undo.card_id, payload.get_descriptor(undo.card_id))
-                 ^ zobrist_hash::card_key(undo.card_id, undo.old_desc);
-    inline_payload.set_descriptor(undo.card_id, undo.old_desc);
+    update_inline_card_descriptor(undo.card_id, undo.old_desc,
+                                  inline_hash, inline_payload);
 
     // === VALIDATE ===
     (void)expected_hash;
@@ -1385,6 +1366,47 @@ void game_state::update_hole_top_in_hash(uint8_t new_cid) {
                         ^ zobrist_hash::hole_top_key(new_cid);
     payload.set_hole_top(new_cid);
 }
+
+#ifdef VALIDATE_INLINE_UNDO
+// Inline versions of hash/payload update functions (for validation path only)
+// These modify local hash/payload variables instead of global state
+
+void game_state::update_inline_card_descriptor(uint8_t cid, uint8_t new_desc,
+                                               uint64_t& inline_hash,
+                                               compact_state& inline_payload) const {
+    uint8_t old_desc = inline_payload.get_descriptor(cid);
+    inline_payload.set_descriptor(cid, new_desc);
+    inline_hash ^= zobrist_hash::card_key(cid, old_desc)
+                 ^ zobrist_hash::card_key(cid, new_desc);
+}
+
+void game_state::update_inline_foundation_in_hash(uint8_t suit, uint8_t new_rank,
+                                                  uint64_t& inline_hash,
+                                                  compact_state& inline_payload) const {
+    uint8_t old_rank = inline_payload.get_foundation(suit);
+    inline_hash ^= zobrist_hash::foundation_key(suit, old_rank)
+                 ^ zobrist_hash::foundation_key(suit, new_rank);
+    inline_payload.set_foundation(suit, new_rank);
+}
+
+void game_state::update_inline_waste_ptr_in_hash(uint8_t new_ptr,
+                                                 uint64_t& inline_hash,
+                                                 compact_state& inline_payload) const {
+    uint8_t old_ptr = inline_payload.get_waste_ptr();
+    inline_hash ^= zobrist_hash::waste_key(old_ptr)
+                 ^ zobrist_hash::waste_key(new_ptr);
+    inline_payload.set_waste_ptr(new_ptr);
+}
+
+void game_state::update_inline_hole_top_in_hash(uint8_t new_cid,
+                                                uint64_t& inline_hash,
+                                                compact_state& inline_payload) const {
+    uint8_t old_cid = inline_payload.get_hole_top();
+    inline_hash ^= zobrist_hash::hole_top_key(old_cid)
+                 ^ zobrist_hash::hole_top_key(new_cid);
+    inline_payload.set_hole_top(new_cid);
+}
+#endif
 
 bool game_state::is_foundation_pile(pile::ref pr) const {
     return !foundations.empty()
