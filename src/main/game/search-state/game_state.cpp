@@ -864,6 +864,10 @@ void game_state::make_stock_k_plus_move(const move m) {
 #endif
 
     // Capture pre-move state
+#ifdef VALIDATE_INLINE_UNDO
+    const uint64_t pre_move_hash = zobrist_hash_value;
+    const compact_state pre_move_payload = payload;
+#endif
     uint8_t old_waste_ptr = payload.get_waste_ptr();
 
     // Transfers count cards from the stock to the waste
@@ -910,9 +914,11 @@ void game_state::make_stock_k_plus_move(const move m) {
         update_hole_top_in_hash(played_cid);
     }
 
+    // Compute waste pointer after move (applying waste-deal symmetry if applicable)
+    uint8_t new_waste_ptr = effective_waste_ptr();
+
     // Update waste pointer to current waste size
-    // (applying waste-deal symmetry if applicable)
-    update_waste_ptr_in_hash(effective_waste_ptr());
+    update_waste_ptr_in_hash(new_waste_ptr);
 
     // Push undo
     zobrist_undo undo = {};
@@ -928,6 +934,44 @@ void game_state::make_stock_k_plus_move(const move m) {
     undo.sat_count = 0;
     zobrist_undo_stack.push_back(undo);
 
+#ifdef VALIDATE_INLINE_UNDO
+    // Reference state after move (existing path result)
+    const uint64_t expected_hash = zobrist_hash_value;
+    const compact_state expected_payload = payload;
+
+    // === INLINE MOVE PATH ===
+    // Compute hash and payload changes from pre-move state
+    uint64_t inline_hash = pre_move_hash;
+    compact_state inline_payload = pre_move_payload;
+
+    // Played card descriptor: played_old_desc → new_desc
+    update_inline_card_descriptor(played_cid, new_desc, inline_hash, inline_payload);
+
+    // Destination foundation header (if applicable)
+    if (to_fs != 255) {
+        update_inline_foundation_in_hash(to_fs, played.get_rank(),
+                                         inline_hash, inline_payload);
+    }
+
+    // Hole header update (if destination is hole)
+    if (old_ht != 255) {
+        update_inline_hole_top_in_hash(played_cid, inline_hash, inline_payload);
+    }
+
+    // Waste pointer update
+    update_inline_waste_ptr_in_hash(new_waste_ptr, inline_hash, inline_payload);
+
+    // === VALIDATE ===
+    (void)expected_hash;
+    (void)expected_payload;
+    (void)inline_hash;
+    (void)inline_payload;
+    assert(inline_hash == expected_hash
+        && "INLINE MAKE: hash mismatch in make_stock_k_plus_move");
+    assert(inline_payload.matches(expected_payload)
+        && "INLINE MAKE: payload mismatch in make_stock_k_plus_move");
+#endif
+
 #ifndef NDEBUG
     auto sz_after = piles[stock].size() + piles[waste].size();
     assert(sz_before == sz_after + 1);
@@ -937,12 +981,6 @@ void game_state::make_stock_k_plus_move(const move m) {
 }
 
 void game_state::undo_stock_k_plus_move(move m) {
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot pre-undo state
-    uint64_t pre_hash = zobrist_hash_value;
-    compact_state pre_payload = payload;
-#endif
-
 #ifndef NDEBUG
     assert(rules.stock_deal_t == sdt::WASTE);
     assert(m.from == stock);
@@ -990,33 +1028,51 @@ void game_state::undo_stock_k_plus_move(move m) {
         }
     }
 
+#ifdef VALIDATE_INLINE_UNDO
+    // Reference state after undo (existing path result)
+    const uint64_t expected_hash = zobrist_hash_value;
+    const compact_state expected_payload = payload;
+
+    // === INLINE UNDO PATH ===
+    // Compute hash and payload changes independently using the undo record
+    uint64_t inline_hash = expected_hash;  // start with reference
+    compact_state inline_payload = expected_payload;
+
+    // Undo waste pointer: current → old
+    update_inline_waste_ptr_in_hash(undo.old_waste_ptr, inline_hash, inline_payload);
+
+    // Undo hole header (if applicable)
+    if (undo.old_hole_top != 255) {
+        update_inline_hole_top_in_hash(undo.old_hole_top, inline_hash, inline_payload);
+    }
+
+    // Undo foundation header (if applicable)
+    if (undo.to_found_suit != 255) {
+        update_inline_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank,
+                                         inline_hash, inline_payload);
+    }
+
+    // Undo played card descriptor: new_desc → old_desc
+    update_inline_card_descriptor(undo.card_id, undo.old_desc,
+                                  inline_hash, inline_payload);
+
+    // === VALIDATE ===
+    (void)expected_hash;
+    (void)expected_payload;
+    (void)inline_hash;
+    (void)inline_payload;
+    assert(inline_hash == expected_hash
+        && "INLINE UNDO: hash mismatch in undo_stock_k_plus_move");
+    assert(inline_payload.matches(expected_payload)
+        && "INLINE UNDO: payload mismatch in undo_stock_k_plus_move");
+#endif
+
 #ifndef NDEBUG
     auto sz_before = piles[stock].size() + piles[waste].size();
     assert(sz_before == sz_after + 1);
     if (rules.stock_redeal) assert(m.count <= piles[stock].size() && m.count > -piles[waste].size());
     assert(!(rules.stock_size > 0 && rules.stock_redeal && piles[stock].empty() && !piles[waste].empty()));
     assert(piles[stock].size() <= rules.stock_size);
-#endif
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot expected result
-    uint64_t expected_hash = zobrist_hash_value;
-    compact_state expected_payload = payload;
-
-    // Restore hash/payload to pre-undo state for inline path validation
-    zobrist_hash_value = pre_hash;
-    payload = pre_payload;
-
-    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
-    // For now, just copy expected result to pass validation trivially
-    zobrist_hash_value = expected_hash;
-    payload = expected_payload;
-
-    // === VALIDATE ===
-    assert(zobrist_hash_value == expected_hash
-        && "INLINE UNDO: hash mismatch in undo_stock_k_plus_move");
-    assert(payload.matches(expected_payload)
-        && "INLINE UNDO: payload mismatch in undo_stock_k_plus_move");
 #endif
 }
 
