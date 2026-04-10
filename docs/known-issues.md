@@ -135,7 +135,7 @@ python3 scripts/compare_benchmarks.py \
 
 **Future fix:** Could add `/usr/bin/time` measurement to modern solver benchmarks for accuracy.
 
-### 7. FreeCell Seed 1 Flat-Only Hits Investigation (2026-04-10)
+### 7. FreeCell Seed 1 Flat-Only Hits Investigation (RESOLVED — commit 4c4b022)
 
 **Investigation:** Recovered 100+ `lru=MISS, flat=HIT` mismatches at op 221+ from previous conversation
 **Status:** RESOLVED — Not a bug; legitimate behavior confirmed
@@ -160,6 +160,7 @@ reported hundreds of flat-only hits starting at operation 221. Investigation con
 
 **Details:** See `docs/investigation/INVESTIGATION_COMPLETE.md` for full analysis.
 Phase 1 implementation can proceed safely — flat cache is trustworthy as oracle.
+Investigation commit: `4c4b022`
 
 ---
 
@@ -177,4 +178,4 @@ are in `docs/resolved-bugs/`.
 | `sol_rules` uninitialized bools (UBSan) | `cb9d26d` | `implementation_plan_v4.md` §M5 |
 | `recompute_payload_from_scratch()` four bugs | `3d5f66d` | `implementation_plan_v4.md` §M5 |
 | `--force-lru` pile ordering not restored in M6 Phase 1 | `a7f3744` | `implementation_plan_v4.md` §M6 |
-| FreeCell seed 1 flat-only hits (op 221+) — investigated 2026-04-10 | N/A (not a bug) | `investigation/RESOLUTION_freecell_op221.md` |
+| FreeCell seed 1 flat-only hits (op 221+) — investigated 2026-04-10 | `4c4b022` (investigation, not a bug) | `investigation/INVESTIGATION_COMPLETE.md` |

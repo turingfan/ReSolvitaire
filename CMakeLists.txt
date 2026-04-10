@@ -263,13 +263,6 @@ add_executable(solvitaire ${main} ${sources})
 set_property(TARGET solvitaire PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_link_libraries(solvitaire PRIVATE ${Boost_LIBRARIES})
 
-# Diagnostic program for investigating flat-only cache hits
-add_executable(freecell_flat_only_diagnostic freecell_flat_only_diagnostic.cpp ${sources})
-target_link_libraries(freecell_flat_only_diagnostic PRIVATE ${Boost_LIBRARIES})
-
-# Detailed diagnostic for op 221 regression investigation
-add_executable(freecell_op221_detailed_diagnostic freecell_op221_detailed_diagnostic.cpp ${sources})
-target_link_libraries(freecell_op221_detailed_diagnostic PRIVATE ${Boost_LIBRARIES})
 
 
 ###############################################################################
