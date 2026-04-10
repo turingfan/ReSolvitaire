@@ -1,4 +1,4 @@
-# Phase 0 & Phase 1 Implementation Plan (Compact State Only)
+    # Phase 0 & Phase 1 Implementation Plan (Compact State Only)
 
 **Date:** 2026-04-10
 **Scope:** Zobrist hash + compact_state payload inline undo. Excludes predecessor/accordion.
