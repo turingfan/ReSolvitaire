@@ -445,13 +445,11 @@ void game_state::make_regular_move(const move m) {
     assert(m.from < piles.size());
     assert(m.to   < piles.size());
 
+    // Capture pre-move state
 #ifdef VALIDATE_INLINE_UNDO
-    // Capture pre-move state for inline computation
-    uint64_t pre_move_hash = zobrist_hash_value;
-    compact_state pre_move_payload = payload;
+    const uint64_t pre_move_hash = zobrist_hash_value;
+    const compact_state pre_move_payload = payload;
 #endif
-
-    // Capture pre-move state for undo record
     card moved = piles[m.from].top_card();
     uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
     uint8_t old_desc = payload.get_descriptor(cid);

@@ -74,7 +74,15 @@
       "Bash(container help:*)",
       "Bash(./build.sh --release --unit-tests -DVALIDATE_INLINE_UNDO)",
       "Bash(timeout 60 ./bin/unit_tests --gtest_filter=\"DualCacheTest.FreeCellOutcome\")",
-      "Bash(timeout 300 ./bin/unit_tests --gtest_filter=\"-*SimpleSolvable:*ComplexSolvable:*SimpleUnsolvable:*ComplexUnsolvable:MismatchDiagnostic*\")"
+      "Bash(find /Users/ipg/Research/ReSolvitaire-project/02-Code-Repositories/ReSolvitaire-caching/docs -name *bug* -o -name *issue* -o -name *known*)",
+      "Bash(timeout 60 ./cmake-build-release/bin/unit_tests --gtest_filter=\"MismatchAnalyzer.FreeCellSeed1\" 2>&1)",
+      "Bash(ls -ltr docs/cache-redesign/active/*.md)",
+      "Bash(timeout 60 ./cmake-build-release/bin/unit_tests --gtest_filter=\"MismatchAnalyzer.FreeCellSeed1\")",
+      "Bash(timeout 120 ./cmake-build-release/bin/unit_tests --gtest_filter=\"MismatchDiagnostic.FreeCellSeed1\")",
+      "Bash(timeout 120 ./cmake-build-release/bin/unit_tests --gtest_filter=\"MismatchDiagnostic.FortunesFavorSeed31646033\")",
+      "Bash(make freecell_flat_only_diagnostic)",
+      "Bash(./bin/unit_tests --gtest_filter=\"DualCacheTest.FreeCellAgreement\")",
+      "Bash(cmake -DVALIDATE_INLINE_UNDO=OFF ..)"
     ]
   }
 }
