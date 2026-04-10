@@ -1079,6 +1079,11 @@ void game_state::undo_stock_k_plus_move(move m) {
 void game_state::make_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
 
+#ifdef VALIDATE_INLINE_UNDO
+    const uint64_t pre_move_hash = zobrist_hash_value;
+    const compact_state pre_move_payload = payload;
+#endif
+
     for (pile::ref tab_pr = original_tableau_piles.front();
          tab_pr < pile::ref(original_tableau_piles.front() + m.count);
          tab_pr++) {
@@ -1106,15 +1111,41 @@ void game_state::make_stock_to_all_tableau_move(move m) {
     undo.old_waste_ptr = 255;
     undo.sat_count = m.count;
     zobrist_undo_stack.push_back(undo);
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Reference state after move (existing path result)
+    const uint64_t expected_hash = zobrist_hash_value;
+    const compact_state expected_payload = payload;
+
+    // === INLINE MOVE PATH ===
+    // Compute hash and payload changes from pre-move state
+    uint64_t inline_hash = pre_move_hash;
+    compact_state inline_payload = pre_move_payload;
+
+    // Update card descriptors for each dealt card: STARTING → destination descriptor
+    for (pile::ref tab_pr = original_tableau_piles.front();
+         tab_pr < pile::ref(original_tableau_piles.front() + m.count);
+         tab_pr++) {
+        // Get the card that was just dealt to this pile (now on top)
+        card dealt = piles[tab_pr].top_card();
+        uint8_t cid = zobrist_hash::card_id(dealt.get_suit(), dealt.get_rank());
+        uint8_t new_desc = determine_destination_descriptor(tab_pr, dealt);
+        update_inline_card_descriptor(cid, new_desc, inline_hash, inline_payload);
+    }
+
+    // === VALIDATE ===
+    (void)expected_hash;
+    (void)expected_payload;
+    (void)inline_hash;
+    (void)inline_payload;
+    assert(inline_hash == expected_hash
+        && "INLINE MAKE: hash mismatch in make_stock_to_all_tableau_move");
+    assert(inline_payload.matches(expected_payload)
+        && "INLINE MAKE: payload mismatch in make_stock_to_all_tableau_move");
+#endif
 }
 
 void game_state::undo_stock_to_all_tableau_move(move) {
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot pre-undo state
-    uint64_t pre_hash = zobrist_hash_value;
-    compact_state pre_payload = payload;
-#endif
-
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
 
     // Pop undo info
@@ -1133,23 +1164,34 @@ void game_state::undo_stock_to_all_tableau_move(move) {
     }
 
 #ifdef VALIDATE_INLINE_UNDO
-    // Snapshot expected result
-    uint64_t expected_hash = zobrist_hash_value;
-    compact_state expected_payload = payload;
+    // Reference state after undo (existing path result)
+    const uint64_t expected_hash = zobrist_hash_value;
+    const compact_state expected_payload = payload;
 
-    // Restore hash/payload to pre-undo state for inline path validation
-    zobrist_hash_value = pre_hash;
-    payload = pre_payload;
+    // === INLINE UNDO PATH ===
+    // Compute hash and payload changes independently using the undo record
+    uint64_t inline_hash = expected_hash;  // start with reference
+    compact_state inline_payload = expected_payload;
 
-    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
-    // For now, just copy expected result to pass validation trivially
-    zobrist_hash_value = expected_hash;
-    payload = expected_payload;
+    // Undo card descriptors: destination descriptor → STARTING for each dealt card
+    for (pile::ref tab_pr = original_tableau_piles.front() + undo.sat_count;
+         tab_pr-- > original_tableau_piles.front();
+            ) {
+        // Get the card that was dealt to this pile (now on stock top after undo)
+        card c = piles[stock].top_card();
+        uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+        update_inline_card_descriptor(cid, compact_state::STARTING,
+                                      inline_hash, inline_payload);
+    }
 
     // === VALIDATE ===
-    assert(zobrist_hash_value == expected_hash
+    (void)expected_hash;
+    (void)expected_payload;
+    (void)inline_hash;
+    (void)inline_payload;
+    assert(inline_hash == expected_hash
         && "INLINE UNDO: hash mismatch in undo_stock_to_all_tableau_move");
-    assert(payload.matches(expected_payload)
+    assert(inline_payload.matches(expected_payload)
         && "INLINE UNDO: payload mismatch in undo_stock_to_all_tableau_move");
 #endif
 }
