@@ -73,92 +73,94 @@ This approach is clean because:
 
 ---
 
-## Design Decisions & Remaining Questions
+## Implementation Strategy (Finalized)
 
-### 1. Component Implementation Order
+### Approach
 
-Within each move type, which components should be implemented first? Candidates:
+For each move type, **all components are implemented together** in a single pass. Both the forward path (`make_*_move`) and backward path (`undo_*_move`) are handled as a unit.
 
-1. **Pile operations** — determine card movement (in/out of piles)
-2. **Reveal undo** — if turning card face-down, update descriptor (STARTING_FACE_UP → STARTING)
-3. **Foundation undo** — restore old foundation ranks in hash
-4. **Hole top undo** — restore old hole top card in hash (if game has holes)
-5. **Waste pointer undo** — restore old waste ptr in hash (if game has waste pile)
-6. **Moved card descriptor undo** — restore old descriptor in payload
+**Component scope (for each move type):**
+1. Pile operations — card movement (in/out of piles)
+2. Reveal handling — descriptor update (STARTING_FACE_UP → STARTING) if card turns face-down
+3. Foundation ranks — hash update
+4. Hole top — hash update (if applicable to game)
+5. Waste pointer — hash update (if applicable to game)
+6. Moved card descriptor — payload update
 
-**Considerations:**
-- Should order follow the existing code's logic, or a cleaner dependency graph?
-- Are some components always required together (e.g., foundation + hole top)?
-- Should we implement "easiest first" (highest confidence) or "riskiest first" (to validate early)?
+### Move Type Implementation Order (Sequential)
 
-### 2. Reveal Move Handling
+1. **Phase 1.1:** `make_regular_move` + `undo_regular_move` — Regular tableau/cell/reserve moves
+2. **Phase 1.2:** `make_built_group_move` + `undo_built_group_move` — Composite group moves
+3. **Phase 1.3:** `make_stock_k_plus_move` + `undo_stock_k_plus_move` — Stock draw/recycle with K+ flexibility
+4. **Phase 1.4:** `make_stock_to_all_tableau_move` + `undo_stock_to_all_tableau_move` — Auto-play stock-to-tableau
 
-The reveal_move mechanism turns a card face-down during undo (`piles[m.from][0].turn_face_down()`). The inline path needs to:
+### Reveal Move Handling
 
-- Compute the new descriptor for a revealed card (STARTING_FACE_UP → STARTING)
-- Know when to apply this (reveal_move flag in the move struct)
-- Ensure interaction with pile state is correct
-
-**Decision needed:** How should reveal descriptor updates be integrated with the component ordering above?
-
-### 3. Move Type Implementation Order
-
-Currently Phase 0 scaffolding covers four move types:
-- `undo_regular_move`
-- `undo_built_group_move`
-- `undo_stock_k_plus_move`
-- `undo_stock_to_all_tableau_move`
-
-**Decision needed:**
-- Implement all four in parallel, or tackle them sequentially?
-- If sequential, which move type first (simplest, or most-used)?
-- If parallel, do they share component implementations, or are they independent?
+The reveal_move mechanism (turning a card face-down) is handled as part of the descriptor component within each move type. When a move has `reveal_move=true`, the inline path computes the descriptor change (STARTING_FACE_UP → STARTING) alongside other descriptor updates.
 
 ---
 
-## Implementation Steps (To Be Defined)
+## Implementation Steps
 
-Once component and move-type ordering are finalized, the implementation will follow this pattern:
+### Step 1.1: Inline `make_regular_move` + `undo_regular_move`
 
-### Step 1.X: Implement component C in move type M
+**Files to modify:**
+- `src/main/game/search-state/game_state.cpp` — `make_regular_move()` and `undo_regular_move()`
 
 **Process:**
-1. Open `undo_M` function in `game_state.cpp`
-2. Inside the `#ifdef VALIDATE_INLINE_UNDO` block, add inline computation for component C
-3. For any components not yet implemented in this move type, keep the fallback copy: `inline_hash = expected_hash;` etc.
-4. Add assertion: `assert(inline_hash == expected_hash && "...")` and `assert(inline_payload.matches(expected_payload) && "...")`
-5. Compile with `-DVALIDATE_INLINE_UNDO=ON`
-6. Run unit tests + Level 1 regression
-7. Commit with message: `feat: inline component C for move type M`
+1. In `make_regular_move()`, add inline Zobrist hash and payload computation inside `#ifdef VALIDATE_INLINE_UNDO`
+   - Compute hash change for card movement (pile removal + pile insertion)
+   - Compute payload descriptor change for moved card (from STARTING/IN_CELL/etc. to IN_CELL/PARENT/etc.)
+   - For components not yet applicable to regular moves, use fallback copy
+2. In `undo_regular_move()`, add corresponding reverse computation inside `#ifdef VALIDATE_INLINE_UNDO`
+   - Reverse the hash changes from make_regular_move
+   - Reverse the payload descriptor changes
+3. Add assertions at the end of both functions:
+   - `assert(inline_hash == zobrist_hash_value && "...")`
+   - `assert(inline_payload.matches(payload) && "...")`
+4. Compile with `-DVALIDATE_INLINE_UNDO=ON`
+5. Run `ctest -R unit_tests --output-on-failure`
+6. Run `ctest -R regression_level1 --output-on-failure`
+7. Commit: `feat(inline_undo): implement regular_move inline hash and payload computation`
 
-### Step 1.Y: Implement component D in move type M
+### Step 1.2: Inline `make_built_group_move` + `undo_built_group_move`
 
-Repeat the process above for the next component in the same move type.
+Same pattern as Step 1.1, but for group move (multiple cards moved together).
 
-### Step 1.Z: Switch to next move type
+### Step 1.3: Inline `make_stock_k_plus_move` + `undo_stock_k_plus_move`
 
-Once all components for move type M are implemented and passing, move to the next move type and repeat.
+Same pattern as Step 1.1, but includes:
+- Waste pointer hash/payload updates
+- Stock cycling logic
+
+### Step 1.4: Inline `make_stock_to_all_tableau_move` + `undo_stock_to_all_tableau_move`
+
+Same pattern as Step 1.1, but includes:
+- Multiple destinations (auto-play to foundations and/or tableau)
+- Waste pointer updates
 
 ### Final Step: Clean-up and remove undo stack
 
-Once all components for all move types are validated:
+Once all four move types pass validation:
 1. Remove `#ifdef VALIDATE_INLINE_UNDO` guards (keep inline code, remove assertions and reference copies)
-2. Remove `zobrist_undo_stack` and related cleanup code
-3. Run full regression suite (Levels 1–5)
-4. Commit with message: `refactor: eliminate zobrist_undo_stack, inline all undo computation`
+2. Identify and remove obsolete `zobrist_undo_stack` and undo recording code
+3. Clean up `zobrist_undo` struct and related helper functions (if unused elsewhere)
+4. Run full regression suite (Levels 1–5) to ensure no regressions
+5. Commit: `refactor: eliminate zobrist_undo_stack, inline all undo computation`
 
 ---
 
 ## Exit Criteria
 
-- [ ] Inline computation implemented for all components in all four move types
-- [ ] `#ifdef VALIDATE_INLINE_UNDO` assertions pass on all unit tests
-- [ ] Level 1 regression passes with validation enabled
-- [ ] Level 2 regression passes with validation enabled (longer test suite)
-- [ ] `zobrist_undo_stack` removed and cleanup code eliminated
-- [ ] Assertions removed, `#ifdef` guards stripped from final code
-- [ ] No runtime performance regression (measured via Level 2+ regression timeouts)
-- [ ] All regression tests pass (Levels 1–5)
+- [ ] Step 1.1 complete: `make_regular_move` + `undo_regular_move` inline, all unit tests pass
+- [ ] Step 1.2 complete: `make_built_group_move` + `undo_built_group_move` inline, all unit tests pass
+- [ ] Step 1.3 complete: `make_stock_k_plus_move` + `undo_stock_k_plus_move` inline, all unit tests pass
+- [ ] Step 1.4 complete: `make_stock_to_all_tableau_move` + `undo_stock_to_all_tableau_move` inline, all unit tests pass
+- [ ] Level 1 regression passes with `VALIDATE_INLINE_UNDO=ON`
+- [ ] Level 2 regression passes with `VALIDATE_INLINE_UNDO=ON` (comprehensive validation)
+- [ ] Final cleanup: `#ifdef` guards removed, `zobrist_undo_stack` eliminated
+- [ ] All regression tests pass (Levels 1–5) with final code
+- [ ] No runtime performance regression detected
 
 ---
 
