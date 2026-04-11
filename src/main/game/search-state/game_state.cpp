@@ -511,7 +511,8 @@ void game_state::make_regular_move(const move m) {
         update_card_descriptor(rev_cid, rev_desc);
     }
 
-    // Push undo info
+#ifdef VALIDATE_INLINE_UNDO
+    // Push undo info (validation only)
     zobrist_undo undo = {};
     undo.card_id = cid;
     undo.old_desc = old_desc;
@@ -524,74 +525,115 @@ void game_state::make_regular_move(const move m) {
     undo.old_waste_ptr = old_waste_ptr;
     undo.sat_count = 0;
     zobrist_undo_stack.push_back(undo);
+#endif
 }
 
 void game_state::undo_regular_move(const move m) {
+    assert(m.to < piles.size());
+
 #ifdef VALIDATE_INLINE_UNDO
-    // Snapshot pre-undo state
+    // Capture pre-undo hash/payload for reference path re-run
     uint64_t pre_hash = zobrist_hash_value;
     compact_state pre_payload = payload;
 #endif
 
-    assert(m.to < piles.size());
+    // Identify moved card BEFORE pile undo (it's at m.to)
+    card moved = piles[m.to].top_card();
+    uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
 
-    // Pop undo info
-    zobrist_undo undo = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
+    // === PILE OPERATIONS (restore physical state) ===
 
-    // Undo reveal descriptor
+    // Undo reveal: turn revealed card face-down BEFORE returning moved card
+    // (revealed card is at piles[m.from][0] while moved card is still at m.to)
     if (m.reveal_move) {
         assert(!piles[m.from].empty());
         assert(!piles[m.from][0].is_face_down());
-        update_card_descriptor(undo.revealed_card_id, compact_state::STARTING);
         piles[m.from][0].turn_face_down();
     }
 
-    // Undo hole header
-    if (undo.old_hole_top != 255) {
-        update_hole_top_in_hash(undo.old_hole_top);
-    }
-
-    // Undo waste pointer (if move was from waste)
-    if (undo.old_waste_ptr != 255) {
-        update_waste_ptr_in_hash(undo.old_waste_ptr);
-    }
-
-    // Undo destination foundation header
-    if (undo.to_found_suit != 255) {
-        update_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank);
-    }
-
-    // Undo source foundation header
-    if (undo.from_found_suit != 255) {
-        update_foundation_in_hash(undo.from_found_suit, undo.old_from_found_rank);
-    }
-
-    // Restore moved card's descriptor
-    update_card_descriptor(undo.card_id, undo.old_desc);
-
-    // Pile operations
+    // Return card to source pile
     place_card(m.from, take_card(m.to));
 
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot expected result
-    uint64_t expected_hash = zobrist_hash_value;
-    compact_state expected_payload = payload;
+    // === HASH/PAYLOAD RECOVERY (all from restored pile state) ===
 
-    // Restore hash/payload to pre-undo state for inline path validation
+    // Revealed card goes back to STARTING
+    // (after place_card, it is at piles[m.from][1])
+    if (m.reveal_move) {
+        card rev = piles[m.from][1];
+        uint8_t rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
+        update_card_descriptor(rev_cid, compact_state::STARTING);
+    }
+
+    // Destination foundation (card removed from m.to)
+    if (is_foundation_pile(m.to)) {
+        uint8_t suit = get_foundation_suit(m.to);
+        uint8_t rank_now = piles[m.to].empty()
+            ? uint8_t(0) : piles[m.to].top_card().get_rank();
+        update_foundation_in_hash(suit, rank_now);
+    }
+
+    // Source foundation (card returned to m.from)
+    if (is_foundation_pile(m.from)) {
+        uint8_t suit = get_foundation_suit(m.from);
+        update_foundation_in_hash(suit, moved.get_rank());
+    }
+
+    // Hole top (card removed from hole)
+    if (m.to == hole) {
+        uint8_t old_ht = piles[hole].empty()
+            ? uint8_t(0)
+            : zobrist_hash::card_id(piles[hole].top_card().get_suit(),
+                                     piles[hole].top_card().get_rank());
+        update_hole_top_in_hash(old_ht);
+    }
+
+    // Waste pointer (card returned to waste)
+    if (m.from == waste) {
+        update_waste_ptr_in_hash(effective_waste_ptr());
+    }
+
+    // Moved card's old descriptor (recovered from restored pile state)
+    uint8_t old_desc = recover_pre_move_descriptor(m.from, moved);
+    update_card_descriptor(cid, old_desc);
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Save pile-first recovery result
+    uint64_t recovery_hash = zobrist_hash_value;
+    compact_state recovery_payload = payload;
+
+    // Pop reference undo record
+    zobrist_undo undo_ref = zobrist_undo_stack.back();
+    zobrist_undo_stack.pop_back();
+
+    // Reset hash/payload to pre-undo state and run reference path
     zobrist_hash_value = pre_hash;
     payload = pre_payload;
 
-    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
-    // For now, just copy expected result to pass validation trivially
-    zobrist_hash_value = expected_hash;
-    payload = expected_payload;
+    if (undo_ref.revealed_card_id != 255) {
+        update_card_descriptor(undo_ref.revealed_card_id, compact_state::STARTING);
+    }
+    if (undo_ref.old_hole_top != 255) {
+        update_hole_top_in_hash(undo_ref.old_hole_top);
+    }
+    if (undo_ref.old_waste_ptr != 255) {
+        update_waste_ptr_in_hash(undo_ref.old_waste_ptr);
+    }
+    if (undo_ref.to_found_suit != 255) {
+        update_foundation_in_hash(undo_ref.to_found_suit, undo_ref.old_to_found_rank);
+    }
+    if (undo_ref.from_found_suit != 255) {
+        update_foundation_in_hash(undo_ref.from_found_suit, undo_ref.old_from_found_rank);
+    }
+    update_card_descriptor(undo_ref.card_id, undo_ref.old_desc);
 
-    // === VALIDATE ===
-    assert(zobrist_hash_value == expected_hash
-        && "INLINE UNDO: hash mismatch in undo_regular_move");
-    assert(payload.matches(expected_payload)
-        && "INLINE UNDO: payload mismatch in undo_regular_move");
+    assert(zobrist_hash_value == recovery_hash
+        && "PILE RECOVERY: hash mismatch in undo_regular_move");
+    assert(payload.matches(recovery_payload)
+        && "PILE RECOVERY: payload mismatch in undo_regular_move");
+
+    // Restore pile-first as authoritative
+    zobrist_hash_value = recovery_hash;
+    payload = recovery_payload;
 #endif
 }
 
