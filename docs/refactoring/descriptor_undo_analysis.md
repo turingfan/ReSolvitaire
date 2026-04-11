@@ -1,7 +1,7 @@
 # Descriptor Undo Reconstruction: Semantic Analysis
 
-**Date:** 2026-04-10
-**Status:** REVISED — STARTING_FACE_UP is now proven recoverable (see Section "Resolution")
+**Date:** 2026-04-10 (revised 2026-04-11)
+**Status:** REVISED — original Resolution section contained a flawed proof; see "Corrected Resolution" section
 
 ---
 
@@ -285,7 +285,9 @@ This is common in Klondike-style games with face-down cards in the tableau. It w
 
 ---
 
-## Resolution: STARTING_FACE_UP IS Recoverable
+## Resolution: STARTING_FACE_UP IS Recoverable (FLAWED — see Corrected Resolution below)
+
+> **Note:** The proof in this section is incorrect. The face-down invariant fails for initially-face-up cards. The section is preserved for context. See "Corrected Resolution" for the valid approach.
 
 ### The Key Invariant
 
@@ -351,17 +353,60 @@ if (piles[from].size() > m.count && piles[from][m.count].is_face_down()) {
 }
 ```
 
-### Conclusion: No Undo Stack Needed At All
+### Conclusion of Flawed Section
 
-With this face-down check, ALL descriptor values are recoverable from pile state. The 1-byte `descriptor_undo_stack` proposed earlier is **not needed**. The undo stack can be eliminated entirely.
+The face-down check was believed to cover all cases, but it does not. See Corrected Resolution below.
 
 ---
 
-## Summary (REVISED)
+## Corrected Resolution: Static Initial State Lookup
+
+### The Counterexample
+
+The face-down invariant claims: "a face-up card sitting directly above a face-down card was necessarily revealed during play." This is wrong for the **initial top card** of a Klondike tableau pile.
+
+Concrete example (Klondike seed 42, CID 28 = 3 of Hearts):
+- CID 28 is dealt as the top card of pile 10, which in Klondike means it is face-up in the logical initial state
+- However, `init_payload_and_hash()` runs **before** `turn_face_up()` in the constructor
+- At `init_payload_and_hash` time, CID 28 is still face-down → assigned `STARTING=0`
+- After init, `turn_face_up()` turns CID 28 face-up
+- During play, CID 28 is moved (with `m.reveal_move=true`, revealing the card below)
+- On undo, `piles[m.from][1].is_face_down()` is true — the face-down card below is visible
+- The flawed heuristic returns `STARTING_FACE_UP=1`, but the correct old descriptor is `STARTING=0`
+
+The invariant fails because it cannot distinguish "initially face-up above a face-down card" from "revealed during play above a face-down card."
+
+### The Correct Fix: Static Initial State
+
+Add `bool initially_face_up[52]` to `game_state`, populated **after** `turn_face_up()` runs in the constructor. This records the logical initial face-up/face-down state for each card, indexed by CID.
+
+The rule for recovering the moved card's old descriptor when it is returning to its starting tableau pile:
+
+```cpp
+if (initially_face_up[cid]) {
+    return compact_state::STARTING;        // was face-up at start → got STARTING=0 at init
+} else {
+    return compact_state::STARTING_FACE_UP; // was face-down at start → revealed during play
+}
+```
+
+**Why this is correct:**
+- A logically face-up card at the start was face-down when `init_payload_and_hash` ran → assigned `STARTING=0`. Its old descriptor is always `STARTING=0`.
+- A logically face-down card at the start was assigned `STARTING=0` at init. It only acquires `STARTING_FACE_UP=1` after being revealed during play. When it is subsequently moved, its old descriptor is `STARTING_FACE_UP=1`.
+
+This approach requires no per-move storage and replaces `recover_pre_move_descriptor` entirely.
+
+**Limitation — 2-deck games:** `initially_face_up[52]` is indexed by CID. In 2-deck games, two physical copies of the same card share a CID. The lookup is ambiguous and may be incorrect. This is a known issue — see PICKUP.md KI-1.
+
+**Note on naming:** Cards that start face-up receive `STARTING=0`; cards that start face-down and are later revealed receive `STARTING_FACE_UP=1`. The names are counterintuitive. This is a known issue — see PICKUP.md KI-2.
+
+---
+
+## Summary (REVISED — corrected 2026-04-11)
 
 | Component | Recoverable from pile state? | Notes |
 |---|---|---|
-| Moved card descriptor | **YES** — all cases including STARTING_FACE_UP | Face-down invariant resolves the ambiguity |
+| Moved card descriptor | **YES** — using static initial state lookup | Face-down heuristic was flawed; `initially_face_up[cid]` is correct |
 | Revealed card identity | YES | Read from `piles[m.from][1]` (or `[m.count]` for built groups) |
 | Revealed card old descriptor | YES | Always STARTING (face-down cards) |
 | Foundation top rank | YES | Read pile top after undo |
@@ -369,4 +414,4 @@ With this face-down check, ALL descriptor values are recoverable from pile state
 | Waste pointer | YES | Call `effective_waste_ptr()` after pile undo |
 | sat_count | YES | Available from `move.count` |
 
-**Bottom line:** The entire `zobrist_undo_stack` can be eliminated. ALL values are recoverable from pile state after undo. The key insight is the face-down card invariant: a face-up card sitting directly above a face-down card was necessarily revealed in place (descriptor = STARTING_FACE_UP), never moved there, because moves can only place cards on face-up tops or empty piles.
+**Bottom line:** The entire `zobrist_undo_stack` can be eliminated. All values are recoverable — but the moved card's descriptor requires a static lookup (`initially_face_up[cid]` stored in `game_state`), not a pile-state heuristic.

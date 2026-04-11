@@ -3,7 +3,7 @@
 **Date written:** 2026-04-11
 **Branch:** `feature/pile-first-undo`
 **Last good commit:** `52b8668` — "feat: add recover_pre_move_descriptor helper (Phase 1 Step A)"
-**Status:** BLOCKED on one bug in `recover_pre_move_descriptor`
+**Status:** BLOCKED — fix identified, pending implementation
 
 ---
 
@@ -108,18 +108,23 @@ The `recover_pre_move_descriptor` function cannot distinguish:
 - A card revealed **during play** (descriptor = STARTING_FACE_UP = 1)
 - A card that was the **initial top card** of a Klondike pile (descriptor = STARTING = 0)
 
-Both satisfy `piles[from][1].is_face_down()` after undo.
+Both satisfy `piles[from][1].is_face_down()` after undo. The face-down invariant in `descriptor_undo_analysis.md` is wrong — see that document for the counterexample and corrected analysis.
 
-### Option A: Store 1 byte per move (minimal approach)
-Add a single byte `old_moved_desc` to the existing `zobrist_undo` struct (or a separate tiny struct), storing only the moved card's old descriptor. Everything else (foundations, hole, waste ptr, reveal card) is recoverable from pile state — only the moved card's original descriptor is not. This eliminates 9 of the 10 bytes per move, reduces the undo record from `zobrist_undo` (10 bytes) to 1 byte.
+### Chosen Fix: Static Initial State Lookup
 
-### Option B: Fix the init ordering
-Change the seed-based constructor so `init_payload_and_hash()` is called **after** `turn_face_up()`. Then initially-top-face-up cards would be assigned STARTING_FACE_UP=1 at init time, making the invariant correct. **However**: this would change the descriptor semantics for initial top cards and may break the flat cache or other tests. Needs careful analysis.
+Add `bool initially_face_up[52]` (or `std::bitset<52>`) to `game_state`, populated **after** `turn_face_up()` runs in the constructor, indexed by CID. This records the logical initial face-up/face-down state of every card.
 
-### Option C: Track revealed cards separately
-Store which cards have ever been revealed (e.g. a 52-bit bitmask), so `recover_pre_move_descriptor` can consult this. More complex.
+Replace the heuristic in `recover_pre_move_descriptor` with:
+- `initially_face_up[cid]` true → return `STARTING` (0)
+- `initially_face_up[cid]` false → return `STARTING_FACE_UP` (1)
 
-**Recommendation: Option A** — it's the least invasive, provably correct, and reduces undo storage by ~90%.
+**Why this is correct:**
+- A card that was logically face-up at the start was face-down when `init_payload_and_hash` ran (ordering issue), so it received `STARTING=0`. Restoring it to `STARTING=0` is correct.
+- A card that was logically face-down at the start received `STARTING=0` at init, and `STARTING_FACE_UP=1` only after being revealed during play. When it moves from that revealed position, its old descriptor was `STARTING_FACE_UP=1`. Restoring it to `STARTING_FACE_UP=1` is correct.
+
+This requires no per-move storage. `recover_pre_move_descriptor` can be deleted and replaced with a direct lookup.
+
+**Limitation — 2-deck games:** See KI-1 at end of this document.
 
 ---
 
@@ -155,13 +160,24 @@ cmake -DVALIDATE_INLINE_UNDO=ON .. && make -j4
 
 ---
 
-## Summary of Decision Needed
+## Next Step: Implement Commit B
 
-Before writing any more code, decide: **Option A (1-byte old_desc per move) or Option B (fix init ordering) or Option C (tracking set)?**
+The fix is chosen (static initial state lookup — see above). Commit B implements:
 
-Option A is recommended. It means:
-- The `zobrist_undo` struct shrinks to just `uint8_t old_moved_desc`
-- All other undo values (reveal, foundations, hole, waste) are recovered from pile state
-- The push in `make_regular_move` stores only 1 byte
-- The `recover_pre_move_descriptor` function is deleted
-- `undo_regular_move` pops that 1 byte and uses it directly
+1. Add `bool initially_face_up[52]` to `game_state` (populated in constructor after `turn_face_up`)
+2. Delete `recover_pre_move_descriptor`
+3. Update `undo_regular_move` to use the static lookup directly
+4. The `zobrist_undo_stack` push in `make_regular_move` remains guarded by `#ifdef VALIDATE_INLINE_UNDO`
+5. Tests must pass with `-DVALIDATE_INLINE_UNDO=ON` before committing
+
+---
+
+## Known Issues / Pre-Merge Checklist
+
+Issues identified during Phase 1 that must be resolved before merging to `master` or any branch supporting 2-deck games:
+
+**KI-1: Static initial state lookup not valid for 2-deck games**
+`initially_face_up[52]` is indexed by CID (derived from suit+rank). In 2-deck games, two physical copies of the same card share a CID but may have different initial face-up states — the lookup is ambiguous. 2-deck games currently use `lru_cache` rather than `flat_cache`, so the practical impact is unclear, but it must be verified before Phase 1 is considered complete for those game types. Likely fix: index by initial pile position rather than CID, or introduce a per-instance card identifier.
+
+**KI-2: Misleading descriptor names**
+Cards that start face-up receive descriptor `STARTING` (0), not `STARTING_FACE_UP` (1). Cards that start face-down and are later revealed receive `STARTING_FACE_UP` (1). The names are the opposite of what you would expect. This is a latent source of confusion for anyone reading the code. Renaming is deferred to avoid churn during Phase 1, but should be addressed before this work is considered production-ready.
