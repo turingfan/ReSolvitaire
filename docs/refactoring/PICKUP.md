@@ -2,8 +2,8 @@
 
 **Date written:** 2026-04-13
 **Branch:** `feature/pile-first-undo`
-**Last good commit:** Commit D — `undo_stock_k_plus_move` pile-first rewrite
-**Status:** Commits A, B, C, D complete. Next: **Commit E** (final cleanup — remove undo stack entirely).
+**Last good commit:** Commit E — `zobrist_undo_stack` removed; KI-6 assert added
+**Status:** Commits A, B, C, D, E complete. **Phase 1 pile-first undo is done.**
 
 ---
 
@@ -27,11 +27,12 @@ The plan has 5 commits: A (helper), B (undo_regular_move), C (undo_built_group_m
 
 ## Current State of the Code
 
-### Committed (Commits A, B, C, D are in the history):
+### Committed (Commits A–E are in the history):
 - Commit A: `recover_pre_move_descriptor` helper (since deleted)
 - Commit B (`ef06f5f`): `undo_regular_move` pile-first rewrite, `initially_face_up[52]`, `init_initially_face_up()`
 - Commit C: `undo_built_group_move` pile-first rewrite, Accordion/Predecessor tests disabled
 - Commit D: `undo_stock_k_plus_move` pile-first rewrite; VALIDATE_INLINE_UNDO guards on unused-in-non-validate variables in all three make functions; test_helper self-describing failure for missing resource files
+- Commit E (`8b99dbd`): Remove all VALIDATE_INLINE_UNDO scaffolding; remove `struct zobrist_undo` and `zobrist_undo_stack`; remove CMake option; add `assert(!use_new_cache(rules))` to make/undo_stock_to_all_tableau_move (KI-6)
 
 ### Key additions from Commit B:
 - `bool initially_face_up[52]` in `game_state.h`
