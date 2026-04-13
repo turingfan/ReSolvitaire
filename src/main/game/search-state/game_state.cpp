@@ -521,26 +521,40 @@ void game_state::make_regular_move(const move m) {
     // Capture pre-move state for descriptor updates
     card moved = piles[m.from].top_card();
     uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
+#ifdef VALIDATE_INLINE_UNDO
     uint8_t old_desc = payload.get_descriptor(cid);
+#endif
 
-    uint8_t from_fs = 255, old_from_fr = 255;
+    uint8_t from_fs = 255;
+#ifdef VALIDATE_INLINE_UNDO
+    uint8_t old_from_fr = 255;
+#endif
     if (is_foundation_pile(m.from)) {
         from_fs = get_foundation_suit(m.from);
+#ifdef VALIDATE_INLINE_UNDO
         old_from_fr = payload.get_foundation(from_fs);
+#endif
     }
-    uint8_t to_fs = 255, old_to_fr = 255;
+    uint8_t to_fs = 255;
+#ifdef VALIDATE_INLINE_UNDO
+    uint8_t old_to_fr = 255;
+#endif
     if (is_foundation_pile(m.to)) {
         to_fs = get_foundation_suit(m.to);
+#ifdef VALIDATE_INLINE_UNDO
         old_to_fr = payload.get_foundation(to_fs);
+#endif
     }
     uint8_t old_ht = 255;
     if (m.to == hole) {
         old_ht = payload.get_hole_top();
     }
+#ifdef VALIDATE_INLINE_UNDO
     uint8_t old_waste_ptr = 255;
     if (m.from == waste) {
         old_waste_ptr = payload.get_waste_ptr();
     }
+#endif
 
     // Pile operations
     place_card(m.to, take_card(m.from));
@@ -739,7 +753,9 @@ void game_state::make_built_group_move(move m) {
     // Capture bottom card of group (the one whose descriptor changes)
     card bottom = piles[m.from][m.count - 1];
     uint8_t bottom_cid = zobrist_hash::card_id(bottom.get_suit(), bottom.get_rank());
+#ifdef VALIDATE_INLINE_UNDO
     uint8_t old_desc = payload.get_descriptor(bottom_cid);
+#endif
 
     // Adds the cards to the 'to' pile
     for (auto pile_idx = m.count; pile_idx-- > 0;) {
@@ -919,8 +935,10 @@ void game_state::make_stock_k_plus_move(const move m) {
     auto sz_before = piles[stock].size() + piles[waste].size();
 #endif
 
-    // Capture pre-move state
+    // Capture pre-move state (validation only)
+#ifdef VALIDATE_INLINE_UNDO
     uint8_t old_waste_ptr = payload.get_waste_ptr();
+#endif
 
     // Transfers count cards from the stock to the waste
     if (m.count > 0) {
@@ -936,7 +954,9 @@ void game_state::make_stock_k_plus_move(const move m) {
     // Capture the card about to be played from waste
     card played = piles[waste].top_card();
     uint8_t played_cid = zobrist_hash::card_id(played.get_suit(), played.get_rank());
+#ifdef VALIDATE_INLINE_UNDO
     uint8_t played_old_desc = payload.get_descriptor(played_cid);
+#endif
 
     // Moves the card on top of the waste to the target pile
     place_card(m.to,  take_card(waste));
@@ -954,15 +974,24 @@ void game_state::make_stock_k_plus_move(const move m) {
     update_card_descriptor(played_cid, new_desc);
 
     // Update foundation/hole headers
-    uint8_t to_fs = 255, old_to_fr = 255;
+    uint8_t to_fs = 255;
+#ifdef VALIDATE_INLINE_UNDO
+    uint8_t old_to_fr = 255;
+#endif
     if (is_foundation_pile(m.to)) {
         to_fs = get_foundation_suit(m.to);
+#ifdef VALIDATE_INLINE_UNDO
         old_to_fr = payload.get_foundation(to_fs);
+#endif
         update_foundation_in_hash(to_fs, played.get_rank());
     }
+#ifdef VALIDATE_INLINE_UNDO
     uint8_t old_ht = 255;
+#endif
     if (m.to == hole) {
+#ifdef VALIDATE_INLINE_UNDO
         old_ht = payload.get_hole_top();
+#endif
         update_hole_top_in_hash(played_cid);
     }
 
