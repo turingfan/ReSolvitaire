@@ -30,18 +30,18 @@ typedef test_helper th;
 const static std::string path = "tests/resources/unit_tests/accordion/";
 const static std::string type = "-test-accordion";
 
-TEST(DISABLED_Accordion, SimpleSolvable) {
+TEST(Accordion, SimpleSolvable) {
     EXPECT_TRUE(th::is_solvable(path + "SimpleSolvable.json", type));
 }
 
-TEST(DISABLED_Accordion, ComplexSolvable) {
+TEST(Accordion, ComplexSolvable) {
     EXPECT_TRUE(th::is_solvable(path + "ComplexSolvable.json", type));
 }
 
-TEST(DISABLED_Accordion, SimpleUnsolvable) {
+TEST(Accordion, SimpleUnsolvable) {
     EXPECT_FALSE(th::is_solvable(path + "SimpleUnsolvable.json", type));
 }
 
-TEST(DISABLED_Accordion, ComplexUnsolvable) {
+TEST(Accordion, ComplexUnsolvable) {
     EXPECT_FALSE(th::is_solvable(path + "ComplexUnsolvable.json", type));
 }
