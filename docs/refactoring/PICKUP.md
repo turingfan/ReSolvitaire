@@ -53,6 +53,7 @@ The plan has 5 commits: A (helper), B (undo_regular_move), C (undo_built_group_m
 - `DISABLED_PredecessorCacheNonAccordion.*` (1 test): DISABLED — same group
 - `PredecessorDualCacheTest.DISABLED_*` (1 test): DISABLED — same group
 - `SolverCacheSelectionTest.BlackHoleUsesNewCache`: FAIL — **pre-existing**, times out in debug build (10k cache too small without -O3)
+- `Klondike.*`, `Somerset.*`, `Spider.*`, `Gaps.*`, etc.: SKIP when run directly from `cmake-build-debug/` (resource files not found); pass when run via CTest from repo root
 
 ---
 
@@ -134,8 +135,15 @@ Games using `stock_deal_t == TABLEAU_PILES` (e.g. Spider) always use the LRU cac
 cmake -DVALIDATE_INLINE_UNDO=ON .. && make -j4
 
 # Run ZobristIncremental + FaceUpCards (key tests for pile-first undo)
+# Expected: 24 passed, 0 failed — run directly from cmake-build-debug/
 ./bin/unit_tests --gtest_filter="ZobristIncremental.*:FaceUpCards.*"
 
-# Run full unit tests (expect 1 pre-existing failure: BlackHoleUsesNewCache)
+# Run full unit tests directly from cmake-build-debug/
+# Expected: 1 failure (BlackHoleUsesNewCache, pre-existing timeout in debug)
+#           resource-file integration tests (Klondike.*, Somerset.*, etc.) will SKIP
 ./bin/unit_tests
+
+# Run full unit tests via CTest (sets working dir to repo root — no skips)
+# From cmake-build-debug/:
+ctest -R unit_tests --output-on-failure
 ```
