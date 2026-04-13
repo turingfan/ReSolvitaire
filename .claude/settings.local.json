@@ -71,10 +71,7 @@
       "Bash(docker --version)",
       "Bash(podman --version)",
       "Bash(container --version)",
-      "Bash(container help:*)",
-      "Bash(./build.sh --release --unit-tests -DVALIDATE_INLINE_UNDO)",
-      "Bash(timeout 60 ./bin/unit_tests --gtest_filter=\"DualCacheTest.FreeCellOutcome\")",
-      "Bash(timeout 300 ./bin/unit_tests --gtest_filter=\"-*SimpleSolvable:*ComplexSolvable:*SimpleUnsolvable:*ComplexUnsolvable:MismatchDiagnostic*\")"
+      "Bash(container help:*)"
     ]
   }
 }
