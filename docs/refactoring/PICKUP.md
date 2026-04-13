@@ -53,7 +53,7 @@ The plan has 5 commits: A (helper), B (undo_regular_move), C (undo_built_group_m
 - `Accordion.*` (4 tests): ALL PASS (run via CTest from repo root; SKIP if run directly from build dir)
 - `PredecessorCacheTest.*` (9 tests): ALL PASS
 - `PredecessorCacheNonAccordion.*` (1 test): PASS
-- `PredecessorDualCacheTest.AccordionAgreement`: CRASH/FAIL — **pre-existing** (KI-7), `assert_payload_consistent()` fires in debug build for accordion moves; predates Phase 0
+- `PredecessorDualCacheTest.AccordionAgreement`: CRASH/FAIL — **IGNORE** (KI-7), accordion/predecessor cache is out of scope for Phase 1; do not investigate
 - `SolverCacheSelectionTest.BlackHoleUsesNewCache`: FAIL — **pre-existing** (KI-3), times out in debug build (10k cache too small without -O3)
 - `Klondike.*`, `Somerset.*`, `Spider.*`, `Gaps.*`, etc.: SKIP when run directly from `cmake-build-debug/` (resource files not found); pass when run via CTest from repo root
 
@@ -125,8 +125,8 @@ These tests use Accordion rules, which selects the predecessor cache rather than
 **KI-6: `undo_stock_to_all_tableau_move` not rewritten; assert missing**
 Games using `stock_deal_t == TABLEAU_PILES` (e.g. Spider) always use the LRU cache, not the flat cache. This undo function is therefore out of scope for the pile-first refactor. A `assert(!use_new_cache(rules))` (or equivalent) should be added at the top of `make_stock_to_all_tableau_move` and `undo_stock_to_all_tableau_move` to guard this assumption. **DONE in Commit E.**
 
-**KI-7: `PredecessorDualCacheTest.AccordionAgreement` crashes in debug builds (pre-existing)**
-In debug builds, `assert_payload_consistent()` fires during accordion moves: the incremental `compact_state` payload diverges from the scratch-recomputed payload. Confirmed pre-existing at commit 4c4b022, before any Phase 0/1 work. Test left enabled so the failure is visible. The root cause is a bug in the descriptor update logic for accordion moves (unrelated to pile-first undo). Expected failure alongside `BlackHoleUsesNewCache` (KI-3).
+**KI-7: `PredecessorDualCacheTest.AccordionAgreement` crashes in debug builds — IGNORE**
+Accordion uses the predecessor cache, not the flat cache. Phase 1 is not about accordion. **Do NOT investigate accordion failures — defer all accordion issues to later work.** Test left enabled so the failure remains visible. Expected failure alongside `BlackHoleUsesNewCache` (KI-3).
 
 ---
 
