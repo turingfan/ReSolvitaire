@@ -1,7 +1,7 @@
 # Descriptor Undo Reconstruction: Semantic Analysis
 
-**Date:** 2026-04-10 (revised 2026-04-11)
-**Status:** REVISED — original Resolution section contained a flawed proof; see "Corrected Resolution" section
+**Date:** 2026-04-10 (revised 2026-04-11, 2026-04-13)
+**Status:** IMPLEMENTED — Commit B on `feature/pile-first-undo` implements the corrected approach; see "Corrected Resolution" and "Implementation Notes (Commit B)"
 
 ---
 
@@ -19,18 +19,20 @@ From `compact_state.h`:
 
 | Value | Name | Meaning |
 |---|---|---|
-| 0 | STARTING | Face-down card, or card in stock/waste/reserve/foundation |
-| 1 | STARTING_FACE_UP | Face-down card that was revealed (turned face-up) but not moved |
+| 0 | STARTING | Face-down card; card in stock/waste/reserve/foundation; OR initially-face-up card in a multi-card initial tableau pile (counterintuitive — see KI-2) |
+| 1 | STARTING_FACE_UP | Card that was face-down at deal and was revealed during play (NOT at bottom of pile) |
 | 2 | ROOT | Card on a non-legal-build parent in the tableau |
 | 3 | IN_CELL | Card in a cell pile |
 | 4–7 | PARENT_0–3 | Card on a legal-build parent (index identifies which parent) |
 | 8 | IN_HOLE | Card in the hole pile |
-| 9 | IN_SPACE | Card at the bottom of a tableau pile (empty space below it) |
+| 9 | IN_SPACE | Card placed in an empty tableau pile; also the top card of an initial single-card tableau pile |
 
 Key semantic distinctions:
-- **STARTING vs STARTING_FACE_UP**: STARTING is face-down or in stock/waste/reserve/foundation. STARTING_FACE_UP is a card that was revealed in-place.
-- **ROOT vs IN_SPACE**: Both are at/near the bottom of a tableau pile, but IN_SPACE means nothing is below, while ROOT means a non-legal-build card is below.
+- **STARTING vs STARTING_FACE_UP**: STARTING covers face-down cards, non-tableau piles, AND initially-face-up cards in multi-card tableau piles (because `init_payload_and_hash` runs before `turn_face_up()` in the seed constructor — those cards are still face-down at init time). STARTING_FACE_UP is reserved for cards that start face-down and are later revealed during play.
+- **STARTING_FACE_UP vs IN_SPACE on reveal**: When a card above is moved away, the revealed card gets IN_SPACE if it is now alone on the pile, or STARTING_FACE_UP if face-down cards remain below it.
+- **ROOT vs IN_SPACE**: Both appear at/near the bottom of a tableau pile. IN_SPACE means nothing is below (empty pile); ROOT means a non-legal-build card is below.
 - The ROOT/IN_SPACE distinction was the subject of a critical bug fix (see `bug_report_root_descriptor_false_positives.md`).
+- **KI-2 (naming anomaly)**: STARTING(0) is assigned to cards that START face-up; STARTING_FACE_UP(1) is for cards that START face-down and are revealed. The names are backwards. Renaming deferred.
 
 ---
 
@@ -402,11 +404,73 @@ This approach requires no per-move storage and replaces `recover_pre_move_descri
 
 ---
 
-## Summary (REVISED — corrected 2026-04-11)
+## Implementation Notes (Commit B — 2026-04-13)
+
+Commit B on `feature/pile-first-undo` implements the corrected approach for `undo_regular_move`. Two additional semantic fixes were discovered during implementation.
+
+### Additional Semantic Fix 1: Face-Up Card Above Face-Down Parent at Init
+
+`init_payload_and_hash()` had a bug: in init-list and JSON constructors, a face-up card sitting directly above a face-down card in the initial tableau got `PARENT_x` (from the parent table lookup on the face-down card below it). The correct descriptor is `STARTING(0)`.
+
+**Rationale:** A face-down card is not a legal move target. `determine_destination_descriptor` is only ever called with face-up destinations (you cannot make a `make_regular_move` to a face-down card). Therefore only the constructors can create a "face-up above face-down" position — and the correct descriptor at that point is `STARTING(0)`, not `PARENT_x`.
+
+**Fix:** In the positional loop in `init_payload_and_hash()`, added:
+```cpp
+card parent_card = p[i + 1];
+if (parent_card.is_face_down()) continue;  // keep STARTING=0, no build relationship visible
+```
+
+### Additional Semantic Fix 2: Initially-Face-Up Single-Card Tableau Pile → IN_SPACE
+
+In the seed constructor, `init_payload_and_hash()` runs before `turn_face_up()`. A card that is the sole occupant of an initial tableau pile (e.g. the top card of each Klondike pile) is face-down at init time and gets `STARTING=0`. After `turn_face_up()`, it is face-up. The semantically correct descriptor is `IN_SPACE(9)` — it is "placed in an empty space" and `determine_destination_descriptor` returns IN_SPACE for a single-card pile.
+
+**Fix:** In `init_initially_face_up()`, after scanning all piles, a fixup pass over `original_tableau_piles` updates any single-card face-up pile top from `STARTING=0` to `IN_SPACE=9`:
+```cpp
+for (auto tab_ref : original_tableau_piles) {
+    if (piles[tab_ref].size() == 1 && !piles[tab_ref][0].is_face_down()) {
+        card c = piles[tab_ref][0];
+        uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+        if (payload.get_descriptor(cid) == compact_state::STARTING) {
+            update_card_descriptor(cid, compact_state::IN_SPACE);
+        }
+    }
+}
+```
+
+This fixup is skipped for accordion/predecessor-cache games (guarded with `if (uses_predecessor_cache()) return;`).
+
+### Actual Implementation of the Pile-First Rule in undo_regular_move
+
+The implemented rule is more precise than the sketch above. It only applies the static lookup when `m.from` is within the original tableau pile range AND there is a face-down card immediately below the returned card:
+
+```cpp
+uint8_t old_desc = determine_destination_descriptor(m.from, moved);  // default
+if (!original_tableau_piles.empty()) {
+    pile::ref first_tab = original_tableau_piles.front();
+    pile::ref last_tab  = original_tableau_piles.back();
+    if (m.from >= first_tab && m.from <= last_tab
+            && piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()) {
+        old_desc = initially_face_up[cid]
+            ? compact_state::STARTING          // was face-up at start → STARTING=0
+            : compact_state::STARTING_FACE_UP; // was face-down at start → revealed
+    }
+}
+update_card_descriptor(cid, old_desc);
+```
+
+The range check (`m.from >= first_tab && m.from <= last_tab`) restricts the lookup to original tableau piles. Non-original piles (cells, waste, etc.) are handled entirely by `determine_destination_descriptor`. Single-card piles (size == 1) are also handled by `determine_destination_descriptor`, which returns `IN_SPACE` — correct after the init fixup above.
+
+### VALIDATE_INLINE_UNDO
+
+When compiled with `-DVALIDATE_INLINE_UNDO=ON`, `make_regular_move` still pushes to `zobrist_undo_stack` (guarded), and `undo_regular_move` runs both the pile-first path and the reference undo-stack path, asserting they agree. A `log_pile_recovery_mismatch()` debug helper fires only on disagreement and dumps the full 52-card descriptor diff. All 24 ZobristIncremental + FaceUpCards tests pass under this flag.
+
+---
+
+## Summary (REVISED — corrected 2026-04-11, implemented 2026-04-13)
 
 | Component | Recoverable from pile state? | Notes |
 |---|---|---|
-| Moved card descriptor | **YES** — using static initial state lookup | Face-down heuristic was flawed; `initially_face_up[cid]` is correct |
+| Moved card descriptor | **YES** — static lookup + positional fallback | `initially_face_up[cid]` applied only when pile[1] is face-down in orig tableau; `determine_destination_descriptor` handles all other cases |
 | Revealed card identity | YES | Read from `piles[m.from][1]` (or `[m.count]` for built groups) |
 | Revealed card old descriptor | YES | Always STARTING (face-down cards) |
 | Foundation top rank | YES | Read pile top after undo |
@@ -414,4 +478,8 @@ This approach requires no per-move storage and replaces `recover_pre_move_descri
 | Waste pointer | YES | Call `effective_waste_ptr()` after pile undo |
 | sat_count | YES | Available from `move.count` |
 
-**Bottom line:** The entire `zobrist_undo_stack` can be eliminated. All values are recoverable — but the moved card's descriptor requires a static lookup (`initially_face_up[cid]` stored in `game_state`), not a pile-state heuristic.
+**Two additional semantic fixes were required** beyond the corrected heuristic:
+- `init_payload_and_hash`: face-up above face-down parent → STARTING(0), not PARENT_x
+- `init_initially_face_up`: single-card initially-face-up pile → IN_SPACE(9) fixup
+
+**Bottom line:** The entire `zobrist_undo_stack` can be eliminated. All values are recoverable — but the moved card's descriptor requires a static lookup (`initially_face_up[cid]` stored in `game_state`), plus two init-time semantic fixes to keep the reference path consistent.
