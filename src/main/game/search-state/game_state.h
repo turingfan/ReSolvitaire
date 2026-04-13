@@ -192,8 +192,10 @@ private:
     /* Descriptor-aligned Zobrist hash and payload */
     uint64_t zobrist_hash_value;
     compact_state payload;
+    bool initially_face_up[52];  // true = card was face-up at initial deal (after turn_face_up)
 
-    void init_payload_and_hash();  // Called at end of constructors
+    void init_payload_and_hash();     // Called at end of constructors
+    void init_initially_face_up();    // Called after turn_face_up() in constructors
 
     // Undo record for incremental descriptor/hash updates
     struct zobrist_undo {
@@ -217,7 +219,6 @@ private:
     void update_waste_ptr_in_hash(uint8_t new_ptr);
     void update_hole_top_in_hash(uint8_t new_cid);
     uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
-    uint8_t recover_pre_move_descriptor(pile::ref from, card moved_card) const;
     bool is_foundation_pile(pile::ref pr) const;
     uint8_t get_foundation_suit(pile::ref pr) const;
 

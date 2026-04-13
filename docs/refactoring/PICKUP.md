@@ -1,9 +1,9 @@
 # Phase 1 Status: Pile-First Undo — Pickup Document
 
-**Date written:** 2026-04-11
+**Date written:** 2026-04-13
 **Branch:** `feature/pile-first-undo`
 **Last good commit:** `52b8668` — "feat: add recover_pre_move_descriptor helper (Phase 1 Step A)"
-**Status:** BLOCKED — fix identified, pending implementation
+**Status:** Commit B implemented, tests passing — READY TO COMMIT
 
 ---
 
@@ -21,120 +21,77 @@ The full plan is in `/Users/ipg/.claude/plans/dazzling-gathering-thacker.md`.
 
 The plan has 6 commits: A (helper), B (undo_regular_move), C (undo_built_group_move), D (undo_stock_k_plus_move), E (undo_stock_to_all_tableau_move), F (final cleanup).
 
-Commit A is done. Commit B is partially implemented but **fails one test** due to a bug described below.
+Commits A and B are done. Next: **Commit C** (`undo_built_group_move`).
 
 ---
 
 ## Current State of the Code
 
-### What is committed (`52b8668`):
-- `recover_pre_move_descriptor` helper added to `game_state.cpp` and declared in `game_state.h`
-- No other behavioral changes
+### Committed:
+- `52b8668`: `recover_pre_move_descriptor` helper added (Commit A — superseded, now deleted)
 
-### What is UNCOMMITTED (sitting in working tree on `feature/pile-first-undo`):
-- `make_regular_move`: push to `zobrist_undo_stack` is guarded with `#ifdef VALIDATE_INLINE_UNDO`
-- `undo_regular_move`: fully rewritten with pile-first approach (but has the bug below)
-- `undo_built_group_move`, `undo_stock_k_plus_move`, `undo_stock_to_all_tableau_move`: NOT yet rewritten
+### Uncommitted working tree changes (ready to commit as Commit B):
+- `game_state.h`: added `bool initially_face_up[52]`, `init_initially_face_up()`, removed `recover_pre_move_descriptor`
+- `game_state.cpp`:
+  - `init_initially_face_up()`: records logical initial face-up state, fixes IN_SPACE for seed-constructor single-card piles, guarded for accordion/predecessor-cache games
+  - `init_payload_and_hash()`: skip PARENT_x assignment when parent card is face-down (new rule: face-up card above face-down parent gets STARTING=0)
+  - `make_regular_move`: `zobrist_undo_stack` push guarded with `#ifdef VALIDATE_INLINE_UNDO`
+  - `undo_regular_move`: fully rewritten with pile-first approach, inline static lookup replaces `recover_pre_move_descriptor`
+  - `log_pile_recovery_mismatch()`: debug helper (only outputs on mismatch, inside `#ifdef VALIDATE_INLINE_UNDO`)
+  - `recover_pre_move_descriptor`: deleted
 
-The uncommitted `undo_regular_move` code structure is:
-1. Record `pre_hash` / `pre_payload` (inside `#ifdef VALIDATE_INLINE_UNDO`)
-2. Identify moved card from `piles[m.to].top_card()` before pile ops
-3. If `m.reveal_move`: turn `piles[m.from][0]` face-down (reveal undo)
-4. `place_card(m.from, take_card(m.to))` — return card to source
-5. If `m.reveal_move`: update `piles[m.from][1]` card's descriptor to STARTING
-6. Update foundation hash if `m.to` or `m.from` is a foundation
-7. Update hole top hash if `m.to == hole`
-8. Update waste ptr hash if `m.from == waste`
-9. **Call `recover_pre_move_descriptor(m.from, moved)` — THIS HAS THE BUG**
-10. `update_card_descriptor(cid, old_desc)`
-11. Inside `#ifdef VALIDATE_INLINE_UNDO`: pop undo record, run reference path, assert match
+### Test status (with `-DVALIDATE_INLINE_UNDO=ON`):
+- `ZobristIncremental.*` (13 tests): ALL PASS
+- `FaceUpCards.*` (11 tests): ALL PASS
+- `Accordion.*` (4 tests): FAIL — **pre-existing**, present on commit A before our changes
+- `SolverCacheSelectionTest.BlackHoleUsesNewCache`: FAIL — **pre-existing**, present on commit A
 
 ---
 
-## The Bug
+## Semantic Changes Made in Commit B (needs doc update)
 
-### Symptom
-Test `ZobristIncremental.KlondikeSeedMakeUndo` fails when built with `-DVALIDATE_INLINE_UNDO=ON`.
+Three descriptor semantic fixes discovered and applied during this session:
 
-Assertion failure:
-```
-Assertion failed: (zobrist_hash_value == recovery_hash && "PILE RECOVERY: hash mismatch in undo_regular_move")
-```
+1. **Face-up card above face-down parent → STARTING(0), not PARENT_x**
+   Fixed in `init_payload_and_hash` positional loop. Face-down parent means no visible build relationship; correct descriptor is STARTING. Rationale: `determine_destination_descriptor` is never called with face-down parents (illegal move target), so only init-list/JSON constructors create this case.
 
-The pile-first path returns `old_desc = 1 = STARTING_FACE_UP` but the reference undo-stack path returns `old_desc = 0 = STARTING` for a specific card.
+2. **Initially-face-up single-card tableau pile → IN_SPACE(9), not STARTING(0)**
+   Fixed in `init_initially_face_up()` fixup. In seed constructor, init_payload_and_hash runs before turn_face_up, so single-card pile top card is face-down at init time → STARTING=0. After turn_face_up it's face-up. Correct semantic is IN_SPACE (equivalent to "placed in an empty space"). Fixed by updating descriptor after turn_face_up.
 
-### Root Cause
-
-`recover_pre_move_descriptor` uses the "face-down invariant" from `descriptor_undo_analysis.md` to decide if a card's old descriptor was STARTING_FACE_UP:
-
-```cpp
-uint8_t game_state::recover_pre_move_descriptor(pile::ref from, card moved_card) const {
-    if (!original_tableau_piles.empty()) {
-        pile::ref first_tab = original_tableau_piles.front();
-        pile::ref last_tab = original_tableau_piles.back();
-        if (from >= first_tab && from <= last_tab
-            && piles[from].size() >= 2 && piles[from][1].is_face_down()) {
-            return compact_state::STARTING_FACE_UP;  // ← BUG: wrong for some cards
-        }
-    }
-    return determine_destination_descriptor(from, moved_card);
-}
-```
-
-The invariant says: "if there is a face-down card at `pile[from][1]` after pile undo, the returned card was revealed in place, so its old descriptor was STARTING_FACE_UP."
-
-**This invariant is WRONG.** Here is a concrete counterexample from Klondike seed 42:
-
-- CID 28 (3 of Hearts) is dealt into a Klondike tableau pile (pile 10) face-down as part of the initial diagonal deal
-- `init_payload_and_hash()` runs **before** `piles[pr][0].turn_face_up()` is called (the top card face-up step at lines 303–307)
-- So at `init_payload_and_hash` time, CID 28 is at `pile[0]` and is face-DOWN → assigned descriptor STARTING=0
-- After init, CID 28 is turned face-up (it IS the top card of pile 10)
-- During play, CID 28 is the card that gets moved with `m.reveal_move=true` (it reveals the card below it when moved)
-- When we undo this move and pile undo runs, `piles[m.from][1].is_face_down()` is true (the card below is face-down)
-- So `recover_pre_move_descriptor` returns STARTING_FACE_UP=1
-- But the actual old descriptor was STARTING=0 (it was assigned STARTING at init time because it was face-down at that moment)
-
-### Why the Invariant is Wrong
-
-The invariant assumes that any face-up card that now sits above a face-down card must have been **revealed during play** (and therefore has STARTING_FACE_UP descriptor). But cards that are the **initial top card** of a Klondike tableau pile are also face-up above face-down cards — and they have STARTING=0 because they were face-down when `init_payload_and_hash` scanned them.
-
-In summary: **`init_payload_and_hash` runs before `turn_face_up()` in the seed-based constructor**, so initially-top-face-up cards are assigned STARTING=0, not STARTING_FACE_UP=1.
+3. **KI-2 naming anomaly (pre-existing, unresolved)**
+   STARTING(0) is assigned to cards that START face-up in seed-constructor games (counterintuitive). STARTING_FACE_UP(1) is for cards revealed during play. Names are backwards. Renaming deferred.
 
 ---
 
-## What Needs to Be Fixed
+## Pile-First Undo Logic for undo_regular_move
 
-The `recover_pre_move_descriptor` function cannot distinguish:
-- A card revealed **during play** (descriptor = STARTING_FACE_UP = 1)
-- A card that was the **initial top card** of a Klondike pile (descriptor = STARTING = 0)
+The pile-first code after pile undo in `undo_regular_move`:
 
-Both satisfy `piles[from][1].is_face_down()` after undo. The face-down invariant in `descriptor_undo_analysis.md` is wrong — see that document for the counterexample and corrected analysis.
+```
+old_desc = determine_destination_descriptor(m.from, moved)  // default
+if m.from is in original tableau piles:
+    if pile size >= 2 AND piles[m.from][1].is_face_down():
+        // Two cases requiring static lookup (determine_destination_descriptor wrong):
+        // - initially_face_up[cid]=true: initially face-up top card (seed) → STARTING=0
+        // - initially_face_up[cid]=false: revealed card at original position → STARTING_FACE_UP=1
+        old_desc = initially_face_up[cid] ? STARTING : STARTING_FACE_UP
+    // else: face-up parent below OR single-card pile → determine_destination_descriptor correct
+```
 
-### Chosen Fix: Static Initial State Lookup
-
-Add `bool initially_face_up[52]` (or `std::bitset<52>`) to `game_state`, populated **after** `turn_face_up()` runs in the constructor, indexed by CID. This records the logical initial face-up/face-down state of every card.
-
-Replace the heuristic in `recover_pre_move_descriptor` with:
-- `initially_face_up[cid]` true → return `STARTING` (0)
-- `initially_face_up[cid]` false → return `STARTING_FACE_UP` (1)
-
-**Why this is correct:**
-- A card that was logically face-up at the start was face-down when `init_payload_and_hash` ran (ordering issue), so it received `STARTING=0`. Restoring it to `STARTING=0` is correct.
-- A card that was logically face-down at the start received `STARTING=0` at init, and `STARTING_FACE_UP=1` only after being revealed during play. When it moves from that revealed position, its old descriptor was `STARTING_FACE_UP=1`. Restoring it to `STARTING_FACE_UP=1` is correct.
-
-This requires no per-move storage. `recover_pre_move_descriptor` can be deleted and replaced with a direct lookup.
-
-**Limitation — 2-deck games:** See KI-1 at end of this document.
+Note: `determine_destination_descriptor` returns IN_SPACE for single-card piles (pile size == 1), which is now correct after the init fixup. No special case needed.
 
 ---
 
-## Files to Read When Starting Work
+## Known Issues / Pre-Merge Checklist
 
-1. **`docs/refactoring/phase1_plan.md`** — the detailed plan (note: plan was designed assuming the invariant was correct; needs updating for Option A)
-2. **`/Users/ipg/.claude/plans/dazzling-gathering-thacker.md`** — plan in Claude's memory, same issue
-3. **`src/main/game/search-state/game_state.cpp`** — the implementation (current state has uncommitted changes)
-4. **`src/main/game/search-state/game_state.h`** — `recover_pre_move_descriptor` declaration is there
-5. **`docs/refactoring/descriptor_undo_analysis.md`** — contains the flawed proof; Section "Resolution: STARTING_FACE_UP IS Recoverable" is incorrect
+**KI-1: Static initial state lookup not valid for 2-deck games**
+`initially_face_up[52]` indexed by CID. In 2-deck games, two physical copies of the same card share a CID. Practical impact unclear (2-deck games use `lru_cache`). Must be verified before Phase 1 is considered complete for 2-deck games.
+
+**KI-2: Misleading descriptor names**
+STARTING(0) for initially-face-up cards, STARTING_FACE_UP(1) for revealed cards. Backwards from expected. Deferred.
+
+**KI-3: Pre-existing Accordion/BlackHole test failures**
+`Accordion.*` (4 tests) and `BlackHoleUsesNewCache` fail with `VALIDATE_INLINE_UNDO=ON` in debug build. Confirmed present on commit A (before Commit B changes). Not caused by our work. Deferred.
 
 ---
 
@@ -142,42 +99,14 @@ This requires no per-move storage. `recover_pre_move_descriptor` can be deleted 
 
 ```bash
 # From repo root
-./build.sh --debug --unit-tests  # debug build with unit tests
-cd cmake-build-debug
+./build.sh --debug --unit-tests  # regular debug build
 
-# Build with validation flag
+# From cmake-build-debug/
 cmake -DVALIDATE_INLINE_UNDO=ON .. && make -j4
 
-# Run the specific failing test
-./bin/unit_tests --gtest_filter="ZobristIncremental.KlondikeSeedMakeUndo"
+# Run ZobristIncremental + FaceUpCards (key tests for pile-first undo)
+./bin/unit_tests --gtest_filter="ZobristIncremental.*:FaceUpCards.*"
 
-# Run all Zobrist tests
-./bin/unit_tests --gtest_filter="ZobristIncremental.*"
-
-# Run full unit tests
+# Run full unit tests (expect 5 pre-existing failures)
 ./bin/unit_tests
 ```
-
----
-
-## Next Step: Implement Commit B
-
-The fix is chosen (static initial state lookup — see above). Commit B implements:
-
-1. Add `bool initially_face_up[52]` to `game_state` (populated in constructor after `turn_face_up`)
-2. Delete `recover_pre_move_descriptor`
-3. Update `undo_regular_move` to use the static lookup directly
-4. The `zobrist_undo_stack` push in `make_regular_move` remains guarded by `#ifdef VALIDATE_INLINE_UNDO`
-5. Tests must pass with `-DVALIDATE_INLINE_UNDO=ON` before committing
-
----
-
-## Known Issues / Pre-Merge Checklist
-
-Issues identified during Phase 1 that must be resolved before merging to `master` or any branch supporting 2-deck games:
-
-**KI-1: Static initial state lookup not valid for 2-deck games**
-`initially_face_up[52]` is indexed by CID (derived from suit+rank). In 2-deck games, two physical copies of the same card share a CID but may have different initial face-up states — the lookup is ambiguous. 2-deck games currently use `lru_cache` rather than `flat_cache`, so the practical impact is unclear, but it must be verified before Phase 1 is considered complete for those game types. Likely fix: index by initial pile position rather than CID, or introduce a per-instance card identifier.
-
-**KI-2: Misleading descriptor names**
-Cards that start face-up receive descriptor `STARTING` (0), not `STARTING_FACE_UP` (1). Cards that start face-down and are later revealed receive `STARTING_FACE_UP` (1). The names are the opposite of what you would expect. This is a latent source of confusion for anyone reading the code. Renaming is deferred to avoid churn during Phase 1, but should be addressed before this work is considered production-ready.

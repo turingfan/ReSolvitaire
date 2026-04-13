@@ -158,6 +158,7 @@ game_state::game_state(const sol_rules& s_rules, const Document& doc, streamline
         : game_state(s_rules, s_opts, force_lru) {
     deal_parser::parse(*this, doc);
     init_payload_and_hash();
+    init_initially_face_up();
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -306,6 +307,8 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
                 piles[pr][0].turn_face_up();
             }
 
+    init_initially_face_up();
+
     // The size of all piles must equal the deck size
     int piles_sz = 0;
     for (auto& p : piles) piles_sz += p.size();
@@ -336,6 +339,7 @@ game_state::game_state(const sol_rules& s_rules,
     }
 
     init_payload_and_hash();
+    init_initially_face_up();
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -440,6 +444,75 @@ void game_state::undo_move(const move m) {
     check_face_down_consistent();
 #endif
 }
+
+#ifdef VALIDATE_INLINE_UNDO
+// Prints a full descriptor diff between the pile-first recovery path and the
+// reference undo-stack path, plus move context.  Called before every
+// PILE RECOVERY assertion so failures are self-describing.
+// Reusable across all undo_*_move functions.
+static void log_pile_recovery_mismatch(
+        const char*          label,
+        const move&          m,
+        uint8_t              pile_first_card_id,
+        uint8_t              pile_first_desc,
+        uint8_t              ref_card_id,
+        uint8_t              ref_desc,
+        const compact_state& pile_first_payload,
+        const compact_state& ref_payload)
+{
+    static const char* desc_name[] = {
+        "STARTING", "STARTING_FACE_UP", "ROOT", "IN_CELL",
+        "PARENT_0", "PARENT_1", "PARENT_2", "PARENT_3",
+        "IN_HOLE",  "IN_SPACE",
+        "10", "11", "12", "13", "14", "15"
+    };
+    auto suit_ch = [](uint8_t cid) -> char {
+        static const char s[] = "CHSD";
+        return s[(cid / 13) % 4];
+    };
+    auto rank_str = [](uint8_t cid) -> std::string {
+        static const char* r[] = {
+            "A","2","3","4","5","6","7","8","9","10","J","Q","K"
+        };
+        return r[cid % 13];
+    };
+    auto card_str = [&](uint8_t cid) -> std::string {
+        return rank_str(cid) + suit_ch(cid);
+    };
+
+    fprintf(stderr, "\n=== PILE RECOVERY MISMATCH: %s ===\n", label);
+    fprintf(stderr, "  move: from=%u to=%u reveal=%s\n",
+            (unsigned)m.from, (unsigned)m.to,
+            m.reveal_move ? "true" : "false");
+    fprintf(stderr, "  pile-first: card=%s(%u) old_desc=%s(%u)\n",
+            card_str(pile_first_card_id).c_str(), (unsigned)pile_first_card_id,
+            desc_name[pile_first_desc & 0xf], (unsigned)pile_first_desc);
+    fprintf(stderr, "  reference:  card=%s(%u) old_desc=%s(%u)\n",
+            card_str(ref_card_id).c_str(), (unsigned)ref_card_id,
+            desc_name[ref_desc & 0xf], (unsigned)ref_desc);
+
+    // Full descriptor diff
+    bool any_diff = false;
+    for (uint8_t c = 0; c < 52; ++c) {
+        uint8_t d1 = pile_first_payload.get_descriptor(c);
+        uint8_t d2 = ref_payload.get_descriptor(c);
+        if (d1 != d2) {
+            if (!any_diff) {
+                fprintf(stderr, "  descriptor diffs (pile-first vs reference):\n");
+                any_diff = true;
+            }
+            fprintf(stderr, "    card %s(%u): %s(%u) vs %s(%u)\n",
+                    card_str(c).c_str(), (unsigned)c,
+                    desc_name[d1 & 0xf], (unsigned)d1,
+                    desc_name[d2 & 0xf], (unsigned)d2);
+        }
+    }
+    if (!any_diff) {
+        fprintf(stderr, "  (no descriptor diffs — mismatch is in header fields)\n");
+    }
+    fprintf(stderr, "=== END MISMATCH ===\n\n");
+}
+#endif // VALIDATE_INLINE_UNDO
 
 void game_state::make_regular_move(const move m) {
     assert(m.from < piles.size());
@@ -592,8 +665,23 @@ void game_state::undo_regular_move(const move m) {
         update_waste_ptr_in_hash(effective_waste_ptr());
     }
 
-    // Moved card's old descriptor (recovered from restored pile state)
-    uint8_t old_desc = recover_pre_move_descriptor(m.from, moved);
+    // Moved card's old descriptor (recovered from restored pile state).
+    // For tableau piles with a face-down card now below the returned card,
+    // use the static initial-face-up table to distinguish:
+    //   - initially face-up (Klondike top-card deal): descriptor was STARTING=0
+    //   - initially face-down (revealed during play): descriptor was STARTING_FACE_UP=1
+    // All other positions are handled correctly by determine_destination_descriptor.
+    uint8_t old_desc = determine_destination_descriptor(m.from, moved);
+    if (!original_tableau_piles.empty()) {
+        pile::ref first_tab = original_tableau_piles.front();
+        pile::ref last_tab = original_tableau_piles.back();
+        if (m.from >= first_tab && m.from <= last_tab
+                && piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()) {
+            old_desc = initially_face_up[cid]
+                ? compact_state::STARTING
+                : compact_state::STARTING_FACE_UP;
+        }
+    }
     update_card_descriptor(cid, old_desc);
 
 #ifdef VALIDATE_INLINE_UNDO
@@ -626,6 +714,13 @@ void game_state::undo_regular_move(const move m) {
     }
     update_card_descriptor(undo_ref.card_id, undo_ref.old_desc);
 
+    if (zobrist_hash_value != recovery_hash || !payload.matches(recovery_payload)) {
+        log_pile_recovery_mismatch(
+            zobrist_hash_value != recovery_hash ? "hash" : "payload",
+            m, cid, old_desc,
+            undo_ref.card_id, undo_ref.old_desc,
+            recovery_payload, payload);
+    }
     assert(zobrist_hash_value == recovery_hash
         && "PILE RECOVERY: hash mismatch in undo_regular_move");
     assert(payload.matches(recovery_payload)
@@ -1192,6 +1287,40 @@ void game_state::check_face_down_consistent() const {
 // ZOBRIST HASHING    //
 ////////////////////////
 
+// Record which cards are face-up after the initial deal (including after turn_face_up()).
+// Also fixes up IN_SPACE descriptors for single-card tableau piles: when
+// init_payload_and_hash() runs before turn_face_up() (seed constructor), the top card
+// of a single-card pile is face-down at init time and gets STARTING=0. But a single-card
+// pile is semantically IN_SPACE (consistent with determine_destination_descriptor), so
+// we correct those here.
+void game_state::init_initially_face_up() {
+    memset(initially_face_up, 0, sizeof(initially_face_up));
+    for (const auto& p : piles) {
+        for (pile::size_type i = 0; i < p.size(); ++i) {
+            card c = p[i];
+            if (!c.is_face_down()) {
+                uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+                initially_face_up[cid] = true;
+            }
+        }
+    }
+
+    // Fix up single-card tableau piles whose top card is face-up but still has
+    // STARTING=0 (because init_payload_and_hash ran while it was face-down).
+    // No-op for init-list/JSON constructors where the positional loop already set IN_SPACE.
+    // Guarded for predecessor-cache (accordion) games which manage descriptors differently.
+    if (uses_predecessor_cache()) return;
+    for (auto tab_ref : original_tableau_piles) {
+        if (piles[tab_ref].size() == 1 && !piles[tab_ref][0].is_face_down()) {
+            card c = piles[tab_ref][0];
+            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+            if (payload.get_descriptor(cid) == compact_state::STARTING) {
+                update_card_descriptor(cid, compact_state::IN_SPACE);
+            }
+        }
+    }
+}
+
 void game_state::init_payload_and_hash() {
     payload.clear();
     zobrist_hash_value = 0;
@@ -1249,6 +1378,9 @@ void game_state::init_payload_and_hash() {
             } else {
                 // Card below this one is p[i+1]
                 card parent_card = p[i + 1];
+                // Face-down parent: card is above an unrevealed card at deal time.
+                // Descriptor stays STARTING (0) — no valid build relationship visible.
+                if (parent_card.is_face_down()) continue;
                 uint8_t parent_cid = zobrist_hash::card_id(
                     parent_card.get_suit(), parent_card.get_rank());
                 uint8_t desc = parent_table::get_descriptor_for_parent(
@@ -1373,21 +1505,7 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
     return compact_state::STARTING;
 }
 
-// Recover the descriptor a card had before it was moved FROM `from`.
-// Called after pile undo (card is back at piles[from][0]).
-// Uses the face-down invariant: if piles[from][1] is face-down, the card
-// was revealed in place (STARTING_FACE_UP), never moved there.
-uint8_t game_state::recover_pre_move_descriptor(pile::ref from, card moved_card) const {
-    if (!original_tableau_piles.empty()) {
-        pile::ref first_tab = original_tableau_piles.front();
-        pile::ref last_tab = original_tableau_piles.back();
-        if (from >= first_tab && from <= last_tab
-            && piles[from].size() >= 2 && piles[from][1].is_face_down()) {
-            return compact_state::STARTING_FACE_UP;
-        }
-    }
-    return determine_destination_descriptor(from, moved_card);
-}
+
 
 void game_state::set_payload_depth(uint16_t depth) {
     payload.set_depth(depth);
