@@ -784,7 +784,8 @@ void game_state::make_built_group_move(move m) {
         update_card_descriptor(rev_cid, rev_desc);
     }
 
-    // Push undo
+#ifdef VALIDATE_INLINE_UNDO
+    // Push undo info (validation only)
     zobrist_undo undo = {};
     undo.card_id = bottom_cid;
     undo.old_desc = old_desc;
@@ -797,61 +798,115 @@ void game_state::make_built_group_move(move m) {
     undo.old_waste_ptr = 255;
     undo.sat_count = 0;
     zobrist_undo_stack.push_back(undo);
+#endif
 }
 
 void game_state::undo_built_group_move(move m) {
+    assert(m.to < piles.size());
+
 #ifdef VALIDATE_INLINE_UNDO
-    // Snapshot pre-undo state
+    // Capture pre-undo hash/payload for reference path re-run
     uint64_t pre_hash = zobrist_hash_value;
     compact_state pre_payload = payload;
 #endif
 
-    assert(m.to < piles.size());
+    // Identify bottom card of group BEFORE pile undo (at piles[m.to][m.count - 1])
+    card bottom = piles[m.to][m.count - 1];
+    uint8_t bottom_cid = zobrist_hash::card_id(bottom.get_suit(), bottom.get_rank());
 
-    // Pop undo info
-    zobrist_undo undo = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
+    // === PILE OPERATIONS (restore physical state) ===
 
-    // Undo reveal descriptor
-    if (m.reveal_move) {
-        assert(!piles[m.from].empty());
-        assert(!piles[m.from][0].is_face_down());
-        update_card_descriptor(undo.revealed_card_id, compact_state::STARTING);
-        piles[m.from][0].turn_face_down();
-    }
-
-    // Restore bottom card's descriptor
-    update_card_descriptor(undo.card_id, undo.old_desc);
-
-    // Adds the cards to the 'from' pile
+    // Return group to source pile
     for (auto pile_idx = m.count; pile_idx-- > 0;) {
         place_card(m.from, piles[m.to][pile_idx]);
     }
-
-    // Removes the cards from the 'to' pile
     for (uint8_t rem_count = 0; rem_count < m.count; rem_count++) {
         take_card(m.to);
     }
 
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot expected result
-    uint64_t expected_hash = zobrist_hash_value;
-    compact_state expected_payload = payload;
+    // Undo reveal: turn card at piles[m.from][m.count] face-down.
+    // Must happen BEFORE descriptor recovery — face-down check reads piles[m.from][m.count].
+    if (m.reveal_move) {
+        assert(piles[m.from].size() > static_cast<pile::size_type>(m.count));
+        assert(!piles[m.from][m.count].is_face_down());
+        card rev = piles[m.from][m.count];
+        uint8_t rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
+        piles[m.from][m.count].turn_face_down();
+        update_card_descriptor(rev_cid, compact_state::STARTING);
+    }
 
-    // Restore hash/payload to pre-undo state for inline path validation
+    // === HASH/PAYLOAD RECOVERY (all from restored pile state) ===
+
+    // Recover bottom card's old descriptor.
+    // For tableau piles with a face-down card below the group, use the static
+    // initial-face-up table (same logic as undo_regular_move, adjusted for depth m.count):
+    //   - initially face-up (Klondike top-card deal): descriptor was STARTING=0
+    //   - initially face-down (revealed during play): descriptor was STARTING_FACE_UP=1
+    uint8_t old_desc;
+    if (static_cast<pile::size_type>(piles[m.from].size()) == m.count) {
+        // Group fills the entire pile: bottom card was placed on an empty pile
+        old_desc = compact_state::IN_SPACE;
+    } else if (!original_tableau_piles.empty()) {
+        pile::ref first_tab = original_tableau_piles.front();
+        pile::ref last_tab = original_tableau_piles.back();
+        if (m.from >= first_tab && m.from <= last_tab
+                && piles[m.from][m.count].is_face_down()) {
+            old_desc = initially_face_up[bottom_cid]
+                ? compact_state::STARTING
+                : compact_state::STARTING_FACE_UP;
+        } else {
+            card parent_card = piles[m.from][m.count];
+            uint8_t parent_cid = zobrist_hash::card_id(
+                parent_card.get_suit(), parent_card.get_rank());
+            uint8_t desc = parent_table::get_descriptor_for_parent(
+                bottom_cid, parent_cid, rules.build_pol,
+                foundations_base, rules.max_rank);
+            old_desc = (desc != 0) ? desc : static_cast<uint8_t>(compact_state::ROOT);
+        }
+    } else {
+        card parent_card = piles[m.from][m.count];
+        uint8_t parent_cid = zobrist_hash::card_id(
+            parent_card.get_suit(), parent_card.get_rank());
+        uint8_t desc = parent_table::get_descriptor_for_parent(
+            bottom_cid, parent_cid, rules.build_pol,
+            foundations_base, rules.max_rank);
+        old_desc = (desc != 0) ? desc : static_cast<uint8_t>(compact_state::ROOT);
+    }
+    update_card_descriptor(bottom_cid, old_desc);
+
+#ifdef VALIDATE_INLINE_UNDO
+    // Save pile-first recovery result
+    uint64_t recovery_hash = zobrist_hash_value;
+    compact_state recovery_payload = payload;
+
+    // Pop reference undo record
+    zobrist_undo undo_ref = zobrist_undo_stack.back();
+    zobrist_undo_stack.pop_back();
+
+    // Reset hash/payload to pre-undo state and run reference path
     zobrist_hash_value = pre_hash;
     payload = pre_payload;
 
-    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
-    // For now, just copy expected result to pass validation trivially
-    zobrist_hash_value = expected_hash;
-    payload = expected_payload;
+    if (undo_ref.revealed_card_id != 255) {
+        update_card_descriptor(undo_ref.revealed_card_id, compact_state::STARTING);
+    }
+    update_card_descriptor(undo_ref.card_id, undo_ref.old_desc);
 
-    // === VALIDATE ===
-    assert(zobrist_hash_value == expected_hash
-        && "INLINE UNDO: hash mismatch in undo_built_group_move");
-    assert(payload.matches(expected_payload)
-        && "INLINE UNDO: payload mismatch in undo_built_group_move");
+    if (zobrist_hash_value != recovery_hash || !payload.matches(recovery_payload)) {
+        log_pile_recovery_mismatch(
+            zobrist_hash_value != recovery_hash ? "hash" : "payload",
+            m, bottom_cid, old_desc,
+            undo_ref.card_id, undo_ref.old_desc,
+            recovery_payload, payload);
+    }
+    assert(zobrist_hash_value == recovery_hash
+        && "PILE RECOVERY: hash mismatch in undo_built_group_move");
+    assert(payload.matches(recovery_payload)
+        && "PILE RECOVERY: payload mismatch in undo_built_group_move");
+
+    // Restore pile-first as authoritative
+    zobrist_hash_value = recovery_hash;
+    payload = recovery_payload;
 #endif
 }
 

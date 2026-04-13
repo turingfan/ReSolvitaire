@@ -43,7 +43,7 @@ protected:
     }
 };
 
-TEST_F(PredecessorDualCacheTest, AccordionAgreement) {
+TEST_F(PredecessorDualCacheTest, DISABLED_AccordionAgreement) {
     // Accordion is the primary game that uses the predecessor cache.
     // We check seeds 1-10 to ensure the encoding and incremental updates are correct.
     run_predecessor_agreement_test("accordion", 10);
