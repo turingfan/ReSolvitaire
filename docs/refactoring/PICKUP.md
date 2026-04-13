@@ -93,6 +93,9 @@ STARTING(0) for initially-face-up cards, STARTING_FACE_UP(1) for revealed cards.
 **KI-3: Pre-existing Accordion/BlackHole test failures**
 `Accordion.*` (4 tests) and `BlackHoleUsesNewCache` fail with `VALIDATE_INLINE_UNDO=ON` in debug build. Confirmed present on commit A (before Commit B changes). Not caused by our work. Deferred.
 
+**KI-4: `init_payload_and_hash()` runs before `turn_face_up()` in seed constructor**
+This ordering means initially-face-up tableau cards are face-down at init time and get `STARTING=0` rather than positional descriptors. The Commit B `init_initially_face_up()` fixup patches up the single-card case (→ IN_SPACE), and the `initially_face_up[]` lookup handles undo correctly. But the cleaner fix would be to run `init_payload_and_hash()` after `turn_face_up()` in the seed constructor. Deferred to avoid risk of unintended side effects during the pile-first undo refactor.
+
 ---
 
 ## Build Commands for Testing
