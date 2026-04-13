@@ -158,6 +158,7 @@ game_state::game_state(const sol_rules& s_rules, const Document& doc, streamline
         : game_state(s_rules, s_opts, force_lru) {
     deal_parser::parse(*this, doc);
     init_payload_and_hash();
+    init_initially_face_up();
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -306,6 +307,8 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
                 piles[pr][0].turn_face_up();
             }
 
+    init_initially_face_up();
+
     // The size of all piles must equal the deck size
     int piles_sz = 0;
     for (auto& p : piles) piles_sz += p.size();
@@ -336,6 +339,7 @@ game_state::game_state(const sol_rules& s_rules,
     }
 
     init_payload_and_hash();
+    init_initially_face_up();
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -448,25 +452,18 @@ void game_state::make_regular_move(const move m) {
     // Capture pre-move state for descriptor updates
     card moved = piles[m.from].top_card();
     uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
-    uint8_t old_desc = payload.get_descriptor(cid);
 
-    uint8_t from_fs = 255, old_from_fr = 255;
+    uint8_t from_fs = 255;
     if (is_foundation_pile(m.from)) {
         from_fs = get_foundation_suit(m.from);
-        old_from_fr = payload.get_foundation(from_fs);
     }
-    uint8_t to_fs = 255, old_to_fr = 255;
+    uint8_t to_fs = 255;
     if (is_foundation_pile(m.to)) {
         to_fs = get_foundation_suit(m.to);
-        old_to_fr = payload.get_foundation(to_fs);
     }
     uint8_t old_ht = 255;
     if (m.to == hole) {
         old_ht = payload.get_hole_top();
-    }
-    uint8_t old_waste_ptr = 255;
-    if (m.from == waste) {
-        old_waste_ptr = payload.get_waste_ptr();
     }
 
     // Pile operations
@@ -511,61 +508,84 @@ void game_state::make_regular_move(const move m) {
         update_card_descriptor(rev_cid, rev_desc);
     }
 
-    // Push undo info
-    zobrist_undo undo = {};
-    undo.card_id = cid;
-    undo.old_desc = old_desc;
-    undo.revealed_card_id = rev_cid;
-    undo.from_found_suit = from_fs;
-    undo.old_from_found_rank = old_from_fr;
-    undo.to_found_suit = to_fs;
-    undo.old_to_found_rank = old_to_fr;
-    undo.old_hole_top = old_ht;
-    undo.old_waste_ptr = old_waste_ptr;
-    undo.sat_count = 0;
-    zobrist_undo_stack.push_back(undo);
 }
 
 void game_state::undo_regular_move(const move m) {
     assert(m.to < piles.size());
 
-    // Pop undo info
-    zobrist_undo undo = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
+    // Identify moved card BEFORE pile undo (it's at m.to)
+    card moved = piles[m.to].top_card();
+    uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
 
-    // Undo reveal descriptor
+    // === PILE OPERATIONS (restore physical state) ===
+
+    // Undo reveal: turn revealed card face-down BEFORE returning moved card
+    // (revealed card is at piles[m.from][0] while moved card is still at m.to)
     if (m.reveal_move) {
         assert(!piles[m.from].empty());
         assert(!piles[m.from][0].is_face_down());
-        update_card_descriptor(undo.revealed_card_id, compact_state::STARTING);
         piles[m.from][0].turn_face_down();
     }
 
-    // Undo hole header
-    if (undo.old_hole_top != 255) {
-        update_hole_top_in_hash(undo.old_hole_top);
-    }
-
-    // Undo waste pointer (if move was from waste)
-    if (undo.old_waste_ptr != 255) {
-        update_waste_ptr_in_hash(undo.old_waste_ptr);
-    }
-
-    // Undo destination foundation header
-    if (undo.to_found_suit != 255) {
-        update_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank);
-    }
-
-    // Undo source foundation header
-    if (undo.from_found_suit != 255) {
-        update_foundation_in_hash(undo.from_found_suit, undo.old_from_found_rank);
-    }
-
-    // Restore moved card's descriptor
-    update_card_descriptor(undo.card_id, undo.old_desc);
-
-    // Pile operations
+    // Return card to source pile
     place_card(m.from, take_card(m.to));
+
+    // === HASH/PAYLOAD RECOVERY (all from restored pile state) ===
+
+    // Revealed card goes back to STARTING
+    // (after place_card, it is at piles[m.from][1])
+    if (m.reveal_move) {
+        card rev = piles[m.from][1];
+        uint8_t rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
+        update_card_descriptor(rev_cid, compact_state::STARTING);
+    }
+
+    // Destination foundation (card removed from m.to)
+    if (is_foundation_pile(m.to)) {
+        uint8_t suit = get_foundation_suit(m.to);
+        uint8_t rank_now = piles[m.to].empty()
+            ? uint8_t(0) : piles[m.to].top_card().get_rank();
+        update_foundation_in_hash(suit, rank_now);
+    }
+
+    // Source foundation (card returned to m.from)
+    if (is_foundation_pile(m.from)) {
+        uint8_t suit = get_foundation_suit(m.from);
+        update_foundation_in_hash(suit, moved.get_rank());
+    }
+
+    // Hole top (card removed from hole)
+    if (m.to == hole) {
+        uint8_t old_ht = piles[hole].empty()
+            ? uint8_t(0)
+            : zobrist_hash::card_id(piles[hole].top_card().get_suit(),
+                                     piles[hole].top_card().get_rank());
+        update_hole_top_in_hash(old_ht);
+    }
+
+    // Waste pointer (card returned to waste)
+    if (m.from == waste) {
+        update_waste_ptr_in_hash(effective_waste_ptr());
+    }
+
+    // Moved card's old descriptor (recovered from restored pile state).
+    // For tableau piles with a face-down card now below the returned card,
+    // use the static initial-face-up table to distinguish:
+    //   - initially face-up (Klondike top-card deal): descriptor was STARTING=0
+    //   - initially face-down (revealed during play): descriptor was STARTING_FACE_UP=1
+    // All other positions are handled correctly by determine_destination_descriptor.
+    uint8_t old_desc = determine_destination_descriptor(m.from, moved);
+    if (!original_tableau_piles.empty()) {
+        pile::ref first_tab = original_tableau_piles.front();
+        pile::ref last_tab = original_tableau_piles.back();
+        if (m.from >= first_tab && m.from <= last_tab
+                && piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()) {
+            old_desc = initially_face_up[cid]
+                ? compact_state::STARTING
+                : compact_state::STARTING_FACE_UP;
+        }
+    }
+    update_card_descriptor(cid, old_desc);
 }
 
 void game_state::make_built_group_move(move m) {
@@ -575,7 +595,6 @@ void game_state::make_built_group_move(move m) {
     // Capture bottom card of group (the one whose descriptor changes)
     card bottom = piles[m.from][m.count - 1];
     uint8_t bottom_cid = zobrist_hash::card_id(bottom.get_suit(), bottom.get_rank());
-    uint8_t old_desc = payload.get_descriptor(bottom_cid);
 
     // Adds the cards to the 'to' pile
     for (auto pile_idx = m.count; pile_idx-- > 0;) {
@@ -620,48 +639,74 @@ void game_state::make_built_group_move(move m) {
         update_card_descriptor(rev_cid, rev_desc);
     }
 
-    // Push undo
-    zobrist_undo undo = {};
-    undo.card_id = bottom_cid;
-    undo.old_desc = old_desc;
-    undo.revealed_card_id = rev_cid;
-    undo.from_found_suit = 255;
-    undo.old_from_found_rank = 255;
-    undo.to_found_suit = 255;
-    undo.old_to_found_rank = 255;
-    undo.old_hole_top = 255;
-    undo.old_waste_ptr = 255;
-    undo.sat_count = 0;
-    zobrist_undo_stack.push_back(undo);
 }
 
 void game_state::undo_built_group_move(move m) {
     assert(m.to < piles.size());
 
-    // Pop undo info
-    zobrist_undo undo = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
+    // Identify bottom card of group BEFORE pile undo (at piles[m.to][m.count - 1])
+    card bottom = piles[m.to][m.count - 1];
+    uint8_t bottom_cid = zobrist_hash::card_id(bottom.get_suit(), bottom.get_rank());
 
-    // Undo reveal descriptor
-    if (m.reveal_move) {
-        assert(!piles[m.from].empty());
-        assert(!piles[m.from][0].is_face_down());
-        update_card_descriptor(undo.revealed_card_id, compact_state::STARTING);
-        piles[m.from][0].turn_face_down();
-    }
+    // === PILE OPERATIONS (restore physical state) ===
 
-    // Restore bottom card's descriptor
-    update_card_descriptor(undo.card_id, undo.old_desc);
-
-    // Adds the cards to the 'from' pile
+    // Return group to source pile
     for (auto pile_idx = m.count; pile_idx-- > 0;) {
         place_card(m.from, piles[m.to][pile_idx]);
     }
-
-    // Removes the cards from the 'to' pile
     for (uint8_t rem_count = 0; rem_count < m.count; rem_count++) {
         take_card(m.to);
     }
+
+    // Undo reveal: turn card at piles[m.from][m.count] face-down.
+    // Must happen BEFORE descriptor recovery — face-down check reads piles[m.from][m.count].
+    if (m.reveal_move) {
+        assert(piles[m.from].size() > static_cast<pile::size_type>(m.count));
+        assert(!piles[m.from][m.count].is_face_down());
+        card rev = piles[m.from][m.count];
+        uint8_t rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
+        piles[m.from][m.count].turn_face_down();
+        update_card_descriptor(rev_cid, compact_state::STARTING);
+    }
+
+    // === HASH/PAYLOAD RECOVERY (all from restored pile state) ===
+
+    // Recover bottom card's old descriptor.
+    // For tableau piles with a face-down card below the group, use the static
+    // initial-face-up table (same logic as undo_regular_move, adjusted for depth m.count):
+    //   - initially face-up (Klondike top-card deal): descriptor was STARTING=0
+    //   - initially face-down (revealed during play): descriptor was STARTING_FACE_UP=1
+    uint8_t old_desc;
+    if (static_cast<pile::size_type>(piles[m.from].size()) == m.count) {
+        // Group fills the entire pile: bottom card was placed on an empty pile
+        old_desc = compact_state::IN_SPACE;
+    } else if (!original_tableau_piles.empty()) {
+        pile::ref first_tab = original_tableau_piles.front();
+        pile::ref last_tab = original_tableau_piles.back();
+        if (m.from >= first_tab && m.from <= last_tab
+                && piles[m.from][m.count].is_face_down()) {
+            old_desc = initially_face_up[bottom_cid]
+                ? compact_state::STARTING
+                : compact_state::STARTING_FACE_UP;
+        } else {
+            card parent_card = piles[m.from][m.count];
+            uint8_t parent_cid = zobrist_hash::card_id(
+                parent_card.get_suit(), parent_card.get_rank());
+            uint8_t desc = parent_table::get_descriptor_for_parent(
+                bottom_cid, parent_cid, rules.build_pol,
+                foundations_base, rules.max_rank);
+            old_desc = (desc != 0) ? desc : static_cast<uint8_t>(compact_state::ROOT);
+        }
+    } else {
+        card parent_card = piles[m.from][m.count];
+        uint8_t parent_cid = zobrist_hash::card_id(
+            parent_card.get_suit(), parent_card.get_rank());
+        uint8_t desc = parent_table::get_descriptor_for_parent(
+            bottom_cid, parent_cid, rules.build_pol,
+            foundations_base, rules.max_rank);
+        old_desc = (desc != 0) ? desc : static_cast<uint8_t>(compact_state::ROOT);
+    }
+    update_card_descriptor(bottom_cid, old_desc);
 }
 
 void game_state::make_stock_k_plus_move(const move m) {
@@ -672,9 +717,6 @@ void game_state::make_stock_k_plus_move(const move m) {
     assert(!rules.stock_redeal || m.to != waste);
     auto sz_before = piles[stock].size() + piles[waste].size();
 #endif
-
-    // Capture pre-move state
-    uint8_t old_waste_ptr = payload.get_waste_ptr();
 
     // Transfers count cards from the stock to the waste
     if (m.count > 0) {
@@ -690,7 +732,6 @@ void game_state::make_stock_k_plus_move(const move m) {
     // Capture the card about to be played from waste
     card played = piles[waste].top_card();
     uint8_t played_cid = zobrist_hash::card_id(played.get_suit(), played.get_rank());
-    uint8_t played_old_desc = payload.get_descriptor(played_cid);
 
     // Moves the card on top of the waste to the target pile
     place_card(m.to,  take_card(waste));
@@ -708,35 +749,18 @@ void game_state::make_stock_k_plus_move(const move m) {
     update_card_descriptor(played_cid, new_desc);
 
     // Update foundation/hole headers
-    uint8_t to_fs = 255, old_to_fr = 255;
+    uint8_t to_fs = 255;
     if (is_foundation_pile(m.to)) {
         to_fs = get_foundation_suit(m.to);
-        old_to_fr = payload.get_foundation(to_fs);
         update_foundation_in_hash(to_fs, played.get_rank());
     }
-    uint8_t old_ht = 255;
     if (m.to == hole) {
-        old_ht = payload.get_hole_top();
         update_hole_top_in_hash(played_cid);
     }
 
     // Update waste pointer to current waste size
     // (applying waste-deal symmetry if applicable)
     update_waste_ptr_in_hash(effective_waste_ptr());
-
-    // Push undo
-    zobrist_undo undo = {};
-    undo.card_id = played_cid;
-    undo.old_desc = played_old_desc;
-    undo.revealed_card_id = 255;
-    undo.from_found_suit = 255;
-    undo.old_from_found_rank = 255;
-    undo.to_found_suit = to_fs;
-    undo.old_to_found_rank = old_to_fr;
-    undo.old_hole_top = old_ht;
-    undo.old_waste_ptr = old_waste_ptr;
-    undo.sat_count = 0;
-    zobrist_undo_stack.push_back(undo);
 
 #ifndef NDEBUG
     auto sz_after = piles[stock].size() + piles[waste].size();
@@ -747,6 +771,8 @@ void game_state::make_stock_k_plus_move(const move m) {
 }
 
 void game_state::undo_stock_k_plus_move(move m) {
+    assert(m.to < piles.size());
+
 #ifndef NDEBUG
     assert(rules.stock_deal_t == sdt::WASTE);
     assert(m.from == stock);
@@ -754,36 +780,18 @@ void game_state::undo_stock_k_plus_move(move m) {
     auto sz_after = piles[stock].size() + piles[waste].size();
 #endif
 
-    // Pop undo info
-    zobrist_undo undo = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
+    // Identify played card BEFORE pile undo (it's at m.to)
+    card played = piles[m.to].top_card();
+    uint8_t played_cid = zobrist_hash::card_id(played.get_suit(), played.get_rank());
 
-    // Restore waste pointer
-    update_waste_ptr_in_hash(undo.old_waste_ptr);
-
-    // Restore hole header
-    if (undo.old_hole_top != 255) {
-        update_hole_top_in_hash(undo.old_hole_top);
-    }
-
-    // Restore foundation header
-    if (undo.to_found_suit != 255) {
-        update_foundation_in_hash(undo.to_found_suit, undo.old_to_found_rank);
-    }
-
-    // Restore played card's descriptor
-    update_card_descriptor(undo.card_id, undo.old_desc);
-
-    // Pile operations
+    // === PILE OPERATIONS (exact reverse of make) ===
     if (m.flip_waste) {
         assert(rules.stock_redeal && piles[waste].empty());
         while (!piles[stock].empty()) {
             place_card(waste, take_card(stock));
         }
     }
-
-    place_card(waste,  take_card(m.to));
-
+    place_card(waste, take_card(m.to));
     if (m.count > 0) {
         for (int i = 0; i < m.count; i++) {
             place_card(stock, take_card(waste));
@@ -801,10 +809,36 @@ void game_state::undo_stock_k_plus_move(move m) {
     assert(!(rules.stock_size > 0 && rules.stock_redeal && piles[stock].empty() && !piles[waste].empty()));
     assert(piles[stock].size() <= rules.stock_size);
 #endif
+
+    // === HASH/PAYLOAD RECOVERY (all from restored pile state) ===
+
+    // Destination foundation (card removed from m.to)
+    if (is_foundation_pile(m.to)) {
+        uint8_t suit = get_foundation_suit(m.to);
+        uint8_t rank_now = piles[m.to].empty()
+            ? uint8_t(0) : piles[m.to].top_card().get_rank();
+        update_foundation_in_hash(suit, rank_now);
+    }
+
+    // Hole top (card removed from hole)
+    if (m.to == hole) {
+        uint8_t old_ht = piles[hole].empty()
+            ? uint8_t(0)
+            : zobrist_hash::card_id(piles[hole].top_card().get_suit(),
+                                     piles[hole].top_card().get_rank());
+        update_hole_top_in_hash(old_ht);
+    }
+
+    // Waste pointer (always updated — stock_k_plus always involves waste)
+    update_waste_ptr_in_hash(effective_waste_ptr());
+
+    // Played card descriptor → STARTING (stock/waste cards are always STARTING)
+    update_card_descriptor(played_cid, compact_state::STARTING);
 }
 
 void game_state::make_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
+    assert(!use_new_cache(rules));  // KI-6: TABLEAU_PILES games always use LRU cache
 
     for (pile::ref tab_pr = original_tableau_piles.front();
          tab_pr < pile::ref(original_tableau_piles.front() + m.count);
@@ -819,31 +853,14 @@ void game_state::make_stock_to_all_tableau_move(move m) {
         uint8_t new_desc = determine_destination_descriptor(tab_pr, dealt);
         update_card_descriptor(cid, new_desc);
     }
-
-    // Push undo with sat_count for the undo path
-    zobrist_undo undo = {};
-    undo.card_id = 255;
-    undo.old_desc = 0;
-    undo.revealed_card_id = 255;
-    undo.from_found_suit = 255;
-    undo.old_from_found_rank = 255;
-    undo.to_found_suit = 255;
-    undo.old_to_found_rank = 255;
-    undo.old_hole_top = 255;
-    undo.old_waste_ptr = 255;
-    undo.sat_count = m.count;
-    zobrist_undo_stack.push_back(undo);
 }
 
-void game_state::undo_stock_to_all_tableau_move(move) {
+void game_state::undo_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
-
-    // Pop undo info
-    zobrist_undo undo = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
+    assert(!use_new_cache(rules));  // KI-6: TABLEAU_PILES games always use LRU cache
 
     // Restore each dealt card's descriptor back to STARTING before pile ops
-    for (pile::ref tab_pr = original_tableau_piles.front() + undo.sat_count;
+    for (pile::ref tab_pr = original_tableau_piles.front() + m.count;
          tab_pr-- > original_tableau_piles.front();
             ) {
         card c = piles[tab_pr].top_card();
@@ -1042,6 +1059,40 @@ void game_state::check_face_down_consistent() const {
 // ZOBRIST HASHING    //
 ////////////////////////
 
+// Record which cards are face-up after the initial deal (including after turn_face_up()).
+// Also fixes up IN_SPACE descriptors for single-card tableau piles: when
+// init_payload_and_hash() runs before turn_face_up() (seed constructor), the top card
+// of a single-card pile is face-down at init time and gets STARTING=0. But a single-card
+// pile is semantically IN_SPACE (consistent with determine_destination_descriptor), so
+// we correct those here.
+void game_state::init_initially_face_up() {
+    memset(initially_face_up, 0, sizeof(initially_face_up));
+    for (const auto& p : piles) {
+        for (pile::size_type i = 0; i < p.size(); ++i) {
+            card c = p[i];
+            if (!c.is_face_down()) {
+                uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+                initially_face_up[cid] = true;
+            }
+        }
+    }
+
+    // Fix up single-card tableau piles whose top card is face-up but still has
+    // STARTING=0 (because init_payload_and_hash ran while it was face-down).
+    // No-op for init-list/JSON constructors where the positional loop already set IN_SPACE.
+    // Guarded for predecessor-cache (accordion) games which manage descriptors differently.
+    if (uses_predecessor_cache()) return;
+    for (auto tab_ref : original_tableau_piles) {
+        if (piles[tab_ref].size() == 1 && !piles[tab_ref][0].is_face_down()) {
+            card c = piles[tab_ref][0];
+            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+            if (payload.get_descriptor(cid) == compact_state::STARTING) {
+                update_card_descriptor(cid, compact_state::IN_SPACE);
+            }
+        }
+    }
+}
+
 void game_state::init_payload_and_hash() {
     payload.clear();
     zobrist_hash_value = 0;
@@ -1099,6 +1150,9 @@ void game_state::init_payload_and_hash() {
             } else {
                 // Card below this one is p[i+1]
                 card parent_card = p[i + 1];
+                // Face-down parent: card is above an unrevealed card at deal time.
+                // Descriptor stays STARTING (0) — no valid build relationship visible.
+                if (parent_card.is_face_down()) continue;
                 uint8_t parent_cid = zobrist_hash::card_id(
                     parent_card.get_suit(), parent_card.get_rank());
                 uint8_t desc = parent_table::get_descriptor_for_parent(
@@ -1222,6 +1276,8 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
     // Reserve, stock, waste: keep STARTING
     return compact_state::STARTING;
 }
+
+
 
 void game_state::set_payload_depth(uint16_t depth) {
     payload.set_depth(depth);

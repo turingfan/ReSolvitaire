@@ -258,6 +258,7 @@ set_property(TARGET solvitaire PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_link_libraries(solvitaire PRIVATE ${Boost_LIBRARIES})
 
 
+
 ###############################################################################
 ## testing ####################################################################
 ###############################################################################

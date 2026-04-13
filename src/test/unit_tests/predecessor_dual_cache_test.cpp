@@ -46,5 +46,10 @@ protected:
 TEST_F(PredecessorDualCacheTest, AccordionAgreement) {
     // Accordion is the primary game that uses the predecessor cache.
     // We check seeds 1-10 to ensure the encoding and incremental updates are correct.
+    //
+    // KI-7 (pre-existing): This test CRASHES in debug builds via assert_payload_consistent(),
+    // which fires when the incremental compact_state payload diverges from the scratch-recomputed
+    // payload during accordion moves. This bug predates Phase 0 — confirmed by bisect to commit
+    // 4c4b022 (before any pile-first undo work). Not caused by Phase 1. Tracked as KI-7 in PICKUP.md.
     run_predecessor_agreement_test("accordion", 10);
 }

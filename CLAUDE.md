@@ -2,6 +2,25 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Process Rules (MANDATORY — OVERRIDE ALL OTHER BEHAVIOR)                                                                                                                                                         
+                                                                                                                                                                                                                     
+  1. **BUG ENCOUNTERED:** Stop immediately. Write the symptom in one paragraph. Ask Ian how to proceed. Do NOT investigate. Do NOT attempt a fix. Do NOT continue to the next step.                                  
+                                                                                                                                                                                                                     
+  2. **SEMANTIC QUESTION:** If you encounter a question about what a descriptor value means, what the intended behavior is at search boundaries, or what the "correct" semantics are for this game — stop and ask    
+  Ian. He is the domain expert. Do not reason your way to an answer.
+                                                                                                                                                                                                                     
+  3. **SCOPE:** Each session implements exactly one named commit from the active plan. Do not proceed to the next commit without Ian's explicit instruction.                                                         
+   
+  4. **TEST FAILURES:** A failing test = a bug report to Ian, not a debugging task for Claude.   
+
+## Pickup Documents (CHECK AT START OF SESSION - UPDATE AT END)
+
+  1. Each branch has a PICKUP.md in a docs subfolder relevant to the branch. If the location is not obvious, look in docs/ for a PICKUP.md rather than assuming a path.
+
+  2. Read it when starting work. If not there ask user if equivalent is available and advise renaming
+
+  3. When git commit made or session ended redraft it and confirm new status with user
+
 ## Project Overview
 
 ReSolvitaire is a general-purpose DFS solver for perfect-information solitaire games, written in C++14. This fork (`ReSolvitaire-caching`) is a research branch focused on caching optimization and a comprehensive 5-level regression testing infrastructure.

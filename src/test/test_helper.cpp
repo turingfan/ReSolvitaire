@@ -21,6 +21,8 @@
 // Created by thecharlesblake on 12/26/17.
 //
 
+#include <fstream>
+
 #include <gtest/gtest.h>
 
 #include "test_helper.h"
@@ -42,6 +44,11 @@ typedef game_state::streamliner_options sos;
 
 
 bool test_helper::is_solvable(const std::string& input_file, const std::string& preset_type) {
+    if (!std::ifstream(input_file)) {
+        ADD_FAILURE() << "Resource file not found: " << input_file
+                      << "\n  Run integration tests via CTest or from repo root, not directly from build dir.";
+        return false;
+    }
     const Document in_doc = json_helper::get_file_json(input_file);
     const sol_rules rules = rules_parser::from_preset(preset_type);
 
