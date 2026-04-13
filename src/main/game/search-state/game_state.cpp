@@ -445,75 +445,6 @@ void game_state::undo_move(const move m) {
 #endif
 }
 
-#ifdef VALIDATE_INLINE_UNDO
-// Prints a full descriptor diff between the pile-first recovery path and the
-// reference undo-stack path, plus move context.  Called before every
-// PILE RECOVERY assertion so failures are self-describing.
-// Reusable across all undo_*_move functions.
-static void log_pile_recovery_mismatch(
-        const char*          label,
-        const move&          m,
-        uint8_t              pile_first_card_id,
-        uint8_t              pile_first_desc,
-        uint8_t              ref_card_id,
-        uint8_t              ref_desc,
-        const compact_state& pile_first_payload,
-        const compact_state& ref_payload)
-{
-    static const char* desc_name[] = {
-        "STARTING", "STARTING_FACE_UP", "ROOT", "IN_CELL",
-        "PARENT_0", "PARENT_1", "PARENT_2", "PARENT_3",
-        "IN_HOLE",  "IN_SPACE",
-        "10", "11", "12", "13", "14", "15"
-    };
-    auto suit_ch = [](uint8_t cid) -> char {
-        static const char s[] = "CHSD";
-        return s[(cid / 13) % 4];
-    };
-    auto rank_str = [](uint8_t cid) -> std::string {
-        static const char* r[] = {
-            "A","2","3","4","5","6","7","8","9","10","J","Q","K"
-        };
-        return r[cid % 13];
-    };
-    auto card_str = [&](uint8_t cid) -> std::string {
-        return rank_str(cid) + suit_ch(cid);
-    };
-
-    fprintf(stderr, "\n=== PILE RECOVERY MISMATCH: %s ===\n", label);
-    fprintf(stderr, "  move: from=%u to=%u reveal=%s\n",
-            (unsigned)m.from, (unsigned)m.to,
-            m.reveal_move ? "true" : "false");
-    fprintf(stderr, "  pile-first: card=%s(%u) old_desc=%s(%u)\n",
-            card_str(pile_first_card_id).c_str(), (unsigned)pile_first_card_id,
-            desc_name[pile_first_desc & 0xf], (unsigned)pile_first_desc);
-    fprintf(stderr, "  reference:  card=%s(%u) old_desc=%s(%u)\n",
-            card_str(ref_card_id).c_str(), (unsigned)ref_card_id,
-            desc_name[ref_desc & 0xf], (unsigned)ref_desc);
-
-    // Full descriptor diff
-    bool any_diff = false;
-    for (uint8_t c = 0; c < 52; ++c) {
-        uint8_t d1 = pile_first_payload.get_descriptor(c);
-        uint8_t d2 = ref_payload.get_descriptor(c);
-        if (d1 != d2) {
-            if (!any_diff) {
-                fprintf(stderr, "  descriptor diffs (pile-first vs reference):\n");
-                any_diff = true;
-            }
-            fprintf(stderr, "    card %s(%u): %s(%u) vs %s(%u)\n",
-                    card_str(c).c_str(), (unsigned)c,
-                    desc_name[d1 & 0xf], (unsigned)d1,
-                    desc_name[d2 & 0xf], (unsigned)d2);
-        }
-    }
-    if (!any_diff) {
-        fprintf(stderr, "  (no descriptor diffs — mismatch is in header fields)\n");
-    }
-    fprintf(stderr, "=== END MISMATCH ===\n\n");
-}
-#endif // VALIDATE_INLINE_UNDO
-
 void game_state::make_regular_move(const move m) {
     assert(m.from < piles.size());
     assert(m.to   < piles.size());
@@ -521,40 +452,19 @@ void game_state::make_regular_move(const move m) {
     // Capture pre-move state for descriptor updates
     card moved = piles[m.from].top_card();
     uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t old_desc = payload.get_descriptor(cid);
-#endif
 
     uint8_t from_fs = 255;
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t old_from_fr = 255;
-#endif
     if (is_foundation_pile(m.from)) {
         from_fs = get_foundation_suit(m.from);
-#ifdef VALIDATE_INLINE_UNDO
-        old_from_fr = payload.get_foundation(from_fs);
-#endif
     }
     uint8_t to_fs = 255;
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t old_to_fr = 255;
-#endif
     if (is_foundation_pile(m.to)) {
         to_fs = get_foundation_suit(m.to);
-#ifdef VALIDATE_INLINE_UNDO
-        old_to_fr = payload.get_foundation(to_fs);
-#endif
     }
     uint8_t old_ht = 255;
     if (m.to == hole) {
         old_ht = payload.get_hole_top();
     }
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t old_waste_ptr = 255;
-    if (m.from == waste) {
-        old_waste_ptr = payload.get_waste_ptr();
-    }
-#endif
 
     // Pile operations
     place_card(m.to, take_card(m.from));
@@ -598,31 +508,10 @@ void game_state::make_regular_move(const move m) {
         update_card_descriptor(rev_cid, rev_desc);
     }
 
-#ifdef VALIDATE_INLINE_UNDO
-    // Push undo info (validation only)
-    zobrist_undo undo = {};
-    undo.card_id = cid;
-    undo.old_desc = old_desc;
-    undo.revealed_card_id = rev_cid;
-    undo.from_found_suit = from_fs;
-    undo.old_from_found_rank = old_from_fr;
-    undo.to_found_suit = to_fs;
-    undo.old_to_found_rank = old_to_fr;
-    undo.old_hole_top = old_ht;
-    undo.old_waste_ptr = old_waste_ptr;
-    undo.sat_count = 0;
-    zobrist_undo_stack.push_back(undo);
-#endif
 }
 
 void game_state::undo_regular_move(const move m) {
     assert(m.to < piles.size());
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Capture pre-undo hash/payload for reference path re-run
-    uint64_t pre_hash = zobrist_hash_value;
-    compact_state pre_payload = payload;
-#endif
 
     // Identify moved card BEFORE pile undo (it's at m.to)
     card moved = piles[m.to].top_card();
@@ -697,53 +586,6 @@ void game_state::undo_regular_move(const move m) {
         }
     }
     update_card_descriptor(cid, old_desc);
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Save pile-first recovery result
-    uint64_t recovery_hash = zobrist_hash_value;
-    compact_state recovery_payload = payload;
-
-    // Pop reference undo record
-    zobrist_undo undo_ref = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
-
-    // Reset hash/payload to pre-undo state and run reference path
-    zobrist_hash_value = pre_hash;
-    payload = pre_payload;
-
-    if (undo_ref.revealed_card_id != 255) {
-        update_card_descriptor(undo_ref.revealed_card_id, compact_state::STARTING);
-    }
-    if (undo_ref.old_hole_top != 255) {
-        update_hole_top_in_hash(undo_ref.old_hole_top);
-    }
-    if (undo_ref.old_waste_ptr != 255) {
-        update_waste_ptr_in_hash(undo_ref.old_waste_ptr);
-    }
-    if (undo_ref.to_found_suit != 255) {
-        update_foundation_in_hash(undo_ref.to_found_suit, undo_ref.old_to_found_rank);
-    }
-    if (undo_ref.from_found_suit != 255) {
-        update_foundation_in_hash(undo_ref.from_found_suit, undo_ref.old_from_found_rank);
-    }
-    update_card_descriptor(undo_ref.card_id, undo_ref.old_desc);
-
-    if (zobrist_hash_value != recovery_hash || !payload.matches(recovery_payload)) {
-        log_pile_recovery_mismatch(
-            zobrist_hash_value != recovery_hash ? "hash" : "payload",
-            m, cid, old_desc,
-            undo_ref.card_id, undo_ref.old_desc,
-            recovery_payload, payload);
-    }
-    assert(zobrist_hash_value == recovery_hash
-        && "PILE RECOVERY: hash mismatch in undo_regular_move");
-    assert(payload.matches(recovery_payload)
-        && "PILE RECOVERY: payload mismatch in undo_regular_move");
-
-    // Restore pile-first as authoritative
-    zobrist_hash_value = recovery_hash;
-    payload = recovery_payload;
-#endif
 }
 
 void game_state::make_built_group_move(move m) {
@@ -753,9 +595,6 @@ void game_state::make_built_group_move(move m) {
     // Capture bottom card of group (the one whose descriptor changes)
     card bottom = piles[m.from][m.count - 1];
     uint8_t bottom_cid = zobrist_hash::card_id(bottom.get_suit(), bottom.get_rank());
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t old_desc = payload.get_descriptor(bottom_cid);
-#endif
 
     // Adds the cards to the 'to' pile
     for (auto pile_idx = m.count; pile_idx-- > 0;) {
@@ -800,31 +639,10 @@ void game_state::make_built_group_move(move m) {
         update_card_descriptor(rev_cid, rev_desc);
     }
 
-#ifdef VALIDATE_INLINE_UNDO
-    // Push undo info (validation only)
-    zobrist_undo undo = {};
-    undo.card_id = bottom_cid;
-    undo.old_desc = old_desc;
-    undo.revealed_card_id = rev_cid;
-    undo.from_found_suit = 255;
-    undo.old_from_found_rank = 255;
-    undo.to_found_suit = 255;
-    undo.old_to_found_rank = 255;
-    undo.old_hole_top = 255;
-    undo.old_waste_ptr = 255;
-    undo.sat_count = 0;
-    zobrist_undo_stack.push_back(undo);
-#endif
 }
 
 void game_state::undo_built_group_move(move m) {
     assert(m.to < piles.size());
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Capture pre-undo hash/payload for reference path re-run
-    uint64_t pre_hash = zobrist_hash_value;
-    compact_state pre_payload = payload;
-#endif
 
     // Identify bottom card of group BEFORE pile undo (at piles[m.to][m.count - 1])
     card bottom = piles[m.to][m.count - 1];
@@ -889,41 +707,6 @@ void game_state::undo_built_group_move(move m) {
         old_desc = (desc != 0) ? desc : static_cast<uint8_t>(compact_state::ROOT);
     }
     update_card_descriptor(bottom_cid, old_desc);
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Save pile-first recovery result
-    uint64_t recovery_hash = zobrist_hash_value;
-    compact_state recovery_payload = payload;
-
-    // Pop reference undo record
-    zobrist_undo undo_ref = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
-
-    // Reset hash/payload to pre-undo state and run reference path
-    zobrist_hash_value = pre_hash;
-    payload = pre_payload;
-
-    if (undo_ref.revealed_card_id != 255) {
-        update_card_descriptor(undo_ref.revealed_card_id, compact_state::STARTING);
-    }
-    update_card_descriptor(undo_ref.card_id, undo_ref.old_desc);
-
-    if (zobrist_hash_value != recovery_hash || !payload.matches(recovery_payload)) {
-        log_pile_recovery_mismatch(
-            zobrist_hash_value != recovery_hash ? "hash" : "payload",
-            m, bottom_cid, old_desc,
-            undo_ref.card_id, undo_ref.old_desc,
-            recovery_payload, payload);
-    }
-    assert(zobrist_hash_value == recovery_hash
-        && "PILE RECOVERY: hash mismatch in undo_built_group_move");
-    assert(payload.matches(recovery_payload)
-        && "PILE RECOVERY: payload mismatch in undo_built_group_move");
-
-    // Restore pile-first as authoritative
-    zobrist_hash_value = recovery_hash;
-    payload = recovery_payload;
-#endif
 }
 
 void game_state::make_stock_k_plus_move(const move m) {
@@ -933,11 +716,6 @@ void game_state::make_stock_k_plus_move(const move m) {
     if (rules.stock_redeal) assert(m.count <= piles[stock].size() && m.count > -piles[waste].size());
     assert(!rules.stock_redeal || m.to != waste);
     auto sz_before = piles[stock].size() + piles[waste].size();
-#endif
-
-    // Capture pre-move state (validation only)
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t old_waste_ptr = payload.get_waste_ptr();
 #endif
 
     // Transfers count cards from the stock to the waste
@@ -954,9 +732,6 @@ void game_state::make_stock_k_plus_move(const move m) {
     // Capture the card about to be played from waste
     card played = piles[waste].top_card();
     uint8_t played_cid = zobrist_hash::card_id(played.get_suit(), played.get_rank());
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t played_old_desc = payload.get_descriptor(played_cid);
-#endif
 
     // Moves the card on top of the waste to the target pile
     place_card(m.to,  take_card(waste));
@@ -975,45 +750,17 @@ void game_state::make_stock_k_plus_move(const move m) {
 
     // Update foundation/hole headers
     uint8_t to_fs = 255;
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t old_to_fr = 255;
-#endif
     if (is_foundation_pile(m.to)) {
         to_fs = get_foundation_suit(m.to);
-#ifdef VALIDATE_INLINE_UNDO
-        old_to_fr = payload.get_foundation(to_fs);
-#endif
         update_foundation_in_hash(to_fs, played.get_rank());
     }
-#ifdef VALIDATE_INLINE_UNDO
-    uint8_t old_ht = 255;
-#endif
     if (m.to == hole) {
-#ifdef VALIDATE_INLINE_UNDO
-        old_ht = payload.get_hole_top();
-#endif
         update_hole_top_in_hash(played_cid);
     }
 
     // Update waste pointer to current waste size
     // (applying waste-deal symmetry if applicable)
     update_waste_ptr_in_hash(effective_waste_ptr());
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Push undo info (validation only)
-    zobrist_undo undo = {};
-    undo.card_id = played_cid;
-    undo.old_desc = played_old_desc;
-    undo.revealed_card_id = 255;
-    undo.from_found_suit = 255;
-    undo.old_from_found_rank = 255;
-    undo.to_found_suit = to_fs;
-    undo.old_to_found_rank = old_to_fr;
-    undo.old_hole_top = old_ht;
-    undo.old_waste_ptr = old_waste_ptr;
-    undo.sat_count = 0;
-    zobrist_undo_stack.push_back(undo);
-#endif
 
 #ifndef NDEBUG
     auto sz_after = piles[stock].size() + piles[waste].size();
@@ -1025,12 +772,6 @@ void game_state::make_stock_k_plus_move(const move m) {
 
 void game_state::undo_stock_k_plus_move(move m) {
     assert(m.to < piles.size());
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Capture pre-undo hash/payload for reference path re-run
-    uint64_t pre_hash = zobrist_hash_value;
-    compact_state pre_payload = payload;
-#endif
 
 #ifndef NDEBUG
     assert(rules.stock_deal_t == sdt::WASTE);
@@ -1093,49 +834,11 @@ void game_state::undo_stock_k_plus_move(move m) {
 
     // Played card descriptor → STARTING (stock/waste cards are always STARTING)
     update_card_descriptor(played_cid, compact_state::STARTING);
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Save pile-first recovery result
-    uint64_t recovery_hash = zobrist_hash_value;
-    compact_state recovery_payload = payload;
-
-    // Pop reference undo record
-    zobrist_undo undo_ref = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
-
-    // Reset hash/payload to pre-undo state and run reference path
-    zobrist_hash_value = pre_hash;
-    payload = pre_payload;
-
-    update_waste_ptr_in_hash(undo_ref.old_waste_ptr);
-    if (undo_ref.old_hole_top != 255) {
-        update_hole_top_in_hash(undo_ref.old_hole_top);
-    }
-    if (undo_ref.to_found_suit != 255) {
-        update_foundation_in_hash(undo_ref.to_found_suit, undo_ref.old_to_found_rank);
-    }
-    update_card_descriptor(undo_ref.card_id, undo_ref.old_desc);
-
-    if (zobrist_hash_value != recovery_hash || !payload.matches(recovery_payload)) {
-        log_pile_recovery_mismatch(
-            zobrist_hash_value != recovery_hash ? "hash" : "payload",
-            m, played_cid, compact_state::STARTING,
-            undo_ref.card_id, undo_ref.old_desc,
-            recovery_payload, payload);
-    }
-    assert(zobrist_hash_value == recovery_hash
-        && "PILE RECOVERY: hash mismatch in undo_stock_k_plus_move");
-    assert(payload.matches(recovery_payload)
-        && "PILE RECOVERY: payload mismatch in undo_stock_k_plus_move");
-
-    // Restore pile-first as authoritative
-    zobrist_hash_value = recovery_hash;
-    payload = recovery_payload;
-#endif
 }
 
 void game_state::make_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
+    assert(!use_new_cache(rules));  // KI-6: TABLEAU_PILES games always use LRU cache
 
     for (pile::ref tab_pr = original_tableau_piles.front();
          tab_pr < pile::ref(original_tableau_piles.front() + m.count);
@@ -1150,37 +853,14 @@ void game_state::make_stock_to_all_tableau_move(move m) {
         uint8_t new_desc = determine_destination_descriptor(tab_pr, dealt);
         update_card_descriptor(cid, new_desc);
     }
-
-    // Push undo with sat_count for the undo path
-    zobrist_undo undo = {};
-    undo.card_id = 255;
-    undo.old_desc = 0;
-    undo.revealed_card_id = 255;
-    undo.from_found_suit = 255;
-    undo.old_from_found_rank = 255;
-    undo.to_found_suit = 255;
-    undo.old_to_found_rank = 255;
-    undo.old_hole_top = 255;
-    undo.old_waste_ptr = 255;
-    undo.sat_count = m.count;
-    zobrist_undo_stack.push_back(undo);
 }
 
-void game_state::undo_stock_to_all_tableau_move(move) {
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot pre-undo state
-    uint64_t pre_hash = zobrist_hash_value;
-    compact_state pre_payload = payload;
-#endif
-
+void game_state::undo_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
-
-    // Pop undo info
-    zobrist_undo undo = zobrist_undo_stack.back();
-    zobrist_undo_stack.pop_back();
+    assert(!use_new_cache(rules));  // KI-6: TABLEAU_PILES games always use LRU cache
 
     // Restore each dealt card's descriptor back to STARTING before pile ops
-    for (pile::ref tab_pr = original_tableau_piles.front() + undo.sat_count;
+    for (pile::ref tab_pr = original_tableau_piles.front() + m.count;
          tab_pr-- > original_tableau_piles.front();
             ) {
         card c = piles[tab_pr].top_card();
@@ -1189,27 +869,6 @@ void game_state::undo_stock_to_all_tableau_move(move) {
 
         place_card(stock, take_card(tab_pr));
     }
-
-#ifdef VALIDATE_INLINE_UNDO
-    // Snapshot expected result
-    uint64_t expected_hash = zobrist_hash_value;
-    compact_state expected_payload = payload;
-
-    // Restore hash/payload to pre-undo state for inline path validation
-    zobrist_hash_value = pre_hash;
-    payload = pre_payload;
-
-    // === INLINE UNDO PATH (placeholder — to be filled in Phase 1) ===
-    // For now, just copy expected result to pass validation trivially
-    zobrist_hash_value = expected_hash;
-    payload = expected_payload;
-
-    // === VALIDATE ===
-    assert(zobrist_hash_value == expected_hash
-        && "INLINE UNDO: hash mismatch in undo_stock_to_all_tableau_move");
-    assert(payload.matches(expected_payload)
-        && "INLINE UNDO: payload mismatch in undo_stock_to_all_tableau_move");
-#endif
 }
 
 void game_state::make_sequence_move(const move m) {

@@ -197,21 +197,6 @@ private:
     void init_payload_and_hash();     // Called at end of constructors
     void init_initially_face_up();    // Called after turn_face_up() in constructors
 
-    // Undo record for incremental descriptor/hash updates
-    struct zobrist_undo {
-        uint8_t card_id;               // Primary moved card
-        uint8_t old_desc;              // Its old descriptor
-        uint8_t revealed_card_id;      // 255 = none
-        uint8_t from_found_suit;       // 255 = source not foundation
-        uint8_t old_from_found_rank;   // Old source foundation rank
-        uint8_t to_found_suit;         // 255 = dest not foundation
-        uint8_t old_to_found_rank;     // Old dest foundation rank
-        uint8_t old_hole_top;          // 255 = dest not hole
-        uint8_t old_waste_ptr;         // 255 = waste ptr didn't change
-        uint8_t sat_count;             // stock_to_all_tableau card count (0 otherwise)
-    };
-    std::vector<zobrist_undo> zobrist_undo_stack;
-
     // Descriptor update helpers
     void update_card_descriptor(uint8_t cid, uint8_t new_desc);
     void update_foundation_in_hash(uint8_t suit, uint8_t new_rank);
