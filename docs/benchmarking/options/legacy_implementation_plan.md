@@ -18,7 +18,7 @@ We will also outline the exact C++ changes needed for the Semi-Legacy branch.
 
 We need to update the Python orchestrator to perform an interrogation "handshake" before spinning up thousands of tasks.
 
-### 1. Implement Binary Interrogation in `run_benchmark.py`
+### 1.1. Implement Binary Interrogation in `run_benchmark.py`
 
 Create a function `interrogate_binary(solver_path: str) -> str` that determines the binary type using a unified handshake flag:
 
@@ -30,7 +30,7 @@ Create a function `interrogate_binary(solver_path: str) -> str` that determines 
 - **Fallback (True Legacy):**
   - If the solver fails (exits non-zero) because it does not recognize the flag, return `"TRUE_LEGACY"`.
 
-### 2. Enforce Handshake Results
+### 1.2. Enforce Handshake Results
 
 In `run_benchmark.py`'s `main()`:
 - Call `interrogate_binary(args.solver)`.
@@ -38,9 +38,9 @@ In `run_benchmark.py`'s `main()`:
 - If `"SEMI_LEGACY"`: Automatically configure the parser to use the updated CSV parser (looking for `[BENCHMARK_CSV_START]`). Pass modern arguments down (because semi-legacy ignores unknowns).
 - If `"TRUE_LEGACY"`: 
   - If the user did *not* provide the `--legacy` flag, abort the script with an error: `"True legacy binary detected, but --legacy flag not provided. Aborting for safety."`
-  - If `--legacy` *was* provided, proceed with the fragile legacy CSV parser. Ensure that only whitelisted arguments are passed to the solver. **If an argument outside the established True Legacy whitelist (e.g., `--cache-capacity`, `--label`) is encountered, the script must FAIL explicitly with an error rather than silently stripping the argument.**
+  - If `--legacy` *was* provided, proceed with the fragile legacy CSV parser. Ensure that only whitelisted arguments are passed to the solver. **If an argument outside the established True Legacy whitelist (e.g., `--label`) is encountered, the script must FAIL explicitly with an error rather than silently stripping the argument.**
 
-### 3. Update the CSV Parsers
+### 1.3. Update the CSV Parsers
 
 Ensure `parse_legacy_classify()` is split or updated:
 - **Semi-Legacy Mode:** Scan stdout specifically for `[BENCHMARK_CSV_START]`. Parse the subsequent CSV string. Extract the appended `solver_resident_bytes` at the end of the CSV row.

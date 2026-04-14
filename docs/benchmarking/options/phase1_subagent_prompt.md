@@ -20,17 +20,22 @@ Implement a "handshake" mechanism in the Python scripts to automatically detect 
 - If the output contains `semi-legacy v` (e.g. `semi-legacy v0.1`), return `"SEMI_LEGACY"`.
 - If the command fails (exit code != 0), return `"TRUE_LEGACY"`.
 
-### 2. Guardrails & Enforcement
+### 1.2. Enforce Handshake Results
 In `run_benchmark.py`:
 - Use the handshake result to configure the run.
 - **MODERN**: Use `--json` as normal.
-- **SEMI_LEGACY**: Switch to CSV parsing. Expect the header `[BENCHMARK_CSV_START]`. Capture the appended `solver_resident_bytes` at the end of the CSV line. Modern flags (like `--cache-capacity`) ARE allowed.
+- **SEMI_LEGACY**: Switch to the updated CSV parser. Pass modern arguments down.
 - **TRUE_LEGACY**: 
   - If the user did NOT pass `--legacy`, ABORT with an error message.
   - If the user DID pass `--legacy`, proceed with the old regex-based CSV parser.
-  - **CRITICAL**: Enforce a strict whitelist of arguments for True Legacy. If any argument NOT in the whitelist (e.g. `--label`) is provided, the script must FAIL explicitly with an error message. Do not silently strip the flag.
+  - **CRITICAL**: Enforce a strict whitelist of arguments for True Legacy (e.g. `--label` is NOT allowed). If any argument NOT in the whitelist is provided, the script must FAIL explicitly with an error message.
 
-### 3. Update modern solver (handshake only)
+### 1.3. Update the CSV Parsers
+Update `parse_legacy_classify()` (or split it) to handle two distinct legacy modes:
+- **Semi-Legacy Mode**: Scan stdout specifically for `[BENCHMARK_CSV_START]`. Parse the subsequent CSV string. Extract the appended `solver_resident_bytes` at the end of the CSV line.
+- **True Legacy Mode**: Retain the current regex-based fragile scanning for 13/24 columns.
+
+### 1.4. Update modern solver (handshake only)
 - Make a minimal change to the modern solver code (likely `src/main/main.cpp` or the argument parser) so that `--benchmark-handshake` returns `modern v1.0` and exits 0.
 
 ## Completion
