@@ -59,7 +59,7 @@ Once Checkpoints 1 and 2 are green and the baseline is confirmed, Session 1 star
 |---|---|---|---|
 | P2-A | Add `generic_flat_cache.h` + 3 policies + static_asserts | `src/main/game/generic_flat_cache.h` (new), `generic_flat_cache_policies.h` (new) | DONE `525e855` |
 | P2-B | Unit tests for each specialisation | `src/test/unit_tests/generic_flat_cache_test.cpp` (new) | DONE `53ead67` |
-| P2-C | Wire `cache_factory.h` behind `USE_GENERIC_CACHE` | `cache_factory.h`, `CMakeLists.txt` | DONE `TBD` |
+| P2-C | Wire `cache_factory.h` behind `USE_GENERIC_CACHE` | `cache_factory.h`, `CMakeLists.txt` | DONE `b25e8bb` |
 | P2-D | DualCache parity harness (non-accordion only) | `src/test/unit_tests/generic_flat_dual_cache_test.cpp` (new) | TODO |
 | P2-E | Regression L1 + L2 under `USE_GENERIC_CACHE=ON` | (no source changes) | TODO |
 
@@ -89,7 +89,7 @@ Key files: `src/test/unit_tests/generic_flat_dual_cache_test.cpp` (new), `CMakeL
 
 ## Completed Commits
 
-### P2-C — `TBD` ✅
+### P2-C — `b25e8bb` ✅
 
 **Validation checklist:**
 - [x] Default build (OFF): clean, no warnings.
