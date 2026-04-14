@@ -32,9 +32,12 @@
 #include <cstring>
 #include <algorithm>
 
+// Non-template base so that solver.cpp can recognise any generic_flat_cache<Policy>
+// via a single dynamic_cast<generic_flat_cache_base*> without instantiating the template.
+class generic_flat_cache_base : public cache_interface {};
 
 template <typename Policy>
-class generic_flat_cache : public cache_interface {
+class generic_flat_cache : public generic_flat_cache_base {
 public:
     // Expose the cluster type (used in the mandatory static_asserts below)
     typedef typename Policy::cluster cluster;
