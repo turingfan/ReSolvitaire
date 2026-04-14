@@ -143,6 +143,7 @@ set(sources_test_unit
         src/test/unit_tests/predecessor_dual_cache_test.cpp
         src/test/unit_tests/generic_flat_cache_compile_test.cpp
         src/test/unit_tests/generic_flat_cache_test.cpp
+        src/test/unit_tests/generic_flat_dual_cache_test.cpp
 )
 
 set(sources_test_helper
