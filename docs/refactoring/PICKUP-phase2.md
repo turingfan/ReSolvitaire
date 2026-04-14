@@ -61,33 +61,45 @@ Once Checkpoints 1 and 2 are green and the baseline is confirmed, Session 1 star
 | P2-B | Unit tests for each specialisation | `src/test/unit_tests/generic_flat_cache_test.cpp` (new) | DONE `53ead67` |
 | P2-C | Wire `cache_factory.h` behind `USE_GENERIC_CACHE` | `cache_factory.h`, `CMakeLists.txt` | DONE `b25e8bb` |
 | P2-D | DualCache parity harness (non-accordion only) | `src/test/unit_tests/generic_flat_dual_cache_test.cpp` (new) | DONE `68f92f2` |
-| P2-E | Regression L1 + L2 under `USE_GENERIC_CACHE=ON` | (no source changes) | TODO |
+| P2-E | Regression L1–L4 under `USE_GENERIC_CACHE=ON` + solver bad_cast fix | `generic_flat_cache.h`, `solver.cpp` | DONE `ff6bb7d` |
 
 Each commit = one session. After each commit, update this PICKUP before ending the session.
 
 ---
 
-## Next Session: Commit P2-E
+## Phase 2 Complete
 
-**Goal:** Regression L1 + L2 under `USE_GENERIC_CACHE=ON`. No source changes.
+All P2-A through P2-E commits are done. Phase 2 goal achieved: `generic_flat_cache<Policy>`
+is fully wired into the factory and validated against the original concrete caches and all
+regression levels.
 
-```bash
-# Enable generic path
-cd cmake-build-release && cmake -DUSE_GENERIC_CACHE=ON .. && make -j4
-
-# Run regression suites
-ctest -R regression_level1 --output-on-failure
-ctest -R regression_level2 --output-on-failure
-
-# Reset to OFF before end of session
-cmake -DUSE_GENERIC_CACHE=OFF .. && make -j4
-```
-
-Expected: identical outcomes to the OFF baseline. Any new failure is a bug — stop and report.
+**Next phase:** Phase 3 (per `phase2_3_workflow.md`). Awaiting Ian's instruction to start.
 
 ---
 
 ## Completed Commits
+
+### P2-E — `ff6bb7d` ✅
+
+**Validation checklist:**
+- [x] Bug found during P2-E: `std::bad_cast` on 94/150 L1 instances with `USE_GENERIC_CACHE=ON`.
+- [x] Root cause: `solver.cpp` `using_flat_cache` detection did not include `generic_flat_cache<Policy>` in the hierarchy check, so the solver fell into the LRU path and threw on `dynamic_cast<lru_cache&>`.
+- [x] Fix: added `generic_flat_cache_base : public cache_interface` to `generic_flat_cache.h`; changed template to inherit from it; added `dynamic_cast<generic_flat_cache_base*>` check in solver constructor.
+- [x] Build clean, no warnings (OFF and ON).
+- [x] `unit_tests` 100% pass (USE_GENERIC_CACHE=OFF) — no regression vs P2-D.
+- [x] regression_level1 100% pass (150/150) under USE_GENERIC_CACHE=ON.
+- [x] regression_level2 100% pass under USE_GENERIC_CACHE=ON.
+- [x] regression_level3 100% pass under USE_GENERIC_CACHE=ON.
+- [x] regression_level4 100% pass under USE_GENERIC_CACHE=ON.
+- [x] USE_GENERIC_CACHE reset to OFF before commit.
+
+**Design notes:**
+- `generic_flat_cache_base` carries no members or virtual methods — it is a pure tag class
+  in the hierarchy, adding zero runtime overhead.
+- The solver's `dynamic_cast` chain now correctly recognises all flat-based caches regardless
+  of whether they are concrete originals or the new template instantiations.
+
+---
 
 ### P2-D — `68f92f2` ✅
 
@@ -205,7 +217,7 @@ All inherited from Phase 1's `PICKUP.md`. Not repeated here in detail — read `
 
 ## Current Blocker
 
-*(none — Phase 2 not started)*
+*(none — Phase 2 complete)*
 
 ---
 
