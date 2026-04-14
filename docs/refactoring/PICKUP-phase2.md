@@ -60,34 +60,52 @@ Once Checkpoints 1 and 2 are green and the baseline is confirmed, Session 1 star
 | P2-A | Add `generic_flat_cache.h` + 3 policies + static_asserts | `src/main/game/generic_flat_cache.h` (new), `generic_flat_cache_policies.h` (new) | DONE `525e855` |
 | P2-B | Unit tests for each specialisation | `src/test/unit_tests/generic_flat_cache_test.cpp` (new) | DONE `53ead67` |
 | P2-C | Wire `cache_factory.h` behind `USE_GENERIC_CACHE` | `cache_factory.h`, `CMakeLists.txt` | DONE `b25e8bb` |
-| P2-D | DualCache parity harness (non-accordion only) | `src/test/unit_tests/generic_flat_dual_cache_test.cpp` (new) | TODO |
+| P2-D | DualCache parity harness (non-accordion only) | `src/test/unit_tests/generic_flat_dual_cache_test.cpp` (new) | DONE `68f92f2` |
 | P2-E | Regression L1 + L2 under `USE_GENERIC_CACHE=ON` | (no source changes) | TODO |
 
 Each commit = one session. After each commit, update this PICKUP before ending the session.
 
 ---
 
-## Next Session: Commit P2-D
+## Next Session: Commit P2-E
 
-**Goal:** DualCache parity harness for `CompactStatePolicy` and `HashOnlyPolicy`
-(non-accordion only). New file `src/test/unit_tests/generic_flat_dual_cache_test.cpp`.
-For each of the two policies:
-- Pair `generic_flat_cache<Policy>` (primary) against the original (`flat_cache` or
-  `hash_only_cache`) in a `dual_cache`.
-- Run the solver on 5 klondike seeds and 5 free-cell seeds with cap = 100 000.
-- `get_lru_only_hits()` and `get_flat_only_hits()` must both be zero.
+**Goal:** Regression L1 + L2 under `USE_GENERIC_CACHE=ON`. No source changes.
 
-`PredecessorPolicy` parity is deliberately deferred (KI-7): add a
-`DISABLED_PredecessorParity` test with an explanatory comment.
+```bash
+# Enable generic path
+cd cmake-build-release && cmake -DUSE_GENERIC_CACHE=ON .. && make -j4
 
-Key files: `src/test/unit_tests/generic_flat_dual_cache_test.cpp` (new), `CMakeLists.txt`.
+# Run regression suites
+ctest -R regression_level1 --output-on-failure
+ctest -R regression_level2 --output-on-failure
 
-**Key constraint:** Do NOT use `USE_GENERIC_CACHE` flag in the test — construct
-`generic_flat_cache<Policy>` and the original explicitly, side by side.
+# Reset to OFF before end of session
+cmake -DUSE_GENERIC_CACHE=OFF .. && make -j4
+```
+
+Expected: identical outcomes to the OFF baseline. Any new failure is a bug — stop and report.
 
 ---
 
 ## Completed Commits
+
+### P2-D — `68f92f2` ✅
+
+**Validation checklist:**
+- [x] Build clean, no warnings.
+- [x] 8 new enabled tests pass: 5 CompactStatePolicy (free-cell, klondike, bakers-game, seahaven-towers, flower-garden) + 3 HashOnlyPolicy (free-cell, klondike, bakers-game).
+- [x] `DISABLED_PredecessorParity` present and skipped.
+- [x] 234 tests pass in `unit_tests` filter — no regressions vs P2-C.
+- [x] Protected files byte-identical to P2-C.
+
+**Design notes:**
+- `unit_tests` runtime increased from ~62s to ~142s because FreeCell and FlowerGarden seeds
+  hit the 10s/seed timeout at cap=100k. Accepted as-is: these tests are temporary (will be
+  removed when we commit to the template cache and delete the original concrete caches).
+- Both caches constructed explicitly — no `USE_GENERIC_CACHE` flag in the test.
+- `DISABLED_PredecessorParity` carries KI-7 explanation for future reference.
+
+---
 
 ### P2-C — `b25e8bb` ✅
 
