@@ -9,6 +9,10 @@
 #include <memory>
 #include <string>
 
+#ifdef USE_GENERIC_CACHE
+#include "generic_flat_cache.h"
+#endif
+
 // Creates the appropriate cache for a given game configuration.
 //
 // Selection order:
@@ -32,11 +36,23 @@ inline std::unique_ptr<cache_interface> make_cache(
         bool force_lru = false,
         bool suit_sym = false) {
     if (cache_type == "hash-only") {
+#ifdef USE_GENERIC_CACHE
+        return std::make_unique<generic_flat_cache<HashOnlyPolicy>>(capacity);
+#else
         return std::make_unique<hash_only_cache>(capacity);
+#endif
     } else if (use_predecessor_cache(rules) && !force_lru) {
+#ifdef USE_GENERIC_CACHE
+        return std::make_unique<generic_flat_cache<PredecessorPolicy>>(capacity);
+#else
         return std::make_unique<predecessor_flat_cache>(capacity);
+#endif
     } else if (use_new_cache(rules, suit_sym) && !force_lru) {
+#ifdef USE_GENERIC_CACHE
+        return std::make_unique<generic_flat_cache<CompactStatePolicy>>(capacity);
+#else
         return std::make_unique<flat_cache>(capacity);
+#endif
     } else {
         return std::make_unique<lru_cache>(gs, capacity);
     }

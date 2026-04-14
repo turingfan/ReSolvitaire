@@ -238,6 +238,11 @@ endif()
 add_compile_options(${ALL_WARNING_FLAGS})
 add_compile_definitions(BOOST_LOG_DYN_LINK)
 
+option(USE_GENERIC_CACHE "Route cache_factory through generic_flat_cache<Policy>" OFF)
+if(USE_GENERIC_CACHE)
+    add_compile_definitions(USE_GENERIC_CACHE)
+endif()
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 
 # Release flags: platform-aware linker options

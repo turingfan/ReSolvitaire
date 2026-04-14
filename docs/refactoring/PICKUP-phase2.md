@@ -57,9 +57,9 @@ Once Checkpoints 1 and 2 are green and the baseline is confirmed, Session 1 star
 
 | ID | Title | Key files | Status |
 |---|---|---|---|
-| P2-A | Add `generic_flat_cache.h` + 3 policies + static_asserts | `src/main/game/generic_flat_cache.h` (new), `generic_flat_cache_policies.h` (new) | TODO |
-| P2-B | Unit tests for each specialisation | `src/test/unit_tests/generic_flat_cache_test.cpp` (new) | TODO |
-| P2-C | Wire `cache_factory.h` behind `USE_GENERIC_CACHE` | `cache_factory.h`, `CMakeLists.txt` | TODO |
+| P2-A | Add `generic_flat_cache.h` + 3 policies + static_asserts | `src/main/game/generic_flat_cache.h` (new), `generic_flat_cache_policies.h` (new) | DONE `525e855` |
+| P2-B | Unit tests for each specialisation | `src/test/unit_tests/generic_flat_cache_test.cpp` (new) | DONE `53ead67` |
+| P2-C | Wire `cache_factory.h` behind `USE_GENERIC_CACHE` | `cache_factory.h`, `CMakeLists.txt` | DONE `TBD` |
 | P2-D | DualCache parity harness (non-accordion only) | `src/test/unit_tests/generic_flat_dual_cache_test.cpp` (new) | TODO |
 | P2-E | Regression L1 + L2 under `USE_GENERIC_CACHE=ON` | (no source changes) | TODO |
 
@@ -67,43 +67,78 @@ Each commit = one session. After each commit, update this PICKUP before ending t
 
 ---
 
-## Next Session: Commit P2-A
+## Next Session: Commit P2-D
 
-**Goal:** Add `generic_flat_cache.h` and `generic_flat_cache_policies.h`, including all three policies (`CompactStatePolicy`, `HashOnlyPolicy`, `PredecessorPolicy`) and three mandatory cluster-size `static_assert`s. No wiring. No existing file modifications. Build must succeed with `-DUSE_GENERIC_CACHE=ON` even though nothing calls the template yet.
+**Goal:** DualCache parity harness for `CompactStatePolicy` and `HashOnlyPolicy`
+(non-accordion only). New file `src/test/unit_tests/generic_flat_dual_cache_test.cpp`.
+For each of the two policies:
+- Pair `generic_flat_cache<Policy>` (primary) against the original (`flat_cache` or
+  `hash_only_cache`) in a `dual_cache`.
+- Run the solver on 5 klondike seeds and 5 free-cell seeds with cap = 100 000.
+- `get_lru_only_hits()` and `get_flat_only_hits()` must both be zero.
 
-**Key constraints (from `phase2_plan.md`):**
+`PredecessorPolicy` parity is deliberately deferred (KI-7): add a
+`DISABLED_PredecessorParity` test with an explanatory comment.
 
-- C++14 only. No `if constexpr`. Use tag dispatch or SFINAE for the `HAS_HASH_GUARD` branch in `PredecessorPolicy`.
-- Static assertions required (MANDATORY, human-signed-off values):
-  - `sizeof(generic_flat_cache<CompactStatePolicy>::cluster) == 64`
-  - `sizeof(generic_flat_cache<HashOnlyPolicy>::cluster)     == 16`
-  - `sizeof(generic_flat_cache<PredecessorPolicy>::cluster)  == 128`
-  - plus matching `alignof` assertions on the first and third.
-- Do NOT modify `flat_cache.*`, `hash_only_cache.*`, `predecessor_flat_cache.*`, `cache_factory.h`, or `game_state.*`. P2-A is additive only.
-- Do NOT add the `#ifdef USE_GENERIC_CACHE` dispatch to `cache_factory.h` — that is P2-C.
+Key files: `src/test/unit_tests/generic_flat_dual_cache_test.cpp` (new), `CMakeLists.txt`.
 
-**Reference implementations to read first:**
+**Key constraint:** Do NOT use `USE_GENERIC_CACHE` flag in the test — construct
+`generic_flat_cache<Policy>` and the original explicitly, side by side.
 
-- `src/main/game/flat_cache.h` / `flat_cache.cpp` — the TwoBig1 depth-preferred replacement.
-- `src/main/game/hash_only_cache.h` / `hash_only_cache.cpp` — simpler no-depth TwoBig1.
-- `src/main/game/predecessor_flat_cache.h` / `predecessor_flat_cache.cpp` — the hash-guard optimisation on slot 1.
+---
 
-The template should reproduce each original's behaviour exactly when instantiated with the matching policy. Preserving the hash-guard optimisation in `PredecessorPolicy` is the subtlest requirement — it cannot be lost.
+## Completed Commits
 
-**Build command for P2-A:**
+### P2-C — `TBD` ✅
 
-```bash
-cd cmake-build-debug && cmake -DUSE_GENERIC_CACHE=ON .. && make -j4
-# Expected: compiles clean; nothing calls the template yet.
-```
+**Validation checklist:**
+- [x] Default build (OFF): clean, no warnings.
+- [x] Default build: `unit_tests` and `unit_tests_full` 100% pass (identical to P2-B).
+- [x] Generic build (ON): `unit_tests` and `unit_tests_full` 100% pass (same pattern).
+- [x] Reset to OFF before commit.
+- [x] `flat_cache.*`, `hash_only_cache.*`, `predecessor_flat_cache.*` byte-identical to P2-B (untouched).
 
-**Validation checklist for P2-A:**
+**Design notes:**
+- `cache_factory.h`: added `#ifdef USE_GENERIC_CACHE` conditional include for
+  `generic_flat_cache.h` (which already includes the policies header). Three
+  specialised branches each wrapped with `#ifdef`/`#else`/`#endif`; `lru_cache`
+  fallback unchanged.
+- `CMakeLists.txt`: `option(USE_GENERIC_CACHE ... OFF)` + `add_compile_definitions`
+  guard inserted after the existing `BOOST_LOG_DYN_LINK` definition.
 
-- [ ] New header files compile standalone under `-DUSE_GENERIC_CACHE=ON`.
-- [ ] Three cluster-size `static_assert`s present and passing.
-- [ ] Two `alignof` assertions present and passing.
-- [ ] `flat_cache.*`, `hash_only_cache.*`, `predecessor_flat_cache.*`, `cache_factory.h` are byte-identical to dev.
-- [ ] Default build (`USE_GENERIC_CACHE=OFF`) is unaffected — full unit test suite same as baseline.
+---
+
+### P2-B — `53ead67` ✅
+
+**Validation checklist:**
+- [x] Build clean, no warnings.
+- [x] Three cluster-size `EXPECT_EQ` runtime checks present and passing.
+- [x] 19 new tests across three suites (CompactState ×7, HashOnly ×6, Predecessor ×6).
+- [x] `flat_cache.*`, `hash_only_cache.*`, `predecessor_flat_cache.*`, `cache_factory.h` byte-identical to P2-A (untouched).
+- [x] Default build unaffected — `unit_tests` and `unit_tests_full` 100% pass (same as P2-A baseline).
+
+**Design notes:**
+- Each suite mirrors its corresponding original test file for easy parity comparison.
+- `EvictionWorks` uses capacity=2 (1 cluster, 2 slots) with 200-move walk; cycling via `moves[i % moves.size()]`.
+- `PredecessorPolicy` suite uses accordion rules; no KI-7 failures observed in unit test surface.
+
+---
+
+### P2-A — `525e855` ✅
+
+**Validation checklist:**
+- [x] New header files compile standalone (build clean, no warnings).
+- [x] Three cluster-size `static_assert`s present and passing.
+- [x] Two `alignof` assertions present and passing.
+- [x] `flat_cache.*`, `hash_only_cache.*`, `predecessor_flat_cache.*`, `cache_factory.h` byte-identical to dev (untouched).
+- [x] Default build unaffected — `unit_tests` 100% pass (same as baseline).
+
+**Design notes (for future sessions):**
+- Tag dispatch uses two axes: `hash_guard_tag`/`no_hash_guard_tag` for the slot-1
+  contains/insert check; `insert_simple/depth/predecessor_tag` for replacement policy.
+- `generic_flat_cache.h` includes `generic_flat_cache_policies.h`; the compile-test
+  `.cpp` includes only `generic_flat_cache.h`.
+- `CMakeLists.txt` one-line change: added compile-test to `sources_test_unit`.
 
 ---
 
