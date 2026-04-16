@@ -162,6 +162,20 @@ reported hundreds of flat-only hits starting at operation 221. Investigation con
 Phase 1 implementation can proceed safely — flat cache is trustworthy as oracle.
 Investigation commit: `4c4b022`
 
+### 8. Redundant Hash/Payload Computation in Default Binary for LRU Games
+
+**Status:** Short-term fix in Phase 3 (boolean guard); long-term fix deferred  
+**Impact:** Performance — wasted hash and payload computation on every DFS move for games routed to `lru_cache` (2-deck, spider, suit-symmetry, accordion)  
+**Proposal doc:** `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`
+
+In the default `solvitaire` binary, `game_state` currently computes the Zobrist descriptor hash and `compact_state` payload on every move regardless of which cache is in use at runtime. For the ~40% of game types that route to `lru_cache`, this work is entirely dead — `lru_cache` never reads the hash or payload.
+
+**Short-term fix (Phase 3):** Two boolean flags set once at game_state construction: `computing_flat_hash` (true for all flat-cache variants including hash-only and predecessor) and `computing_flat_payload` (true for flat and predecessor, false for hash-only and LRU). Hash updates are guarded by the first; payload updates by the second. Both are stable branches that the CPU predicts perfectly after the first iteration of any game.
+
+**Long-term fix (deferred):** Template `game_state_impl<Policy>` on a hash/payload policy struct. Four concrete policies (Flat, HashOnly, Predecessor, LRU) are instantiated in the default binary. The runtime dispatch happens once per solve at the `solve_game()` entry point; inside the DFS loop there are zero branches and zero dead stores. The variant binaries (`solvitaire-flat` etc.) become trivial typedef selections of a single policy. Full details, costs, and migration strategy are in `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`.
+
+**Prerequisite for long-term fix:** Phase 3 workpackage complete. The boolean guards introduced in the short-term fix mark every site that will become a policy dispatch call, making the migration mechanical.
+
 ---
 
 ## Resolved Issues (for reference)

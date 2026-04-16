@@ -13,6 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    
   4. **TEST FAILURES:** A failing test = a bug report to Ian, not a debugging task for Claude.   
 
+  5. **EVALUATING AGENT WORK:** When asked to evaluate work done by another agent, you MUST: (a) pull the latest code from the remote before reading anything — do not proceed if the pull is blocked, explain why it is essential; (b) read the actual files, do not trust the other agent's summary or report; (c) verify claims (e.g. "Zobrist stripped", "tests pass") by inspecting the code directly, not by accepting the agent's word.
+
 ## Pickup Documents (CHECK AT START OF SESSION - UPDATE AT END)
 
   1. Each branch has a PICKUP.md in a docs subfolder relevant to the branch. If the location is not obvious, look in docs/ for a PICKUP.md rather than assuming a path.
