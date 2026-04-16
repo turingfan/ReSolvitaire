@@ -136,15 +136,16 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
                 // Caches the current state
                 bool is_new_state;
                 if (using_flat_cache) {
-                    state.set_payload_depth(static_cast<uint16_t>(
-                        min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
+                    if (state.computing_flat_payload)
+                        state.set_payload_depth(static_cast<uint16_t>(
+                            min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
                     if (state.uses_predecessor_cache()) {
                         state.set_predecessor_payload_depth(static_cast<uint8_t>(
                             min(res.depth, static_cast<uint64_t>(UINT8_MAX))));
                     }
                     is_new_state = cache.insert(state);
 #ifndef NDEBUG
-                    state.assert_payload_consistent();
+                    if (state.computing_flat_payload) state.assert_payload_consistent();
 #endif
                 } else {
                     auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);

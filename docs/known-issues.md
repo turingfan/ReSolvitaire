@@ -187,6 +187,20 @@ Concretely: `computing_flat_payload` (which means "the cache uses the payload as
 
 **Better design:** A separate compact descriptor-tracking array (not packed into `compact_state`) would decouple the "tracking store for hash deltas" from the "cache payload" role. This would allow hash-only mode to maintain descriptors without carrying full `compact_state` overhead, and would make the invariant explicit. Deferred until after the Phase 3 workpackage.
 
+### 10. `dual_cache` and Test Construction Always Enable Both Policy Flags
+
+**Status:** Intentional workaround; deferred clean-up  
+**Impact:** Minor — `DualCacheTest` game_states compute hash and payload even for games that would route to LRU in production; test correctness requires this
+
+`game_state` constructors accept an optional `cache_type` string (default `""`) that drives `computing_flat_hash` and `computing_flat_payload`. Two construction paths don't supply a `cache_type`:
+
+1. **Initializer-list constructor** — used heavily in unit tests; no cache context available.
+2. **`dual_cache` / `DualCacheTest`** — tests two caches simultaneously without specifying which type drives the game_state policy.
+
+When `cache_type == ""`, both `needs_flat_hash()` and `needs_flat_payload()` return `true` unconditionally, preserving the pre-P3 behaviour where hash and payload were always computed. This means `DualCacheTest` wastes a little work on the LRU side, but it is correct.
+
+**Ideal fix:** Pass explicit policy flags (or a `cache_type`) from `dual_cache` construction sites, computing the OR of the flags required by each constituent cache. Deferred — requires refactoring `dual_cache` and its test harness.
+
 ---
 
 ## Resolved Issues (for reference)

@@ -58,9 +58,9 @@ public:
     /* Constructors */
 
     // Creates a game state representation from a JSON doc
-    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options, bool force_lru = false);
+    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
     // Does the same from a seed
-    game_state(const sol_rules&, int seed, streamliner_options, bool force_lru = false);
+    game_state(const sol_rules&, int seed, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
     // Does the same but with an initialiser list (useful for testing)
     game_state(const sol_rules&, std::initializer_list<std::initializer_list<std::string>>);
 
@@ -75,6 +75,10 @@ public:
 
     std::vector<move> get_legal_moves(move = move(move::mtype::regular));
     boost::optional<move> get_dominance_move() const;
+
+    /* Runtime policy flags (public: read by solver to avoid dead work) */
+    bool computing_flat_hash;     // true: maintain Zobrist hash + payload descriptor store
+    bool computing_flat_payload;  // true: cache uses full compact_state payload as key
 
     /* State inspection */
 
@@ -103,7 +107,7 @@ public:
 private:
     /* Constructors (& helper function) */
 
-    explicit game_state(const sol_rules&, streamliner_options, bool force_lru = false);
+    explicit game_state(const sol_rules&, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
     static std::vector<card> gen_shuffled_deck(card::rank_t, bool, std::mt19937);
     template<class RandomIt, class URBG> static void shuffle(RandomIt, RandomIt, URBG&&);
 

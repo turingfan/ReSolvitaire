@@ -77,7 +77,8 @@ bool game_state::Z_pred_initialised = false;
 
 // A private constructor used by both of the public ones. Initializes all of the
 // piles and pile refs specified by the rules
-game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts_, bool force_lru)
+game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts_, bool force_lru,
+                       const std::string& cache_type)
         : rules(s_rules)
         , stream_opts(stream_opts_)
         , foundations_base(card::rank_t(1))
@@ -86,6 +87,10 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
         , waste(255)
         , hole (255) {
     std::memset(predecessor_array, 0, 52);
+    bool suit_sym = stream_opts_ == streamliner_options::SUIT_SYMMETRY
+                 || stream_opts_ == streamliner_options::BOTH;
+    computing_flat_hash    = needs_flat_hash(s_rules, suit_sym, force_lru, cache_type);
+    computing_flat_payload = needs_flat_payload(s_rules, suit_sym, force_lru, cache_type);
     // If there is a hole, creates pile
     if (rules.hole) {
         piles.emplace_back();
@@ -154,18 +159,17 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
         sequences.push_back(static_cast<pile::ref>(piles.size() - 1));
     }
 
-    // Initialize Zobrist hash and payload to zero (will be filled by subclasses)
-    zobrist_hash_value = 0;
-    bool suit_sym = stream_opts == streamliner_options::SUIT_SYMMETRY
-                 || stream_opts == streamliner_options::BOTH;
+    // Initialize Zobrist hash to zero (will be filled by init_payload_and_hash if needed)
+    if (computing_flat_hash) zobrist_hash_value = 0;
     skip_pile_ordering = use_new_cache(s_rules, suit_sym) && !force_lru;
 }
 
 // Constructs an initial game state from a JSON doc
-game_state::game_state(const sol_rules& s_rules, const Document& doc, streamliner_options s_opts, bool force_lru)
-        : game_state(s_rules, s_opts, force_lru) {
+game_state::game_state(const sol_rules& s_rules, const Document& doc, streamliner_options s_opts, bool force_lru,
+                       const std::string& cache_type)
+        : game_state(s_rules, s_opts, force_lru, cache_type) {
     deal_parser::parse(*this, doc);
-    init_payload_and_hash();
+    if (computing_flat_hash) init_payload_and_hash();
     init_initially_face_up();
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
@@ -174,8 +178,9 @@ game_state::game_state(const sol_rules& s_rules, const Document& doc, streamline
 }
 
 // Constructs an initial game state from a seed
-game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s_opts, bool force_lru)
-        : game_state(s_rules, s_opts, force_lru) {
+game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s_opts, bool force_lru,
+                       const std::string& cache_type)
+        : game_state(s_rules, s_opts, force_lru, cache_type) {
     auto rng = mt19937(seed);
     vector<card> deck = gen_shuffled_deck(rules.max_rank, rules.two_decks, rng);
 
@@ -300,7 +305,7 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
         }
     }
 
-    init_payload_and_hash();
+    if (computing_flat_hash) init_payload_and_hash();
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -346,7 +351,7 @@ game_state::game_state(const sol_rules& s_rules,
         }
     }
 
-    init_payload_and_hash();
+    if (computing_flat_hash) init_payload_and_hash();
     init_initially_face_up();
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
@@ -471,7 +476,7 @@ void game_state::make_regular_move(const move m) {
     }
     uint8_t old_ht = 255;
     if (m.to == hole) {
-        old_ht = payload.get_hole_top();
+        if (computing_flat_hash) old_ht = payload.get_hole_top();
     }
 
     // Pile operations
@@ -1094,7 +1099,7 @@ void game_state::init_initially_face_up() {
         if (piles[tab_ref].size() == 1 && !piles[tab_ref][0].is_face_down()) {
             card c = piles[tab_ref][0];
             uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
-            if (payload.get_descriptor(cid) == compact_state::STARTING) {
+            if (computing_flat_hash && payload.get_descriptor(cid) == compact_state::STARTING) {
                 update_card_descriptor(cid, compact_state::IN_SPACE);
             }
         }
@@ -1102,6 +1107,7 @@ void game_state::init_initially_face_up() {
 }
 
 void game_state::init_payload_and_hash() {
+    if (!computing_flat_hash) return;
     payload.clear();
     zobrist_hash_value = 0;
 
@@ -1194,22 +1200,28 @@ void game_state::init_payload_and_hash() {
 
 void game_state::update_card_descriptor(uint8_t cid, uint8_t new_desc) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
-    uint8_t old_desc = payload.get_descriptor(cid);
-#endif
-    payload.set_descriptor(cid, new_desc);
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    zobrist_hash_value ^= zobrist_hash::card_key(cid, old_desc)
-                        ^ zobrist_hash::card_key(cid, new_desc);
+    if (computing_flat_hash) {
+        uint8_t old_desc = payload.get_descriptor(cid);
+        payload.set_descriptor(cid, new_desc);
+        zobrist_hash_value ^= zobrist_hash::card_key(cid, old_desc)
+                            ^ zobrist_hash::card_key(cid, new_desc);
+    }
+#else
+    (void)cid; (void)new_desc;
 #endif
 }
 
 void game_state::update_foundation_in_hash(uint8_t suit, uint8_t new_rank) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
-    uint8_t old_rank = payload.get_foundation(suit);
-    zobrist_hash_value ^= zobrist_hash::foundation_key(suit, old_rank)
-                        ^ zobrist_hash::foundation_key(suit, new_rank);
+    if (computing_flat_hash) {
+        uint8_t old_rank = payload.get_foundation(suit);
+        payload.set_foundation(suit, new_rank);
+        zobrist_hash_value ^= zobrist_hash::foundation_key(suit, old_rank)
+                            ^ zobrist_hash::foundation_key(suit, new_rank);
+    }
+#else
+    (void)suit; (void)new_rank;
 #endif
-    payload.set_foundation(suit, new_rank);
 }
 
 uint8_t game_state::effective_waste_ptr() const {
@@ -1223,20 +1235,28 @@ uint8_t game_state::effective_waste_ptr() const {
 
 void game_state::update_waste_ptr_in_hash(uint8_t new_ptr) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
-    uint8_t old_ptr = payload.get_waste_ptr();
-    zobrist_hash_value ^= zobrist_hash::waste_key(old_ptr)
-                        ^ zobrist_hash::waste_key(new_ptr);
+    if (computing_flat_hash) {
+        uint8_t old_ptr = payload.get_waste_ptr();
+        payload.set_waste_ptr(new_ptr);
+        zobrist_hash_value ^= zobrist_hash::waste_key(old_ptr)
+                            ^ zobrist_hash::waste_key(new_ptr);
+    }
+#else
+    (void)new_ptr;
 #endif
-    payload.set_waste_ptr(new_ptr);
 }
 
 void game_state::update_hole_top_in_hash(uint8_t new_cid) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
-    uint8_t old_cid = payload.get_hole_top();
-    zobrist_hash_value ^= zobrist_hash::hole_top_key(old_cid)
-                        ^ zobrist_hash::hole_top_key(new_cid);
+    if (computing_flat_hash) {
+        uint8_t old_cid = payload.get_hole_top();
+        payload.set_hole_top(new_cid);
+        zobrist_hash_value ^= zobrist_hash::hole_top_key(old_cid)
+                            ^ zobrist_hash::hole_top_key(new_cid);
+    }
+#else
+    (void)new_cid;
 #endif
-    payload.set_hole_top(new_cid);
 }
 
 bool game_state::is_foundation_pile(pile::ref pr) const {
@@ -1298,10 +1318,11 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
 
 
 void game_state::set_payload_depth(uint16_t depth) {
-    payload.set_depth(depth);
+    if (computing_flat_payload) payload.set_depth(depth);
 }
 
 void game_state::compute_hash_from_scratch() {
+    if (!computing_flat_hash) return;
     // Recompute hash from the payload's current descriptor values
     zobrist_hash_value = 0;
     for (uint8_t c = 0; c < 52; ++c) {
@@ -1483,6 +1504,7 @@ compact_state game_state::recompute_payload_from_scratch() const {
 }
 
 void game_state::assert_payload_consistent() const {
+    if (!computing_flat_payload) return;
     // Cannot accurately recompute STARTING_FACE_UP for face-down games
     // (revealed cards are indistinguishable from originally-placed cards by
     // board inspection alone). Only assert for fully face-up games.

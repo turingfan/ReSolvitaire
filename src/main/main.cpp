@@ -287,7 +287,7 @@ pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout
                                         optional<int> seed, optional<const Document&> in_doc,
                                         bool force_lru,
                                         const std::string& cache_type) {
-    game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru) : game_state(rules, *in_doc, str_opts, force_lru);
+    game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru, cache_type) : game_state(rules, *in_doc, str_opts, force_lru, cache_type);
 
     bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                  || str_opts == game_state::streamliner_options::BOTH;
