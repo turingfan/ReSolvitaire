@@ -265,6 +265,21 @@ add_executable(solvitaire ${main} ${sources})
 set_property(TARGET solvitaire PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_link_libraries(solvitaire PRIVATE ${Boost_LIBRARIES})
 
+add_executable(solvitaire-flat     ${main} ${sources})
+target_compile_definitions(solvitaire-flat PRIVATE SOLVITAIRE_FLAT_ONLY)
+set_property(TARGET solvitaire-flat PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+target_link_libraries(solvitaire-flat PRIVATE ${Boost_LIBRARIES})
+
+add_executable(solvitaire-hash-only ${main} ${sources})
+target_compile_definitions(solvitaire-hash-only PRIVATE SOLVITAIRE_HASH_ONLY)
+set_property(TARGET solvitaire-hash-only PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+target_link_libraries(solvitaire-hash-only PRIVATE ${Boost_LIBRARIES})
+
+add_executable(solvitaire-lru       ${main} ${sources})
+target_compile_definitions(solvitaire-lru PRIVATE SOLVITAIRE_LRU_ONLY)
+set_property(TARGET solvitaire-lru PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+target_link_libraries(solvitaire-lru PRIVATE ${Boost_LIBRARIES})
+
 
 
 ###############################################################################

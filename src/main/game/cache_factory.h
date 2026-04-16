@@ -9,7 +9,7 @@
 #include <memory>
 #include <string>
 
-#ifdef USE_GENERIC_CACHE
+#if defined(USE_GENERIC_CACHE) || defined(SOLVITAIRE_FLAT_ONLY) || defined(SOLVITAIRE_HASH_ONLY)
 #include "generic_flat_cache.h"
 #endif
 
@@ -35,6 +35,34 @@ inline std::unique_ptr<cache_interface> make_cache(
         const std::string& cache_type = "auto",
         bool force_lru = false,
         bool suit_sym = false) {
+#if defined(SOLVITAIRE_LRU_ONLY)
+    // Games already routing to LRU in the standard binary run without restriction.
+    // Flat-cache-eligible games require --force-lru as an explicit benchmarking opt-in.
+    (void)cache_type;
+    if (use_new_cache(rules, suit_sym) && !force_lru)
+        throw std::runtime_error(
+            "lru-only binary: game is flat-cache-eligible; "
+            "pass --force-lru to run under lru_cache for benchmarking");
+    return std::make_unique<lru_cache>(gs, capacity);
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+    (void)gs;
+    (void)cache_type;
+    if (force_lru)
+        throw std::runtime_error("flat-only binary: --force-lru is not supported");
+    if (use_predecessor_cache(rules))
+        throw std::runtime_error("flat-only binary: game requires predecessor cache; use default solvitaire binary");
+    if (!use_new_cache(rules, suit_sym))
+        throw std::runtime_error("flat-only binary: game requires LRU cache; use default solvitaire binary");
+    return std::make_unique<generic_flat_cache<CompactStatePolicy>>(capacity);
+#elif defined(SOLVITAIRE_HASH_ONLY)
+    (void)gs;
+    (void)cache_type;
+    if (force_lru)
+        throw std::runtime_error("hash-only binary: --force-lru is not supported");
+    if (use_predecessor_cache(rules) || !use_new_cache(rules, suit_sym))
+        throw std::runtime_error("hash-only binary: game not eligible for hash-only cache");
+    return std::make_unique<generic_flat_cache<HashOnlyPolicy>>(capacity);
+#else
     if (cache_type == "hash-only") {
 #ifdef USE_GENERIC_CACHE
         return std::make_unique<generic_flat_cache<HashOnlyPolicy>>(capacity);
@@ -56,6 +84,7 @@ inline std::unique_ptr<cache_interface> make_cache(
     } else {
         return std::make_unique<lru_cache>(gs, capacity);
     }
+#endif
 }
 
 #endif // SOLVITAIRE_CACHE_FACTORY_H
