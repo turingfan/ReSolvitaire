@@ -4,7 +4,7 @@
 **Branch:** `feature/conditional-compilation` (to be created from `dev` after Phase 2 merges)
 **Plan:** `docs/refactoring/phase3_plan.md`
 **Workflow:** `docs/refactoring/phase2_3_workflow.md`
-**Status:** Phase 3 **not started**. Awaiting Phase 2 merge to `dev` and branch creation.
+**Status:** P3-A DONE; next session is P3-B.
 
 ---
 
@@ -70,7 +70,7 @@ Once Checkpoints 3 and 4 are green and the baseline is confirmed, Session 1 star
 
 | ID | Title | Key files | Status |
 |---|---|---|---|
-| P3-A | Add `SOLVITAIRE_COMPUTES_FLAT_HASH` guard macro + wrap Zobrist update calls | `src/main/game/search-state/game_state.cpp` | TODO |
+| P3-A | Add `SOLVITAIRE_COMPUTES_FLAT_HASH` guard macro + wrap Zobrist update calls | `src/main/game/search-state/game_state.cpp` | DONE (`c355f85`) |
 | P3-B | CMake variant targets + factory dispatch (incl. `--force-lru` validation) | `CMakeLists.txt`, `src/main/game/cache_factory.h` | TODO |
 | P3-C | Error handling for ineligible flag+game combinations in `main.cpp` | `src/main/main.cpp` | TODO |
 | P3-D | `compare_binaries.sh` validation harness | `scripts/compare_binaries.sh` (new), `CMakeLists.txt` | TODO |
