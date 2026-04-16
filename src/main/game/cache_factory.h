@@ -5,7 +5,9 @@
 #include "flat_cache.h"
 #include "global_cache.h"
 #include "hash_only_cache.h"
+#if !defined(SOLVITAIRE_LRU_ONLY)
 #include "predecessor_flat_cache.h"
+#endif
 #include <memory>
 #include <string>
 
@@ -36,9 +38,12 @@ inline std::unique_ptr<cache_interface> make_cache(
         bool force_lru = false,
         bool suit_sym = false) {
 #if defined(SOLVITAIRE_LRU_ONLY)
-    // Games already routing to LRU in the standard binary run without restriction.
+    // Accordion games use the predecessor flat cache — they are not LRU games.
     // Flat-cache-eligible games require --force-lru as an explicit benchmarking opt-in.
     (void)cache_type;
+    if (use_predecessor_cache(rules))
+        throw std::runtime_error(
+            "lru-only binary: accordion requires predecessor cache; use solvitaire-flat");
     if (use_new_cache(rules, suit_sym) && !force_lru)
         throw std::runtime_error(
             "lru-only binary: game is flat-cache-eligible; "
@@ -50,7 +55,7 @@ inline std::unique_ptr<cache_interface> make_cache(
     if (force_lru)
         throw std::runtime_error("flat-only binary: --force-lru is not supported");
     if (use_predecessor_cache(rules))
-        throw std::runtime_error("flat-only binary: game requires predecessor cache; use default solvitaire binary");
+        return std::make_unique<predecessor_flat_cache>(capacity);
     if (!use_new_cache(rules, suit_sym))
         throw std::runtime_error("flat-only binary: game requires LRU cache; use default solvitaire binary");
     return std::make_unique<generic_flat_cache<CompactStatePolicy>>(capacity);

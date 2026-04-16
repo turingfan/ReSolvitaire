@@ -1,3 +1,5 @@
+#if !defined(SOLVITAIRE_LRU_ONLY)
+
 #include "predecessor_flat_cache.h"
 #include "search-state/game_state.h"
 
@@ -206,3 +208,5 @@ std::string predecessor_flat_cache::get_diagnostic_info(const game_state& gs) co
 
     return res;
 }
+
+#endif // !defined(SOLVITAIRE_LRU_ONLY)

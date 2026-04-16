@@ -34,7 +34,9 @@
 #include "solver.h"
 #include "../game/move.h"
 #include "../game/flat_cache.h"
+#if !defined(SOLVITAIRE_LRU_ONLY)
 #include "../game/predecessor_flat_cache.h"
+#endif
 #include "../game/hash_only_cache.h"
 #include "../game/dual_cache.h"
 #include "../game/generic_flat_cache.h"
@@ -70,7 +72,9 @@ solver::solver(const game_state& gs, cache_interface& c)
         , root(move(move::mtype::null))
         , current_node() {
     using_flat_cache = (dynamic_cast<flat_cache*>(&cache) != nullptr)
+#if !defined(SOLVITAIRE_LRU_ONLY)
                     || (dynamic_cast<predecessor_flat_cache*>(&cache) != nullptr)
+#endif
                     || (dynamic_cast<hash_only_cache*>(&cache) != nullptr)
                     || (dynamic_cast<dual_cache*>(&cache) != nullptr)
                     || (dynamic_cast<generic_flat_cache_base*>(&cache) != nullptr);
