@@ -170,11 +170,22 @@ Investigation commit: `4c4b022`
 
 In the default `solvitaire` binary, `game_state` currently computes the Zobrist descriptor hash and `compact_state` payload on every move regardless of which cache is in use at runtime. For the ~40% of game types that route to `lru_cache`, this work is entirely dead — `lru_cache` never reads the hash or payload.
 
-**Short-term fix (Phase 3):** Two boolean flags set once at game_state construction: `computing_flat_hash` (true for all flat-cache variants including hash-only and predecessor) and `computing_flat_payload` (true for flat and predecessor, false for hash-only and LRU). Hash updates are guarded by the first; payload updates by the second. Both are stable branches that the CPU predicts perfectly after the first iteration of any game.
+**Short-term fix (Phase 3):** Two boolean flags set once at game_state construction: `computing_flat_hash` (true for all flat-cache variants including hash-only and predecessor) and `computing_flat_payload` (true for flat and predecessor, false for hash-only and LRU). All hash updates and all `payload.set_*` calls (which maintain descriptor state needed for hash XOR) are guarded by `computing_flat_hash`. Only cache-key use of the payload (`set_payload_depth`, `assert_payload_consistent`) is guarded by `computing_flat_payload`. Both are stable branches that the CPU predicts perfectly after the first iteration of any game.
 
 **Long-term fix (deferred):** Template `game_state_impl<Policy>` on a hash/payload policy struct. Four concrete policies (Flat, HashOnly, Predecessor, LRU) are instantiated in the default binary. The runtime dispatch happens once per solve at the `solve_game()` entry point; inside the DFS loop there are zero branches and zero dead stores. The variant binaries (`solvitaire-flat` etc.) become trivial typedef selections of a single policy. Full details, costs, and migration strategy are in `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`.
 
 **Prerequisite for long-term fix:** Phase 3 workpackage complete. The boolean guards introduced in the short-term fix mark every site that will become a policy dispatch call, making the migration mechanical.
+
+### 9. Descriptor State Tracked Only Inside `compact_state payload`
+
+**Status:** Design constraint; no short-term fix planned  
+**Impact:** Code clarity — `payload` serves a dual role: (1) cache key stored in `flat_cache`, and (2) internal tracking store for old descriptor values needed to compute Zobrist XOR deltas
+
+The 52 card descriptors (and foundation/hole/waste header fields) used to compute the incremental Zobrist hash have no storage of their own — they live exclusively inside `compact_state payload`. Every `update_*` helper reads the old value via `payload.get_*()` before XOR-ing, then writes the new value via `payload.set_*()`. This means `payload` must be maintained (cleared and incrementally updated) even in `hash_only_cache` mode, where the cache itself never stores or reads the payload.
+
+Concretely: `computing_flat_payload` (which means "the cache uses the payload as a key") is a strict subset of `computing_flat_hash`, and all `payload.set_*` calls must be guarded by `computing_flat_hash` rather than `computing_flat_payload`. Any refactor that tries to skip payload maintenance for hash-only games will silently break incremental hash correctness.
+
+**Better design:** A separate compact descriptor-tracking array (not packed into `compact_state`) would decouple the "tracking store for hash deltas" from the "cache payload" role. This would allow hash-only mode to maintain descriptors without carrying full `compact_state` overhead, and would make the invariant explicit. Deferred until after the Phase 3 workpackage.
 
 ---
 
