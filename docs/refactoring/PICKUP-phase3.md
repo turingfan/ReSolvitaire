@@ -4,7 +4,7 @@
 **Branch:** `feature/conditional-compilation` (to be created from `dev` after Phase 2 merges)
 **Plan:** `docs/refactoring/phase3_plan.md`
 **Workflow:** `docs/refactoring/phase2_3_workflow.md`
-**Status:** P3-D DONE; next session is P3-B-fix-1 then P3-B-fix-2 (see §Bugs Found and §Commits Planned).
+**Status:** P3-B-fix-1 DONE (`5e65260`); P3-B-fix-2 Commit 1 DONE (`39e4a82`); next is P3-B-fix-2 Commit 2 (awaiting Ian's explicit go).
 
 ---
 
@@ -92,8 +92,8 @@ Long-term architectural solution (templated game_state with single runtime dispa
 | P3-B | CMake variant targets + factory dispatch (incl. `--force-lru` validation) | `CMakeLists.txt`, `cache_factory.h` | DONE (`b0e418f`) — **has bugs, see fixes below** |
 | P3-C | Error handling for ineligible flag+game combinations in `main.cpp` | `main.cpp` | DONE (`a62f126`) |
 | P3-D | `compare_binaries.sh` validation harness | `scripts/compare_binaries.sh`, `CMakeLists.txt` | DONE (`5d0ccb8`, timeout fix `a025bd1`) |
-| **P3-B-fix-1** | **Fix predecessor routing + strip from LRU binary** | `cache_factory.h`, `predecessor_flat_cache.cpp`, `solver.cpp` | **LOCAL ONLY — commit this first** |
-| **P3-B-fix-2 (Commit 1)** | **Runtime boolean guards in default binary** | `cache_interface.h`, `game_state.h`, `game_state.cpp`, `solver.cpp` | TODO |
+| **P3-B-fix-1** | **Fix predecessor routing + strip from LRU binary** | `cache_factory.h`, `predecessor_flat_cache.cpp`, `solver.cpp` | DONE (`5e65260`) |
+| **P3-B-fix-2 (Commit 1)** | **Runtime boolean guards in default binary** | `cache_interface.h`, `game_state.h`, `game_state.cpp`, `solver.cpp` | DONE (`39e4a82`) |
 | **P3-B-fix-2 (Commit 2)** | **Compile-time guards for variant binaries** | `game_state.h`, `game_state.cpp`, flat-cache `.cpp` files, `solver.cpp`, `cache_factory.h` | TODO |
 | P3-E | Regression Level 1 per variant binary | `CMakeLists.txt`, `regression_runner.py` | TODO — see §P3-E Design below |
 
