@@ -141,6 +141,9 @@ set(sources_test_unit
         src/test/unit_tests/mismatch_diagnostic.cpp
         src/test/unit_tests/predecessor_cache_test.cpp
         src/test/unit_tests/predecessor_dual_cache_test.cpp
+        src/test/unit_tests/generic_flat_cache_compile_test.cpp
+        src/test/unit_tests/generic_flat_cache_test.cpp
+        src/test/unit_tests/generic_flat_dual_cache_test.cpp
 )
 
 set(sources_test_helper
@@ -235,6 +238,11 @@ endif()
 
 add_compile_options(${ALL_WARNING_FLAGS})
 add_compile_definitions(BOOST_LOG_DYN_LINK)
+
+option(USE_GENERIC_CACHE "Route cache_factory through generic_flat_cache<Policy>" OFF)
+if(USE_GENERIC_CACHE)
+    add_compile_definitions(USE_GENERIC_CACHE)
+endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 

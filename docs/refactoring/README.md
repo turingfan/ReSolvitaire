@@ -7,11 +7,9 @@ Canonical home for the caching-refactor plan and its per-phase working documents
 | File | Purpose |
 |---|---|
 | `execution_strategy.md` | Master strategy covering all phases. Background reference; rarely edited. |
-| `PICKUP.md` | Phase 1 final status. Remains until Phase 2 starts, then archived. |
-| `phase2_plan.md` | Phase 2 (template cache unification) — detailed plan. |
 | `phase3_plan.md` | Phase 3 (conditional compilation) — detailed plan. |
 | `phase2_3_workflow.md` | Branch strategy, session cadence, PICKUP protocol, merge gates. |
-| `PICKUP-phase2.md` | Phase 2 working pickup. Updated at the end of every session. |
+| `PICKUP-phase3.md` | Phase 3 working pickup. Updated at the end of every session. |
 
 ## `archive/`
 
@@ -21,11 +19,14 @@ Historical documents from completed or superseded phases. Kept for traceability;
 |---|---|
 | `phase0_plan.md` | Phase 0 (metamorphic testing infra) — complete |
 | `phase1_plan.md` | Phase 1 (pile-first undo) — complete |
+| `phase2_plan.md` | Phase 2 (template cache unification) — complete |
+| `PICKUP-phase2-final.md` | Phase 2 final pickup — all P2-A through P2-E done |
 | `descriptor_undo_analysis.md` | Analysis that underpinned the Phase 1 descriptor recovery logic — implemented |
 | `zobrist_undo_simplification.md` | Original Phase 1 proposal — implemented |
 | `PROMPT-2026-04-11-1638.md` | Historical session prompt |
 | `PROMPT-2026-04-13-CommitC.md` | Historical session prompt (Phase 1 Commit C) |
 | `PROMPT-2026-04-13-CommitD.md` | Historical session prompt (Phase 1 Commit D) |
+| `PROMPT-2026-04-14-P2-A.md` | Historical session prompt (Phase 2 Commit A) |
 
 ## Conventions
 
