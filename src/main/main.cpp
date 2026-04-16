@@ -101,35 +101,43 @@ int main(int argc, const char* argv[]) {
         return EXIT_SUCCESS;
     }
 
-    // If the user has asked for a solvability percentage, calculates it
-    if (clh.get_solvability() > 0) {
-        solvability_calc solv_c(*rules, clh.get_cache_capacity(), clh.get_cache_type());
-        solv_c.calculate_solvability_percentage(clh.get_timeout(), clh.get_solvability(), clh.get_cores(),
-                                                clh.get_streamliners(), clh.get_resume());
-    }
-    // If the benchmark option has been supplied, generates it
-    if (!clh.get_benchmark_json().empty()) {
-        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_cache_type());
-        return EXIT_SUCCESS;
-    }
+    try {
+        // If the user has asked for a solvability percentage, calculates it
+        if (clh.get_solvability() > 0) {
+            solvability_calc solv_c(*rules, clh.get_cache_capacity(), clh.get_cache_type());
+            solv_c.calculate_solvability_percentage(clh.get_timeout(), clh.get_solvability(), clh.get_cores(),
+                                                    clh.get_streamliners(), clh.get_resume());
+        }
+        // If the benchmark option has been supplied, generates it
+        if (!clh.get_benchmark_json().empty()) {
+            benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_cache_type());
+            return EXIT_SUCCESS;
+        }
 
-    if (clh.get_benchmark() || clh.get_is_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_force_lru_cache(), clh.get_cache_type());
-        return EXIT_SUCCESS;
-    }
-    
-    // If a random deal seed has been supplied, solves it
-    if (clh.get_random_deal() != -1) {
-        solve_random_game(clh.get_random_deal(), *rules, clh);
-    }
-    // Otherwise there are supplied input files which should be solved
-    else {
-        const vector<string> input_files = clh.get_input_files();
+        if (clh.get_benchmark() || clh.get_is_benchmark()) {
+            benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_force_lru_cache(), clh.get_cache_type());
+            return EXIT_SUCCESS;
+        }
+        
+        // If a random deal seed has been supplied, solves it
+        if (clh.get_random_deal() != -1) {
+            solve_random_game(clh.get_random_deal(), *rules, clh);
+        }
+        // Otherwise there are supplied input files which should be solved
+        else {
+            const vector<string> input_files = clh.get_input_files();
 
-        // If there are no input files, solve a random deal based on the
-        // supplied seed
-        assert(!input_files.empty());
-        solve_input_files(input_files, *rules, clh);
+            // If there are no input files, solve a random deal based on the
+            // supplied seed
+            assert(!input_files.empty());
+            solve_input_files(input_files, *rules, clh);
+        }
+    } catch (const std::runtime_error& error) {
+        LOG_ERROR(error.what());
+        return EXIT_FAILURE;
+    } catch (const std::exception& error) {
+        LOG_ERROR("Unexpected error: " << error.what());
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
@@ -171,10 +179,8 @@ void solve_input_files(const vector<string> input_files, const sol_rules& rules,
                 LOG_INFO ("Attempting to solve " << input_file << "...");
             solve_game(rules, clh, none, in_doc, input_file);
 
-        } catch (const runtime_error& error) {
-            string errmsg = "Error parsing deal file: ";
-            errmsg += error.what();
-            LOG_ERROR(errmsg);
+        } catch (const std::runtime_error& error) {
+            LOG_ERROR(error.what());
         }
     }
 }
