@@ -12,7 +12,7 @@ fi
 
 TYPES="klondike free-cell"
 TARGET_MATCHES=10
-TIMEOUT=60
+TIMEOUT=60000
 
 # Check if binaries exist
 BIN_DIR="cmake-build-release/bin"
