@@ -310,6 +310,11 @@ add_test(NAME unit_tests_full
         COMMAND "$<TARGET_FILE:unit_tests>"
 )
 
+add_test(NAME compare_binaries
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_binaries.sh"
+)
+
 add_test(NAME trailing_space
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_output_format.py"
