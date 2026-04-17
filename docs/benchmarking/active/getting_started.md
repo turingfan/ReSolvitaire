@@ -1,64 +1,152 @@
-# Getting Started: Remote Benchmarking & Analysis
+# Getting Started: Benchmarking & Analysis
 
-This guide covers the automated workflow for setting up a remote compute instance, running parallelized benchmarks, and performing comparative statistical analysis.
+This guide covers two workflows: running benchmarks locally, and running them on a
+remote compute server from your local machine.
 
-## 1. Remote Environment Setup
+---
 
-The `setup_remote.sh` script prepares a fresh Linux or macOS machine for benchmarking by installing dependencies (CMake, Boost, R, Python) and building the solver in Release mode.
+## Local Workflow
 
-```bash
-# Clone and build for the first time
-bash scripts/setup_remote.sh --repo https://github.com/turingfan/ReSolvitaire.git --branch dev
-
-# Or just update and rebuild an existing directory
-bash scripts/setup_remote.sh --dir ~/ReSolvitaire-caching
-```
-
-## 2. Orchestrating Parallel Benchmarks
-
-Instead of running long sequences of seeds manually, use `benchmark_orchestrator.py`. This script splits the workload into parallel chunks, taking full advantage of many-core CPUs.
-
-### Basic Invocations
-- **Quick Validation**: Runs a subset of 5 games (50 seeds each) to check system performance.
-  ```bash
-  python3 scripts/benchmark_orchestrator.py --solver cmake-build-release/bin/solvitaire --quick
-  ```
-- **Full Run**: Executes the full production suite across all supported game types.
-  ```bash
-  python3 scripts/benchmark_orchestrator.py --solver cmake-build-release/bin/solvitaire --workers 32
-  ```
-
-### Advanced Controls
-- **Compare Caches**: Automatically runs benchmarks for multiple configurations (e.g., `auto`, `hash-only`, and `force-lru`).
-  ```bash
-  python3 scripts/benchmark_orchestrator.py --solver [PATH] --configs auto hash-only
-  ```
-- **Custom Passthrough**: Pass any arbitrary solver flags (like capacity) using the `--` separator.
-  ```bash
-  python3 scripts/benchmark_orchestrator.py --solver [PATH] -- --cache-capacity 4294967296
-  ```
-
-## 3. Results Collection
-
-Once completed, the orchestrator produces a `combined.csv` file in the `--output-dir` (default: `results/remote`). Use the helper script to bundle these for transfer:
+### 1. Build
 
 ```bash
-bash scripts/collect_results.sh results/remote
-# Then run the 'scp' command printed by the script on your local machine.
+./build.sh --release
 ```
 
-## 4. Statistical Analysis
-
-Comparative analysis is handled by `analysis/compare_labels.R`. It groups results by the `--label` provided during benchmarking and calculates key metrics.
+This builds the default `solvitaire` binary. To also build variant binaries:
 
 ```bash
-# Compare all labels in the dataset relative to 'auto'
-Rscript analysis/compare_labels.R results/combined.csv
+cmake --build cmake-build-release --target solvitaire-flat
+cmake --build cmake-build-release --target solvitaire-hash-only
+cmake --build cmake-build-release --target solvitaire-lru
 ```
 
-### Metrics Explained
-- **Time Geo-Mean**: Central tendency of wall-clock time (highly resistant to outliers).
-- **PAR2 Score**: Penalizes timeouts/unsolvable instances at 2x the timeout limit.
-- **Aggregate NPS**: Total nodes searched / total time (global throughput).
-- **Result Diffs**: Count of instances where solution outcomes mismatched between labels.
-- **Node-Reduction / Speedup**: Ratios relative to the baseline (e.g., 1.5x means 50% faster).
+### 2. Run benchmarks
+
+**Quick validation** (5 games, 50 seeds each):
+```bash
+python3 scripts/benchmark_orchestrator.py \
+    --solver cmake-build-release/bin/solvitaire \
+    --workers 4 --quick \
+    --output-dir results/$(date +%Y%m%d)_quick
+```
+
+**Full run** (all game types, 200 seeds each):
+```bash
+python3 scripts/benchmark_orchestrator.py \
+    --solver cmake-build-release/bin/solvitaire \
+    --workers $(sysctl -n hw.logicalcpu 2>/dev/null || nproc) \
+    --output-dir results/$(date +%Y%m%d)
+```
+
+### 3. Analyse results
+
+```bash
+# Summary of a single run
+Rscript analysis/summary.R results/20260407/combined.csv
+
+# Compare cache configurations by label
+Rscript analysis/compare_labels.R results/20260407/combined.csv
+
+# Baseline vs. current comparison
+Rscript analysis/benchmark.R \
+    --baseline results/baseline.csv \
+    --current  results/20260407/combined.csv
+```
+
+---
+
+## Remote Workflow (SSH from local machine)
+
+All remote scripts are run **from your local machine**. They SSH into the remote
+and do the work there; you never need to log in manually.
+
+### 1. Set up the remote (first time)
+
+```bash
+bash scripts/setup_remote.sh \
+    --host user@server \
+    --repo https://github.com/turingfan/ReSolvitaire.git
+```
+
+This clones the `dev` branch, installs dependencies, and builds all four variant
+binaries. It is idempotent — safe to rerun to pull the latest and rebuild:
+
+```bash
+bash scripts/setup_remote.sh --host user@server
+```
+
+Options: `--branch BRANCH`, `--commit SHA`, `--dir PATH` (remote working directory,
+default `~/ReSolvitaire-caching`).
+
+### 2. Start a benchmark run
+
+SSH in to kick off the orchestrator (or use `nohup`/`tmux` for long runs):
+
+```bash
+ssh user@server "cd ~/ReSolvitaire-caching && nohup python3 scripts/benchmark_orchestrator.py \
+    --solver cmake-build-release/bin/solvitaire \
+    --workers \$(nproc) \
+    --output-dir results/\$(date +%Y%m%d) \
+    > results/run.log 2>&1 &"
+```
+
+Or for a quick validation before committing to the full run:
+
+```bash
+ssh user@server "cd ~/ReSolvitaire-caching && python3 scripts/benchmark_orchestrator.py \
+    --solver cmake-build-release/bin/solvitaire \
+    --workers \$(nproc) --quick \
+    --output-dir results/\$(date +%Y%m%d)_quick"
+```
+
+### 3. Collect results
+
+Once the run is complete, fetch the results to your local machine:
+
+```bash
+bash scripts/collect_results.sh --host user@server
+```
+
+This tars up `results/` on the remote and scp's it to `~/Downloads/`. Options:
+
+- `--remote-dir results/20260407` — collect a specific subdirectory
+- `--local-dir ~/benchmarks` — save to a different local path
+- `--remote-root ~/ReSolvitaire-caching` — if you used a non-default `--dir`
+
+### 4. Analyse locally
+
+```bash
+tar xzf ~/Downloads/benchmark_server_*.tar.gz -C /tmp/
+Rscript analysis/summary.R /tmp/results/combined.csv
+Rscript analysis/compare_labels.R /tmp/results/combined.csv
+```
+
+---
+
+## Benchmark Orchestrator Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--solver` | (required) | Path to solvitaire binary |
+| `--workers` | CPU count | Parallel worker processes |
+| `--output-dir` | `results/remote` | Where to write CSV/JSON output |
+| `--quick` | off | Small subset (5 games, 50 seeds) for validation |
+| `--configs` | `auto hash-only force-lru` | Cache configurations to compare |
+
+Pass arbitrary solver flags after `--`:
+```bash
+python3 scripts/benchmark_orchestrator.py --solver ... -- --cache-capacity 4294967296
+```
+
+---
+
+## Metrics (compare_labels.R)
+
+| Metric | Meaning |
+|---|---|
+| Time Geo-Mean | Central tendency of wall-clock time (resistant to outliers) |
+| PAR2 Score | Timeouts penalised at 2× the timeout limit |
+| Aggregate NPS | Total nodes / total time — global throughput |
+| Result Diffs | Instances where solution outcome differed between labels |
+| Speedup | Ratio relative to baseline label (1.5× = 50% faster) |
