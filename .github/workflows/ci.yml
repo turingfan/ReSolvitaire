@@ -41,6 +41,12 @@ jobs:
       - name: Build release
         run: ./build.sh --release
 
+      - name: Build variant binaries
+        run: |
+          cmake --build cmake-build-release --target solvitaire-flat
+          cmake --build cmake-build-release --target solvitaire-hash-only
+          cmake --build cmake-build-release --target solvitaire-lru
+
       - name: Build unit tests
         run: ./build.sh --release --unit-tests
 
