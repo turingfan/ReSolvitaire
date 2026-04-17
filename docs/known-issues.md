@@ -203,6 +203,21 @@ When `cache_type == ""`, both `needs_flat_hash()` and `needs_flat_payload()` ret
 
 ---
 
+### 9. Per-Variant Oracles for `solvitaire-hash-only` Node Counts (P3-E, Option B deferred)
+
+**Status:** Deferred — `solvitaire-hash-only` regression targets use `--compare-outcome-only`
+**Impact:** Node counts for hash-only runs are not validated against an oracle
+
+`hash_only_cache` uses 16-byte clusters (hash only, no payload / descriptor) and therefore explores states in a different order than `flat_cache`. The shared Level 1–5 oracles were generated against the default binary (which uses `flat_cache` for eligible games) so their `states_searched` values do not match hash-only runs.
+
+Current workaround: all `regression_levelN_hash_only` CTest targets pass `--compare-outcome-only`, which validates outcomes (solved/unsolvable/timeout) but ignores node counts.
+
+**Option B (full per-variant oracle generation):** Generate a separate oracle for each variant binary at each regression level (`tests/oracles/level1_hash_only.json`, etc.) using `regression_runner.py --regenerate`. This would enable node-count regression for each variant. Deferred to a future work package; also applicable to `solvitaire-flat` and `solvitaire-lru` if desired.
+
+This is a general need: any architectural change that legitimately alters DFS traversal order (new cache, new eviction policy, compile-time flag) benefits from per-configuration oracles.
+
+---
+
 ## Resolved Issues (for reference)
 
 The following issues were open during development and are now fixed. Full details

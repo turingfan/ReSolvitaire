@@ -48,7 +48,7 @@ typedef std::chrono::milliseconds millisec;
 
 const optional<sol_rules> gen_rules(command_line_helper&);
 void solve_random_game(int, const sol_rules&, command_line_helper&);
-void solve_input_files(vector<string>, const sol_rules&, command_line_helper&);
+bool solve_input_files(vector<string>, const sol_rules&, command_line_helper&);
 void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name);
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
@@ -130,7 +130,8 @@ int main(int argc, const char* argv[]) {
             // If there are no input files, solve a random deal based on the
             // supplied seed
             assert(!input_files.empty());
-            solve_input_files(input_files, *rules, clh);
+            if (solve_input_files(input_files, *rules, clh))
+                return EXIT_FAILURE;
         }
     } catch (const std::runtime_error& error) {
         LOG_ERROR(error.what());
@@ -169,7 +170,8 @@ void solve_random_game(int seed, const sol_rules& rules, command_line_helper& cl
     solve_game(rules, clh, seed, none, "seed_" + to_string(seed));
 }
 
-void solve_input_files(const vector<string> input_files, const sol_rules& rules, command_line_helper& clh) {
+bool solve_input_files(const vector<string> input_files, const sol_rules& rules, command_line_helper& clh) {
+    bool had_error = false;
     for (const string& input_file : input_files) {
         try {
             // Reads in the input file to a json doc
@@ -181,8 +183,10 @@ void solve_input_files(const vector<string> input_files, const sol_rules& rules,
 
         } catch (const std::runtime_error& error) {
             LOG_ERROR(error.what());
+            had_error = true;
         }
     }
+    return had_error;
 }
 
 void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name) {

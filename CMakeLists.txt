@@ -374,6 +374,180 @@ add_test(NAME regression_level5
 set_tests_properties(regression_level5 PROPERTIES TIMEOUT 450000)
 
 ###############################################################################
+## Variant-binary regression targets                                         ##
+##                                                                           ##
+## 15 targets: regression_levelN_{flat,hash_only,lru} for N=1..5            ##
+##                                                                           ##
+## *_flat        --skip-ineligible                                           ##
+##   Flat cache handles flat-eligible + accordion (predecessor_flat_cache).  ##
+##   Suit-sym, sequence, and 2-deck games are rejected by the binary and     ##
+##   logged as SKIP.                                                         ##
+##                                                                           ##
+## *_hash_only   --skip-ineligible --compare-outcome-only                   ##
+##   Hash-only cache handles the same eligible set as flat but node counts   ##
+##   differ (different collision behaviour, no payload). Outcome checked     ##
+##   only; see docs/known-issues.md for future per-variant oracle task.      ##
+##                                                                           ##
+## *_lru         --force-lru --skip-ineligible --compare-outcome-only       ##
+##   LRU cache handles suit-sym, 2-deck, sequence natively.                 ##
+##   Flat-eligible games forced to LRU via --force-lru (nodes will differ). ##
+##   Accordion games rejected by the binary -> SKIP.                        ##
+##   Outcome-only comparison throughout.                                     ##
+###############################################################################
+
+# Level 1 — JSON-based; needs --instances
+add_test(NAME regression_level1_flat
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-flat>"
+        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
+        "--skip-ineligible"
+)
+set_tests_properties(regression_level1_flat PROPERTIES TIMEOUT 900)
+
+add_test(NAME regression_level1_hash_only
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-hash-only>"
+        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
+        "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level1_hash_only PROPERTIES TIMEOUT 900)
+
+add_test(NAME regression_level1_lru
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-lru>"
+        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
+        "--force-lru" "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level1_lru PROPERTIES TIMEOUT 900)
+
+# Levels 2-5 — seed-based; no --instances
+add_test(NAME regression_level2_flat
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-flat>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
+        "--max-instance-timeout-ms" "60000"
+        "--skip-ineligible"
+)
+set_tests_properties(regression_level2_flat PROPERTIES TIMEOUT 15000)
+
+add_test(NAME regression_level2_hash_only
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-hash-only>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
+        "--max-instance-timeout-ms" "60000"
+        "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level2_hash_only PROPERTIES TIMEOUT 15000)
+
+add_test(NAME regression_level2_lru
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-lru>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
+        "--max-instance-timeout-ms" "60000"
+        "--force-lru" "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level2_lru PROPERTIES TIMEOUT 15000)
+
+add_test(NAME regression_level3_flat
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-flat>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
+        "--max-instance-timeout-ms" "120000"
+        "--skip-ineligible"
+)
+set_tests_properties(regression_level3_flat PROPERTIES TIMEOUT 30000)
+
+add_test(NAME regression_level3_hash_only
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-hash-only>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
+        "--max-instance-timeout-ms" "120000"
+        "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level3_hash_only PROPERTIES TIMEOUT 30000)
+
+add_test(NAME regression_level3_lru
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-lru>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
+        "--max-instance-timeout-ms" "120000"
+        "--force-lru" "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level3_lru PROPERTIES TIMEOUT 30000)
+
+add_test(NAME regression_level4_flat
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-flat>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level4.json"
+        "--max-instance-timeout-ms" "600000"
+        "--skip-ineligible"
+)
+set_tests_properties(regression_level4_flat PROPERTIES TIMEOUT 150000)
+
+add_test(NAME regression_level4_hash_only
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-hash-only>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level4.json"
+        "--max-instance-timeout-ms" "600000"
+        "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level4_hash_only PROPERTIES TIMEOUT 150000)
+
+add_test(NAME regression_level4_lru
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-lru>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level4.json"
+        "--max-instance-timeout-ms" "600000"
+        "--force-lru" "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level4_lru PROPERTIES TIMEOUT 150000)
+
+add_test(NAME regression_level5_flat
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-flat>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level5.json"
+        "--max-instance-timeout-ms" "1800000"
+        "--skip-ineligible"
+)
+set_tests_properties(regression_level5_flat PROPERTIES TIMEOUT 450000)
+
+add_test(NAME regression_level5_hash_only
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-hash-only>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level5.json"
+        "--max-instance-timeout-ms" "1800000"
+        "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level5_hash_only PROPERTIES TIMEOUT 450000)
+
+add_test(NAME regression_level5_lru
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-lru>"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level5.json"
+        "--max-instance-timeout-ms" "1800000"
+        "--force-lru" "--skip-ineligible" "--compare-outcome-only"
+)
+set_tests_properties(regression_level5_lru PROPERTIES TIMEOUT 450000)
+
+###############################################################################
 ## packaging ##################################################################
 ###############################################################################
 
