@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
 """
-benchmark_orchestrator.py — Parallel multi-game, multi-cache benchmark orchestrator.
+benchmark_orchestrator.py — Parallel multi-game, multi-solver benchmark orchestrator.
 
 Wraps the core `run_benchmark.py` script. It partitions the benchmark configurations
 and seed ranges into chunks, invoking `run_benchmark.py` across multiple parallel
 workers to maximize throughput on many-core machines.
 
-Features:
-- Seamless support for `--cache-type hash-only`, `--force-lru`, and `auto` default configurations.
-- Filters invalid cache types for specific games (e.g. hash-only on Predecessor games).
-- Merges all output chunk CSVs and JSONs automatically.
+Usage — variant binaries (recommended):
+    python3 scripts/benchmark_orchestrator.py \
+        --solver-dir cmake-build-release/bin \
+        --workers 32 \
+        --output-dir results/$(date +%Y%m%d)
 
-Usage:
+Usage — single binary with cache-type flags (legacy):
     python3 scripts/benchmark_orchestrator.py \
         --solver cmake-build-release/bin/solvitaire \
         --workers 32 \
-        --output-dir results/$(date +%Y%m%d) \
-        [--quick]   # subset of games, fewer seeds
+        --output-dir results/$(date +%Y%m%d)
+
+In --solver-dir mode, each variant binary (solvitaire, solvitaire-flat,
+solvitaire-hash-only, solvitaire-lru) is run directly as its own configuration.
+Ineligible game/solver combinations are skipped gracefully.
+Use --solvers to restrict to a subset of the discovered binaries.
 """
 
 import argparse
@@ -57,26 +62,36 @@ GAME_CONFIGS_QUICK = [
     ("golf",            (1, 50), 15000, "none",             ""),
 ]
 
-CACHE_CONFIGS = [
-    ("auto",       []),
-    ("hash-only",  ["--cache-type", "hash-only"]),
-    ("force-lru",  ["--force-lru"]),
+# ---------------------------------------------------------------------------
+# Solver configurations
+# ---------------------------------------------------------------------------
+# In --solver-dir mode each entry maps a label to:
+#   (binary_name, extra_solver_args, skip_ineligible)
+# binary_name is looked up in --solver-dir.
+# skip_ineligible=True passes --skip-ineligible to run_benchmark.py so
+# ineligible game/solver combos are skipped gracefully rather than erroring.
+#
+# In legacy --solver mode, LEGACY_CACHE_CONFIGS is used instead.
+SOLVER_CONFIGS = [
+    ("default",   "solvitaire",           [],              False),
+    ("flat",      "solvitaire-flat",      [],              True),
+    ("hash-only", "solvitaire-hash-only", [],              True),
+    ("lru",       "solvitaire-lru",       ["--force-lru"], True),
 ]
 
-HASH_ONLY_INELIGIBLE = {
-    "accordion",
-    "spider",
-    "spider-one-suit",
-    "spider-two-suits",
-}
+# Legacy mode: single binary, different flag combinations.
+LEGACY_CACHE_CONFIGS = [
+    ("auto",       [],                          False),
+    ("hash-only",  ["--cache-type", "hash-only"], True),
+    ("force-lru",  ["--force-lru"],               False),
+]
 
 
 def run_chunk(args):
     """Worker function: calls run_benchmark.py for a chunk of seeds."""
-    run_bench_script, solver, game_type, seed_start, seed_end, timeout_ms, streamliner, cache_name, cache_args, kwargs = args
+    run_bench_script, solver, game_type, seed_start, seed_end, timeout_ms, streamliner, label, solver_args, skip_ineligible, kwargs = args
 
-    # Write chunk data locally, let master stitch them together
-    chunk_base = os.path.join(kwargs["output_dir"], f"chunk_{game_type}_{cache_name}_{seed_start}_{seed_end}")
+    chunk_base = os.path.join(kwargs["output_dir"], f"chunk_{game_type}_{label}_{seed_start}_{seed_end}")
     chunk_csv = f"{chunk_base}.csv"
     chunk_json = f"{chunk_base}.json"
 
@@ -87,7 +102,8 @@ def run_chunk(args):
         "--seeds", f"{seed_start}-{seed_end}",
         "--output", chunk_csv,
         "--output-json", chunk_json,
-        "--no-summary"
+        "--no-summary",
+        "--label", label,
     ]
     if streamliner and streamliner != "none":
         cmd.extend(["--streamliner", streamliner])
@@ -95,19 +111,16 @@ def run_chunk(args):
         cmd.extend(["--timeout", str(timeout_ms)])
     if kwargs.get("cache_capacity"):
         cmd.extend(["--cache-capacity", str(kwargs["cache_capacity"])])
-
-    # Important: append label to know which config produced this
-    cmd.extend(["--label", cache_name])
-
-    # Add solver passthrough args
-    if cache_args:
+    if skip_ineligible:
+        cmd.append("--skip-ineligible")
+    if solver_args:
         cmd.append("--")
-        cmd.extend(cache_args)
+        cmd.extend(solver_args)
 
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode != 0:
-            print(f"[Error] Chunk failed ({game_type} seeds {seed_start}-{seed_end} {cache_name}):", file=sys.stderr)
+            print(f"[Error] Chunk failed ({game_type} seeds {seed_start}-{seed_end} {label}):", file=sys.stderr)
             print(proc.stderr, file=sys.stderr)
             return {"success": False, "csv": chunk_csv, "json": chunk_json}
     except Exception as e:
@@ -143,7 +156,27 @@ def merge_csvs(dest_file, csv_files):
 
 def main():
     parser = argparse.ArgumentParser(description="Parallel multi-game orchestrator for run_benchmark.py")
-    parser.add_argument("--solver", required=True, help="Path to solvitaire binary")
+
+    # Primary: multi-binary mode
+    parser.add_argument("--solver-dir", default=None,
+                        help="Directory containing variant binaries (solvitaire, solvitaire-flat, "
+                             "solvitaire-hash-only, solvitaire-lru). Each found binary is run as "
+                             "a separate labelled configuration.")
+    parser.add_argument("--solvers", nargs="+",
+                        choices=["default", "flat", "hash-only", "lru"],
+                        default=None,
+                        help="Subset of solver variants to run (default: all found in --solver-dir). "
+                             "Ignored in legacy --solver mode.")
+
+    # Legacy: single binary with flag variants
+    parser.add_argument("--solver", default=None,
+                        help="Path to a single solvitaire binary (legacy mode). "
+                             "Use --solver-dir instead to benchmark variant binaries.")
+    parser.add_argument("--configs", nargs="+",
+                        choices=["auto", "hash-only", "force-lru"],
+                        default=["auto", "hash-only", "force-lru"],
+                        help="Cache configurations for legacy --solver mode.")
+
     parser.add_argument("--workers", type=int, default=multiprocessing.cpu_count(),
                         help="Number of chunks to run concurrently (default: all CPUs)")
     parser.add_argument("--output-dir", default="results/remote",
@@ -154,11 +187,11 @@ def main():
                         help="Quick mode: subset of games, fewer seeds")
     parser.add_argument("--games", nargs="+",
                         help="Run only these game types")
-    parser.add_argument("--configs", nargs="+",
-                        choices=["auto", "hash-only", "force-lru"],
-                        default=["auto", "hash-only", "force-lru"],
-                        help="Cache configs to run")
     args = parser.parse_args()
+
+    if not args.solver_dir and not args.solver:
+        print("Error: either --solver-dir or --solver is required", file=sys.stderr)
+        sys.exit(1)
 
     os.makedirs(args.output_dir, exist_ok=True)
     bench_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_benchmark.py")
@@ -172,31 +205,48 @@ def main():
         if not game_configs:
             game_configs = [(g, (1, 50), 60000, "auto-foundations", "") for g in args.games]
 
-    cache_configs = [(n, a) for n, a in CACHE_CONFIGS if n in args.configs]
+    # Resolve solver configurations
+    if args.solver_dir:
+        # Multi-binary mode: discover variant binaries in solver_dir
+        solver_dir = os.path.abspath(args.solver_dir)
+        active_configs = []
+        wanted = set(args.solvers) if args.solvers else None
+        for label, binary_name, extra_args, skip_ineligible in SOLVER_CONFIGS:
+            if wanted and label not in wanted:
+                continue
+            binary_path = os.path.join(solver_dir, binary_name)
+            if os.path.isfile(binary_path):
+                active_configs.append((label, binary_path, extra_args, skip_ineligible))
+            else:
+                print(f"[warn] {binary_name} not found in {solver_dir} — skipping '{label}'",
+                      file=sys.stderr)
+        if not active_configs:
+            print(f"Error: no solver binaries found in {solver_dir}", file=sys.stderr)
+            sys.exit(1)
+        print(f"Multi-binary mode: {[label for label, *_ in active_configs]}")
+    else:
+        # Legacy single-binary mode
+        active_configs = [
+            (name, args.solver, extra_args, skip_ineligible)
+            for name, extra_args, skip_ineligible in LEGACY_CACHE_CONFIGS
+            if name in args.configs
+        ]
+        print(f"Single-binary mode: {args.solver}")
 
     chunk_size = 5 if args.quick else 10
     tasks = []
-    skipped_combos = []
-    
     kwargs = {
         "output_dir": args.output_dir,
-        "cache_capacity": args.cache_capacity
+        "cache_capacity": args.cache_capacity,
     }
 
     for game_type, (seed_lo, seed_hi), timeout_ms, streamliner, _ in game_configs:
-        for cache_name, cache_args in cache_configs:
-            if cache_name == "hash-only" and game_type in HASH_ONLY_INELIGIBLE:
-                skipped_combos.append((game_type, cache_name))
-                continue
-            
+        for label, solver_path, solver_args, skip_ineligible in active_configs:
             for c_start, c_end in chunk_range(seed_lo, seed_hi, chunk_size):
                 tasks.append((
-                    bench_script, args.solver, game_type, c_start, c_end,
-                    timeout_ms, streamliner, cache_name, cache_args, kwargs
+                    bench_script, solver_path, game_type, c_start, c_end,
+                    timeout_ms, streamliner, label, solver_args, skip_ineligible, kwargs
                 ))
-                
-    if skipped_combos:
-        print(f"  Skipped hash-only for ineligible games: {sorted(set(g for g,_ in skipped_combos))}")
 
     total = len(tasks)
     print(f"[{datetime.now():%H:%M:%S}] Starting {total} chunks on {args.workers} workers")

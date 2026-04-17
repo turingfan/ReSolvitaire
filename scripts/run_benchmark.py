@@ -94,10 +94,10 @@ def time_prefix() -> List[str]:
         return [time_bin, "-v"]
 
 
-def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, float, int]:
+def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, int]:
     """
     Run solver subprocess, measure wall-clock time and peak RSS.
-    Returns (success, stdout, time_us, rss_bytes).
+    Returns (success, stdout, stderr, time_us, rss_bytes).
 
     Wraps the command with /usr/bin/time (platform-appropriate) to get
     per-run peak RSS from stderr. Falls back to rss_bytes=0 if unavailable.
@@ -128,7 +128,7 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, float, int]:
             t1 = time.perf_counter()
             time_us = (t1 - t0) * 1_000_000
             rss_bytes = parse_rss_from_time_output(stderr) if prefix else 0
-            return proc.returncode == 0, stdout, time_us, rss_bytes
+            return proc.returncode == 0, stdout, stderr, time_us, rss_bytes
 
         except subprocess.TimeoutExpired:
             try:
@@ -147,12 +147,12 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, float, int]:
             t1 = time.perf_counter()
             time_us = (t1 - t0) * 1_000_000
             rss_bytes = parse_rss_from_time_output(stderr) if prefix else 0
-            return False, stdout, time_us, rss_bytes
+            return False, stdout, stderr, time_us, rss_bytes
 
     except Exception:
         t1 = time.perf_counter()
         time_us = (t1 - t0) * 1_000_000
-        return False, "", time_us, 0
+        return False, "", "", time_us, 0
 
 def parse_legacy_classify(text: str) -> Dict:
     """
@@ -309,6 +309,10 @@ def main():
     parser.add_argument("--output-json", help="Optional JSON output file")
     parser.add_argument("--no-header", action="store_true", help="Don't write CSV header")
     parser.add_argument("--no-summary", action="store_true", help="Skip automatic R summary")
+    parser.add_argument("--skip-ineligible", action="store_true",
+                        help="If solver rejects the game type (non-zero exit with 'requires'/"
+                             "'not eligible'/'not supported' in stderr), skip remaining seeds "
+                             "and exit cleanly. Use for variant binaries.")
     parser.add_argument("--label", default="", help="Label for this benchmark run (e.g., cache config)")
     parser.add_argument("solver_args", nargs=argparse.REMAINDER, help="Additional arguments to pass to the solver")
 
@@ -375,8 +379,18 @@ def main():
                 run_solver(cmd, args.timeout)
 
             # Run timed runs
+            ineligible = False
             for run_num in range(1, args.iterations + 1):
-                success, json_output, time_us, rss_bytes = run_solver(cmd, args.timeout)
+                success, json_output, solver_stderr, time_us, rss_bytes = run_solver(cmd, args.timeout)
+
+                # Check for ineligible game/solver combination before writing any row.
+                if not success and args.skip_ineligible:
+                    stderr_lower = solver_stderr.lower()
+                    if any(kw in stderr_lower for kw in ("requires", "not eligible", "not supported")):
+                        print(f"[skip] ineligible for this solver — skipping remaining seeds",
+                              file=sys.stderr)
+                        ineligible = True
+                        break
 
                 parse = parse_legacy_classify if args.legacy else parse_solver_json
                 if success:
@@ -445,6 +459,9 @@ def main():
                     progress_line = format_progress(overall_index, total_instances, instance, solution_type, time_us, nodes)
                     print(progress_line, file=sys.stderr)
                     overall_index += 1
+
+            if ineligible:
+                break  # skip remaining seeds for this game/solver combination
 
     finally:
         csv_file.close()
