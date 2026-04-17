@@ -38,17 +38,16 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install boost
 
-      - name: Build release
-        run: ./build.sh --release
+      - name: Configure cmake
+        run: cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
 
-      - name: Build variant binaries
+      - name: Build all targets
         run: |
+          cmake --build cmake-build-release --target solvitaire
           cmake --build cmake-build-release --target solvitaire-flat
           cmake --build cmake-build-release --target solvitaire-hash-only
           cmake --build cmake-build-release --target solvitaire-lru
-
-      - name: Build unit tests
-        run: ./build.sh --release --unit-tests
+          cmake --build cmake-build-release --target unit_tests
 
       - name: Run unit tests
         run: cd cmake-build-release && ctest -R '^unit_tests$' --output-on-failure
