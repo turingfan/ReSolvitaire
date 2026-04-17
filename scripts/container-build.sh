@@ -3,6 +3,11 @@
 # Usage: ./scripts/container-build.sh [--test] [--regression]
 #
 # Requires: Docker, Podman, or the 'container' CLI (OCI-compliant container runtime)
+#
+# Memory note: the flat_cache uses mmap to reserve a large virtual address space
+# (default 100M entries = 3.2 GB). Container runtimes often enforce a virtual
+# memory limit that causes mmap to fail with std::bad_alloc. Tests are therefore
+# run with -m 2g to ensure sufficient address space.
 
 IMAGE_NAME="solvitaire-dev"
 TEST_FLAG=""
@@ -12,6 +17,9 @@ REGRESSION_FLAG=""
 # silently use stale sources. Use --use-cache to opt in to caching
 # (saves ~30s on apt install, useful on slow networks).
 NO_CACHE_FLAG="--no-cache"
+# Memory limit for test runs: 7g required due to mmap virtual address reservation
+# (default flat_cache = 100M entries × 64 bytes = 6.4 GB virtual).
+MEMORY_LIMIT="7g"
 
 print_usage() {
     cat << EOF
@@ -25,6 +33,9 @@ Options:
 
 The container image is tagged as '$IMAGE_NAME' and requires a container
 runtime (the 'container' CLI, Docker, or Podman) to be available on PATH.
+
+Note: test runs use -m $MEMORY_LIMIT due to mmap virtual address reservation by the
+flat_cache (default capacity reserves ~3.2 GB of virtual address space).
 
 Examples:
   ./scripts/container-build.sh              # Build only
@@ -81,22 +92,22 @@ echo "Image built successfully: $IMAGE_NAME"
 # Run tests if requested
 if [ -n "$TEST_FLAG" ]; then
     echo ""
-    echo "Running unit tests inside container..."
-    $CONTAINER_CMD run --rm "$IMAGE_NAME" \
+    echo "Running unit tests inside container (memory limit: $MEMORY_LIMIT)..."
+    $CONTAINER_CMD run --rm -m "$MEMORY_LIMIT" "$IMAGE_NAME" \
         bash -c "cd cmake-build-release && ctest -R '^unit_tests$' --output-on-failure"
 fi
 
 if [ -n "$REGRESSION_FLAG" ]; then
     echo ""
-    echo "Running regression_level1 inside container..."
-    $CONTAINER_CMD run --rm "$IMAGE_NAME" \
+    echo "Running regression_level1 inside container (memory limit: $MEMORY_LIMIT)..."
+    $CONTAINER_CMD run --rm -m "$MEMORY_LIMIT" "$IMAGE_NAME" \
         bash -c "cd cmake-build-release && ctest -R regression_level1 --output-on-failure"
 fi
 
 if [ -z "$TEST_FLAG" ] && [ -z "$REGRESSION_FLAG" ]; then
     echo ""
     echo "To run tests in the container:"
-    echo "  $CONTAINER_CMD run --rm $IMAGE_NAME \\"
+    echo "  $CONTAINER_CMD run --rm -m $MEMORY_LIMIT $IMAGE_NAME \\"
     echo "    bash -c 'cd cmake-build-release && ctest -R unit_tests --output-on-failure'"
     echo ""
     echo "For an interactive shell:"

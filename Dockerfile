@@ -27,6 +27,9 @@ RUN rm -rf cmake-build-release cmake-build-debug build build-archive
 # Two separate RUN steps so cmake configure is cached independently of compile
 RUN cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
 RUN cmake --build cmake-build-release --target solvitaire \
+ && cmake --build cmake-build-release --target solvitaire-flat \
+ && cmake --build cmake-build-release --target solvitaire-hash-only \
+ && cmake --build cmake-build-release --target solvitaire-lru \
  && cmake --build cmake-build-release --target unit_tests
 
 CMD ["/workspace/cmake-build-release/bin/solvitaire"]
