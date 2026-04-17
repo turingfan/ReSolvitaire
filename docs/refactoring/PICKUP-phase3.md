@@ -1,10 +1,11 @@
 # Phase 3 Status: Conditional Compilation — Pickup Document
 
 **Date written:** 2026-04-14
-**Branch:** `feature/conditional-compilation` (to be created from `dev` after Phase 2 merges)
+**Last updated:** 2026-04-17
+**Branch:** `feature/conditional-compilation`
 **Plan:** `docs/refactoring/phase3_plan.md`
 **Workflow:** `docs/refactoring/phase2_3_workflow.md`
-**Status:** P3-B-fix-1 DONE (`5e65260`); P3-B-fix-2 Commit 1 DONE (`39e4a82`); next is P3-B-fix-2 Commit 2 (awaiting Ian's explicit go).
+**Status:** P3-B-fix-2 Commit 2 DONE (`9fe8736`). All P3-B-fix work complete. Next: P3-E (awaiting Ian's explicit go).
 
 ---
 
@@ -94,7 +95,7 @@ Long-term architectural solution (templated game_state with single runtime dispa
 | P3-D | `compare_binaries.sh` validation harness | `scripts/compare_binaries.sh`, `CMakeLists.txt` | DONE (`5d0ccb8`, timeout fix `a025bd1`) |
 | **P3-B-fix-1** | **Fix predecessor routing + strip from LRU binary** | `cache_factory.h`, `predecessor_flat_cache.cpp`, `solver.cpp` | DONE (`5e65260`) |
 | **P3-B-fix-2 (Commit 1)** | **Runtime boolean guards in default binary** | `cache_interface.h`, `game_state.h`, `game_state.cpp`, `solver.cpp` | DONE (`39e4a82`) |
-| **P3-B-fix-2 (Commit 2)** | **Compile-time guards for variant binaries** | `game_state.h`, `game_state.cpp`, flat-cache `.cpp` files, `solver.cpp`, `cache_factory.h` | TODO |
+| **P3-B-fix-2 (Commit 2)** | **Compile-time guards for variant binaries** | `game_state.h`, `game_state.cpp`, flat-cache `.cpp` files, `solver.cpp`, `cache_factory.h` | DONE (`9fe8736`) |
 | P3-E | Regression Level 1 per variant binary | `CMakeLists.txt`, `regression_runner.py` | TODO — see §P3-E Design below |
 
 ---
@@ -230,7 +231,7 @@ Inherited from earlier phases; Phase 3 does not address any of them.
 
 ## Current Blocker
 
-*(none — Phase 3 not yet started; awaiting Phase 2 merge to `dev`)*
+*(none — P3-B-fix-2 Commit 2 complete; awaiting Ian's go for P3-E)*
 
 ---
 
