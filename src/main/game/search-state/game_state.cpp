@@ -59,13 +59,7 @@ typedef sol_rules::face_up_policy fu;
 typedef game_state::streamliner_options sos;
 typedef sol_rules::foundations_init_type fit;
 
-#if defined(SOLVITAIRE_FLAT_ONLY) || defined(SOLVITAIRE_HASH_ONLY)
-#  define SOLVITAIRE_COMPUTES_FLAT_HASH 1
-#elif defined(SOLVITAIRE_LRU_ONLY)
-#  define SOLVITAIRE_COMPUTES_FLAT_HASH 0
-#else
-#  define SOLVITAIRE_COMPUTES_FLAT_HASH 1   /* default: compile everything */
-#endif
+// SOLVITAIRE_COMPUTES_FLAT_HASH is derived in game_state.h (included above).
 
 // Static predecessor Zobrist table
 uint64_t game_state::Z_pred[52][110];
@@ -89,8 +83,12 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
     std::memset(predecessor_array, 0, 52);
     bool suit_sym = stream_opts_ == streamliner_options::SUIT_SYMMETRY
                  || stream_opts_ == streamliner_options::BOTH;
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     computing_flat_hash    = needs_flat_hash(s_rules, suit_sym, force_lru, cache_type);
     computing_flat_payload = needs_flat_payload(s_rules, suit_sym, force_lru, cache_type);
+#else
+    (void)cache_type;
+#endif
     // If there is a hole, creates pile
     if (rules.hole) {
         piles.emplace_back();
@@ -160,7 +158,9 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
     }
 
     // Initialize Zobrist hash to zero (will be filled by init_payload_and_hash if needed)
-    if (computing_flat_hash) zobrist_hash_value = 0;
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
+    zobrist_hash_value = 0;
+#endif
     skip_pile_ordering = use_new_cache(s_rules, suit_sym) && !force_lru;
 }
 
@@ -169,8 +169,10 @@ game_state::game_state(const sol_rules& s_rules, const Document& doc, streamline
                        const std::string& cache_type)
         : game_state(s_rules, s_opts, force_lru, cache_type) {
     deal_parser::parse(*this, doc);
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (computing_flat_hash) init_payload_and_hash();
     init_initially_face_up();
+#endif
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -305,7 +307,9 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
         }
     }
 
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (computing_flat_hash) init_payload_and_hash();
+#endif
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -320,7 +324,9 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
                 piles[pr][0].turn_face_up();
             }
 
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     init_initially_face_up();
+#endif
 
     // The size of all piles must equal the deck size
     int piles_sz = 0;
@@ -351,8 +357,10 @@ game_state::game_state(const sol_rules& s_rules,
         }
     }
 
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (computing_flat_hash) init_payload_and_hash();
     init_initially_face_up();
+#endif
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -475,9 +483,11 @@ void game_state::make_regular_move(const move m) {
         to_fs = get_foundation_suit(m.to);
     }
     uint8_t old_ht = 255;
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (m.to == hole) {
         if (computing_flat_hash) old_ht = payload.get_hole_top();
     }
+#endif
 
     // Pile operations
     place_card(m.to, take_card(m.from));
@@ -593,9 +603,11 @@ void game_state::undo_regular_move(const move m) {
         pile::ref last_tab = original_tableau_piles.back();
         if (m.from >= first_tab && m.from <= last_tab
                 && piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()) {
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
             old_desc = initially_face_up[cid]
                 ? compact_state::STARTING
                 : compact_state::STARTING_FACE_UP;
+#endif
         }
     }
     update_card_descriptor(cid, old_desc);
@@ -689,7 +701,7 @@ void game_state::undo_built_group_move(move m) {
     // initial-face-up table (same logic as undo_regular_move, adjusted for depth m.count):
     //   - initially face-up (Klondike top-card deal): descriptor was STARTING=0
     //   - initially face-down (revealed during play): descriptor was STARTING_FACE_UP=1
-    uint8_t old_desc;
+    uint8_t old_desc = 0;  // LRU_ONLY: update_card_descriptor is a no-op, value unused
     if (static_cast<pile::size_type>(piles[m.from].size()) == m.count) {
         // Group fills the entire pile: bottom card was placed on an empty pile
         old_desc = compact_state::IN_SPACE;
@@ -698,9 +710,11 @@ void game_state::undo_built_group_move(move m) {
         pile::ref last_tab = original_tableau_piles.back();
         if (m.from >= first_tab && m.from <= last_tab
                 && piles[m.from][m.count].is_face_down()) {
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
             old_desc = initially_face_up[bottom_cid]
                 ? compact_state::STARTING
                 : compact_state::STARTING_FACE_UP;
+#endif
         } else {
             card parent_card = piles[m.from][m.count];
             uint8_t parent_cid = zobrist_hash::card_id(
@@ -1052,6 +1066,7 @@ void game_state::check_face_down_consistent() const {
         }
 
         // Check that face-down cards have STARTING descriptor
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
         for (auto& c : piles[p].pile_vec) {
             if (c.is_face_down()) {
                 uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
@@ -1064,6 +1079,7 @@ void game_state::check_face_down_consistent() const {
                 }
             }
         }
+#endif
     }
 }
 #endif
@@ -1071,6 +1087,8 @@ void game_state::check_face_down_consistent() const {
 ////////////////////////
 // ZOBRIST HASHING    //
 ////////////////////////
+
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
 
 // Record which cards are face-up after the initial deal (including after turn_face_up()).
 // Also fixes up IN_SPACE descriptors for single-card tableau piles: when
@@ -1198,6 +1216,8 @@ void game_state::init_payload_and_hash() {
     }
 }
 
+#endif // SOLVITAIRE_COMPUTES_FLAT_HASH
+
 void game_state::update_card_descriptor(uint8_t cid, uint8_t new_desc) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (computing_flat_hash) {
@@ -1317,6 +1337,7 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
 
 
 
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
 void game_state::set_payload_depth(uint16_t depth) {
     if (computing_flat_payload) payload.set_depth(depth);
 }
@@ -1346,6 +1367,7 @@ void game_state::compute_hash_from_scratch() {
         zobrist_hash_value ^= zobrist_hash::waste_key(payload.get_waste_ptr());
     }
 }
+#endif // SOLVITAIRE_COMPUTES_FLAT_HASH
 
 ////////////////////////
 // INSPECT GAME STATE //
@@ -1418,6 +1440,7 @@ const std::vector<pile>& game_state::get_data() const {
 }
 
 #ifndef NDEBUG
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
 compact_state game_state::recompute_payload_from_scratch() const {
     compact_state cp;
     cp.clear();  // All 52 card descriptors default to STARTING(0)
@@ -1515,7 +1538,8 @@ void game_state::assert_payload_consistent() const {
            "Incremental payload diverged from scratch-recomputed payload — "
            "make_move/undo_move descriptor update bug");
 }
-#endif
+#endif // SOLVITAIRE_COMPUTES_FLAT_HASH
+#endif // NDEBUG
 
 ////////////////////////////////////
 // PREDECESSOR ZOBRIST (ACCORDION) //

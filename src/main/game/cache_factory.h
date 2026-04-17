@@ -2,12 +2,12 @@
 #define SOLVITAIRE_CACHE_FACTORY_H
 
 #include "cache_interface.h"
-#include "flat_cache.h"
-#include "global_cache.h"
-#include "hash_only_cache.h"
 #if !defined(SOLVITAIRE_LRU_ONLY)
+#include "flat_cache.h"
+#include "hash_only_cache.h"
 #include "predecessor_flat_cache.h"
 #endif
+#include "global_cache.h"
 #include <memory>
 #include <string>
 

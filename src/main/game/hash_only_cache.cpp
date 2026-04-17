@@ -1,5 +1,6 @@
-#include "hash_only_cache.h"
 #include "search-state/game_state.h"
+#if !defined(SOLVITAIRE_LRU_ONLY)
+#include "hash_only_cache.h"
 
 // For Fibonacci hashing (multiply-high)
 #ifdef __SIZEOF_INT128__
@@ -100,3 +101,4 @@ uint64_t hash_only_cache::get_states_removed_from_cache() const {
 uint64_t hash_only_cache::bucket_count() const {
     return num_clusters * 2;
 }
+#endif // !SOLVITAIRE_LRU_ONLY
