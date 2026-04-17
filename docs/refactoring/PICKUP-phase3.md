@@ -5,7 +5,7 @@
 **Branch:** `feature/conditional-compilation`
 **Plan:** `docs/refactoring/phase3_plan.md`
 **Workflow:** `docs/refactoring/phase2_3_workflow.md`
-**Status:** P3-E DONE. All planned commits complete. Branch ready for merge review.
+**Status:** P3-E DONE. Regression levels 2 and 3 (default + all variants) all pass. Hash-only oracle generation (KI-9 Option B) in progress.
 
 ---
 
@@ -232,7 +232,7 @@ Inherited from earlier phases; Phase 3 does not address any of them.
 
 ## Current Blocker
 
-*(none — all commits complete)*
+*(none — all planned work complete; hash-only oracle generation in progress (KI-9 Option B))*
 
 ---
 
