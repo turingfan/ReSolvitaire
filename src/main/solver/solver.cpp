@@ -33,10 +33,13 @@
 
 #include "solver.h"
 #include "../game/move.h"
+#if !defined(SOLVITAIRE_LRU_ONLY)
 #include "../game/flat_cache.h"
 #include "../game/predecessor_flat_cache.h"
 #include "../game/hash_only_cache.h"
 #include "../game/dual_cache.h"
+#include "../game/generic_flat_cache.h"
+#endif
 #include "../input-output/output/log_helper.h"
 #include "../input-output/output/state_printer.h"
 #include "../input-output/input/command_line_helper.h"
@@ -68,10 +71,15 @@ solver::solver(const game_state& gs, cache_interface& c)
         , frontier()
         , root(move(move::mtype::null))
         , current_node() {
+#if !defined(SOLVITAIRE_LRU_ONLY)
     using_flat_cache = (dynamic_cast<flat_cache*>(&cache) != nullptr)
                     || (dynamic_cast<predecessor_flat_cache*>(&cache) != nullptr)
                     || (dynamic_cast<hash_only_cache*>(&cache) != nullptr)
-                    || (dynamic_cast<dual_cache*>(&cache) != nullptr);
+                    || (dynamic_cast<dual_cache*>(&cache) != nullptr)
+                    || (dynamic_cast<generic_flat_cache_base*>(&cache) != nullptr);
+#else
+    using_flat_cache = false;
+#endif
     frontier.push_back(root);
     current_node = begin(frontier);
     res.states_searched = 0;
@@ -130,15 +138,20 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
                 // Caches the current state
                 bool is_new_state;
                 if (using_flat_cache) {
-                    state.set_payload_depth(static_cast<uint16_t>(
-                        min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
+                    if (state.computing_flat_payload)
+                        state.set_payload_depth(static_cast<uint16_t>(
+                            min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
+#endif
                     if (state.uses_predecessor_cache()) {
                         state.set_predecessor_payload_depth(static_cast<uint8_t>(
                             min(res.depth, static_cast<uint64_t>(UINT8_MAX))));
                     }
                     is_new_state = cache.insert(state);
 #ifndef NDEBUG
-                    state.assert_payload_consistent();
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
+                    if (state.computing_flat_payload) state.assert_payload_consistent();
+#endif
 #endif
                 } else {
                     auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);

@@ -162,6 +162,58 @@ reported hundreds of flat-only hits starting at operation 221. Investigation con
 Phase 1 implementation can proceed safely — flat cache is trustworthy as oracle.
 Investigation commit: `4c4b022`
 
+### 8. Redundant Hash/Payload Computation in Default Binary for LRU Games
+
+**Status:** Short-term fix in Phase 3 (boolean guard); long-term fix deferred  
+**Impact:** Performance — wasted hash and payload computation on every DFS move for games routed to `lru_cache` (2-deck, spider, suit-symmetry, accordion)  
+**Proposal doc:** `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`
+
+In the default `solvitaire` binary, `game_state` currently computes the Zobrist descriptor hash and `compact_state` payload on every move regardless of which cache is in use at runtime. For the ~40% of game types that route to `lru_cache`, this work is entirely dead — `lru_cache` never reads the hash or payload.
+
+**Short-term fix (Phase 3):** Two boolean flags set once at game_state construction: `computing_flat_hash` (true for all flat-cache variants including hash-only and predecessor) and `computing_flat_payload` (true for flat and predecessor, false for hash-only and LRU). All hash updates and all `payload.set_*` calls (which maintain descriptor state needed for hash XOR) are guarded by `computing_flat_hash`. Only cache-key use of the payload (`set_payload_depth`, `assert_payload_consistent`) is guarded by `computing_flat_payload`. Both are stable branches that the CPU predicts perfectly after the first iteration of any game.
+
+**Long-term fix (deferred):** Template `game_state_impl<Policy>` on a hash/payload policy struct. Four concrete policies (Flat, HashOnly, Predecessor, LRU) are instantiated in the default binary. The runtime dispatch happens once per solve at the `solve_game()` entry point; inside the DFS loop there are zero branches and zero dead stores. The variant binaries (`solvitaire-flat` etc.) become trivial typedef selections of a single policy. Full details, costs, and migration strategy are in `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`.
+
+**Prerequisite for long-term fix:** Phase 3 workpackage complete. The boolean guards introduced in the short-term fix mark every site that will become a policy dispatch call, making the migration mechanical.
+
+### 9. Descriptor State Tracked Only Inside `compact_state payload`
+
+**Status:** Design constraint; no short-term fix planned  
+**Impact:** Code clarity — `payload` serves a dual role: (1) cache key stored in `flat_cache`, and (2) internal tracking store for old descriptor values needed to compute Zobrist XOR deltas
+
+The 52 card descriptors (and foundation/hole/waste header fields) used to compute the incremental Zobrist hash have no storage of their own — they live exclusively inside `compact_state payload`. Every `update_*` helper reads the old value via `payload.get_*()` before XOR-ing, then writes the new value via `payload.set_*()`. This means `payload` must be maintained (cleared and incrementally updated) even in `hash_only_cache` mode, where the cache itself never stores or reads the payload.
+
+Concretely: `computing_flat_payload` (which means "the cache uses the payload as a key") is a strict subset of `computing_flat_hash`, and all `payload.set_*` calls must be guarded by `computing_flat_hash` rather than `computing_flat_payload`. Any refactor that tries to skip payload maintenance for hash-only games will silently break incremental hash correctness.
+
+**Better design:** A separate compact descriptor-tracking array (not packed into `compact_state`) would decouple the "tracking store for hash deltas" from the "cache payload" role. This would allow hash-only mode to maintain descriptors without carrying full `compact_state` overhead, and would make the invariant explicit. Deferred until after the Phase 3 workpackage.
+
+### 10. `dual_cache` and Test Construction Always Enable Both Policy Flags
+
+**Status:** Intentional workaround; deferred clean-up  
+**Impact:** Minor — `DualCacheTest` game_states compute hash and payload even for games that would route to LRU in production; test correctness requires this
+
+`game_state` constructors accept an optional `cache_type` string (default `""`) that drives `computing_flat_hash` and `computing_flat_payload`. Two construction paths don't supply a `cache_type`:
+
+1. **Initializer-list constructor** — used heavily in unit tests; no cache context available.
+2. **`dual_cache` / `DualCacheTest`** — tests two caches simultaneously without specifying which type drives the game_state policy.
+
+When `cache_type == ""`, both `needs_flat_hash()` and `needs_flat_payload()` return `true` unconditionally, preserving the pre-P3 behaviour where hash and payload were always computed. This means `DualCacheTest` wastes a little work on the LRU side, but it is correct.
+
+**Ideal fix:** Pass explicit policy flags (or a `cache_type`) from `dual_cache` construction sites, computing the OR of the flags required by each constituent cache. Deferred — requires refactoring `dual_cache` and its test harness.
+
+---
+
+### 9. Per-Variant Oracles for `solvitaire-hash-only` Node Counts (Option B partially done)
+
+**Status:** Levels 1–4 done; Level 5 still uses `--compare-outcome-only`
+**Impact:** Level 5 hash-only node counts are not validated against an oracle
+
+`hash_only_cache` uses 16-byte clusters (hash only, no payload / descriptor) and therefore explores states in a different order than `flat_cache`. Per-variant oracles (`tests/oracles/levelN_hash_only.json`) were generated for levels 1–4 using the `pre-refactor-work` tagged binary with `--cache-type hash-only` as the reference. Node counts are now validated for those levels.
+
+**Remaining:** `regression_level5_hash_only` still passes `--compare-outcome-only` against `level5.json` (no level 5 hash-only oracle generated). Generate `level5_hash_only.json` using the same approach when needed.
+
+This approach generalises: `solvitaire-flat` and `solvitaire-lru` could have per-variant oracles generated similarly if node-count validation is desired for those variants.
+
 ---
 
 ## Resolved Issues (for reference)

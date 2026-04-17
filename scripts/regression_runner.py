@@ -23,7 +23,9 @@ import time
 # ---------------------------------------------------------------------------
 
 def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
-                   max_instance_timeout_ms=120000, regenerate=False):
+                   max_instance_timeout_ms=120000, regenerate=False,
+                   force_lru=False, skip_ineligible=False,
+                   compare_outcome_only=False, cache_type=None):
     if not os.path.exists(solver_path):
         print(f"Error: Solver not found at {solver_path}")
         return 1
@@ -58,6 +60,7 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
     total = len(instance_filenames)
     failed = 0
     passed = 0
+    skipped = 0
     new_oracle_entries = {}  # used when regenerate=True
 
     def normalize_outcome(outcome):
@@ -119,6 +122,12 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
         streamliner = baseline.get("streamliner", "none")
         cmd.extend(["--streamliners", streamliner])
 
+        if force_lru:
+            cmd.append("--force-lru")
+
+        if cache_type:
+            cmd.extend(["--cache-type", cache_type])
+
         try:
             # Give the process 60s on top of the solver's own timeout to flush output.
             py_timeout = (instance_timeout_ms / 1000.0) + 60.0
@@ -127,6 +136,16 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
             elapsed_ms = (time.time() - t0) * 1000.0
 
             if result.returncode != 0:
+                stderr_lower = result.stderr.lower()
+                if skip_ineligible and (
+                        "requires" in stderr_lower or
+                        "not eligible" in stderr_lower or
+                        "not supported" in stderr_lower):
+                    if verbose:
+                        print(f"[SKIP] {filename} (ineligible: {result.stderr.strip()})",
+                              flush=True)
+                    skipped += 1
+                    continue
                 print(f"[FAIL] {filename} (Solver crashed with return code {result.returncode})",
                       flush=True)
                 print(f"Stderr: {result.stderr}", flush=True)
@@ -194,12 +213,14 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
             else:
                 passed += 1
                 if verbose:
-                    node_note = (f" [nodes: {actual_nodes} vs oracle {expected_nodes}]"
-                                 if actual_nodes != expected_nodes else "")
+                    if not compare_outcome_only and actual_nodes != expected_nodes:
+                        node_note = f" [nodes: {actual_nodes} vs oracle {expected_nodes}]"
+                    else:
+                        node_note = ""
                     print(f"[OK] {filename}: {actual_outcome}{node_note}", flush=True)
-                elif (passed + failed) % 25 == 0:
-                    print(f"Progress: {passed+failed}/{total} "
-                          f"(Pass: {passed}, Fail: {failed})", flush=True)
+                elif (passed + failed + skipped) % 25 == 0:
+                    print(f"Progress: {passed+failed+skipped}/{total} "
+                          f"(Pass: {passed}, Fail: {failed}, Skip: {skipped})", flush=True)
 
         except subprocess.TimeoutExpired:
             if regenerate:
@@ -235,7 +256,8 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
         print(f"Oracle regenerated: {oracle_path} ({passed} instances)", flush=True)
         return 0
 
-    print(f"Final Report: Passed: {passed}/{total}", flush=True)
+    skip_note = f", Skipped: {skipped}" if skipped else ""
+    print(f"Final Report: Passed: {passed}/{total}{skip_note}", flush=True)
     if failed > 0:
         print(f"FAILED: {failed}/{total}", flush=True)
         return 1
@@ -259,6 +281,22 @@ if __name__ == "__main__":
     parser.add_argument("--regenerate", action="store_true",
                         help="Regenerate oracle values from fresh solver runs instead of "
                              "comparing. Overwrites the oracle file in place on success.")
+    parser.add_argument("--force-lru", action="store_true",
+                        help="Append --force-lru to every solver invocation. "
+                             "Use for solvitaire-lru variant targets.")
+    parser.add_argument("--skip-ineligible", action="store_true",
+                        help="If the solver exits non-zero and stderr contains 'requires', "
+                             "'not eligible', or 'not supported', count the instance as "
+                             "SKIP rather than FAIL. Use for variant binaries that reject "
+                             "game types outside their scope.")
+    parser.add_argument("--compare-outcome-only", action="store_true",
+                        help="Suppress node-count notes in verbose output. "
+                             "Use when node counts are expected to differ from the oracle "
+                             "(e.g. hash-only or forced-LRU runs).")
+    parser.add_argument("--cache-type", default=None,
+                        help="Append --cache-type <VALUE> to every solver invocation. "
+                             "Use 'hash-only' to generate or compare against hash-only "
+                             "cache results using the default solvitaire binary.")
 
     args = parser.parse_args()
     sys.exit(run_regression(
@@ -266,4 +304,8 @@ if __name__ == "__main__":
         verbose=args.verbose,
         max_instance_timeout_ms=args.max_instance_timeout_ms,
         regenerate=args.regenerate,
+        force_lru=args.force_lru,
+        skip_ineligible=args.skip_ineligible,
+        compare_outcome_only=args.compare_outcome_only,
+        cache_type=args.cache_type,
     ))

@@ -48,7 +48,7 @@ typedef std::chrono::milliseconds millisec;
 
 const optional<sol_rules> gen_rules(command_line_helper&);
 void solve_random_game(int, const sol_rules&, command_line_helper&);
-void solve_input_files(vector<string>, const sol_rules&, command_line_helper&);
+bool solve_input_files(vector<string>, const sol_rules&, command_line_helper&);
 void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name);
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
@@ -101,35 +101,44 @@ int main(int argc, const char* argv[]) {
         return EXIT_SUCCESS;
     }
 
-    // If the user has asked for a solvability percentage, calculates it
-    if (clh.get_solvability() > 0) {
-        solvability_calc solv_c(*rules, clh.get_cache_capacity(), clh.get_cache_type());
-        solv_c.calculate_solvability_percentage(clh.get_timeout(), clh.get_solvability(), clh.get_cores(),
-                                                clh.get_streamliners(), clh.get_resume());
-    }
-    // If the benchmark option has been supplied, generates it
-    if (!clh.get_benchmark_json().empty()) {
-        benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_cache_type());
-        return EXIT_SUCCESS;
-    }
+    try {
+        // If the user has asked for a solvability percentage, calculates it
+        if (clh.get_solvability() > 0) {
+            solvability_calc solv_c(*rules, clh.get_cache_capacity(), clh.get_cache_type());
+            solv_c.calculate_solvability_percentage(clh.get_timeout(), clh.get_solvability(), clh.get_cores(),
+                                                    clh.get_streamliners(), clh.get_resume());
+        }
+        // If the benchmark option has been supplied, generates it
+        if (!clh.get_benchmark_json().empty()) {
+            benchmark::run_json(clh.get_benchmark_json(), clh.get_cache_capacity(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_cache_type());
+            return EXIT_SUCCESS;
+        }
 
-    if (clh.get_benchmark() || clh.get_is_benchmark()) {
-        benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_force_lru_cache(), clh.get_cache_type());
-        return EXIT_SUCCESS;
-    }
-    
-    // If a random deal seed has been supplied, solves it
-    if (clh.get_random_deal() != -1) {
-        solve_random_game(clh.get_random_deal(), *rules, clh);
-    }
-    // Otherwise there are supplied input files which should be solved
-    else {
-        const vector<string> input_files = clh.get_input_files();
+        if (clh.get_benchmark() || clh.get_is_benchmark()) {
+            benchmark::run(*rules, clh.get_cache_capacity(), clh.get_streamliners_game_state(), clh.get_benchmark_seeds(), clh.get_benchmark_iterations(), clh.get_benchmark_warmup(), clh.get_timeout(), clh.get_force_lru_cache(), clh.get_cache_type());
+            return EXIT_SUCCESS;
+        }
+        
+        // If a random deal seed has been supplied, solves it
+        if (clh.get_random_deal() != -1) {
+            solve_random_game(clh.get_random_deal(), *rules, clh);
+        }
+        // Otherwise there are supplied input files which should be solved
+        else {
+            const vector<string> input_files = clh.get_input_files();
 
-        // If there are no input files, solve a random deal based on the
-        // supplied seed
-        assert(!input_files.empty());
-        solve_input_files(input_files, *rules, clh);
+            // If there are no input files, solve a random deal based on the
+            // supplied seed
+            assert(!input_files.empty());
+            if (solve_input_files(input_files, *rules, clh))
+                return EXIT_FAILURE;
+        }
+    } catch (const std::runtime_error& error) {
+        LOG_ERROR(error.what());
+        return EXIT_FAILURE;
+    } catch (const std::exception& error) {
+        LOG_ERROR("Unexpected error: " << error.what());
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
@@ -161,7 +170,8 @@ void solve_random_game(int seed, const sol_rules& rules, command_line_helper& cl
     solve_game(rules, clh, seed, none, "seed_" + to_string(seed));
 }
 
-void solve_input_files(const vector<string> input_files, const sol_rules& rules, command_line_helper& clh) {
+bool solve_input_files(const vector<string> input_files, const sol_rules& rules, command_line_helper& clh) {
+    bool had_error = false;
     for (const string& input_file : input_files) {
         try {
             // Reads in the input file to a json doc
@@ -171,12 +181,12 @@ void solve_input_files(const vector<string> input_files, const sol_rules& rules,
                 LOG_INFO ("Attempting to solve " << input_file << "...");
             solve_game(rules, clh, none, in_doc, input_file);
 
-        } catch (const runtime_error& error) {
-            string errmsg = "Error parsing deal file: ";
-            errmsg += error.what();
-            LOG_ERROR(errmsg);
+        } catch (const std::runtime_error& error) {
+            LOG_ERROR(error.what());
+            had_error = true;
         }
     }
+    return had_error;
 }
 
 void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name) {
@@ -281,7 +291,7 @@ pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout
                                         optional<int> seed, optional<const Document&> in_doc,
                                         bool force_lru,
                                         const std::string& cache_type) {
-    game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru) : game_state(rules, *in_doc, str_opts, force_lru);
+    game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru, cache_type) : game_state(rules, *in_doc, str_opts, force_lru, cache_type);
 
     bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                  || str_opts == game_state::streamliner_options::BOTH;

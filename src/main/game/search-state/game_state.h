@@ -24,6 +24,16 @@
 #ifndef SOLVITAIRE_GAME_STATE_H
 #define SOLVITAIRE_GAME_STATE_H
 
+// Derived compile-time flag: 1 when the flat-cache Zobrist hash and compact_state
+// payload are compiled into game_state. Driven by CMake variant-specific defines.
+#if defined(SOLVITAIRE_FLAT_ONLY) || defined(SOLVITAIRE_HASH_ONLY)
+#  define SOLVITAIRE_COMPUTES_FLAT_HASH 1
+#elif defined(SOLVITAIRE_LRU_ONLY)
+#  define SOLVITAIRE_COMPUTES_FLAT_HASH 0
+#else
+#  define SOLVITAIRE_COMPUTES_FLAT_HASH 1   /* default binary: compile everything */
+#endif
+
 #include <vector>
 #include <list>
 #include <set>
@@ -58,9 +68,9 @@ public:
     /* Constructors */
 
     // Creates a game state representation from a JSON doc
-    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options, bool force_lru = false);
+    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
     // Does the same from a seed
-    game_state(const sol_rules&, int seed, streamliner_options, bool force_lru = false);
+    game_state(const sol_rules&, int seed, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
     // Does the same but with an initialiser list (useful for testing)
     game_state(const sol_rules&, std::initializer_list<std::initializer_list<std::string>>);
 
@@ -76,14 +86,22 @@ public:
     std::vector<move> get_legal_moves(move = move(move::mtype::regular));
     boost::optional<move> get_dominance_move() const;
 
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
+    /* Runtime policy flags (public: read by solver to avoid dead work) */
+    bool computing_flat_hash;     // true: maintain Zobrist hash + payload descriptor store
+    bool computing_flat_payload;  // true: cache uses full compact_state payload as key
+#endif
+
     /* State inspection */
 
     bool is_solved() const;
     const std::vector<pile>& get_data() const;
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
     const compact_state& get_payload() const { return payload; }
     void set_payload_depth(uint16_t depth);
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
+#endif
 
     /* Predecessor-based Zobrist (accordion games) */
     uint64_t get_predecessor_zobrist_hash() const { return predecessor_zobrist_hash; }
@@ -91,7 +109,7 @@ public:
     void set_predecessor_payload_depth(uint8_t depth);
     bool uses_predecessor_cache() const { return rules.accordion_size > 0; }
 
-#ifndef NDEBUG
+#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(NDEBUG)
     compact_state recompute_payload_from_scratch() const;  // Debug: rebuild payload from board state
     void assert_payload_consistent() const;                // Debug: assert incremental payload matches recomputed
 #endif
@@ -103,7 +121,7 @@ public:
 private:
     /* Constructors (& helper function) */
 
-    explicit game_state(const sol_rules&, streamliner_options, bool force_lru = false);
+    explicit game_state(const sol_rules&, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
     static std::vector<card> gen_shuffled_deck(card::rank_t, bool, std::mt19937);
     template<class RandomIt, class URBG> static void shuffle(RandomIt, RandomIt, URBG&&);
 
@@ -189,6 +207,7 @@ private:
     bool skip_pile_ordering;
     card::rank_t foundations_base;
 
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     /* Descriptor-aligned Zobrist hash and payload */
     uint64_t zobrist_hash_value;
     compact_state payload;
@@ -196,6 +215,7 @@ private:
 
     void init_payload_and_hash();     // Called at end of constructors
     void init_initially_face_up();    // Called after turn_face_up() in constructors
+#endif
 
     // Descriptor update helpers
     void update_card_descriptor(uint8_t cid, uint8_t new_desc);
@@ -203,7 +223,9 @@ private:
     uint8_t effective_waste_ptr() const;
     void update_waste_ptr_in_hash(uint8_t new_ptr);
     void update_hole_top_in_hash(uint8_t new_cid);
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
+#endif
     bool is_foundation_pile(pile::ref pr) const;
     uint8_t get_foundation_suit(pile::ref pr) const;
 

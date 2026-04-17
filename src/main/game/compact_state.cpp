@@ -1,5 +1,7 @@
 #include "compact_state.h"
 
+#if !defined(SOLVITAIRE_LRU_ONLY)
+
 void compact_state::clear() {
     std::memset(data, 0, 32);
 }
@@ -96,3 +98,5 @@ uint8_t compact_state::get_descriptor(uint8_t card_id) const {
 bool compact_state::matches(const compact_state& other) const {
     return std::memcmp(data + 3, other.data + 3, 29) == 0;
 }
+
+#endif // !SOLVITAIRE_LRU_ONLY
