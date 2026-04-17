@@ -223,7 +223,9 @@ private:
     uint8_t effective_waste_ptr() const;
     void update_waste_ptr_in_hash(uint8_t new_ptr);
     void update_hole_top_in_hash(uint8_t new_cid);
+#if SOLVITAIRE_COMPUTES_FLAT_HASH
     uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
+#endif
     bool is_foundation_pile(pile::ref pr) const;
     uint8_t get_foundation_suit(pile::ref pr) const;
 
