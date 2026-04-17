@@ -25,7 +25,7 @@ import time
 def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
                    max_instance_timeout_ms=120000, regenerate=False,
                    force_lru=False, skip_ineligible=False,
-                   compare_outcome_only=False):
+                   compare_outcome_only=False, cache_type=None):
     if not os.path.exists(solver_path):
         print(f"Error: Solver not found at {solver_path}")
         return 1
@@ -124,6 +124,9 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
 
         if force_lru:
             cmd.append("--force-lru")
+
+        if cache_type:
+            cmd.extend(["--cache-type", cache_type])
 
         try:
             # Give the process 60s on top of the solver's own timeout to flush output.
@@ -290,6 +293,10 @@ if __name__ == "__main__":
                         help="Suppress node-count notes in verbose output. "
                              "Use when node counts are expected to differ from the oracle "
                              "(e.g. hash-only or forced-LRU runs).")
+    parser.add_argument("--cache-type", default=None,
+                        help="Append --cache-type <VALUE> to every solver invocation. "
+                             "Use 'hash-only' to generate or compare against hash-only "
+                             "cache results using the default solvitaire binary.")
 
     args = parser.parse_args()
     sys.exit(run_regression(
@@ -300,4 +307,5 @@ if __name__ == "__main__":
         force_lru=args.force_lru,
         skip_ineligible=args.skip_ineligible,
         compare_outcome_only=args.compare_outcome_only,
+        cache_type=args.cache_type,
     ))

@@ -203,18 +203,16 @@ When `cache_type == ""`, both `needs_flat_hash()` and `needs_flat_payload()` ret
 
 ---
 
-### 9. Per-Variant Oracles for `solvitaire-hash-only` Node Counts (P3-E, Option B deferred)
+### 9. Per-Variant Oracles for `solvitaire-hash-only` Node Counts (Option B partially done)
 
-**Status:** Deferred — `solvitaire-hash-only` regression targets use `--compare-outcome-only`
-**Impact:** Node counts for hash-only runs are not validated against an oracle
+**Status:** Levels 1–4 done; Level 5 still uses `--compare-outcome-only`
+**Impact:** Level 5 hash-only node counts are not validated against an oracle
 
-`hash_only_cache` uses 16-byte clusters (hash only, no payload / descriptor) and therefore explores states in a different order than `flat_cache`. The shared Level 1–5 oracles were generated against the default binary (which uses `flat_cache` for eligible games) so their `states_searched` values do not match hash-only runs.
+`hash_only_cache` uses 16-byte clusters (hash only, no payload / descriptor) and therefore explores states in a different order than `flat_cache`. Per-variant oracles (`tests/oracles/levelN_hash_only.json`) were generated for levels 1–4 using the `pre-refactor-work` tagged binary with `--cache-type hash-only` as the reference. Node counts are now validated for those levels.
 
-Current workaround: all `regression_levelN_hash_only` CTest targets pass `--compare-outcome-only`, which validates outcomes (solved/unsolvable/timeout) but ignores node counts.
+**Remaining:** `regression_level5_hash_only` still passes `--compare-outcome-only` against `level5.json` (no level 5 hash-only oracle generated). Generate `level5_hash_only.json` using the same approach when needed.
 
-**Option B (full per-variant oracle generation):** Generate a separate oracle for each variant binary at each regression level (`tests/oracles/level1_hash_only.json`, etc.) using `regression_runner.py --regenerate`. This would enable node-count regression for each variant. Deferred to a future work package; also applicable to `solvitaire-flat` and `solvitaire-lru` if desired.
-
-This is a general need: any architectural change that legitimately alters DFS traversal order (new cache, new eviction policy, compile-time flag) benefits from per-configuration oracles.
+This approach generalises: `solvitaire-flat` and `solvitaire-lru` could have per-variant oracles generated similarly if node-count validation is desired for those variants.
 
 ---
 
