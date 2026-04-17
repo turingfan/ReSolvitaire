@@ -39,7 +39,12 @@ jobs:
         run: brew install boost
 
       - name: Configure cmake
-        run: cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix)" -Bcmake-build-release -H.
+          else
+            cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
+          fi
 
       - name: Build all targets
         run: |
