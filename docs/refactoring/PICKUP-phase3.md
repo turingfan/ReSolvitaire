@@ -5,7 +5,7 @@
 **Branch:** `feature/conditional-compilation`
 **Plan:** `docs/refactoring/phase3_plan.md`
 **Workflow:** `docs/refactoring/phase2_3_workflow.md`
-**Status:** P3-E DONE. Regression levels 2 and 3 (default + all variants) all pass. Hash-only oracle generation (KI-9 Option B) in progress.
+**Status:** ALL PHASE 3 WORK COMPLETE. P3-E done, hash-only oracles (KI-9 Option B) for levels 1–4 done, descriptor cleanup (P3-E-3) done. Regression levels 1–3 all pass for default + all three variants (12/12).
 
 ---
 
@@ -97,7 +97,8 @@ Long-term architectural solution (templated game_state with single runtime dispa
 | **P3-B-fix-2 (Commit 1)** | **Runtime boolean guards in default binary** | `cache_interface.h`, `game_state.h`, `game_state.cpp`, `solver.cpp` | DONE (`39e4a82`) |
 | **P3-B-fix-2 (Commit 2)** | **Compile-time guards for variant binaries** | `game_state.h`, `game_state.cpp`, flat-cache `.cpp` files, `solver.cpp`, `cache_factory.h` | DONE (`9fe8736`) |
 | **P3-E-1** | **regression_runner.py: --force-lru, --skip-ineligible, --compare-outcome-only** | `scripts/regression_runner.py` | DONE (`5784b39`) |
-| **P3-E-2** | **CMakeLists.txt variant targets + main.cpp exit-code fix** | `CMakeLists.txt`, `src/main/main.cpp`, `docs/known-issues.md` | DONE (pending commit) |
+| **P3-E-2** | **CMakeLists.txt variant targets + main.cpp exit-code fix** | `CMakeLists.txt`, `src/main/main.cpp`, `docs/known-issues.md` | DONE (`7b952fc`) |
+| **P3-E-3** | **Guard determine_destination_descriptor from solvitaire-lru** | `game_state.h`, `game_state.cpp` | DONE (`921b6e3`) |
 
 ---
 
@@ -232,7 +233,7 @@ Inherited from earlier phases; Phase 3 does not address any of them.
 
 ## Current Blocker
 
-*(none — all planned work complete; hash-only oracle generation in progress (KI-9 Option B))*
+*(none — all planned work complete)*
 
 ---
 
