@@ -119,6 +119,7 @@ for GAME in "${GAMES[@]}"; do
         --warmup "$WARMUP" \
         --iterations "$ITERATIONS" \
         --no-summary \
+        --label "$LRUSOLVER" \
         --output "$OUTDIR/${GAME}.csv" \
         -- --force-lru \
         $RUNARGS || {
@@ -139,6 +140,7 @@ for SOLVER in $DEFAULTSOLVER $FLATSOLVER $HASHSOLVER; do
         --warmup "$WARMUP" \
         --iterations "$ITERATIONS" \
         --no-summary \
+        --label "$SOLVER" \
         --output "$OUTDIR/${GAME}.csv" \
         $RUNARGS || {
             echo "WARNING: $GAME failed (exit $?), continuing" >&2
