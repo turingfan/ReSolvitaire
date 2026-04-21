@@ -120,7 +120,7 @@ for GAME in "${GAMES[@]}"; do
             echo "WARNING: $GAME failed (exit $?), continuing" >&2
             FAILED=$((FAILED + 1))
         } \
-        $RUNARGS
+        "$RUNARGS"
     echo ""
 done
 
