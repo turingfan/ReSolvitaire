@@ -24,7 +24,7 @@ SEEDS="${SEEDS:-1-50}"
 TIMEOUT="${TIMEOUT:-60000}"       # ms
 WARMUP="${WARMUP:-1}"
 ITERATIONS="${ITERATIONS:-3}"     # median-of-3
-RUNARGS="${RUNARGS:''}"             # args to pass to run_benchmark
+RUNARGS="${RUNARGS:-''}"             # args to pass to run_benchmark
 
 GAMES=(
     alina
