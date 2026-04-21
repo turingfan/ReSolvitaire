@@ -29,9 +29,11 @@ WARMUP="${WARMUP:-1}"
 ITERATIONS="${ITERATIONS:-3}"     # median-of-3
 RUNARGS="${RUNARGS:-}"             # args to pass to run_benchmark
 
+    #alina
+
 GAMES=(
     alpha-star
-    alina
+    somerset
     american-canister
     bakers-game
     beleaguered-castle
@@ -58,7 +60,6 @@ GAMES=(
     seahaven-towers
     siegecraft
     simple-simon
-    somerset
     spanish-patience
     streets-and-alleys
     stronghold
