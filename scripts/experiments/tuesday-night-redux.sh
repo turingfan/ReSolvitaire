@@ -116,11 +116,11 @@ for GAME in "${GAMES[@]}"; do
         --warmup "$WARMUP" \
         --iterations "$ITERATIONS" \
         --no-summary \
-        --output "$OUTDIR/${GAME}.csv" || {
+        --output "$OUTDIR/${GAME}.csv" \ 
+        $RUNARGS || {
             echo "WARNING: $GAME failed (exit $?), continuing" >&2
             FAILED=$((FAILED + 1))
-        } \
-        "$RUNARGS"
+        } 
     echo ""
 done
 
