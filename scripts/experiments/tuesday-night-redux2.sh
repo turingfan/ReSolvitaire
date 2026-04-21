@@ -77,8 +77,8 @@ if [[ -z "${BENCH_RUN_DIR:-}" ]]; then
     exit 1
 fi
 
-if [[ ! -x "$SOLVER" ]]; then
-    echo "FATAL: solver not found at $SOLVER" >&2
+if [[ ! -x "$LRUSOLVER" ]]; then
+    echo "FATAL: solver not found at $LRUSOLVER" >&2
     exit 1
 fi
 
@@ -98,7 +98,6 @@ fi
 # ---------------------------------------------------------------------------
 
 echo "=== Tuesday night redux ==="
-#echo "  Solver:     $SOLVER"
 echo "  Seeds:      $SEEDS"
 echo "  Timeout:    ${TIMEOUT}ms"
 echo "  Warmup:     $WARMUP"
