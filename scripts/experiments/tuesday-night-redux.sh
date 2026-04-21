@@ -24,7 +24,7 @@ SEEDS="${SEEDS:-1-50}"
 TIMEOUT="${TIMEOUT:-60000}"       # ms
 WARMUP="${WARMUP:-1}"
 ITERATIONS="${ITERATIONS:-3}"     # median-of-3
-RUNARGS="${RUNARGS:-''}"             # args to pass to run_benchmark
+RUNARGS="${RUNARGS:-}"             # args to pass to run_benchmark
 
 GAMES=(
     alina
@@ -116,7 +116,7 @@ for GAME in "${GAMES[@]}"; do
         --warmup "$WARMUP" \
         --iterations "$ITERATIONS" \
         --no-summary \
-        --output "$OUTDIR/${GAME}.csv" \ 
+        --output "$OUTDIR/${GAME}.csv" \
         $RUNARGS || {
             echo "WARNING: $GAME failed (exit $?), continuing" >&2
             FAILED=$((FAILED + 1))
