@@ -39,20 +39,20 @@ from datetime import datetime
 # ---------------------------------------------------------------------------
 # Each entry: (game_type, seeds_tuple, timeout_ms, streamliner, notes)
 GAME_CONFIGS_FULL = [
-    ("somerset",                   (1, 200),  1200000,   "none", "about 50% solvable"),
-    ("free-cell",                  (1, 200),  1200000,   "none", "well-studied"),
-    ("klondike",                   (1, 200),  1200000,   "none", "Classic Klondike"),
-    ("klondike-deal-1",            (1, 200),  1200000,   "none", "Klondike Variant"),
-    ("klondike-deal-3-nospace",    (1, 200),  1200000,   "none", "Harder Klondike"),
-    ("bakers-game",                (1, 200),  1200000,   "none", "Baker's Game"),
-    ("accordion",                  (1, 200),  1200000,   "none",             "Uses predecessor cache"),
-    ("seahaven-towers",            (1, 200),  1200000,   "auto-foundations", "Seahaven Towers"),
-    ("simple-simon",               (1, 200),  1200000,   "auto-foundations", "Simple Simon"),
-    ("golf",                       (1, 200),  1200000,   "none",             "Golf (fast)"),
-    ("black-hole",                 (1, 200),  1200000,   "auto-foundations", "Black Hole"),
-    ("spanish-patience",           (1, 200),  1200000,  "auto-foundations", "Hard; long runs"),
-    ("gaps-one-deal",              (1, 200),  1200000,   "none",             "Gaps"),
-    ("eight-off",                  (1, 200),  1200000,   "auto-foundations", "Eight Off"),
+    ("somerset",                   (1, 500),  1200000,   "none", "about 50% solvable"),
+    ("free-cell",                  (1, 500),  1200000,   "none", "well-studied"),
+    ("klondike",                   (1, 500),  1200000,   "none", "Classic Klondike"),
+    ("klondike-deal-1",            (1, 500),  1200000,   "none", "Klondike Variant"),
+    ("klondike-deal-3-nospace",    (1, 500),  1200000,   "none", "Harder Klondike"),
+    ("bakers-game",                (1, 500),  1200000,   "none", "Baker's Game"),
+    ("accordion",                  (1, 500),  1200000,   "none",             "Uses predecessor cache"),
+    ("seahaven-towers",            (1, 500),  1200000,   "auto-foundations", "Seahaven Towers"),
+    ("simple-simon",               (1, 500),  1200000,   "auto-foundations", "Simple Simon"),
+    ("golf",                       (1, 500),  1200000,   "none",             "Golf (fast)"),
+    ("black-hole",                 (1, 500),  1200000,   "auto-foundations", "Black Hole"),
+    ("spanish-patience",           (1, 500),  1200000,  "auto-foundations", "Hard; long runs"),
+    ("gaps-one-deal",              (1, 500),  1200000,   "none",             "Gaps"),
+    ("eight-off",                  (1, 500),  1200000,   "auto-foundations", "Eight Off"),
 ]
 
 GAME_CONFIGS_QUICK = [
@@ -103,9 +103,7 @@ def run_chunk(args):
         "--seeds", f"{seed_start}-{seed_end}",
         "--output", chunk_csv,
         "--output-json", chunk_json,
-        "--no-summary", 
-        "--iterations", 3 ,
-        "--warmup", 1,
+        "--no-summary", # "--iterations", 3 , "--warmup", 1,
         "--label", label,
     ]
     if streamliner and streamliner != "none":
