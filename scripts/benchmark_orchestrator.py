@@ -103,9 +103,7 @@ def run_chunk(args):
         "--seeds", f"{seed_start}-{seed_end}",
         "--output", chunk_csv,
         "--output-json", chunk_json,
-        "--no-summary",
-        "--iterations 3",
-        "--warmup 1",
+        "--no-summary", #"--iterations 3", #"--warmup 1",
         "--label", label,
     ]
     if streamliner and streamliner != "none":
