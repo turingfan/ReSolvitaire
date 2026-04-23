@@ -39,6 +39,7 @@ from datetime import datetime
 # ---------------------------------------------------------------------------
 # Each entry: (game_type, seeds_tuple, timeout_ms, streamliner, notes)
 GAME_CONFIGS_FULL = [
+    ("somerset",                   (1, 200),  1200000,   "none", "about 50% solvable"),
     ("free-cell",                  (1, 200),  1200000,   "none", "well-studied"),
     ("klondike",                   (1, 200),  1200000,   "none", "Classic Klondike"),
     ("klondike-deal-1",            (1, 200),  1200000,   "none", "Klondike Variant"),
@@ -49,7 +50,7 @@ GAME_CONFIGS_FULL = [
     ("simple-simon",               (1, 200),  1200000,   "auto-foundations", "Simple Simon"),
     ("golf",                       (1, 200),  1200000,   "none",             "Golf (fast)"),
     ("black-hole",                 (1, 200),  1200000,   "auto-foundations", "Black Hole"),
-    ("spanish-patience",           (1, 200),  120000,  "auto-foundations", "Hard; long runs"),
+    ("spanish-patience",           (1, 200),  1200000,  "auto-foundations", "Hard; long runs"),
     ("gaps-one-deal",              (1, 200),  1200000,   "none",             "Gaps"),
     ("eight-off",                  (1, 200),  1200000,   "auto-foundations", "Eight Off"),
 ]
@@ -103,6 +104,8 @@ def run_chunk(args):
         "--output", chunk_csv,
         "--output-json", chunk_json,
         "--no-summary",
+        "--iterations 3",
+        "--warmup 1",
         "--label", label,
     ]
     if streamliner and streamliner != "none":
