@@ -5,6 +5,8 @@
 # Usage:
 #   Rscript analysis/compare_labels.R results/20260407/combined.csv
 
+options("width"=10000)
+
 initial_options <- commandArgs(trailingOnly = FALSE)
 script_dir <- dirname(normalizePath(sub("--file=", "", initial_options[grep("--file=", initial_options)])))
 if (length(script_dir) == 0 || script_dir == "") script_dir <- "."
