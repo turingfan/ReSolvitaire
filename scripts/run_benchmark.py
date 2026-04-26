@@ -356,6 +356,7 @@ def main():
     parser.add_argument("solver_args", nargs=argparse.REMAINDER, help="Additional arguments to pass to the solver")
 
     args = parser.parse_args()
+    args.solver = os.path.abspath(args.solver)
 
     # Validate inputs
     if not args.seeds and not args.instances:
