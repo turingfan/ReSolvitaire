@@ -14,7 +14,7 @@ One row per run. Column headers always present by default (`--no-header` to supp
 
 | Column | Type | Values | Notes |
 |---|---|---|---|
-| `solution_type` | string | `SOLVED`, `UNWINNABLE`, `TIMEOUT` | From solver JSON output. |
+| `solution_type` | string | `SOLVED`, `UNWINNABLE`, `TIMEOUT`, `TERMINATED`, `KILLED`, `UNKNOWN` | `SOLVED`/`UNWINNABLE`/`TIMEOUT` from solver output. `TERMINATED` if the process was killed but emitted unrecognisable output. `KILLED` if the process was killed with no output at all. `UNKNOWN` if output was present but unparseable. |
 
 ## Timing
 
@@ -51,6 +51,7 @@ One row per run. Column headers always present by default (`--no-header` to supp
 | `cache_capacity` | int | `100000000` | `--cache-capacity` value. |
 | `timeout_ms` | int | `60000` | Timeout used for this run. |
 | `solver_commit` | string | `bf4f811` | 7-char git hash of HEAD when `run_benchmark.py` was invoked. Identifies the solver binary used. |
+| `label` | string | `flat-cache` | Freeform tag set via `--label`. Empty string if not provided. Useful for grouping runs from different configurations in a single CSV when using `--append`. |
 
 ## Notes on derived metrics
 

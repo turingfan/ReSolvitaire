@@ -164,10 +164,32 @@ Rscript analysis/summary.R results/klondike_current.csv
 | `--iterations N` | 1 | Timed runs per instance |
 | `--warmup N` | 0 | Warmup runs (excluded from output) |
 | `--streamliner X` | `none` | `none`, `auto-foundations`, `suit-symmetry`, `both`, `smart-solvability` |
-| `--cache-capacity N` | 100000000 | Cache entry limit |
+| `--cache-capacity N` | — | Cache capacity in bytes (omit to use solver default) |
 | `--custom-rules FILE` | — | Rules JSON; replaces `--type` (mutually exclusive) |
+| `--label TEXT` | `""` | Freeform tag written to the `label` CSV column (e.g. `"flat-cache"`) |
 | `--append` | off | Open output CSV in append mode (use with `--no-header` when chaining calls) |
 | `--legacy` | off | Use `--classify` output (for pre-ReSolvitaire solver binaries) |
-| `--output-json FILE` | off | Also write JSON output |
+| `--skip-ineligible` | off | If the solver rejects the game type (prints "requires"/"not eligible"/"not supported" to stderr and exits non-zero), skip all remaining seeds and exit cleanly. Useful for variant binaries that only support a subset of game types. |
+| `--output-json FILE` | — | Also write JSON output |
 | `--no-summary` | off | Skip automatic R summary at end |
 | `--no-header` | off | Suppress CSV column headers |
+
+## Solver path
+
+The `--solver` path is resolved to an absolute path before the subprocess is
+launched.  Relative paths work as long as they are correct relative to the
+directory where `run_benchmark.py` is invoked — typically the repo root.
+
+## Linux / container
+
+Inside the container the repo is at `/workspace`.  Solver binaries are at
+`/workspace/cmake-build-release/bin/solvitaire` etc.  Pass absolute paths or
+run from `/workspace`:
+
+```bash
+cd /workspace
+python3 scripts/run_benchmark.py \
+    --solver cmake-build-release/bin/solvitaire \
+    --type klondike --seeds 1-10 --timeout 10000 \
+    --output /tmp/test.csv
+```
