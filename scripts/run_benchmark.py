@@ -6,10 +6,22 @@ Orchestrates solver runs across multiple seeds or instances, captures timing
 and memory statistics, and optionally generates R summary statistics.
 
 Usage:
+    # Preset game type, seed range
     python3 run_benchmark.py --solver PATH --seeds N-M --type TYPE --output results.csv
+
+    # Single seed with custom rules JSON
+    python3 run_benchmark.py --solver PATH --seeds SEED --custom-rules RULES.json --output results.csv
+
+    # File-based instances (Level 1 JSON deal files)
     python3 run_benchmark.py --solver PATH --instances '*.json' --output results.csv
 
+--custom-rules / --type are mutually exclusive.  --seeds accepts either a
+range (N-M) or a single integer.
 
+Use --append with --no-header to accumulate results from successive calls
+(e.g. one call per instance) into a single CSV without duplicate headers.
+See scripts/oracle_to_benchmark_cmds.py for a helper that generates these
+chained calls from an oracle JSON file.
 """
 
 import argparse
@@ -39,8 +51,13 @@ def get_solver_commit() -> str:
         return "unknown"
 
 def parse_seed_range(seed_spec: str) -> List[int]:
-    """Parse seed specification like '1-10' into [1, 2, ..., 10]."""
+    """Parse seed specification like '1-10' or single '42' into a list of ints."""
     parts = seed_spec.split('-')
+    if len(parts) == 1:
+        try:
+            return [int(parts[0])]
+        except ValueError:
+            raise ValueError(f"Invalid seed: {seed_spec}")
     if len(parts) != 2:
         raise ValueError(f"Invalid seed range: {seed_spec}")
     try:
@@ -294,7 +311,8 @@ def main():
         description="Benchmark ReSolvitaire across multiple instances"
     )
     parser.add_argument("--solver", required=True, help="Path to solvitaire binary")
-    parser.add_argument("--type", help="Game type (required for --seeds mode)")
+    parser.add_argument("--type", help="Game type (required for --seeds mode, mutually exclusive with --custom-rules)")
+    parser.add_argument("--custom-rules", dest="custom_rules", help="Path to custom rules JSON (used with --seeds instead of --type)")
     parser.add_argument("--seeds", help="Seed range N-M (inclusive)")
     parser.add_argument("--instances", nargs="+", help="Glob patterns for instance files")
     parser.add_argument("--legacy", action="store_true", help="Use --classify flag for legacy Solvitaire solver")
@@ -308,6 +326,7 @@ def main():
     parser.add_argument("--output", required=True, help="Output CSV file")
     parser.add_argument("--output-json", help="Optional JSON output file")
     parser.add_argument("--no-header", action="store_true", help="Don't write CSV header")
+    parser.add_argument("--append", action="store_true", help="Append to output CSV instead of overwriting (use with --no-header for chained calls)")
     parser.add_argument("--no-summary", action="store_true", help="Skip automatic R summary")
     parser.add_argument("--skip-ineligible", action="store_true",
                         help="If solver rejects the game type (non-zero exit with 'requires'/"
@@ -322,15 +341,22 @@ def main():
     if not args.seeds and not args.instances:
         print("Error: either --seeds or --instances is required", file=sys.stderr)
         sys.exit(1)
-    if args.seeds and not args.type:
-        print("Error: --type is required when using --seeds", file=sys.stderr)
+    if args.seeds and not args.type and not args.custom_rules:
+        print("Error: --type or --custom-rules is required when using --seeds", file=sys.stderr)
+        sys.exit(1)
+    if args.seeds and args.type and args.custom_rules:
+        print("Error: --type and --custom-rules are mutually exclusive", file=sys.stderr)
         sys.exit(1)
 
     # Determine mode and build instance list
     seed_mode = bool(args.seeds)
     if seed_mode:
         seeds = parse_seed_range(args.seeds)
-        instances = [f"{args.type}_{seed}" for seed in seeds]
+        if args.custom_rules:
+            rules_name = os.path.splitext(os.path.basename(args.custom_rules))[0]
+            instances = [f"{rules_name}_{seed}" for seed in seeds]
+        else:
+            instances = [f"{args.type}_{seed}" for seed in seeds]
     else:
         instance_files = glob_expand(args.instances)
         instances = [os.path.splitext(os.path.basename(f))[0] for f in instance_files]
@@ -340,7 +366,7 @@ def main():
     solver_commit = get_solver_commit()
 
     # Open CSV and write header
-    csv_file = open(args.output, "w")
+    csv_file = open(args.output, "a" if args.append else "w")
     if not args.no_header:
         header = "instance,seed,run,solution_type,time_us,nodes,unique_nodes,backtracks,dominance_moves,states_removed_from_cache,cache_size,cache_buckets,max_depth,final_depth,resident_memory_bytes,solver_resident_bytes,streamliner,cache_capacity,timeout_ms,solver_commit,label"
         csv_file.write(header + "\n")
@@ -359,7 +385,10 @@ def main():
                 cmd = [args.solver, "--json", "--timeout", str(args.timeout)]
 
             if seed_mode:
-                cmd += ["--type", args.type, "--random", str(seed)]
+                if args.custom_rules:
+                    cmd += ["--custom-rules", args.custom_rules, "--random", str(seed)]
+                else:
+                    cmd += ["--type", args.type, "--random", str(seed)]
             else:
                 cmd += [instance_files[instance_idx]]
 
