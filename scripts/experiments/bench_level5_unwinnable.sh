@@ -21,7 +21,7 @@ LEGACY_BIN="${LEGACY_BIN:-$REPO_ROOT/../05-Executables/reference/solvitaire-refe
 RESULTS_DIR="${1:-benchmarks/level5_unwinnable_$(date +%Y%m%d_%H%M%S)}"
 
 WARMUP=1
-ITERATIONS=3
+ITERATIONS=5
 TIMEOUT=1800000   # 1800 s — Level 5 standard
 
 mkdir -p "$RESULTS_DIR"
@@ -51,9 +51,9 @@ run_variant() {
     echo "  -> $output"
 }
 
-run_variant "solvitaire"      "$BIN_DIR/solvitaire"
-run_variant "solvitaire-flat" "$BIN_DIR/solvitaire-flat"
-run_variant "solvitaire-lru"  "$BIN_DIR/solvitaire-lru"  -- --force-lru
+run_variant "solvitaire"      "$BIN_DIR/solvitaire" &
+run_variant "solvitaire-flat" "$BIN_DIR/solvitaire-flat" &
+run_variant "solvitaire-lru"  "$BIN_DIR/solvitaire-lru"  -- --force-lru &
 
 run_variant "legacy" "$LEGACY_BIN" --legacy
 
