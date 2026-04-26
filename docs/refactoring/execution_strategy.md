@@ -26,9 +26,9 @@ Three things immediately shape the strategy after reading the code:
 
 1. Extend `zobrist_test.cpp` to add a **round-trip sequence test**: run 50-move random sequences, verify `hash_after_make_then_undo == hash_before`. This doesn't test the *method* of undo, just the result. It will serve as the oracle for Phase 1.
 
-2. Add a **hash snapshot comparison test**: in `dual_cache_test.cpp` or a new `hash_consistency_test.cpp`, run a solver search on a small fixed seed, recording `zobrist_hash_value` at every node. This golden trace is replayed in Phase 1 to verify inline undo produces bit-identical hashes.
+    1. Add a **hash snapshot comparison test**: in `dual_cache_test.cpp` or a new `hash_consistency_test.cpp`, run a solver search on a small fixed seed, recording `zobrist_hash_value` at every node. This golden trace is replayed in Phase 1 to verify inline undo produces bit-identical hashes.
 
-3. Ensure `unit_tests_full` (including `DualCacheTest`) passes cleanly on the current `dev` branch. This is the baseline.
+2. Ensure `unit_tests_full` (including `DualCacheTest`) passes cleanly on the current `dev` branch. This is the baseline.
 
 **Branch:** `dev` (no feature branch — these are pure test additions)
 **Merge criterion:** All existing tests pass + new tests pass
@@ -202,7 +202,7 @@ The legacy solver should be a **frozen tag**, not a long-lived branch. Branches 
 
 **No code changes required.** The `--legacy` flag planned for `run_benchmark.py` completes this phase (see `task_legacy_solver_support.md`).
 
----
+---        
 
 ### Phase 5: Cleanup *(after all phases validated)*
 

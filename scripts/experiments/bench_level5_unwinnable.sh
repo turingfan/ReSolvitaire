@@ -15,7 +15,9 @@ cd "$REPO_ROOT"
 
 ORACLE="tests/oracles/level5.json"
 BIN_DIR="cmake-build-release/bin"
-LEGACY_BIN="$REPO_ROOT/../05-Executables/reference/solvitaire-reference-mac-arm64"
+# Override LEGACY_BIN via environment to use a platform-appropriate binary, e.g.:
+#   LEGACY_BIN=/path/to/solvitaire-linux-arm64 ./scripts/experiments/bench_level5_unwinnable.sh
+LEGACY_BIN="${LEGACY_BIN:-$REPO_ROOT/../05-Executables/reference/solvitaire-reference-mac-arm64}"
 RESULTS_DIR="${1:-benchmarks/level5_unwinnable_$(date +%Y%m%d_%H%M%S)}"
 
 WARMUP=1

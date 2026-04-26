@@ -120,15 +120,24 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, 
     per-run peak RSS from stderr. Falls back to rss_bytes=0 if unavailable.
 
     The solver's own --timeout flag is the primary time enforcer.
-    Python's safety valve fires at 3× that limit for truly hung processes:
-      1. Send SIGTERM, wait up to 5 s for the process to exit and emit output.
-      2. If still alive, send SIGKILL.
-    Whatever stdout is available after SIGTERM is returned so the caller can
-    write a partial row rather than losing the run entirely.
+    Python's safety valve fires only for truly stuck processes:
+      1. Wait solver_timeout + solver_timeout (same again as grace) for self-exit.
+      2. Send SIGTERM to the entire process group (covers /usr/bin/time wrapper
+         AND the solver child — avoids orphaning the solver with an open pipe).
+      3. Wait up to 60 s for graceful shutdown after SIGTERM.
+      4. Send SIGKILL to the process group.
+    Whatever stdout is available is returned so the caller can write a partial row.
+
+    SIGTERM is sent to the immediate child (the /usr/bin/time wrapper if active,
+    otherwise the solver itself). The solver grandchild may continue briefly
+    after time exits, but it will be reaped when it finishes or the OS cleans up.
     """
     import signal
 
-    safety_timeout_s = timeout_ms / 1000.0 * 3
+    solver_timeout_s = timeout_ms / 1000.0
+    grace_s = solver_timeout_s          # same again — total wait before SIGTERM = 2× timeout
+    sigterm_grace_s = 60.0              # 60 s for graceful output flush after SIGTERM
+
     prefix = time_prefix()
     full_cmd = prefix + cmd
 
@@ -141,19 +150,20 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, 
             text=True,
         )
         try:
-            stdout, stderr = proc.communicate(timeout=safety_timeout_s)
+            stdout, stderr = proc.communicate(timeout=solver_timeout_s + grace_s)
             t1 = time.perf_counter()
             time_us = (t1 - t0) * 1_000_000
             rss_bytes = parse_rss_from_time_output(stderr) if prefix else 0
             return proc.returncode == 0, stdout, stderr, time_us, rss_bytes
 
         except subprocess.TimeoutExpired:
+            # Solver is stuck — send SIGTERM then wait before forcing SIGKILL
             try:
                 proc.send_signal(signal.SIGTERM)
             except OSError:
                 pass
             try:
-                stdout, stderr = proc.communicate(timeout=5)
+                stdout, stderr = proc.communicate(timeout=sigterm_grace_s)
             except subprocess.TimeoutExpired:
                 try:
                     proc.kill()
@@ -307,6 +317,16 @@ def format_progress(index: int, total: int, instance: str, solution_type: str, t
     return f"[{index:3d}/{total:3d}] {instance:20s} {solution_type:12s} {time_us:12.1f} us {nodes:8d} nodes"
 
 def main():
+    # When invoked via a pipeline (e.g. oracle_to_benchmark_cmds.py | bash),
+    # Python inherits a broken-pipe fd 0 that can cause solver subprocesses to
+    # fail at fork time.  Replace it with /dev/null once at startup.
+    try:
+        _devnull = os.open(os.devnull, os.O_RDONLY)
+        os.dup2(_devnull, 0)
+        os.close(_devnull)
+    except OSError:
+        pass
+
     parser = argparse.ArgumentParser(
         description="Benchmark ReSolvitaire across multiple instances"
     )
