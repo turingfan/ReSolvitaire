@@ -12,6 +12,7 @@
 IMAGE_NAME="solvitaire-dev"
 TEST_FLAG=""
 REGRESSION_FLAG=""
+VARIANTS_FLAG=""
 # Default to --no-cache: the 'container' CLI v0.9 does not reliably
 # invalidate the COPY layer when source files change, so cached builds
 # silently use stale sources. Use --use-cache to opt in to caching
@@ -27,7 +28,9 @@ Usage: ./scripts/container-build.sh [OPTIONS]
 
 Options:
   --test        Run unit tests after build
-  --regression  Run regression_level1 tests after build
+  --regression  Run regression_level1 tests after build (main binary only)
+  --variants    Run regression_level1 tests for all three variant binaries
+                (solvitaire-flat, solvitaire-hash-only, solvitaire-lru)
   --use-cache   Allow cached layers (faster on slow networks, but may use stale sources)
   (no options)  Build the container image only
 
@@ -40,7 +43,8 @@ flat_cache (default capacity reserves ~3.2 GB of virtual address space).
 Examples:
   ./scripts/container-build.sh              # Build only
   ./scripts/container-build.sh --test       # Build and run unit tests
-  ./scripts/container-build.sh --regression # Build and run Level 1 regression
+  ./scripts/container-build.sh --regression # Build and run Level 1 regression (main binary)
+  ./scripts/container-build.sh --variants   # Build and run Level 1 regression for all variants
   ./scripts/container-build.sh --use-cache --test  # Faster build using cached layers
 EOF
 }
@@ -50,6 +54,7 @@ for arg in "$@"; do
     case "$arg" in
         --test)       TEST_FLAG="1" ;;
         --regression) REGRESSION_FLAG="1" ;;
+        --variants)   VARIANTS_FLAG="1" ;;
         --use-cache)  NO_CACHE_FLAG="" ;;
         --help|-h)    print_usage; exit 0 ;;
         *)
@@ -104,7 +109,14 @@ if [ -n "$REGRESSION_FLAG" ]; then
         bash -c "cd cmake-build-release && ctest -R regression_level1 --output-on-failure"
 fi
 
-if [ -z "$TEST_FLAG" ] && [ -z "$REGRESSION_FLAG" ]; then
+if [ -n "$VARIANTS_FLAG" ]; then
+    echo ""
+    echo "Running regression_level1 for all variant binaries inside container (memory limit: $MEMORY_LIMIT)..."
+    $CONTAINER_CMD run --rm -m "$MEMORY_LIMIT" "$IMAGE_NAME" \
+        bash -c "cd cmake-build-release && ctest -R 'regression_level1_(flat|hash_only|lru)' --output-on-failure"
+fi
+
+if [ -z "$TEST_FLAG" ] && [ -z "$REGRESSION_FLAG" ] && [ -z "$VARIANTS_FLAG" ]; then
     echo ""
     echo "To run tests in the container:"
     echo "  $CONTAINER_CMD run --rm -m $MEMORY_LIMIT $IMAGE_NAME \\"

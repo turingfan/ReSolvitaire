@@ -178,7 +178,8 @@ In the default `solvitaire` binary, `game_state` currently computes the Zobrist 
 
 ### 14. Descriptor State Tracked Only Inside `compact_state payload`
 
-**Status:** Design constraint; no short-term fix planned  
+**Status:** Fix planned in branch `fix/variant-build-hash-only` (Commits 2–4)
+**Plan:** `docs/fix-variant-build-hash-only/implementation_plan.md`  
 **Impact:** Code clarity — `payload` serves a dual role: (1) cache key stored in `flat_cache`, and (2) internal tracking store for old descriptor values needed to compute Zobrist XOR deltas
 
 The 52 card descriptors (and foundation/hole/waste header fields) used to compute the incremental Zobrist hash have no storage of their own — they live exclusively inside `compact_state payload`. Every `update_*` helper reads the old value via `payload.get_*()` before XOR-ing, then writes the new value via `payload.set_*()`. This means `payload` must be maintained (cleared and incrementally updated) even in `hash_only_cache` mode, where the cache itself never stores or reads the payload.
@@ -204,7 +205,8 @@ When `cache_type == ""`, both `needs_flat_hash()` and `needs_flat_payload()` ret
 ### 11. Build Script Does Not Build Variant Binaries for Regression Tests
 
 **Affected file:** `build.sh`
-**Status:** Open; affects regression test setup  
+**Status:** Open; fix planned in branch `fix/variant-build-hash-only` (Commit 1)
+**Plan:** `docs/fix-variant-build-hash-only/implementation_plan.md`
 **Impact:** Running regression tests requires manual build commands; `./build.sh` alone is insufficient
 
 The CMakeLists.txt defines three variant executable targets (`solvitaire-flat`, `solvitaire-hash-only`, `solvitaire-lru`) configured with compile-time cache selection flags. The regression test harness (CMakeLists.txt lines 225–288) invokes these three binaries with different command-line arguments to test each cache variant separately.
@@ -260,6 +262,26 @@ Measured allocations match theory (e.g., 50M clusters: 800 MB vs 3,200 MB).
 **Remaining:** `regression_level5_hash_only` still passes `--compare-outcome-only` against `level5.json` (no level 5 hash-only oracle generated). Generate `level5_hash_only.json` using the same approach when needed.
 
 This approach generalises: `solvitaire-flat` and `solvitaire-lru` could have per-variant oracles generated similarly if node-count validation is desired for those variants.
+
+### 17. Byte-Array Descriptor Store Not Yet Used on Flat-Cache Path
+
+**Status:** Open; deferred post-merge optimisation
+**Impact:** Potential performance — flat-cache path could avoid nibble bit-operations on every Zobrist update
+
+`hash_descriptor_store` (introduced in `fix/variant-build-hash-only`) stores descriptors as
+a plain byte array (one byte per card, 52 bytes total). `compact_state` packs them as nibbles
+(4 bits per card, 26 bytes for 52 cards). Every call to `get_descriptor`/`set_descriptor` in
+the flat-cache path therefore requires a shift-and-mask. These are on the hot Zobrist update
+path, executed millions of times per solve.
+
+Using `hash_descriptor_store` (or a similar byte-array store) for the flat-cache path too
+would eliminate these bit operations. The trade-off: 26 extra bytes per `game_state` on the
+DFS stack, and the flat cache clusters continue to use `compact_state` format — so the
+`game_state` update path would write to a byte-array store while the cache-insert path would
+separately copy into a `compact_state` for the actual cache key.
+
+Magnitude TBD — benchmark before acting. Only worth doing if profiling shows nibble
+operations are a measurable fraction of total solve time.
 
 ---
 

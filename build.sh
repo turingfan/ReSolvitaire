@@ -2,62 +2,44 @@
 
 build="release"
 target="solvitaire"
+build_variants=false
 error=false
 
-if [ "$#" == 1 ]; then
-    if [ "$1" == "--debug" ]; then
-        build="debug"
-    elif [ "$1" == "--release" ]; then
-        build="release"
-    elif [ "$1" == "--unit-tests" ]; then
-        target="unit_tests"
-    elif [ "$1" == "--solvitaire" ]; then
-        target="solvitaire"
-    else
-        error=true
-    fi
-fi
-
-if [ "$#" == 2 ]; then
-    if [ "$1" == "--debug" ]; then
-        build="debug"
-    elif [ "$1" == "--release" ]; then
-        build="release"
-    else
-        error=true
-    fi
-
-    if [ "$2" == "--unit-tests" ]; then
-        target="unit_tests"
-    elif [ "$2" == "--solvitaire" ]; then
-        target="solvitaire"
-    else
-        error=true
-    fi
-fi
-
-if [ "$#" -gt 2 ]; then
-    error=true
-fi
+for arg in "$@"; do
+    case "$arg" in
+        --debug)      build="debug" ;;
+        --release)    build="release" ;;
+        --unit-tests) target="unit_tests" ;;
+        --solvitaire) target="solvitaire" ;;
+        --variants)   build_variants=true ;;
+        *)            error=true ;;
+    esac
+done
 
 if [ "$error" = true ]; then
-    echo "Usage: ./build.sh [--release|--debug] [--solvitaire|--unit-tests]"
+    echo "Usage: ./build.sh [--release|--debug] [--solvitaire|--unit-tests] [--variants]"
     echo "(default args = --release --solvitaire)"
+    echo "--variants: also build solvitaire-flat, solvitaire-hash-only, solvitaire-lru"
     exit 1
-else
-    # More portable way to capitalize build type
-    if [ "$build" == "debug" ]; then
-        build_type="Debug"
-    else
-        build_type="Release"
-    fi
-    cmake \
-    "-DCMAKE_BUILD_TYPE=$build_type" \
-    "-Bcmake-build-$build" -H.
-    cmake --build "cmake-build-$build" --target solvitaire
-    if [ "$target" != "solvitaire" ]; then
-        cmake --build "cmake-build-$build" --target "$target"
-    fi
-    exit 0
 fi
 
+if [ "$build" == "debug" ]; then
+    build_type="Debug"
+else
+    build_type="Release"
+fi
+
+cmake "-DCMAKE_BUILD_TYPE=$build_type" "-Bcmake-build-$build" -H.
+cmake --build "cmake-build-$build" --target solvitaire
+
+if [ "$target" != "solvitaire" ]; then
+    cmake --build "cmake-build-$build" --target "$target"
+fi
+
+if [ "$build_variants" = true ]; then
+    cmake --build "cmake-build-$build" --target solvitaire-flat
+    cmake --build "cmake-build-$build" --target solvitaire-hash-only
+    cmake --build "cmake-build-$build" --target solvitaire-lru
+fi
+
+exit 0

@@ -185,7 +185,19 @@ As of 2026-04-07, `refactor-caching` has ~41 commits ahead of `dev` including:
 
 See `docs/cache-redesign/active/branch_workflow.md` for the full branching protocol.
 
-## Next Steps for Future Work
+## Immediate Next Work (fix/variant-build-hash-only)
+
+Two bugs identified 2026-04-27 are being fixed on branch `fix/variant-build-hash-only`:
+1. `build.sh` never builds variant binaries (`solvitaire-flat`, `solvitaire-hash-only`, `solvitaire-lru`)
+2. Hash-only binary maintains full `compact_state` unnecessarily; fix introduces `hash_descriptor_store`
+
+Plan: `docs/fix-variant-build-hash-only/implementation_plan.md`
+Pickup: `docs/fix-variant-build-hash-only/PICKUP.md`
+
+Once that branch merges to `dev`, the next phase is proper `game_state` policy templating
+(see known-issues #8 and `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`).
+
+## Next Steps for Future Work (roadmap)
 
 1. **Review the roadmap** (`flat_cache_extension_roadmap.md`): Decide which priority item to tackle first
 2. **Start with Priority 1 or 2b**: Lower complexity than chain-based representation
