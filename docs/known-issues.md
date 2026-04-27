@@ -178,15 +178,13 @@ In the default `solvitaire` binary, `game_state` currently computes the Zobrist 
 
 ### 14. Descriptor State Tracked Only Inside `compact_state payload`
 
-**Status:** Fix planned in branch `fix/variant-build-hash-only` (Commits 2–4)
+**Status:** RESOLVED — commits 7e73ab1, c4dc519, 76aaa43 (branch `fix/variant-build-hash-only`, merged to `dev`)
 **Plan:** `docs/fix-variant-build-hash-only/implementation_plan.md`  
-**Impact:** Code clarity — `payload` serves a dual role: (1) cache key stored in `flat_cache`, and (2) internal tracking store for old descriptor values needed to compute Zobrist XOR deltas
+**Impact:** Code clarity — `payload` served a dual role: (1) cache key stored in `flat_cache`, and (2) internal tracking store for old descriptor values needed to compute Zobrist XOR deltas
 
-The 52 card descriptors (and foundation/hole/waste header fields) used to compute the incremental Zobrist hash have no storage of their own — they live exclusively inside `compact_state payload`. Every `update_*` helper reads the old value via `payload.get_*()` before XOR-ing, then writes the new value via `payload.set_*()`. This means `payload` must be maintained (cleared and incrementally updated) even in `hash_only_cache` mode, where the cache itself never stores or reads the payload.
+The 52 card descriptors (and foundation/hole/waste header fields) used to compute the incremental Zobrist hash had no storage of their own — they lived exclusively inside `compact_state payload`. Every `update_*` helper read the old value via `payload.get_*()` before XOR-ing, then wrote the new value via `payload.set_*()`. This meant `payload` had to be maintained even in `hash_only_cache` mode, where the cache itself never stores or reads the payload.
 
-Concretely: `computing_flat_payload` (which means "the cache uses the payload as a key") is a strict subset of `computing_flat_hash`, and all `payload.set_*` calls must be guarded by `computing_flat_hash` rather than `computing_flat_payload`. Any refactor that tries to skip payload maintenance for hash-only games will silently break incremental hash correctness.
-
-**Better design:** A separate compact descriptor-tracking array (not packed into `compact_state`) would decouple the "tracking store for hash deltas" from the "cache payload" role. This would allow hash-only mode to maintain descriptors without carrying full `compact_state` overhead, and would make the invariant explicit. Deferred until after the Phase 3 workpackage.
+**Fix:** `card_descriptor` enum extracted to `descriptor.h` (commit 7e73ab1). New `hash_descriptor_store` (plain byte arrays, 58 bytes) introduced as the old-value store for the hash-only path (commit c4dc519). `game_state` now uses `hash_descriptor_store hash_desc` instead of `compact_state payload` when compiled with `SOLVITAIRE_HASH_ONLY`, and `compact_state.h` is excluded entirely from that compilation unit (commit 76aaa43). All four `update_*` helpers and `make_move` dispatch via `#ifdef SOLVITAIRE_HASH_ONLY`.
 
 ### 15. `dual_cache` and Test Construction Always Enable Both Policy Flags
 
@@ -205,22 +203,17 @@ When `cache_type == ""`, both `needs_flat_hash()` and `needs_flat_payload()` ret
 ### 11. Build Script Does Not Build Variant Binaries for Regression Tests
 
 **Affected file:** `build.sh`
-**Status:** Open; fix planned in branch `fix/variant-build-hash-only` (Commit 1)
+**Status:** RESOLVED — commit 0653486 (branch `fix/variant-build-hash-only`, merged to `dev`)
 **Plan:** `docs/fix-variant-build-hash-only/implementation_plan.md`
-**Impact:** Running regression tests requires manual build commands; `./build.sh` alone is insufficient
+**Impact:** Running regression tests required manual build commands; `./build.sh` alone was insufficient
 
-The CMakeLists.txt defines three variant executable targets (`solvitaire-flat`, `solvitaire-hash-only`, `solvitaire-lru`) configured with compile-time cache selection flags. The regression test harness (CMakeLists.txt lines 225–288) invokes these three binaries with different command-line arguments to test each cache variant separately.
+The CMakeLists.txt defines three variant executable targets (`solvitaire-flat`, `solvitaire-hash-only`, `solvitaire-lru`) configured with compile-time cache selection flags. The regression test harness (CMakeLists.txt lines 225–288) invokes these three binaries.
 
-However, `build.sh` only builds the main `solvitaire` target (and optionally `unit_tests`). The variant targets are never built unless explicitly requested via:
+**Fix:** `build.sh` now accepts a `--variants` flag that builds all three variant targets after the main build. `scripts/container-build.sh` forwards `--variants` to the inner build and runs the variant regression tests. Usage:
 ```bash
-cmake --build cmake-build-release --target solvitaire-flat
-cmake --build cmake-build-release --target solvitaire-hash-only
-cmake --build cmake-build-release --target solvitaire-lru
+./build.sh --variants
+./scripts/container-build.sh --variants
 ```
-
-**Current workaround:** Manually build each variant before running regression tests, or run `ctest` without the `-hash_only`, `-flat`, or `-lru` suffixed tests.
-
-**Recommended fix:** Modify `build.sh` to build all three variants when running the default release build, or at least when `--unit-tests` is specified (since regression tests are part of the full test suite).
 
 ### 12. Hash-Only vs Flat Cache Total Memory Usage Discrepancy Under Investigation
 
@@ -300,3 +293,5 @@ are in `docs/resolved-bugs/`.
 | `recompute_payload_from_scratch()` four bugs | `3d5f66d` | `implementation_plan_v4.md` §M5 |
 | `--force-lru` pile ordering not restored in M6 Phase 1 | `a7f3744` | `implementation_plan_v4.md` §M6 |
 | FreeCell seed 1 flat-only hits (op 221+) — investigated 2026-04-10 | `4c4b022` (investigation, not a bug) | `investigation/INVESTIGATION_COMPLETE.md` |
+| Build script omits variant binaries (#11) | `0653486` | `docs/fix-variant-build-hash-only/implementation_plan.md` |
+| `compact_state payload` dual-role in hash-only path (#14) | `7e73ab1`, `c4dc519`, `76aaa43` | `docs/fix-variant-build-hash-only/implementation_plan.md` |

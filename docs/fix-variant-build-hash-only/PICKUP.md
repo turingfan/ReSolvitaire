@@ -10,7 +10,7 @@
 
 ## Current Status
 
-**Commits 1–4 done.** Next: Commit 5 — docs: close known-issues #11 and #14; add #17.
+**All 5 commits done. Branch work complete.**
 
 Plan document: `docs/fix-variant-build-hash-only/implementation_plan.md`
 
@@ -44,7 +44,7 @@ Fixes two bugs identified in the 2026-04-27 diagnostic session:
 | 2 | `descriptor: extract card_descriptor enum to shared header` | **Done** (7e73ab1) |
 | 3 | `hash_descriptor_store: new lightweight descriptor store for hash-only path` | **Done** (c4dc519) |
 | 4 | `game_state: use hash_descriptor_store in SOLVITAIRE_HASH_ONLY; exclude compact_state` | **Done** (76aaa43) |
-| 5 | `docs: close known-issues #11 and #14; add #17` | Not started |
+| 5 | `docs: close known-issues #11 and #14; add #17` | **Done** |
 
 ---
 
@@ -104,3 +104,4 @@ See `known-issues.md` #8 and `docs/proposals/PROPOSAL-templated-game-state-dispa
 | 2026-04-27 | Commit 2 (7e73ab1): descriptor.h created; compact_state.h backward-compat aliases + C++14 out-of-line defs; game_state.cpp enum refs updated; all unit tests pass |
 | 2026-04-27 | Commit 3 (c4dc519): hash_descriptor_store.h created; header-only, not yet wired in |
 | 2026-04-27 | Commit 4 (76aaa43): game_state wired to hash_descriptor_store for HASH_ONLY; also guarded generic_flat_cache_policies.h, flat_cache.cpp, solver.cpp; all 6 ctest targets pass |
+| 2026-04-27 | Commit 5: docs: known-issues #11 and #14 marked Resolved with commit refs; #17 confirmed present; PICKUP and plan updated. Branch work complete. |
