@@ -279,10 +279,12 @@ private:
 //   HashOnlyPolicy:     2 × uint64_t (8 B)         = 16 B
 //   PredecessorPolicy:  2 × cache_line (64 B)      = 128 B, aligned 128 B
 
+#ifndef SOLVITAIRE_HASH_ONLY
 static_assert(sizeof(generic_flat_cache<CompactStatePolicy>::cluster) == 64,
     "generic_flat_cache<CompactStatePolicy>::cluster must be exactly 64 bytes");
 static_assert(alignof(generic_flat_cache<CompactStatePolicy>::cluster) == 64,
     "generic_flat_cache<CompactStatePolicy>::cluster must be aligned to 64 bytes");
+#endif
 
 static_assert(sizeof(generic_flat_cache<HashOnlyPolicy>::cluster) == 16,
     "generic_flat_cache<HashOnlyPolicy>::cluster must be exactly 16 bytes");

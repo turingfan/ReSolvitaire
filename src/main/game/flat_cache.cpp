@@ -1,5 +1,5 @@
 #include "search-state/game_state.h"
-#if !defined(SOLVITAIRE_LRU_ONLY)
+#if !defined(SOLVITAIRE_LRU_ONLY) && !defined(SOLVITAIRE_HASH_ONLY)
 #include "flat_cache.h"
 
 // For Fibonacci hashing (multiply-high)
@@ -128,4 +128,4 @@ uint64_t flat_cache::get_states_removed_from_cache() const {
 uint64_t flat_cache::bucket_count() const {
     return num_clusters * 2;
 }
-#endif // !SOLVITAIRE_LRU_ONLY
+#endif // !SOLVITAIRE_LRU_ONLY && !SOLVITAIRE_HASH_ONLY

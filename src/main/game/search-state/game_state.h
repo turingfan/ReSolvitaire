@@ -24,8 +24,9 @@
 #ifndef SOLVITAIRE_GAME_STATE_H
 #define SOLVITAIRE_GAME_STATE_H
 
-// Derived compile-time flag: 1 when the flat-cache Zobrist hash and compact_state
-// payload are compiled into game_state. Driven by CMake variant-specific defines.
+// Derived compile-time flag: 1 when the flat-cache Zobrist hash is compiled into
+// game_state. True for both SOLVITAIRE_FLAT_ONLY and SOLVITAIRE_HASH_ONLY.
+// compact_state is only present when SOLVITAIRE_HASH_ONLY is NOT defined.
 #if defined(SOLVITAIRE_FLAT_ONLY) || defined(SOLVITAIRE_HASH_ONLY)
 #  define SOLVITAIRE_COMPUTES_FLAT_HASH 1
 #elif defined(SOLVITAIRE_LRU_ONLY)
@@ -50,7 +51,12 @@
 #include "../sol_rules.h"
 #include "../move.h"
 #include "../zobrist.h"
-#include "../compact_state.h"
+#include "../descriptor.h"
+#ifndef SOLVITAIRE_HASH_ONLY
+#  include "../compact_state.h"
+#else
+#  include "../hash_descriptor_store.h"
+#endif
 #include "../predecessor_state.h"
 #include "../parent_table.h"
 
@@ -98,9 +104,11 @@ public:
     const std::vector<pile>& get_data() const;
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
     uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
+#ifndef SOLVITAIRE_HASH_ONLY
     const compact_state& get_payload() const { return payload; }
     void set_payload_depth(uint16_t depth);
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
+#endif
 #endif
 
     /* Predecessor-based Zobrist (accordion games) */
@@ -109,7 +117,7 @@ public:
     void set_predecessor_payload_depth(uint8_t depth);
     bool uses_predecessor_cache() const { return rules.accordion_size > 0; }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(NDEBUG)
+#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(NDEBUG) && !defined(SOLVITAIRE_HASH_ONLY)
     compact_state recompute_payload_from_scratch() const;  // Debug: rebuild payload from board state
     void assert_payload_consistent() const;                // Debug: assert incremental payload matches recomputed
 #endif
@@ -208,9 +216,13 @@ private:
     card::rank_t foundations_base;
 
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
-    /* Descriptor-aligned Zobrist hash and payload */
+    /* Descriptor-aligned Zobrist hash and descriptor store */
     uint64_t zobrist_hash_value;
-    compact_state payload;
+#ifdef SOLVITAIRE_HASH_ONLY
+    hash_descriptor_store hash_desc;  // old-value store for incremental Zobrist XOR deltas
+#else
+    compact_state payload;            // cache key (copied into flat_cache clusters) + descriptor store
+#endif
     bool initially_face_up[52];  // true = card was face-up at initial deal (after turn_face_up)
 
     void init_payload_and_hash();     // Called at end of constructors

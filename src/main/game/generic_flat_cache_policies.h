@@ -20,7 +20,9 @@
 
 #include <cstdint>
 #include <cstring>
-#include "compact_state.h"
+#ifndef SOLVITAIRE_HASH_ONLY
+#  include "compact_state.h"
+#endif
 #include "predecessor_state.h"
 #include "search-state/game_state.h"
 
@@ -53,7 +55,10 @@ struct insert_predecessor_tag {};
 //
 // Mirrors flat_cache exactly: entries are compact_state (32 B), cluster = 64 B,
 // aligned to 64 B (one cache line). TwoBig1 depth-preferred replacement.
+//
+// Not compiled in SOLVITAIRE_HASH_ONLY: compact_state is excluded from that path.
 
+#ifndef SOLVITAIRE_HASH_ONLY
 struct CompactStatePolicy {
     typedef compact_state payload_type;
     typedef insert_depth_tag insert_strategy;
@@ -96,6 +101,7 @@ struct CompactStatePolicy {
         cl.entries[dst] = cl.entries[src];
     }
 };
+#endif // !SOLVITAIRE_HASH_ONLY
 
 
 // ─── HashOnlyPolicy ───────────────────────────────────────────────────────────

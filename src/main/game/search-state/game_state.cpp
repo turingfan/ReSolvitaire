@@ -485,7 +485,11 @@ void game_state::make_regular_move(const move m) {
     uint8_t old_ht = 255;
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (m.to == hole) {
+#ifdef SOLVITAIRE_HASH_ONLY
+        if (computing_flat_hash) old_ht = hash_desc.get_hole_top();
+#else
         if (computing_flat_hash) old_ht = payload.get_hole_top();
+#endif
     }
 #endif
 
@@ -1134,7 +1138,11 @@ void game_state::init_initially_face_up() {
         if (piles[tab_ref].size() == 1 && !piles[tab_ref][0].is_face_down()) {
             card c = piles[tab_ref][0];
             uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+#ifdef SOLVITAIRE_HASH_ONLY
+            if (computing_flat_hash && hash_desc.get_descriptor(cid) == card_descriptor::STARTING) {
+#else
             if (computing_flat_hash && payload.get_descriptor(cid) == card_descriptor::STARTING) {
+#endif
                 update_card_descriptor(cid, card_descriptor::IN_SPACE);
             }
         }
@@ -1143,7 +1151,11 @@ void game_state::init_initially_face_up() {
 
 void game_state::init_payload_and_hash() {
     if (!computing_flat_hash) return;
+#ifdef SOLVITAIRE_HASH_ONLY
+    hash_desc.clear();
+#else
     payload.clear();
+#endif
     zobrist_hash_value = 0;
 
     // All cards start with descriptor STARTING (0)
@@ -1159,7 +1171,11 @@ void game_state::init_payload_and_hash() {
             if (s < foundations.size()) {
                 top_rank = piles[foundations[s]].empty() ? 0 : piles[foundations[s]].top_card().get_rank();
             }
+#ifdef SOLVITAIRE_HASH_ONLY
+            hash_desc.set_foundation(s, top_rank);
+#else
             payload.set_foundation(s, top_rank);
+#endif
             zobrist_hash_value ^= zobrist_hash::foundation_key(s, top_rank);
         }
     }
@@ -1168,7 +1184,11 @@ void game_state::init_payload_and_hash() {
     if (rules.hole && !piles[hole].empty()) {
         card top = piles[hole].top_card();
         uint8_t cid = zobrist_hash::card_id(top.get_suit(), top.get_rank());
+#ifdef SOLVITAIRE_HASH_ONLY
+        hash_desc.set_hole_top(cid);
+#else
         payload.set_hole_top(cid);
+#endif
         zobrist_hash_value ^= zobrist_hash::hole_top_key(cid);
     }
 
@@ -1177,7 +1197,11 @@ void game_state::init_payload_and_hash() {
     // by deal count), use 0 to match LRU's position-independent encoding.
     if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
         uint8_t ptr = effective_waste_ptr();
+#ifdef SOLVITAIRE_HASH_ONLY
+        hash_desc.set_waste_ptr(ptr);
+#else
         payload.set_waste_ptr(ptr);
+#endif
         zobrist_hash_value ^= zobrist_hash::waste_key(ptr);
     }
 
@@ -1238,8 +1262,13 @@ void game_state::init_payload_and_hash() {
 void game_state::update_card_descriptor(uint8_t cid, uint8_t new_desc) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (computing_flat_hash) {
+#ifdef SOLVITAIRE_HASH_ONLY
+        uint8_t old_desc = hash_desc.get_descriptor(cid);
+        hash_desc.set_descriptor(cid, new_desc);
+#else
         uint8_t old_desc = payload.get_descriptor(cid);
         payload.set_descriptor(cid, new_desc);
+#endif
         zobrist_hash_value ^= zobrist_hash::card_key(cid, old_desc)
                             ^ zobrist_hash::card_key(cid, new_desc);
     }
@@ -1251,8 +1280,13 @@ void game_state::update_card_descriptor(uint8_t cid, uint8_t new_desc) {
 void game_state::update_foundation_in_hash(uint8_t suit, uint8_t new_rank) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (computing_flat_hash) {
+#ifdef SOLVITAIRE_HASH_ONLY
+        uint8_t old_rank = hash_desc.get_foundation(suit);
+        hash_desc.set_foundation(suit, new_rank);
+#else
         uint8_t old_rank = payload.get_foundation(suit);
         payload.set_foundation(suit, new_rank);
+#endif
         zobrist_hash_value ^= zobrist_hash::foundation_key(suit, old_rank)
                             ^ zobrist_hash::foundation_key(suit, new_rank);
     }
@@ -1273,8 +1307,13 @@ uint8_t game_state::effective_waste_ptr() const {
 void game_state::update_waste_ptr_in_hash(uint8_t new_ptr) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (computing_flat_hash) {
+#ifdef SOLVITAIRE_HASH_ONLY
+        uint8_t old_ptr = hash_desc.get_waste_ptr();
+        hash_desc.set_waste_ptr(new_ptr);
+#else
         uint8_t old_ptr = payload.get_waste_ptr();
         payload.set_waste_ptr(new_ptr);
+#endif
         zobrist_hash_value ^= zobrist_hash::waste_key(old_ptr)
                             ^ zobrist_hash::waste_key(new_ptr);
     }
@@ -1286,8 +1325,13 @@ void game_state::update_waste_ptr_in_hash(uint8_t new_ptr) {
 void game_state::update_hole_top_in_hash(uint8_t new_cid) {
 #if SOLVITAIRE_COMPUTES_FLAT_HASH
     if (computing_flat_hash) {
+#ifdef SOLVITAIRE_HASH_ONLY
+        uint8_t old_cid = hash_desc.get_hole_top();
+        hash_desc.set_hole_top(new_cid);
+#else
         uint8_t old_cid = payload.get_hole_top();
         payload.set_hole_top(new_cid);
+#endif
         zobrist_hash_value ^= zobrist_hash::hole_top_key(old_cid)
                             ^ zobrist_hash::hole_top_key(new_cid);
     }
@@ -1354,7 +1398,7 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
 }
 #endif // SOLVITAIRE_COMPUTES_FLAT_HASH (determine_destination_descriptor)
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
+#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(SOLVITAIRE_HASH_ONLY)
 void game_state::set_payload_depth(uint16_t depth) {
     if (computing_flat_payload) payload.set_depth(depth);
 }

@@ -72,8 +72,12 @@ solver::solver(const game_state& gs, cache_interface& c)
         , root(move(move::mtype::null))
         , current_node() {
 #if !defined(SOLVITAIRE_LRU_ONLY)
-    using_flat_cache = (dynamic_cast<flat_cache*>(&cache) != nullptr)
-                    || (dynamic_cast<predecessor_flat_cache*>(&cache) != nullptr)
+    using_flat_cache =
+#ifndef SOLVITAIRE_HASH_ONLY
+                       (dynamic_cast<flat_cache*>(&cache) != nullptr)
+                    ||
+#endif
+                       (dynamic_cast<predecessor_flat_cache*>(&cache) != nullptr)
                     || (dynamic_cast<hash_only_cache*>(&cache) != nullptr)
                     || (dynamic_cast<dual_cache*>(&cache) != nullptr)
                     || (dynamic_cast<generic_flat_cache_base*>(&cache) != nullptr);
@@ -138,7 +142,7 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
                 // Caches the current state
                 bool is_new_state;
                 if (using_flat_cache) {
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
+#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(SOLVITAIRE_HASH_ONLY)
                     if (state.computing_flat_payload)
                         state.set_payload_depth(static_cast<uint16_t>(
                             min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
@@ -149,7 +153,7 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
                     }
                     is_new_state = cache.insert(state);
 #ifndef NDEBUG
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
+#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(SOLVITAIRE_HASH_ONLY)
                     if (state.computing_flat_payload) state.assert_payload_consistent();
 #endif
 #endif
