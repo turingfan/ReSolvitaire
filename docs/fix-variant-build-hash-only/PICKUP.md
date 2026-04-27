@@ -10,7 +10,7 @@
 
 ## Current Status
 
-**No commits made yet.** Branch not yet created. Plan is written and approved.
+**Commit 1 done** (0653486). Next: Commit 2 — extract `card_descriptor` enum to `descriptor.h`.
 
 Plan document: `docs/fix-variant-build-hash-only/implementation_plan.md`
 
@@ -40,7 +40,7 @@ Fixes two bugs identified in the 2026-04-27 diagnostic session:
 
 | # | Commit message | Status |
 |---|----------------|--------|
-| 1 | `build: add --variants flag; build variant binaries in container` | Not started |
+| 1 | `build: add --variants flag; build variant binaries in container` | **Done** (0653486) |
 | 2 | `descriptor: extract card_descriptor enum to shared header` | Not started |
 | 3 | `hash_descriptor_store: new lightweight descriptor store for hash-only path` | Not started |
 | 4 | `game_state: use hash_descriptor_store in SOLVITAIRE_HASH_ONLY; exclude compact_state` | Not started |
@@ -100,3 +100,4 @@ See `known-issues.md` #8 and `docs/proposals/PROPOSAL-templated-game-state-dispa
 | Date | What was done |
 |------|--------------|
 | 2026-04-27 | Planning session: plan document written, PICKUP written, no code changes |
+| 2026-04-27 | Commit 1 (0653486): build.sh loop-based parser + --variants flag; container-build.sh --variants; Dockerfile already correct |

@@ -486,6 +486,7 @@ and hash-only node counts are already validated in existing oracles.
 | Date | Session | Commits completed | Notes |
 |------|---------|-------------------|-------|
 | 2026-04-27 | Planning | — | Plan written; branch not yet created |
+| 2026-04-27 | Implementation | Commit 1 (0653486) | build.sh, container-build.sh; Dockerfile already built variants, no change needed |
 
 **Rule: update PICKUP.md and this session log at the end of every session in which a commit
 is completed.**
