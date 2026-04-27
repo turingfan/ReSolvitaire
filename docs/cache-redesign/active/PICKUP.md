@@ -1,7 +1,58 @@
-# Pickup Document: refactor-caching Branch
+# Pickup Document: Cache Validation & Known Issues (dev branch)
 
-**Date:** 2026-03-30 (updated 2026-04-07)
-**Branch Status:** Active development branch — contains `hash_only_cache`, `predecessor_flat_cache`, `cache_factory.h`, and mmap lazy allocation for all three flat caches. These are **not yet merged to `dev`**.
+**Date:** 2026-04-27 (diagnostic session)
+**Branch Status:** `dev` contains all cache implementations. Diagnostic branch `diagnostic/cache-routing` completed for validation.
+
+## Session 2026-04-27: Hash-Only Cache Verification & Memory Efficiency Investigation
+
+### What Was Done
+
+Verified hash-only cache behavior and investigated memory efficiency:
+
+1. **Cache Routing Verification** (diagnostic branch `diagnostic/cache-routing`)
+   - Added stderr debug output to track cache instantiation and memory allocation
+   - Confirmed `solvitaire-hash-only` binary enforces hash-only cache via `SOLVITAIRE_HASH_ONLY` compilation flag
+   - Verified cache routing works correctly with and without `--cache-type` argument
+   - Cache selection code properly routes to correct implementation
+
+2. **Build Issue Identified**
+   - `build.sh` only builds main `solvitaire` binary (and optionally `unit_tests`)
+   - Regression tests expect three variant binaries: `solvitaire-flat`, `solvitaire-hash-only`, `solvitaire-lru`
+   - CMakeLists.txt defines these targets but `build.sh` never invokes them
+   - **Fix needed:** Update `build.sh` to build all three variants, or document requirement to build manually:
+     ```bash
+     cmake --build cmake-build-release --target solvitaire-flat
+     cmake --build cmake-build-release --target solvitaire-hash-only
+     cmake --build cmake-build-release --target solvitaire-lru
+     ```
+
+3. **Cache Cluster Memory Investigation**
+   - Hash-only cache clusters: **16 bytes/cluster** (two uint64_t hashes)
+   - Flat cache clusters: **64 bytes/cluster** (two 32-byte compact_state entries)
+   - Debug output shows expected cluster allocation:
+     - Hash-only: 50M clusters × 16 bytes = 800 MB
+     - Flat cache: 50M clusters × 64 bytes = 3,200 MB
+   - **⚠️ Discrepancy under investigation:** Benchmarks on Linux appear to show equal total RAM usage between hash-only and flat cache, despite theoretical 4× difference in cache cluster allocation. Requires further investigation — may involve overhead, game_state allocation patterns, or measurement differences.
+
+4. **Inefficiency Identified** (see Known Issues §6 below)
+   - Hash-only cache computes full `compact_state payload` on every move, despite never using it for cache verification
+   - `computing_flat_hash` = true, `computing_flat_payload` = false for hash-only
+   - Payload updates happen in `init_payload_and_hash()` and move operations when hash is needed
+   - The 32-byte payload is allocated in every game_state and updated constantly
+   - **Potential impact:** Wasted CPU cycles and memory bandwidth on payload maintenance (magnitude TBD)
+
+### Regression Tests Status
+
+- All hash-only regression tests (levels 1-3) **pass successfully** when variant binaries are built
+- Node counts differ between hash-only and flat cache (expected, due to exploration order)
+- Regression harness validates **outcomes only**, not node counts (intentional policy per M6)
+
+### Diagnostic Branch
+
+Branch `diagnostic/cache-routing` contains:
+- Debug output added to flat_cache.cpp, hash_only_cache.cpp, generic_flat_cache.h
+- Shows cache type, cluster count, cluster size, and total allocation at initialization
+- Preserved for future memory profiling investigation
 
 ## Executive Summary
 

@@ -135,7 +135,7 @@ python3 scripts/compare_benchmarks.py \
 
 **Future fix:** Could add `/usr/bin/time` measurement to modern solver benchmarks for accuracy.
 
-### 7. FreeCell Seed 1 Flat-Only Hits Investigation (RESOLVED — commit 4c4b022)
+### 16. FreeCell Seed 1 Flat-Only Hits Investigation (RESOLVED — commit 4c4b022)
 
 **Investigation:** Recovered 100+ `lru=MISS, flat=HIT` mismatches at op 221+ from previous conversation
 **Status:** RESOLVED — Not a bug; legitimate behavior confirmed
@@ -176,7 +176,7 @@ In the default `solvitaire` binary, `game_state` currently computes the Zobrist 
 
 **Prerequisite for long-term fix:** Phase 3 workpackage complete. The boolean guards introduced in the short-term fix mark every site that will become a policy dispatch call, making the migration mechanical.
 
-### 9. Descriptor State Tracked Only Inside `compact_state payload`
+### 14. Descriptor State Tracked Only Inside `compact_state payload`
 
 **Status:** Design constraint; no short-term fix planned  
 **Impact:** Code clarity — `payload` serves a dual role: (1) cache key stored in `flat_cache`, and (2) internal tracking store for old descriptor values needed to compute Zobrist XOR deltas
@@ -187,7 +187,7 @@ Concretely: `computing_flat_payload` (which means "the cache uses the payload as
 
 **Better design:** A separate compact descriptor-tracking array (not packed into `compact_state`) would decouple the "tracking store for hash deltas" from the "cache payload" role. This would allow hash-only mode to maintain descriptors without carrying full `compact_state` overhead, and would make the invariant explicit. Deferred until after the Phase 3 workpackage.
 
-### 10. `dual_cache` and Test Construction Always Enable Both Policy Flags
+### 15. `dual_cache` and Test Construction Always Enable Both Policy Flags
 
 **Status:** Intentional workaround; deferred clean-up  
 **Impact:** Minor — `DualCacheTest` game_states compute hash and payload even for games that would route to LRU in production; test correctness requires this
@@ -201,9 +201,56 @@ When `cache_type == ""`, both `needs_flat_hash()` and `needs_flat_payload()` ret
 
 **Ideal fix:** Pass explicit policy flags (or a `cache_type`) from `dual_cache` construction sites, computing the OR of the flags required by each constituent cache. Deferred — requires refactoring `dual_cache` and its test harness.
 
+### 11. Build Script Does Not Build Variant Binaries for Regression Tests
+
+**Affected file:** `build.sh`
+**Status:** Open; affects regression test setup  
+**Impact:** Running regression tests requires manual build commands; `./build.sh` alone is insufficient
+
+The CMakeLists.txt defines three variant executable targets (`solvitaire-flat`, `solvitaire-hash-only`, `solvitaire-lru`) configured with compile-time cache selection flags. The regression test harness (CMakeLists.txt lines 225–288) invokes these three binaries with different command-line arguments to test each cache variant separately.
+
+However, `build.sh` only builds the main `solvitaire` target (and optionally `unit_tests`). The variant targets are never built unless explicitly requested via:
+```bash
+cmake --build cmake-build-release --target solvitaire-flat
+cmake --build cmake-build-release --target solvitaire-hash-only
+cmake --build cmake-build-release --target solvitaire-lru
+```
+
+**Current workaround:** Manually build each variant before running regression tests, or run `ctest` without the `-hash_only`, `-flat`, or `-lru` suffixed tests.
+
+**Recommended fix:** Modify `build.sh` to build all three variants when running the default release build, or at least when `--unit-tests` is specified (since regression tests are part of the full test suite).
+
+### 12. Hash-Only vs Flat Cache Total Memory Usage Discrepancy Under Investigation
+
+**Status:** Open; requires further investigation  
+**Impact:** Memory efficiency claims for hash-only cache not yet confirmed under realistic benchmarks
+
+**Observed:** Cache cluster allocations are correct in theory:
+- Hash-only clusters: 16 bytes (two uint64_t hashes)
+- Flat cache clusters: 64 bytes (two 32-byte compact_state entries)
+- Expected ratio: 1:4 (hash-only should use 1/4 the cache memory)
+
+Measured allocations match theory (e.g., 50M clusters: 800 MB vs 3,200 MB).
+
+**Discrepancy:** Benchmarks run on Linux report total solver process memory as equal between hash-only and flat cache variants, contradicting the 4× theoretical difference.
+
+**Possible explanations:**
+- Game_state allocation overhead (32-byte payload allocated in every game_state regardless of cache type)
+- Other per-game overhead that scales equally
+- Measurement differences (RSS vs virtual memory vs actual physical allocation)
+- Linux/macOS differences in memory reporting
+
+**What needs investigation:**
+1. Clarify what metric the benchmark is measuring (total RSS, peak RSS, virtual memory, etc.)
+2. Profile actual memory layout with real benchmarks
+3. Determine if game_state payload overhead dominates total memory usage
+4. Verify whether Linux and macOS show the same ratio or differ
+
+**Related issue:** Issue #9 (payload tracking overhead) may be contributing to total memory overhead.
+
 ---
 
-### 9. Per-Variant Oracles for `solvitaire-hash-only` Node Counts (Option B partially done)
+### 13. Per-Variant Oracles for `solvitaire-hash-only` Node Counts (Option B partially done)
 
 **Status:** Levels 1–4 done; Level 5 still uses `--compare-outcome-only`
 **Impact:** Level 5 hash-only node counts are not validated against an oracle
