@@ -1,5 +1,18 @@
 #include "compact_state.h"
 
+// C++14 out-of-line definitions for static constexpr members (required when ODR-used,
+// e.g. bound to a const reference in GTest EXPECT_EQ calls).
+constexpr card_descriptor compact_state::STARTING;
+constexpr card_descriptor compact_state::STARTING_FACE_UP;
+constexpr card_descriptor compact_state::ROOT;
+constexpr card_descriptor compact_state::IN_CELL;
+constexpr card_descriptor compact_state::PARENT_0;
+constexpr card_descriptor compact_state::PARENT_1;
+constexpr card_descriptor compact_state::PARENT_2;
+constexpr card_descriptor compact_state::PARENT_3;
+constexpr card_descriptor compact_state::IN_HOLE;
+constexpr card_descriptor compact_state::IN_SPACE;
+
 #if !defined(SOLVITAIRE_LRU_ONLY)
 
 void compact_state::clear() {

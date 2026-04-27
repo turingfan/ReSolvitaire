@@ -3,22 +3,24 @@
 
 #include <cstdint>
 #include <cstring>
+#include "descriptor.h"
 
 struct compact_state {
     uint8_t data[32];
 
-    enum descriptor : uint8_t {
-        STARTING         = 0,
-        STARTING_FACE_UP = 1,
-        ROOT             = 2,
-        IN_CELL          = 3,
-        PARENT_0         = 4,
-        PARENT_1         = 5,
-        PARENT_2         = 6,
-        PARENT_3         = 7,
-        IN_HOLE          = 8,
-        IN_SPACE         = 9,  // Moved to an empty tableau pile (distinct from ROOT = original bottom)
-    };
+    // Backward-compatibility aliases so existing flat-cache code can still write
+    // compact_state::STARTING etc. without change.
+    using descriptor = card_descriptor;
+    static constexpr card_descriptor STARTING         = card_descriptor::STARTING;
+    static constexpr card_descriptor STARTING_FACE_UP = card_descriptor::STARTING_FACE_UP;
+    static constexpr card_descriptor ROOT             = card_descriptor::ROOT;
+    static constexpr card_descriptor IN_CELL          = card_descriptor::IN_CELL;
+    static constexpr card_descriptor PARENT_0         = card_descriptor::PARENT_0;
+    static constexpr card_descriptor PARENT_1         = card_descriptor::PARENT_1;
+    static constexpr card_descriptor PARENT_2         = card_descriptor::PARENT_2;
+    static constexpr card_descriptor PARENT_3         = card_descriptor::PARENT_3;
+    static constexpr card_descriptor IN_HOLE          = card_descriptor::IN_HOLE;
+    static constexpr card_descriptor IN_SPACE         = card_descriptor::IN_SPACE;
 
     void clear();
 
