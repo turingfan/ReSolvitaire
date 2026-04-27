@@ -52,7 +52,7 @@ run_variant() {
 }
 
 #run_variant "solvitaire"      "$BIN_DIR/solvitaire" &
-run_variant "solvitaire-hash-only" "$BIN_DIR/solvitaire-hash-only" 
+run_variant "solvitaire-hash-only-updated" "$BIN_DIR/solvitaire-hash-only" 
 #run_variant "solvitaire-flat" "$BIN_DIR/solvitaire-flat" &
 #run_variant "solvitaire-lru"  "$BIN_DIR/solvitaire-lru"  -- --force-lru &
 
