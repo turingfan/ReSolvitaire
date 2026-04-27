@@ -488,6 +488,7 @@ and hash-only node counts are already validated in existing oracles.
 | 2026-04-27 | Planning | — | Plan written; branch not yet created |
 | 2026-04-27 | Implementation | Commit 1 (0653486) | build.sh, container-build.sh; Dockerfile already built variants, no change needed |
 | 2026-04-27 | Implementation | Commit 2 (7e73ab1) | descriptor.h; compact_state.h backward-compat; C++14 ODR defs in compact_state.cpp; game_state.cpp enum refs; all unit tests pass |
+| 2026-04-27 | Implementation | Commit 3 (c4dc519) | hash_descriptor_store.h created; header-only, not yet wired in |
 
 **Rule: update PICKUP.md and this session log at the end of every session in which a commit
 is completed.**
