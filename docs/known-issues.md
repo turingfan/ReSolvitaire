@@ -7,26 +7,16 @@ are interesting as development history are documented in `docs/resolved-bugs/`.
 
 ## Open Issues
 
-### 1. JSON Deal Round-Trip Changes Node Counts (`json_helper.cpp`)
+### ~~1. JSON Deal Round-Trip Changes Node Counts (`json_helper.cpp`)~~ RESOLVED
 
 **Affected file:** `src/main/input-output/input/json-parsing/json_helper.cpp`
-**Status:** Open in `refactor-caching`; fixed in `claude/quizzical-darwin`
-**Impact:** Different `states_searched` counts when running from exported JSON vs seed
+**Status:** RESOLVED — fix present on `dev` (commit `10c233c` and earlier merges)
+**Impact:** Was: different `states_searched` counts when running from exported JSON vs seed
 
-`json_helper::print_game_state_as_json` serialises tableau piles by iterating
+`json_helper::print_game_state_as_json` was serialising tableau piles by iterating
 `gs.tableau_piles` (the runtime-reordered list) rather than `gs.original_tableau_piles`
-(the fixed construction order). When pile symmetry has reordered the piles, the
-serialised JSON records them in a different order than the parser expects, producing
-a logically identical but internally different game state.
-
-**Workaround:** The Level 2–5 regression runner invokes the solver with `--random <seed>`
-directly, bypassing JSON serialisation. Level 1 is unaffected in practice.
-
-**Fix (one line, in `claude/quizzical-darwin`):**
-```cpp
-// Change in json_helper::print_game_state_as_json:
-for (auto pr : gs.original_tableau_piles)  // was: gs.tableau_piles
-```
+(the fixed construction order). The code on `dev` now correctly uses
+`gs.original_tableau_piles` (lines 87, 90 of `json_helper.cpp`).
 
 ### 2. Spanish Patience Traversal Regression (pile ordering)
 
@@ -295,3 +285,4 @@ are in `docs/resolved-bugs/`.
 | FreeCell seed 1 flat-only hits (op 221+) — investigated 2026-04-10 | `4c4b022` (investigation, not a bug) | `investigation/INVESTIGATION_COMPLETE.md` |
 | Build script omits variant binaries (#11) | `0653486` | `docs/fix-variant-build-hash-only/implementation_plan.md` |
 | `compact_state payload` dual-role in hash-only path (#14) | `7e73ab1`, `c4dc519`, `76aaa43` | `docs/fix-variant-build-hash-only/implementation_plan.md` |
+| JSON deal round-trip changes node counts (#1) | `10c233c` | `known-issues.md` — `original_tableau_piles` fix |

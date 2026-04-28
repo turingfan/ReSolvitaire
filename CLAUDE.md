@@ -166,7 +166,7 @@ Oracle files are JSON arrays; each entry stores `outcome`, `states_searched`, `b
 
 ## Known Issues
 
-1. **`json_helper.cpp` line ~90:** Uses `gs.tableau_piles` (runtime-reordered for symmetry) instead of `gs.original_tableau_piles`. This breaks JSON round-trips when symmetry reordering is active. One-line fix is documented but deferred; Levels 2–5 avoid this by using seed-based runs.
+1. **~~`json_helper.cpp` JSON round-trip~~:** RESOLVED. `json_helper.cpp` now correctly uses `gs.original_tableau_piles`. See `docs/known-issues.md` issue #1.
 2. **Flat cache + suit-symmetry:** The flat cache cannot provide suit-canonical deduplication; games using `--streamliners suit-symmetry` or `both` automatically fall back to `lru_cache`. See `docs/known-issues.md` issues #3 and #4.
 
 ## Compilation Flags
