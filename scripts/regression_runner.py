@@ -25,7 +25,8 @@ import time
 def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
                    max_instance_timeout_ms=120000, regenerate=False,
                    force_lru=False, skip_ineligible=False,
-                   compare_outcome_only=False, cache_type=None):
+                   compare_outcome_only=False, cache_type=None,
+                   enforce_node_counts=False):
     if not os.path.exists(solver_path):
         print(f"Error: Solver not found at {solver_path}")
         return 1
@@ -201,9 +202,12 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
             diffs = []
             if actual_outcome != expected_outcome:
                 diffs.append(f"OUTCOME FLIP: {actual_outcome} (expected {expected_outcome})")
-            # states_searched is not enforced — traversal order changes between
-            # cache implementations make node counts non-reproducible across
-            # refactors.  Counts are stored in oracles for reference only.
+            # By default, states_searched is not enforced — traversal order
+            # changes between cache implementations make node counts
+            # non-reproducible across refactors.  Use --enforce-node-counts
+            # when the refactoring should not change traversal order.
+            if enforce_node_counts and actual_nodes != expected_nodes:
+                diffs.append(f"NODE COUNT: {actual_nodes} (expected {expected_nodes})")
 
             if diffs:
                 print(f"[FAIL] {filename} (streamliner: {streamliner})", flush=True)
@@ -297,6 +301,10 @@ if __name__ == "__main__":
                         help="Append --cache-type <VALUE> to every solver invocation. "
                              "Use 'hash-only' to generate or compare against hash-only "
                              "cache results using the default solvitaire binary.")
+    parser.add_argument("--enforce-node-counts", action="store_true",
+                        help="Fail if states_searched differs from oracle (in addition "
+                             "to outcome checks). Use when the change under test should "
+                             "not alter traversal order.")
 
     args = parser.parse_args()
     sys.exit(run_regression(
@@ -308,4 +316,5 @@ if __name__ == "__main__":
         skip_ineligible=args.skip_ineligible,
         compare_outcome_only=args.compare_outcome_only,
         cache_type=args.cache_type,
+        enforce_node_counts=args.enforce_node_counts,
     ))

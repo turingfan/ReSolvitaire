@@ -335,6 +335,7 @@ add_test(NAME regression_level1
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
+        "--enforce-node-counts"
 )
 set_tests_properties(regression_level1 PROPERTIES TIMEOUT 900)
 # Levels 2-5 use seed-based invocation (no JSON instance files on disk).
@@ -346,6 +347,7 @@ add_test(NAME regression_level2
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
         "--max-instance-timeout-ms" "60000"
+        "--enforce-node-counts"
 )
 set_tests_properties(regression_level2 PROPERTIES TIMEOUT 15000)
 add_test(NAME regression_level3
@@ -354,6 +356,7 @@ add_test(NAME regression_level3
         "--exe" "$<TARGET_FILE:solvitaire>"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
         "--max-instance-timeout-ms" "120000"
+        "--enforce-node-counts"
 )
 set_tests_properties(regression_level3 PROPERTIES TIMEOUT 30000)
 add_test(NAME regression_level4
@@ -389,11 +392,13 @@ set_tests_properties(regression_level5 PROPERTIES TIMEOUT 450000)
 ##   binary with --cache-type hash-only; node counts are validated.          ##
 ##   Level 5 still uses level5.json + --compare-outcome-only (no oracle).   ##
 ##                                                                           ##
-## *_lru         --force-lru --skip-ineligible --compare-outcome-only       ##
+## *_lru         --force-lru --skip-ineligible                              ##
 ##   LRU cache handles suit-sym, 2-deck, sequence natively.                 ##
-##   Flat-eligible games forced to LRU via --force-lru (nodes will differ). ##
+##   Flat-eligible games forced to LRU via --force-lru (nodes will differ   ##
+##   from flat/default oracles).                                             ##
 ##   Accordion games rejected by the binary -> SKIP.                        ##
-##   Outcome-only comparison throughout.                                     ##
+##   Levels 1-3 use per-variant levelN_lru.json oracles with node counts.  ##
+##   Levels 4-5 use outcome-only comparison against default oracles.        ##
 ###############################################################################
 
 # Level 1 — JSON-based; needs --instances
@@ -403,7 +408,7 @@ add_test(NAME regression_level1_flat
         "--exe" "$<TARGET_FILE:solvitaire-flat>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
-        "--skip-ineligible"
+        "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level1_flat PROPERTIES TIMEOUT 900)
 
@@ -413,7 +418,7 @@ add_test(NAME regression_level1_hash_only
         "--exe" "$<TARGET_FILE:solvitaire-hash-only>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1_hash_only.json"
-        "--skip-ineligible"
+        "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level1_hash_only PROPERTIES TIMEOUT 900)
 
@@ -422,8 +427,8 @@ add_test(NAME regression_level1_lru
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire-lru>"
         "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
-        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1.json"
-        "--force-lru" "--skip-ineligible" "--compare-outcome-only"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1_lru.json"
+        "--force-lru" "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level1_lru PROPERTIES TIMEOUT 900)
 
@@ -434,7 +439,7 @@ add_test(NAME regression_level2_flat
         "--exe" "$<TARGET_FILE:solvitaire-flat>"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
         "--max-instance-timeout-ms" "60000"
-        "--skip-ineligible"
+        "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level2_flat PROPERTIES TIMEOUT 15000)
 
@@ -444,7 +449,7 @@ add_test(NAME regression_level2_hash_only
         "--exe" "$<TARGET_FILE:solvitaire-hash-only>"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2_hash_only.json"
         "--max-instance-timeout-ms" "60000"
-        "--skip-ineligible"
+        "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level2_hash_only PROPERTIES TIMEOUT 15000)
 
@@ -452,9 +457,9 @@ add_test(NAME regression_level2_lru
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire-lru>"
-        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2.json"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level2_lru.json"
         "--max-instance-timeout-ms" "60000"
-        "--force-lru" "--skip-ineligible" "--compare-outcome-only"
+        "--force-lru" "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level2_lru PROPERTIES TIMEOUT 15000)
 
@@ -464,7 +469,7 @@ add_test(NAME regression_level3_flat
         "--exe" "$<TARGET_FILE:solvitaire-flat>"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
         "--max-instance-timeout-ms" "120000"
-        "--skip-ineligible"
+        "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level3_flat PROPERTIES TIMEOUT 30000)
 
@@ -474,7 +479,7 @@ add_test(NAME regression_level3_hash_only
         "--exe" "$<TARGET_FILE:solvitaire-hash-only>"
         "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3_hash_only.json"
         "--max-instance-timeout-ms" "120000"
-        "--skip-ineligible"
+        "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level3_hash_only PROPERTIES TIMEOUT 30000)
 
@@ -482,9 +487,9 @@ add_test(NAME regression_level3_lru
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
         "--exe" "$<TARGET_FILE:solvitaire-lru>"
-        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3.json"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level3_lru.json"
         "--max-instance-timeout-ms" "120000"
-        "--force-lru" "--skip-ineligible" "--compare-outcome-only"
+        "--force-lru" "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level3_lru PROPERTIES TIMEOUT 30000)
 
