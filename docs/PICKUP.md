@@ -12,21 +12,12 @@ Full plan: `/Users/ipg/.claude/plans/keen-crafting-treehouse.md`
 
 ## Commits Done
 
-### Commit 0: Test infrastructure (01fae5b)
+### Commit 0: Test infrastructure (01fae5b + 1000bd0)
 - Generated LRU node-count oracles for Level 1-3 (`tests/oracles/level{1,2,3}_lru.json`)
 - Added `--enforce-node-counts` flag to `scripts/regression_runner.py`
 - Updated all Level 1-3 CTest targets to enforce node counts
-- All Level 1 regression tests pass (default, flat, hash-only, LRU)
-
-## Immediate Next Step: Regenerate Level 2-3 oracles
-
-Level 2 regression with `--enforce-node-counts` failed for default, flat, and hash-only targets — existing oracles were generated with a pre-refactoring binary. LRU oracles pass (just generated). Need to regenerate:
-- `tests/oracles/level2.json` — `--regenerate` with default binary
-- `tests/oracles/level2_hash_only.json` — `--regenerate --cache-type hash-only`
-- `tests/oracles/level3.json` — same pattern
-- `tests/oracles/level3_hash_only.json` — same pattern
-
-Then verify all Level 1-3 pass. Amend Commit 0 or make a follow-up commit.
+- Regenerated stale Level 2-3 default and hash-only oracles with current binary
+- All Level 1-3 regression tests pass: 12/12 (default, flat, hash-only, LRU)
 
 ## Next Code Commit
 
