@@ -19,10 +19,16 @@ Full plan: `/Users/ipg/.claude/plans/keen-crafting-treehouse.md`
 - Regenerated stale Level 2-3 default and hash-only oracles with current binary
 - All Level 1-3 regression tests pass: 12/12 (default, flat, hash-only, LRU)
 
+### Commit 1: Add `cache_policy.h` dispatch traits (8737539)
+- Created `src/main/game/cache_policy.h` with four dispatch policy tag structs: `FlatPolicy`, `HashOnlyPolicy`, `PredecessorPolicy`, `LRUPolicy`
+- Each provides `static constexpr bool computes_hash / computes_payload` and `descriptor_store_type` typedef
+- Renamed cluster storage policies in `generic_flat_cache_policies.h` to avoid name collision: `HashOnlyPolicy` → `HashOnlyClusterPolicy`, `PredecessorPolicy` → `PredecessorClusterPolicy`; updated all 4 callsite files
+- Build clean (all variants); unit tests 2/2; Level 1 regression 4/4
+
 ## Next Code Commit
 
-### Commit 1: Add policy structs (pure addition)
-Create `src/main/game/cache_policy.h` with four policy structs (FlatPolicy, HashOnlyPolicy, PredecessorPolicy, LRUPolicy). Each provides `static constexpr bool computes_hash` and `computes_payload`, plus a `descriptor_store_type` typedef. No existing code changes.
+### Commit 2: Unify descriptor store API
+Make `compact_state` and `hash_descriptor_store` present a uniform interface (`get_descriptor`/`set_descriptor`, foundation, waste_ptr, hole_top accessors) so template code in `game_state_impl` can use `Policy::descriptor_store_type` without `#ifdef`. Pure API addition — no behaviour change.
 
 ## Key Decisions
 
