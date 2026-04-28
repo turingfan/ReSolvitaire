@@ -6,7 +6,7 @@
         "backtracks": 130828,
         "max_depth": 3205,
         "solution_type": "solved",
-        "baseline_time_ms": 1001.4,
+        "baseline_time_ms": 457.6,
         "streamliner": "both",
         "custom_rules": "tests/rules/american-canister.json"
     },
@@ -17,7 +17,7 @@
         "backtracks": 65567,
         "max_depth": 604,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 695.4,
+        "baseline_time_ms": 93.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/american-canister.json"
     },
@@ -28,7 +28,7 @@
         "backtracks": 129209,
         "max_depth": 119,
         "solution_type": "solved",
-        "baseline_time_ms": 138.3,
+        "baseline_time_ms": 129.9,
         "streamliner": "both",
         "custom_rules": "tests/rules/canfield.json"
     },
@@ -39,7 +39,7 @@
         "backtracks": 133411,
         "max_depth": 23,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 449.4,
+        "baseline_time_ms": 233.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/canfield.json"
     },
@@ -50,7 +50,7 @@
         "backtracks": 112202,
         "max_depth": 73,
         "solution_type": "solved",
-        "baseline_time_ms": 93.8,
+        "baseline_time_ms": 93.6,
         "streamliner": "both",
         "custom_rules": "tests/rules/canfield-strict.json"
     },
@@ -61,7 +61,7 @@
         "backtracks": 155108,
         "max_depth": 36,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 454.2,
+        "baseline_time_ms": 209.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/canfield-strict.json"
     },
@@ -72,7 +72,7 @@
         "backtracks": 146344,
         "max_depth": 48543,
         "solution_type": "solved",
-        "baseline_time_ms": 443.7,
+        "baseline_time_ms": 236.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/bakers-game.json"
     },
@@ -83,7 +83,7 @@
         "backtracks": 67024,
         "max_depth": 390,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 371.6,
+        "baseline_time_ms": 84.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/bakers-game.json"
     },
@@ -94,7 +94,7 @@
         "backtracks": 111687,
         "max_depth": 51,
         "solution_type": "solved",
-        "baseline_time_ms": 121.9,
+        "baseline_time_ms": 110.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/black-hole.json"
     },
@@ -105,7 +105,7 @@
         "backtracks": 490809,
         "max_depth": 50,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 703.1,
+        "baseline_time_ms": 906.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/black-hole.json"
     },
@@ -116,7 +116,7 @@
         "backtracks": 1206,
         "max_depth": 72,
         "solution_type": "solved",
-        "baseline_time_ms": 338.9,
+        "baseline_time_ms": 11.1,
         "streamliner": "none",
         "custom_rules": "tests/rules/fan.json"
     },
@@ -127,7 +127,7 @@
         "backtracks": 238958,
         "max_depth": 40,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 442.9,
+        "baseline_time_ms": 150.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/fan.json"
     },
@@ -138,7 +138,7 @@
         "backtracks": 197270,
         "max_depth": 3502,
         "solution_type": "solved",
-        "baseline_time_ms": 168.2,
+        "baseline_time_ms": 166.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/fore-cell.json"
     },
@@ -149,7 +149,7 @@
         "backtracks": 167056,
         "max_depth": 302,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 459.7,
+        "baseline_time_ms": 212.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/fore-cell.json"
     },
@@ -160,7 +160,7 @@
         "backtracks": 250729,
         "max_depth": 4136,
         "solution_type": "solved",
-        "baseline_time_ms": 185.1,
+        "baseline_time_ms": 187.2,
         "streamliner": "both",
         "custom_rules": "tests/rules/beleaguered-castle.json"
     },
@@ -171,7 +171,7 @@
         "backtracks": 175552,
         "max_depth": 494,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 430.8,
+        "baseline_time_ms": 180.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/beleaguered-castle.json"
     },
@@ -182,7 +182,7 @@
         "backtracks": 109606,
         "max_depth": 730,
         "solution_type": "solved",
-        "baseline_time_ms": 102.5,
+        "baseline_time_ms": 98.1,
         "streamliner": "both",
         "custom_rules": "tests/rules/eight-off.json"
     },
@@ -193,7 +193,7 @@
         "backtracks": 66274,
         "max_depth": 214,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 370.1,
+        "baseline_time_ms": 87.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/eight-off.json"
     },
@@ -204,7 +204,7 @@
         "backtracks": 103270,
         "max_depth": 394,
         "solution_type": "solved",
-        "baseline_time_ms": 83.8,
+        "baseline_time_ms": 77.6,
         "streamliner": "both",
         "custom_rules": "tests/rules/fore-cell-same-suit.json"
     },
@@ -215,7 +215,7 @@
         "backtracks": 133703,
         "max_depth": 178,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 385.3,
+        "baseline_time_ms": 122.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/fore-cell-same-suit.json"
     },
@@ -226,7 +226,7 @@
         "backtracks": 198372,
         "max_depth": 1696,
         "solution_type": "solved",
-        "baseline_time_ms": 139.9,
+        "baseline_time_ms": 141.3,
         "streamliner": "both",
         "custom_rules": "tests/rules/east-haven.json"
     },
@@ -237,7 +237,7 @@
         "backtracks": 165182,
         "max_depth": 37,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 174.0,
+        "baseline_time_ms": 161.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/east-haven.json"
     },
@@ -248,7 +248,7 @@
         "backtracks": 136485,
         "max_depth": 886,
         "solution_type": "solved",
-        "baseline_time_ms": 165.9,
+        "baseline_time_ms": 129.8,
         "streamliner": "both",
         "custom_rules": "tests/rules/free-cell-1-cell.json"
     },
@@ -259,7 +259,7 @@
         "backtracks": 95020,
         "max_depth": 633,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 385.8,
+        "baseline_time_ms": 108.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-1-cell.json"
     },
@@ -270,7 +270,7 @@
         "backtracks": 170085,
         "max_depth": 756,
         "solution_type": "solved",
-        "baseline_time_ms": 156.4,
+        "baseline_time_ms": 155.1,
         "streamliner": "both",
         "custom_rules": "tests/rules/free-cell-2-cell.json"
     },
@@ -281,7 +281,7 @@
         "backtracks": 174514,
         "max_depth": 705,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 440.7,
+        "baseline_time_ms": 185.1,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-2-cell.json"
     },
@@ -292,7 +292,7 @@
         "backtracks": 106695,
         "max_depth": 47726,
         "solution_type": "solved",
-        "baseline_time_ms": 169.5,
+        "baseline_time_ms": 160.1,
         "streamliner": "both",
         "custom_rules": "tests/rules/free-cell-3-cell.json"
     },
@@ -303,7 +303,7 @@
         "backtracks": 197311,
         "max_depth": 223,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 442.6,
+        "baseline_time_ms": 202.1,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-3-cell.json"
     },
@@ -314,7 +314,7 @@
         "backtracks": 185852,
         "max_depth": 621,
         "solution_type": "solved",
-        "baseline_time_ms": 171.2,
+        "baseline_time_ms": 162.2,
         "streamliner": "both",
         "custom_rules": "tests/rules/free-cell-0-cell.json"
     },
@@ -325,7 +325,7 @@
         "backtracks": 151708,
         "max_depth": 564,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 422.7,
+        "baseline_time_ms": 138.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-0-cell.json"
     },
@@ -336,7 +336,7 @@
         "backtracks": 152610,
         "max_depth": 7451,
         "solution_type": "solved",
-        "baseline_time_ms": 153.3,
+        "baseline_time_ms": 144.6,
         "streamliner": "both",
         "custom_rules": "tests/rules/free-cell-5-pile.json"
     },
@@ -347,7 +347,7 @@
         "backtracks": 207456,
         "max_depth": 2720,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 436.2,
+        "baseline_time_ms": 197.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-5-pile.json"
     },
@@ -358,7 +358,7 @@
         "backtracks": 159905,
         "max_depth": 2810,
         "solution_type": "solved",
-        "baseline_time_ms": 155.0,
+        "baseline_time_ms": 149.9,
         "streamliner": "both",
         "custom_rules": "tests/rules/free-cell-6-pile.json"
     },
@@ -369,7 +369,7 @@
         "backtracks": 189337,
         "max_depth": 2867,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 453.1,
+        "baseline_time_ms": 178.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-6-pile.json"
     },
@@ -380,7 +380,7 @@
         "backtracks": 115878,
         "max_depth": 35028,
         "solution_type": "solved",
-        "baseline_time_ms": 160.1,
+        "baseline_time_ms": 153.5,
         "streamliner": "both",
         "custom_rules": "tests/rules/free-cell-7-pile.json"
     },
@@ -391,7 +391,7 @@
         "backtracks": 119553,
         "max_depth": 355,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 415.5,
+        "baseline_time_ms": 160.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-7-pile.json"
     },
@@ -402,7 +402,7 @@
         "backtracks": 70170,
         "max_depth": 108,
         "solution_type": "solved",
-        "baseline_time_ms": 125.1,
+        "baseline_time_ms": 109.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/gaps-basic-variant.json"
     },
@@ -413,7 +413,7 @@
         "backtracks": 79960,
         "max_depth": 93,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 119.4,
+        "baseline_time_ms": 126.1,
         "streamliner": "none",
         "custom_rules": "tests/rules/gaps-basic-variant.json"
     },
@@ -424,7 +424,7 @@
         "backtracks": 114484,
         "max_depth": 129,
         "solution_type": "solved",
-        "baseline_time_ms": 178.6,
+        "baseline_time_ms": 173.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/gaps-one-deal.json"
     },
@@ -435,7 +435,7 @@
         "backtracks": 97707,
         "max_depth": 85,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 177.0,
+        "baseline_time_ms": 171.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/gaps-one-deal.json"
     },
@@ -446,7 +446,7 @@
         "backtracks": 205796,
         "max_depth": 51,
         "solution_type": "solved",
-        "baseline_time_ms": 435.6,
+        "baseline_time_ms": 532.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/golf.json"
     },
@@ -457,7 +457,7 @@
         "backtracks": 355560,
         "max_depth": 46,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 510.8,
+        "baseline_time_ms": 910.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/golf.json"
     },
@@ -468,7 +468,7 @@
         "backtracks": 51029,
         "max_depth": 815,
         "solution_type": "solved",
-        "baseline_time_ms": 62.5,
+        "baseline_time_ms": 59.1,
         "streamliner": "both",
         "custom_rules": "tests/rules/king-albert.json"
     },
@@ -479,7 +479,7 @@
         "backtracks": 39202,
         "max_depth": 202,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 357.8,
+        "baseline_time_ms": 56.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/king-albert.json"
     },
@@ -490,7 +490,7 @@
         "backtracks": 143570,
         "max_depth": 88,
         "solution_type": "solved",
-        "baseline_time_ms": 140.2,
+        "baseline_time_ms": 132.0,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike.json"
     },
@@ -501,7 +501,7 @@
         "backtracks": 167717,
         "max_depth": 18,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 451.6,
+        "baseline_time_ms": 178.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike.json"
     },
@@ -512,7 +512,7 @@
         "backtracks": 80489,
         "max_depth": 93,
         "solution_type": "solved",
-        "baseline_time_ms": 439.1,
+        "baseline_time_ms": 176.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-1.json"
     },
@@ -523,7 +523,7 @@
         "backtracks": 95869,
         "max_depth": 28,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 455.9,
+        "baseline_time_ms": 161.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-1.json"
     },
@@ -534,7 +534,7 @@
         "backtracks": 123745,
         "max_depth": 81,
         "solution_type": "solved",
-        "baseline_time_ms": 443.2,
+        "baseline_time_ms": 146.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-1-noworryback.json"
     },
@@ -545,7 +545,7 @@
         "backtracks": 95441,
         "max_depth": 56,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 416.5,
+        "baseline_time_ms": 115.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-1-noworryback.json"
     },
@@ -556,7 +556,7 @@
         "backtracks": 124688,
         "max_depth": 80,
         "solution_type": "solved",
-        "baseline_time_ms": 143.2,
+        "baseline_time_ms": 150.5,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-2.json"
     },
@@ -567,7 +567,7 @@
         "backtracks": 108714,
         "max_depth": 36,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 383.3,
+        "baseline_time_ms": 88.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-2.json"
     },
@@ -578,7 +578,7 @@
         "backtracks": 122840,
         "max_depth": 78,
         "solution_type": "solved",
-        "baseline_time_ms": 170.8,
+        "baseline_time_ms": 141.4,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-2-noworryback.json"
     },
@@ -589,7 +589,7 @@
         "backtracks": 133878,
         "max_depth": 26,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 461.8,
+        "baseline_time_ms": 219.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-2-noworryback.json"
     },
@@ -600,7 +600,7 @@
         "backtracks": 93001,
         "max_depth": 342,
         "solution_type": "solved",
-        "baseline_time_ms": 130.8,
+        "baseline_time_ms": 124.4,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-3-anyspace.json"
     },
@@ -611,7 +611,7 @@
         "backtracks": 90866,
         "max_depth": 21,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 445.5,
+        "baseline_time_ms": 252.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-anyspace.json"
     },
@@ -622,7 +622,7 @@
         "backtracks": 182134,
         "max_depth": 525,
         "solution_type": "solved",
-        "baseline_time_ms": 179.6,
+        "baseline_time_ms": 186.0,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-3-anysuit.json"
     },
@@ -633,7 +633,7 @@
         "backtracks": 74361,
         "max_depth": 25,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 388.3,
+        "baseline_time_ms": 102.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-anysuit.json"
     },
@@ -644,7 +644,7 @@
         "backtracks": 12879,
         "max_depth": 5134,
         "solution_type": "solved",
-        "baseline_time_ms": 346.8,
+        "baseline_time_ms": 35.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-anysuitanyspace.json"
     },
@@ -655,7 +655,7 @@
         "backtracks": 119810,
         "max_depth": 16,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 445.6,
+        "baseline_time_ms": 298.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-anysuitanyspace.json"
     },
@@ -666,7 +666,7 @@
         "backtracks": 122153,
         "max_depth": 81,
         "solution_type": "solved",
-        "baseline_time_ms": 173.6,
+        "baseline_time_ms": 164.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-3-anysuitnospace.json"
     },
@@ -677,7 +677,7 @@
         "backtracks": 116692,
         "max_depth": 27,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 449.7,
+        "baseline_time_ms": 161.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-anysuitnospace.json"
     },
@@ -688,7 +688,7 @@
         "backtracks": 129572,
         "max_depth": 74,
         "solution_type": "solved",
-        "baseline_time_ms": 129.5,
+        "baseline_time_ms": 122.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-3-nospace.json"
     },
@@ -699,7 +699,7 @@
         "backtracks": 128052,
         "max_depth": 23,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 462.0,
+        "baseline_time_ms": 168.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-nospace.json"
     },
@@ -710,7 +710,7 @@
         "backtracks": 90897,
         "max_depth": 86,
         "solution_type": "solved",
-        "baseline_time_ms": 98.4,
+        "baseline_time_ms": 91.3,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-3-noworryback.json"
     },
@@ -721,7 +721,7 @@
         "backtracks": 112480,
         "max_depth": 49,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 431.2,
+        "baseline_time_ms": 150.1,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-noworryback.json"
     },
@@ -732,7 +732,7 @@
         "backtracks": 256367,
         "max_depth": 75,
         "solution_type": "solved",
-        "baseline_time_ms": 174.3,
+        "baseline_time_ms": 169.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-3-samesuit.json"
     },
@@ -743,7 +743,7 @@
         "backtracks": 162748,
         "max_depth": 26,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 461.5,
+        "baseline_time_ms": 194.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-samesuit.json"
     },
@@ -754,7 +754,7 @@
         "backtracks": 127958,
         "max_depth": 343,
         "solution_type": "solved",
-        "baseline_time_ms": 427.0,
+        "baseline_time_ms": 164.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-samesuitanyspace.json"
     },
@@ -765,7 +765,7 @@
         "backtracks": 172184,
         "max_depth": 35,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 431.7,
+        "baseline_time_ms": 174.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-samesuitanyspace.json"
     },
@@ -776,7 +776,7 @@
         "backtracks": 248605,
         "max_depth": 69,
         "solution_type": "solved",
-        "baseline_time_ms": 435.5,
+        "baseline_time_ms": 162.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-samesuitnospace.json"
     },
@@ -787,7 +787,7 @@
         "backtracks": 357643,
         "max_depth": 47,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 438.3,
+        "baseline_time_ms": 174.6,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-3-samesuitnospace.json"
     },
@@ -798,7 +798,7 @@
         "backtracks": 85707,
         "max_depth": 92,
         "solution_type": "solved",
-        "baseline_time_ms": 85.2,
+        "baseline_time_ms": 82.8,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-4.json"
     },
@@ -809,7 +809,7 @@
         "backtracks": 60468,
         "max_depth": 47,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 384.5,
+        "baseline_time_ms": 97.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-4.json"
     },
@@ -820,7 +820,7 @@
         "backtracks": 144611,
         "max_depth": 79,
         "solution_type": "solved",
-        "baseline_time_ms": 145.0,
+        "baseline_time_ms": 138.4,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-4-noworryback.json"
     },
@@ -831,7 +831,7 @@
         "backtracks": 159736,
         "max_depth": 43,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 468.5,
+        "baseline_time_ms": 263.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-4-noworryback.json"
     },
@@ -842,7 +842,7 @@
         "backtracks": 147036,
         "max_depth": 75,
         "solution_type": "solved",
-        "baseline_time_ms": 139.8,
+        "baseline_time_ms": 137.5,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-5.json"
     },
@@ -853,7 +853,7 @@
         "backtracks": 113557,
         "max_depth": 32,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 433.1,
+        "baseline_time_ms": 169.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-5.json"
     },
@@ -864,7 +864,7 @@
         "backtracks": 77855,
         "max_depth": 82,
         "solution_type": "solved",
-        "baseline_time_ms": 87.5,
+        "baseline_time_ms": 128.3,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-5-noworryback.json"
     },
@@ -875,7 +875,7 @@
         "backtracks": 116767,
         "max_depth": 53,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 430.1,
+        "baseline_time_ms": 184.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-5-noworryback.json"
     },
@@ -886,7 +886,7 @@
         "backtracks": 117107,
         "max_depth": 97,
         "solution_type": "solved",
-        "baseline_time_ms": 138.4,
+        "baseline_time_ms": 138.0,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-6.json"
     },
@@ -897,7 +897,7 @@
         "backtracks": 124862,
         "max_depth": 37,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 439.4,
+        "baseline_time_ms": 144.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-6.json"
     },
@@ -908,7 +908,7 @@
         "backtracks": 146621,
         "max_depth": 84,
         "solution_type": "solved",
-        "baseline_time_ms": 157.7,
+        "baseline_time_ms": 150.5,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-6-noworryback.json"
     },
@@ -919,7 +919,7 @@
         "backtracks": 137730,
         "max_depth": 84,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 414.4,
+        "baseline_time_ms": 138.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-6-noworryback.json"
     },
@@ -930,7 +930,7 @@
         "backtracks": 121311,
         "max_depth": 88,
         "solution_type": "solved",
-        "baseline_time_ms": 131.0,
+        "baseline_time_ms": 126.5,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-7.json"
     },
@@ -941,7 +941,7 @@
         "backtracks": 142184,
         "max_depth": 33,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 431.2,
+        "baseline_time_ms": 282.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-7.json"
     },
@@ -952,7 +952,7 @@
         "backtracks": 179195,
         "max_depth": 83,
         "solution_type": "solved",
-        "baseline_time_ms": 158.8,
+        "baseline_time_ms": 154.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-7-noworryback.json"
     },
@@ -963,7 +963,7 @@
         "backtracks": 151033,
         "max_depth": 72,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 409.5,
+        "baseline_time_ms": 160.1,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-7-noworryback.json"
     },
@@ -974,7 +974,7 @@
         "backtracks": 117009,
         "max_depth": 89,
         "solution_type": "solved",
-        "baseline_time_ms": 146.0,
+        "baseline_time_ms": 141.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-8.json"
     },
@@ -985,7 +985,7 @@
         "backtracks": 161065,
         "max_depth": 55,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 419.9,
+        "baseline_time_ms": 183.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-8.json"
     },
@@ -996,7 +996,7 @@
         "backtracks": 185205,
         "max_depth": 78,
         "solution_type": "solved",
-        "baseline_time_ms": 162.9,
+        "baseline_time_ms": 150.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-8-noworryback.json"
     },
@@ -1007,7 +1007,7 @@
         "backtracks": 106604,
         "max_depth": 39,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 409.5,
+        "baseline_time_ms": 159.1,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-8-noworryback.json"
     },
@@ -1018,7 +1018,7 @@
         "backtracks": 135704,
         "max_depth": 85,
         "solution_type": "solved",
-        "baseline_time_ms": 150.0,
+        "baseline_time_ms": 144.9,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-9.json"
     },
@@ -1029,7 +1029,7 @@
         "backtracks": 150606,
         "max_depth": 45,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 411.5,
+        "baseline_time_ms": 163.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-9.json"
     },
@@ -1040,7 +1040,7 @@
         "backtracks": 121349,
         "max_depth": 91,
         "solution_type": "solved",
-        "baseline_time_ms": 152.2,
+        "baseline_time_ms": 140.3,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-9-noworryback.json"
     },
@@ -1051,7 +1051,7 @@
         "backtracks": 123441,
         "max_depth": 44,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 439.0,
+        "baseline_time_ms": 196.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-9-noworryback.json"
     },
@@ -1062,7 +1062,7 @@
         "backtracks": 146203,
         "max_depth": 83,
         "solution_type": "solved",
-        "baseline_time_ms": 144.2,
+        "baseline_time_ms": 132.8,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-10.json"
     },
@@ -1073,7 +1073,7 @@
         "backtracks": 118528,
         "max_depth": 39,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 409.1,
+        "baseline_time_ms": 157.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-10.json"
     },
@@ -1084,7 +1084,7 @@
         "backtracks": 152584,
         "max_depth": 88,
         "solution_type": "solved",
-        "baseline_time_ms": 153.7,
+        "baseline_time_ms": 148.1,
         "streamliner": "both",
         "custom_rules": "tests/rules/klondike-deal-10-noworryback.json"
     },
@@ -1095,7 +1095,7 @@
         "backtracks": 151287,
         "max_depth": 59,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 439.6,
+        "baseline_time_ms": 205.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-10-noworryback.json"
     },
@@ -1106,7 +1106,7 @@
         "backtracks": 18995,
         "max_depth": 88,
         "solution_type": "solved",
-        "baseline_time_ms": 346.9,
+        "baseline_time_ms": 31.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-11.json"
     },
@@ -1117,7 +1117,7 @@
         "backtracks": 151149,
         "max_depth": 35,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 420.7,
+        "baseline_time_ms": 134.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-11.json"
     },
@@ -1128,7 +1128,7 @@
         "backtracks": 317937,
         "max_depth": 79,
         "solution_type": "solved",
-        "baseline_time_ms": 509.3,
+        "baseline_time_ms": 328.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-11-noworryback.json"
     },
@@ -1139,7 +1139,7 @@
         "backtracks": 151070,
         "max_depth": 58,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 422.5,
+        "baseline_time_ms": 145.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-11-noworryback.json"
     },
@@ -1150,7 +1150,7 @@
         "backtracks": 643,
         "max_depth": 100,
         "solution_type": "solved",
-        "baseline_time_ms": 333.7,
+        "baseline_time_ms": 11.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-12.json"
     },
@@ -1161,7 +1161,7 @@
         "backtracks": 157558,
         "max_depth": 42,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 419.0,
+        "baseline_time_ms": 133.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-12.json"
     },
@@ -1172,7 +1172,7 @@
         "backtracks": 140059,
         "max_depth": 97,
         "solution_type": "solved",
-        "baseline_time_ms": 421.6,
+        "baseline_time_ms": 125.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-12-noworryback.json"
     },
@@ -1183,7 +1183,7 @@
         "backtracks": 130022,
         "max_depth": 53,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 416.0,
+        "baseline_time_ms": 133.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-12-noworryback.json"
     },
@@ -1194,7 +1194,7 @@
         "backtracks": 227066,
         "max_depth": 85,
         "solution_type": "solved",
-        "baseline_time_ms": 427.3,
+        "baseline_time_ms": 156.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-13.json"
     },
@@ -1205,7 +1205,7 @@
         "backtracks": 156165,
         "max_depth": 42,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 413.6,
+        "baseline_time_ms": 152.7,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-13.json"
     },
@@ -1216,7 +1216,7 @@
         "backtracks": 133606,
         "max_depth": 96,
         "solution_type": "solved",
-        "baseline_time_ms": 415.8,
+        "baseline_time_ms": 126.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-13-noworryback.json"
     },
@@ -1227,29 +1227,29 @@
         "backtracks": 190817,
         "max_depth": 42,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 423.7,
+        "baseline_time_ms": 163.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/klondike-deal-13-noworryback.json"
     },
     {
         "instance": "resources/level2/late-binding-solitaire_151_winnable.json",
-        "states_searched": 501750,
-        "unique_states": 150085,
-        "backtracks": 501733,
+        "states_searched": 501886,
+        "unique_states": 150131,
+        "backtracks": 501869,
         "max_depth": 17,
         "solution_type": "solved",
-        "baseline_time_ms": 254.0,
+        "baseline_time_ms": 737.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/late-binding-solitaire.json"
     },
     {
         "instance": "resources/level2/late-binding-solitaire_172_unwinnable.json",
-        "states_searched": 492827,
-        "unique_states": 137530,
-        "backtracks": 492826,
+        "states_searched": 492993,
+        "unique_states": 137589,
+        "backtracks": 492992,
         "max_depth": 16,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 259.7,
+        "baseline_time_ms": 516.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/late-binding-solitaire.json"
     },
@@ -1260,7 +1260,7 @@
         "backtracks": 148976,
         "max_depth": 14659,
         "solution_type": "solved",
-        "baseline_time_ms": 202.5,
+        "baseline_time_ms": 188.3,
         "streamliner": "both",
         "custom_rules": "tests/rules/mrs-mop.json"
     },
@@ -1271,7 +1271,7 @@
         "backtracks": 79346,
         "max_depth": 200,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 127.7,
+        "baseline_time_ms": 105.3,
         "streamliner": "both",
         "custom_rules": "tests/rules/mrs-mop.json"
     },
@@ -1282,7 +1282,7 @@
         "backtracks": 116775,
         "max_depth": 87,
         "solution_type": "solved",
-        "baseline_time_ms": 150.0,
+        "baseline_time_ms": 138.6,
         "streamliner": "both",
         "custom_rules": "tests/rules/northwest-territory.json"
     },
@@ -1293,7 +1293,7 @@
         "backtracks": 57498,
         "max_depth": 30,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 380.7,
+        "baseline_time_ms": 86.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/northwest-territory.json"
     },
@@ -1304,7 +1304,7 @@
         "backtracks": 169063,
         "max_depth": 416,
         "solution_type": "solved",
-        "baseline_time_ms": 177.4,
+        "baseline_time_ms": 163.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/raglan.json"
     },
@@ -1315,7 +1315,7 @@
         "backtracks": 193887,
         "max_depth": 374,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 440.6,
+        "baseline_time_ms": 180.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/raglan.json"
     },
@@ -1326,7 +1326,7 @@
         "backtracks": 432860,
         "max_depth": 855,
         "solution_type": "solved",
-        "baseline_time_ms": 484.6,
+        "baseline_time_ms": 237.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/seahaven-towers.json"
     },
@@ -1337,7 +1337,7 @@
         "backtracks": 238675,
         "max_depth": 548,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 422.4,
+        "baseline_time_ms": 162.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/seahaven-towers.json"
     },
@@ -1348,7 +1348,7 @@
         "backtracks": 248043,
         "max_depth": 1051,
         "solution_type": "solved",
-        "baseline_time_ms": 206.8,
+        "baseline_time_ms": 207.2,
         "streamliner": "both",
         "custom_rules": "tests/rules/siegecraft.json"
     },
@@ -1359,7 +1359,7 @@
         "backtracks": 172579,
         "max_depth": 1213,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 407.1,
+        "baseline_time_ms": 177.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/siegecraft.json"
     },
@@ -1370,7 +1370,7 @@
         "backtracks": 115364,
         "max_depth": 44821,
         "solution_type": "solved",
-        "baseline_time_ms": 180.0,
+        "baseline_time_ms": 168.9,
         "streamliner": "both",
         "custom_rules": "tests/rules/simple-simon.json"
     },
@@ -1381,7 +1381,7 @@
         "backtracks": 178150,
         "max_depth": 2021,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 407.6,
+        "baseline_time_ms": 128.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/simple-simon.json"
     },
@@ -1392,7 +1392,7 @@
         "backtracks": 14807,
         "max_depth": 2703,
         "solution_type": "solved",
-        "baseline_time_ms": 27.2,
+        "baseline_time_ms": 25.5,
         "streamliner": "both",
         "custom_rules": "tests/rules/somerset.json"
     },
@@ -1403,7 +1403,7 @@
         "backtracks": 21481,
         "max_depth": 119,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 345.6,
+        "baseline_time_ms": 33.6,
         "streamliner": "none",
         "custom_rules": "tests/rules/somerset.json"
     },
@@ -1414,7 +1414,7 @@
         "backtracks": 85375,
         "max_depth": 2856,
         "solution_type": "solved",
-        "baseline_time_ms": 79.1,
+        "baseline_time_ms": 78.2,
         "streamliner": "both",
         "custom_rules": "tests/rules/free-cell.json"
     },
@@ -1425,7 +1425,7 @@
         "backtracks": 54909,
         "max_depth": 135,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 362.0,
+        "baseline_time_ms": 66.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell.json"
     },
@@ -1436,7 +1436,7 @@
         "backtracks": 155030,
         "max_depth": 39017,
         "solution_type": "solved",
-        "baseline_time_ms": 178.8,
+        "baseline_time_ms": 171.7,
         "streamliner": "both",
         "custom_rules": "tests/rules/spider.json"
     },
@@ -1447,7 +1447,7 @@
         "backtracks": 252063,
         "max_depth": 2820,
         "solution_type": "solved",
-        "baseline_time_ms": 175.7,
+        "baseline_time_ms": 183.9,
         "streamliner": "both",
         "custom_rules": "tests/rules/spiderette.json"
     },
@@ -1458,7 +1458,7 @@
         "backtracks": 199918,
         "max_depth": 190,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 188.7,
+        "baseline_time_ms": 179.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/spiderette.json"
     },
@@ -1469,7 +1469,7 @@
         "backtracks": 183939,
         "max_depth": 7059,
         "solution_type": "solved",
-        "baseline_time_ms": 160.8,
+        "baseline_time_ms": 161.1,
         "streamliner": "both",
         "custom_rules": "tests/rules/streets-and-alleys.json"
     },
@@ -1480,7 +1480,7 @@
         "backtracks": 167109,
         "max_depth": 1426,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 419.7,
+        "baseline_time_ms": 223.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/streets-and-alleys.json"
     },
@@ -1491,7 +1491,7 @@
         "backtracks": 199607,
         "max_depth": 596,
         "solution_type": "solved",
-        "baseline_time_ms": 186.0,
+        "baseline_time_ms": 187.6,
         "streamliner": "both",
         "custom_rules": "tests/rules/stronghold.json"
     },
@@ -1502,7 +1502,7 @@
         "backtracks": 239234,
         "max_depth": 2247,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 433.5,
+        "baseline_time_ms": 238.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/stronghold.json"
     },
@@ -1513,7 +1513,7 @@
         "backtracks": 225243,
         "max_depth": 6615,
         "solution_type": "solved",
-        "baseline_time_ms": 421.3,
+        "baseline_time_ms": 142.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/thirty.json"
     },
@@ -1524,7 +1524,7 @@
         "backtracks": 241689,
         "max_depth": 1077,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 412.7,
+        "baseline_time_ms": 162.1,
         "streamliner": "none",
         "custom_rules": "tests/rules/thirty.json"
     },
@@ -1535,7 +1535,7 @@
         "backtracks": 195493,
         "max_depth": 4338,
         "solution_type": "solved",
-        "baseline_time_ms": 188.9,
+        "baseline_time_ms": 187.3,
         "streamliner": "both",
         "custom_rules": "tests/rules/thirtysix.json"
     },
@@ -1546,7 +1546,7 @@
         "backtracks": 165823,
         "max_depth": 74,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 411.9,
+        "baseline_time_ms": 145.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/thirtysix.json"
     },
@@ -1557,7 +1557,7 @@
         "backtracks": 62120,
         "max_depth": 20077,
         "solution_type": "solved",
-        "baseline_time_ms": 98.5,
+        "baseline_time_ms": 86.8,
         "streamliner": "both",
         "custom_rules": "tests/rules/spanish-patience.json"
     },
@@ -1568,7 +1568,7 @@
         "backtracks": 85953,
         "max_depth": 837,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 372.3,
+        "baseline_time_ms": 64.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/spanish-patience.json"
     },
@@ -1579,7 +1579,7 @@
         "backtracks": 79183,
         "max_depth": 23869,
         "solution_type": "solved",
-        "baseline_time_ms": 94.3,
+        "baseline_time_ms": 91.0,
         "streamliner": "both",
         "custom_rules": "tests/rules/will-o-the-wisp.json"
     },
@@ -1590,7 +1590,7 @@
         "backtracks": 121934,
         "max_depth": 67,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 98.5,
+        "baseline_time_ms": 107.4,
         "streamliner": "none",
         "custom_rules": "tests/rules/will-o-the-wisp.json"
     },
@@ -1601,7 +1601,7 @@
         "backtracks": 189942,
         "max_depth": 2154,
         "solution_type": "solved",
-        "baseline_time_ms": 421.1,
+        "baseline_time_ms": 255.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-4-pile.json"
     },
@@ -1612,7 +1612,7 @@
         "backtracks": 206744,
         "max_depth": 1900,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 426.8,
+        "baseline_time_ms": 204.6,
         "streamliner": "none",
         "custom_rules": "tests/rules/free-cell-4-pile.json"
     },
@@ -1623,7 +1623,7 @@
         "backtracks": 67999,
         "max_depth": 84,
         "solution_type": "solved",
-        "baseline_time_ms": 405.1,
+        "baseline_time_ms": 101.8,
         "streamliner": "none",
         "custom_rules": "tests/rules/trigon.json"
     },
@@ -1634,18 +1634,18 @@
         "backtracks": 61899,
         "max_depth": 36,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 402.4,
+        "baseline_time_ms": 96.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/trigon.json"
     },
     {
         "instance": "resources/level2/accordion_1009_winnable.json",
-        "states_searched": 159046,
-        "unique_states": 58961,
-        "backtracks": 158995,
+        "states_searched": 159048,
+        "unique_states": 58963,
+        "backtracks": 158997,
         "max_depth": 51,
         "solution_type": "solved",
-        "baseline_time_ms": 99.7,
+        "baseline_time_ms": 207.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/accordion.json"
     },
@@ -1656,7 +1656,7 @@
         "backtracks": 85228,
         "max_depth": 121,
         "solution_type": "solved",
-        "baseline_time_ms": 379.5,
+        "baseline_time_ms": 84.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/british-canister.json"
     },
@@ -1667,7 +1667,7 @@
         "backtracks": 135162,
         "max_depth": 63,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 396.5,
+        "baseline_time_ms": 164.2,
         "streamliner": "none",
         "custom_rules": "tests/rules/british-canister.json"
     },
@@ -1678,7 +1678,7 @@
         "backtracks": 6492064,
         "max_depth": 56,
         "solution_type": "solved",
-        "baseline_time_ms": 3181.0,
+        "baseline_time_ms": 5436.5,
         "streamliner": "none",
         "custom_rules": "tests/rules/worm-hole.json"
     },
@@ -1689,7 +1689,7 @@
         "backtracks": 18680,
         "max_depth": 15,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 342.5,
+        "baseline_time_ms": 56.0,
         "streamliner": "none",
         "custom_rules": "tests/rules/worm-hole.json"
     },
@@ -1700,7 +1700,7 @@
         "backtracks": 118783,
         "max_depth": 90,
         "solution_type": "solved",
-        "baseline_time_ms": 98.6,
+        "baseline_time_ms": 87.8,
         "streamliner": "both",
         "custom_rules": "tests/rules/fortunes-favor.json"
     },
@@ -1711,7 +1711,7 @@
         "backtracks": 114879,
         "max_depth": 35,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 386.6,
+        "baseline_time_ms": 97.9,
         "streamliner": "none",
         "custom_rules": "tests/rules/fortunes-favor.json"
     },
@@ -1722,7 +1722,7 @@
         "backtracks": 38377,
         "max_depth": 14489,
         "solution_type": "solved",
-        "baseline_time_ms": 80.1,
+        "baseline_time_ms": 78.4,
         "streamliner": "both",
         "custom_rules": "tests/rules/alpha-star.json"
     },
@@ -1733,7 +1733,7 @@
         "backtracks": 16147,
         "max_depth": 19,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 334.6,
+        "baseline_time_ms": 24.6,
         "streamliner": "none",
         "custom_rules": "tests/rules/alpha-star.json"
     },
@@ -1744,7 +1744,7 @@
         "backtracks": 59473,
         "max_depth": 23454,
         "solution_type": "solved",
-        "baseline_time_ms": 86.2,
+        "baseline_time_ms": 86.3,
         "streamliner": "both",
         "custom_rules": "tests/rules/delta-star.json"
     },
@@ -1755,7 +1755,7 @@
         "backtracks": 45413,
         "max_depth": 53,
         "solution_type": "unsolvable",
-        "baseline_time_ms": 358.5,
+        "baseline_time_ms": 59.3,
         "streamliner": "none",
         "custom_rules": "tests/rules/delta-star.json"
     }
