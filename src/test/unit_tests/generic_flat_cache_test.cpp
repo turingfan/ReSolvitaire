@@ -4,14 +4,14 @@
 // Each suite mirrors the corresponding per-class test file so parity can be
 // verified by inspection:
 //   CompactStatePolicy  ↔  flat_cache_test.cpp
-//   HashOnlyPolicy      ↔  hash_only_cache_test.cpp
-//   PredecessorPolicy   ↔  predecessor_cache_test.cpp
+//   HashOnlyClusterPolicy      ↔  hash_only_cache_test.cpp
+//   PredecessorClusterPolicy   ↔  predecessor_cache_test.cpp
 //
 // Only the insert/contains/eviction/clear surface of generic_flat_cache itself
 // is exercised here.  Predecessor payload semantics are covered by the existing
 // predecessor_cache_test.cpp and are not duplicated.
 //
-// KI-7 note: PredecessorPolicy tests use accordion game_states.  If a test
+// KI-7 note: PredecessorClusterPolicy tests use accordion game_states.  If a test
 // fails with the same crash signature as PredecessorDualCacheTest.AccordionAgreement,
 // it is the pre-existing KI-7 — do not investigate.  Any other new failure is
 // a blocker.
@@ -116,7 +116,7 @@ TEST_F(GenericCompactStateCacheTest, ClusterSizeMatchesFlatCache) {
     EXPECT_EQ(sizeof(generic_flat_cache<CompactStatePolicy>::cluster), 64u);
 }
 
-// ─── Suite 2: HashOnlyPolicy ──────────────────────────────────────────────────
+// ─── Suite 2: HashOnlyClusterPolicy ──────────────────────────────────────────────────
 
 class GenericHashOnlyCacheTest : public ::testing::Test {
 protected:
@@ -127,7 +127,7 @@ protected:
 };
 
 TEST_F(GenericHashOnlyCacheTest, BasicInsertAndContains) {
-    generic_flat_cache<HashOnlyPolicy> cache(1000);
+    generic_flat_cache<HashOnlyClusterPolicy> cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     EXPECT_TRUE(cache.insert(gs));
@@ -145,7 +145,7 @@ TEST_F(GenericHashOnlyCacheTest, BasicInsertAndContains) {
 }
 
 TEST_F(GenericHashOnlyCacheTest, DuplicateInsertReturnsFalse) {
-    generic_flat_cache<HashOnlyPolicy> cache(1000);
+    generic_flat_cache<HashOnlyClusterPolicy> cache(1000);
     game_state gs(rules, 42, game_state::streamliner_options::NONE);
 
     EXPECT_TRUE(cache.insert(gs));
@@ -154,7 +154,7 @@ TEST_F(GenericHashOnlyCacheTest, DuplicateInsertReturnsFalse) {
 }
 
 TEST_F(GenericHashOnlyCacheTest, DifferentStatesAreDistinct) {
-    generic_flat_cache<HashOnlyPolicy> cache(1000);
+    generic_flat_cache<HashOnlyClusterPolicy> cache(1000);
     game_state gs1(rules, 1, game_state::streamliner_options::NONE);
     game_state gs2(rules, 2, game_state::streamliner_options::NONE);
 
@@ -164,7 +164,7 @@ TEST_F(GenericHashOnlyCacheTest, DifferentStatesAreDistinct) {
 }
 
 TEST_F(GenericHashOnlyCacheTest, EvictionWorks) {
-    generic_flat_cache<HashOnlyPolicy> cache(2);  // 1 cluster = 2 slots
+    generic_flat_cache<HashOnlyClusterPolicy> cache(2);  // 1 cluster = 2 slots
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     cache.insert(gs);
@@ -180,7 +180,7 @@ TEST_F(GenericHashOnlyCacheTest, EvictionWorks) {
 }
 
 TEST_F(GenericHashOnlyCacheTest, ClearResetsEverything) {
-    generic_flat_cache<HashOnlyPolicy> cache(1000);
+    generic_flat_cache<HashOnlyClusterPolicy> cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     cache.insert(gs);
@@ -193,10 +193,10 @@ TEST_F(GenericHashOnlyCacheTest, ClearResetsEverything) {
 }
 
 TEST_F(GenericHashOnlyCacheTest, ClusterSizeMatchesHashOnlyCache) {
-    EXPECT_EQ(sizeof(generic_flat_cache<HashOnlyPolicy>::cluster), 16u);
+    EXPECT_EQ(sizeof(generic_flat_cache<HashOnlyClusterPolicy>::cluster), 16u);
 }
 
-// ─── Suite 3: PredecessorPolicy ───────────────────────────────────────────────
+// ─── Suite 3: PredecessorClusterPolicy ───────────────────────────────────────────────
 
 class GenericPredecessorCacheTest : public ::testing::Test {
 protected:
@@ -207,7 +207,7 @@ protected:
 };
 
 TEST_F(GenericPredecessorCacheTest, BasicInsertAndContains) {
-    generic_flat_cache<PredecessorPolicy> cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     EXPECT_TRUE(cache.insert(gs));
@@ -216,7 +216,7 @@ TEST_F(GenericPredecessorCacheTest, BasicInsertAndContains) {
 }
 
 TEST_F(GenericPredecessorCacheTest, DuplicateInsertReturnsFalse) {
-    generic_flat_cache<PredecessorPolicy> cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs(rules, 42, game_state::streamliner_options::NONE);
 
     EXPECT_TRUE(cache.insert(gs));
@@ -225,7 +225,7 @@ TEST_F(GenericPredecessorCacheTest, DuplicateInsertReturnsFalse) {
 }
 
 TEST_F(GenericPredecessorCacheTest, DifferentStatesAreDistinct) {
-    generic_flat_cache<PredecessorPolicy> cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs1(rules, 1, game_state::streamliner_options::NONE);
     game_state gs2(rules, 2, game_state::streamliner_options::NONE);
 
@@ -237,7 +237,7 @@ TEST_F(GenericPredecessorCacheTest, DifferentStatesAreDistinct) {
 }
 
 TEST_F(GenericPredecessorCacheTest, EvictionWorks) {
-    generic_flat_cache<PredecessorPolicy> cache(2);  // 1 cluster = 2 slots
+    generic_flat_cache<PredecessorClusterPolicy> cache(2);  // 1 cluster = 2 slots
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     cache.insert(gs);
@@ -253,7 +253,7 @@ TEST_F(GenericPredecessorCacheTest, EvictionWorks) {
 }
 
 TEST_F(GenericPredecessorCacheTest, ClearResetsEverything) {
-    generic_flat_cache<PredecessorPolicy> cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     cache.insert(gs);
@@ -266,5 +266,5 @@ TEST_F(GenericPredecessorCacheTest, ClearResetsEverything) {
 }
 
 TEST_F(GenericPredecessorCacheTest, ClusterSizeMatchesPredecessorCache) {
-    EXPECT_EQ(sizeof(generic_flat_cache<PredecessorPolicy>::cluster), 128u);
+    EXPECT_EQ(sizeof(generic_flat_cache<PredecessorClusterPolicy>::cluster), 128u);
 }

@@ -10,9 +10,9 @@
 // Suites:
 //   CompactStatePolicy vs flat_cache      — 5 klondike + 5 free-cell + 3 bakers-game
 //                                            + 3 seahaven-towers + 2 flower-garden
-//   HashOnlyPolicy     vs hash_only_cache — 5 klondike + 5 free-cell + 3 bakers-game
+//   HashOnlyClusterPolicy     vs hash_only_cache — 5 klondike + 5 free-cell + 3 bakers-game
 //
-// PredecessorPolicy parity is deliberately deferred (KI-7): see
+// PredecessorClusterPolicy parity is deliberately deferred (KI-7): see
 // DISABLED_PredecessorParity below.
 
 #include <gtest/gtest.h>
@@ -61,7 +61,7 @@ protected:
             dual_cache::context() = preset + " hash-only (seed " + std::to_string(seed) + ")";
             game_state gs(rules, seed, game_state::streamliner_options::NONE);
             dual_cache cache(
-                std::make_unique<generic_flat_cache<HashOnlyPolicy>>(cap),
+                std::make_unique<generic_flat_cache<HashOnlyClusterPolicy>>(cap),
                 std::make_unique<hash_only_cache>(cap),
                 "generic", "original"
             );
@@ -98,7 +98,7 @@ TEST_F(GenericFlatDualCacheTest, CompactParity_FlowerGarden) {
     run_compact_parity_test("flower-garden", 2, 100000);
 }
 
-// ─── HashOnlyPolicy vs hash_only_cache ───────────────────────────────────────
+// ─── HashOnlyClusterPolicy vs hash_only_cache ───────────────────────────────────────
 
 TEST_F(GenericFlatDualCacheTest, HashOnlyParity_FreeCell) {
     run_hashonly_parity_test("free-cell", 5, 100000);
@@ -112,7 +112,7 @@ TEST_F(GenericFlatDualCacheTest, HashOnlyParity_BakersGame) {
     run_hashonly_parity_test("bakers-game", 3, 100000);
 }
 
-// ─── PredecessorPolicy (DISABLED — KI-7) ─────────────────────────────────────
+// ─── PredecessorClusterPolicy (DISABLED — KI-7) ─────────────────────────────────────
 
 TEST_F(GenericFlatDualCacheTest, DISABLED_PredecessorParity) {
     // KI-7 (pre-existing): accordion games crash in debug builds via

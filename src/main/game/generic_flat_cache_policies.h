@@ -5,15 +5,15 @@
 //
 // Three policies for generic_flat_cache<Policy>:
 //
-//   CompactStatePolicy  — wraps compact_state (32 B entries, 64 B clusters)
-//                         TwoBig1 depth-preferred replacement
+//   CompactStatePolicy      — wraps compact_state (32 B entries, 64 B clusters)
+//                             TwoBig1 depth-preferred replacement
 //
-//   HashOnlyPolicy      — hash-only entries (8 B each, 16 B clusters)
-//                         Simple TwoBig1, no depth, 0→1 normalisation
+//   HashOnlyClusterPolicy   — hash-only entries (8 B each, 16 B clusters)
+//                             Simple TwoBig1, no depth, 0→1 normalisation
 //
-//   PredecessorPolicy   — 56 B payload + 8 B guard hash (128 B clusters)
-//                         TwoBig1 depth-preferred + hash-guard optimisation
-//                         on slot 1 to avoid a second DRAM fetch
+//   PredecessorClusterPolicy — 56 B payload + 8 B guard hash (128 B clusters)
+//                              TwoBig1 depth-preferred + hash-guard optimisation
+//                              on slot 1 to avoid a second DRAM fetch
 //
 // C++14: no if constexpr. Tag dispatch is used throughout.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,14 +104,14 @@ struct CompactStatePolicy {
 #endif // !SOLVITAIRE_HASH_ONLY
 
 
-// ─── HashOnlyPolicy ───────────────────────────────────────────────────────────
+// ─── HashOnlyClusterPolicy ───────────────────────────────────────────────────
 //
 // Mirrors hash_only_cache exactly: entries are uint64_t hashes (8 B each),
 // cluster = 16 B (no alignment requirement beyond natural uint64_t alignment).
 // Empty sentinel = 0; if the actual hash is 0, store 1 (0→1 normalisation).
 // Simple TwoBig1 — no depth comparison; slot 1 is always-replace.
 
-struct HashOnlyPolicy {
+struct HashOnlyClusterPolicy {
     typedef uint64_t payload_type;
     typedef insert_simple_tag insert_strategy;
     static const bool HAS_HASH_GUARD = false;
@@ -147,7 +147,7 @@ struct HashOnlyPolicy {
 };
 
 
-// ─── PredecessorPolicy ────────────────────────────────────────────────────────
+// ─── PredecessorClusterPolicy ────────────────────────────────────────────────
 //
 // Mirrors predecessor_flat_cache exactly: each cache_line is 64 B
 // (56 B payload + 8 B other_hash guard), two lines per cluster → 128 B,
@@ -160,7 +160,7 @@ struct HashOnlyPolicy {
 //
 // Replacement: TwoBig1 depth-preferred (same logic as CompactStatePolicy).
 
-struct PredecessorPolicy {
+struct PredecessorClusterPolicy {
     typedef predecessor_state payload_type;
     typedef insert_predecessor_tag insert_strategy;
     static const bool HAS_HASH_GUARD = true;

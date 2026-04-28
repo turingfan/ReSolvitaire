@@ -66,17 +66,17 @@ inline std::unique_ptr<cache_interface> make_cache(
         throw std::runtime_error("hash-only binary: --force-lru is not supported");
     if (use_predecessor_cache(rules) || !use_new_cache(rules, suit_sym))
         throw std::runtime_error("hash-only binary: game not eligible for hash-only cache");
-    return std::make_unique<generic_flat_cache<HashOnlyPolicy>>(capacity);
+    return std::make_unique<generic_flat_cache<HashOnlyClusterPolicy>>(capacity);
 #else
     if (cache_type == "hash-only") {
 #ifdef USE_GENERIC_CACHE
-        return std::make_unique<generic_flat_cache<HashOnlyPolicy>>(capacity);
+        return std::make_unique<generic_flat_cache<HashOnlyClusterPolicy>>(capacity);
 #else
         return std::make_unique<hash_only_cache>(capacity);
 #endif
     } else if (use_predecessor_cache(rules) && !force_lru) {
 #ifdef USE_GENERIC_CACHE
-        return std::make_unique<generic_flat_cache<PredecessorPolicy>>(capacity);
+        return std::make_unique<generic_flat_cache<PredecessorClusterPolicy>>(capacity);
 #else
         return std::make_unique<predecessor_flat_cache>(capacity);
 #endif

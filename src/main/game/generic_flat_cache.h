@@ -10,7 +10,7 @@
 //   Policy::cluster         — the struct stored per two-slot bucket (with alignas)
 //   Policy::payload_type    — what game_state provides for identity comparisons
 //   Policy::insert_strategy — tag selecting the replacement-policy overload
-//   Policy::HAS_HASH_GUARD  — bool; true only for PredecessorPolicy
+//   Policy::HAS_HASH_GUARD  — bool; true only for PredecessorClusterPolicy
 //
 // Plus static methods:
 //   hash_of(gs), payload_of(gs)            — extract hash and payload
@@ -18,7 +18,7 @@
 //   get_depth(cl, slot), depth_of_new(payload)  (depth-aware policies)
 //   write_slot(cl, slot, payload), copy_slot(cl, dst, src)
 //   get_guard_hash(cl), set_slot1_guard(cl, h),
-//   set_cascade_guard(cl, h), clear_slot1_guard(cl) (PredecessorPolicy only)
+//   set_cascade_guard(cl, h), clear_slot1_guard(cl) (PredecessorClusterPolicy only)
 //
 // C++14: no if constexpr.  Compile-time branching uses tag dispatch.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -276,8 +276,8 @@ private:
 //
 // Values are human-signed-off:
 //   CompactStatePolicy: 2 × compact_state (32 B)  = 64 B, aligned 64 B
-//   HashOnlyPolicy:     2 × uint64_t (8 B)         = 16 B
-//   PredecessorPolicy:  2 × cache_line (64 B)      = 128 B, aligned 128 B
+//   HashOnlyClusterPolicy:     2 × uint64_t (8 B)         = 16 B
+//   PredecessorClusterPolicy:  2 × cache_line (64 B)      = 128 B, aligned 128 B
 
 #ifndef SOLVITAIRE_HASH_ONLY
 static_assert(sizeof(generic_flat_cache<CompactStatePolicy>::cluster) == 64,
@@ -286,13 +286,13 @@ static_assert(alignof(generic_flat_cache<CompactStatePolicy>::cluster) == 64,
     "generic_flat_cache<CompactStatePolicy>::cluster must be aligned to 64 bytes");
 #endif
 
-static_assert(sizeof(generic_flat_cache<HashOnlyPolicy>::cluster) == 16,
-    "generic_flat_cache<HashOnlyPolicy>::cluster must be exactly 16 bytes");
+static_assert(sizeof(generic_flat_cache<HashOnlyClusterPolicy>::cluster) == 16,
+    "generic_flat_cache<HashOnlyClusterPolicy>::cluster must be exactly 16 bytes");
 
-static_assert(sizeof(generic_flat_cache<PredecessorPolicy>::cluster) == 128,
-    "generic_flat_cache<PredecessorPolicy>::cluster must be exactly 128 bytes");
-static_assert(alignof(generic_flat_cache<PredecessorPolicy>::cluster) == 128,
-    "generic_flat_cache<PredecessorPolicy>::cluster must be aligned to 128 bytes");
+static_assert(sizeof(generic_flat_cache<PredecessorClusterPolicy>::cluster) == 128,
+    "generic_flat_cache<PredecessorClusterPolicy>::cluster must be exactly 128 bytes");
+static_assert(alignof(generic_flat_cache<PredecessorClusterPolicy>::cluster) == 128,
+    "generic_flat_cache<PredecessorClusterPolicy>::cluster must be aligned to 128 bytes");
 
 
 #endif // SOLVITAIRE_GENERIC_FLAT_CACHE_H
