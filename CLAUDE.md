@@ -2,26 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Process Rules (MANDATORY — OVERRIDE ALL OTHER BEHAVIOR)                                                                                                                                                         
-                                                                                                                                                                                                                     
-  1. **BUG ENCOUNTERED:** Stop immediately. Write the symptom in one paragraph. Ask Ian how to proceed. Do NOT investigate. Do NOT attempt a fix. Do NOT continue to the next step.                                  
-                                                                                                                                                                                                                     
-  2. **SEMANTIC QUESTION:** If you encounter a question about what a descriptor value means, what the intended behavior is at search boundaries, or what the "correct" semantics are for this game — stop and ask    
-  Ian. He is the domain expert. Do not reason your way to an answer.
-                                                                                                                                                                                                                     
-  3. **SCOPE:** Each session implements exactly one named commit from the active plan. Do not proceed to the next commit without Ian's explicit instruction.                                                         
-   
-  4. **TEST FAILURES:** A failing test = a bug report to Ian, not a debugging task for Claude.   
+## Project-Level Rules
 
-  5. **EVALUATING AGENT WORK:** When asked to evaluate work done by another agent, you MUST: (a) pull the latest code from the remote before reading anything — do not proceed if the pull is blocked, explain why it is essential; (b) read the actual files, do not trust the other agent's summary or report; (c) verify claims (e.g. "Zobrist stripped", "tests pass") by inspecting the code directly, not by accepting the agent's word.
+**Read `01-Knowledge-Base/AGENTS.md`** in the project directory for mandatory rules that apply to all agents and all tools. That file is the single source of truth for process rules, where things go, and session-end checklist.
 
-## Pickup Documents (CHECK AT START OF SESSION - UPDATE AT END)
+## Repo-Specific Rules
 
-  1. Each branch has a PICKUP.md in a docs subfolder relevant to the branch. If the location is not obvious, look in docs/ for a PICKUP.md rather than assuming a path.
+  1. **EVALUATING AGENT WORK:** When asked to evaluate work done by another agent, you MUST: (a) pull the latest code from the remote before reading anything — do not proceed if the pull is blocked, explain why it is essential; (b) read the actual files, do not trust the other agent's summary or report; (c) verify claims (e.g. "Zobrist stripped", "tests pass") by inspecting the code directly, not by accepting the agent's word.
 
-  2. Read it when starting work. If not there ask user if equivalent is available and advise renaming
-
-  3. When git commit made or session ended redraft it and confirm new status with user
+  2. **Completed branch docs** get archived to `01-Knowledge-Base/Archive/` and removed from this repo. Only active branch docs belong in `docs/`.
 
 ## Project Overview
 
