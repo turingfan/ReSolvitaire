@@ -1,8 +1,6 @@
 #ifndef SOLVITAIRE_CACHE_POLICY_H
 #define SOLVITAIRE_CACHE_POLICY_H
 
-#include <cstdint>
-
 // ─── cache_policy.h ──────────────────────────────────────────────────────────
 //
 // Dispatch policy tag types for game_state_impl<Policy>.  Each policy encodes
@@ -71,21 +69,7 @@ struct LRUPolicy {
     static constexpr bool computes_hash        = false;
     static constexpr bool computes_payload     = false;
     static constexpr bool skip_pile_ordering   = false;
-    // No-op stubs so that regular (non-constexpr) if-branches in
-    // game_state_impl<LRUPolicy> compile without dead-code removal.
-    struct empty_descriptor_store {
-        void    clear()                              {}
-        uint8_t get_descriptor(uint8_t)        const { return 0; }
-        void    set_descriptor(uint8_t, uint8_t)     {}
-        uint8_t get_foundation(uint8_t)        const { return 0; }
-        void    set_foundation(uint8_t, uint8_t)     {}
-        uint8_t get_waste_ptr()                const { return 0; }
-        void    set_waste_ptr(uint8_t)               {}
-        uint8_t get_hole_top()                 const { return 0; }
-        void    set_hole_top(uint8_t)                {}
-        void    set_depth(uint16_t)                  {}
-        uint64_t compute_hash()                const { return 0; }
-    };
+    struct empty_descriptor_store {};
     typedef empty_descriptor_store descriptor_store_type;
 };
 

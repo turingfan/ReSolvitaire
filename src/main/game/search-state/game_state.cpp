@@ -1135,12 +1135,14 @@ void game_state_impl<Policy>::init_initially_face_up() {
     // No-op for init-list/JSON constructors where the positional loop already set IN_SPACE.
     // Guarded for predecessor-cache (accordion) games which manage descriptors differently.
     if (uses_predecessor_cache()) return;
-    for (auto tab_ref : original_tableau_piles) {
-        if (piles[tab_ref].size() == 1 && !piles[tab_ref][0].is_face_down()) {
-            card c = piles[tab_ref][0];
-            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
-            if (desc_store.get_descriptor(cid) == card_descriptor::STARTING) {
-                update_card_descriptor(cid, card_descriptor::IN_SPACE);
+    if constexpr (Policy::computes_hash) {
+        for (auto tab_ref : original_tableau_piles) {
+            if (piles[tab_ref].size() == 1 && !piles[tab_ref][0].is_face_down()) {
+                card c = piles[tab_ref][0];
+                uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+                if (desc_store.get_descriptor(cid) == card_descriptor::STARTING) {
+                    update_card_descriptor(cid, card_descriptor::IN_SPACE);
+                }
             }
         }
     }
@@ -1358,35 +1360,37 @@ uint8_t game_state_impl<Policy>::determine_destination_descriptor(pile::ref dest
 }
 
 template <typename Policy>
-template <typename P, typename>
 void game_state_impl<Policy>::set_payload_depth(uint16_t depth) {
-    desc_store.set_depth(depth);
+    if constexpr (Policy::computes_payload) {
+        desc_store.set_depth(depth);
+    }
 }
 
 template <typename Policy>
-template <typename P, typename>
 void game_state_impl<Policy>::compute_hash_from_scratch() {
-    // Recompute hash from the payload's current descriptor values
-    zobrist_hash_value = 0;
-    for (uint8_t c = 0; c < 52; ++c) {
-        zobrist_hash_value ^= zobrist_hash::card_key(c, desc_store.get_descriptor(c));
-    }
-
-    // Foundation contributions
-    if (rules.foundations_present) {
-        for (uint8_t s = 0; s < 4; ++s) {
-            zobrist_hash_value ^= zobrist_hash::foundation_key(s, desc_store.get_foundation(s));
+    if constexpr (Policy::computes_payload) {
+        // Recompute hash from the payload's current descriptor values
+        zobrist_hash_value = 0;
+        for (uint8_t c = 0; c < 52; ++c) {
+            zobrist_hash_value ^= zobrist_hash::card_key(c, desc_store.get_descriptor(c));
         }
-    }
 
-    // Hole top contribution
-    if (rules.hole) {
-        zobrist_hash_value ^= zobrist_hash::hole_top_key(desc_store.get_hole_top());
-    }
+        // Foundation contributions
+        if (rules.foundations_present) {
+            for (uint8_t s = 0; s < 4; ++s) {
+                zobrist_hash_value ^= zobrist_hash::foundation_key(s, desc_store.get_foundation(s));
+            }
+        }
 
-    // Waste pointer contribution (only for games with stock+waste)
-    if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
-        zobrist_hash_value ^= zobrist_hash::waste_key(desc_store.get_waste_ptr());
+        // Hole top contribution
+        if (rules.hole) {
+            zobrist_hash_value ^= zobrist_hash::hole_top_key(desc_store.get_hole_top());
+        }
+
+        // Waste pointer contribution (only for games with stock+waste)
+        if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
+            zobrist_hash_value ^= zobrist_hash::waste_key(desc_store.get_waste_ptr());
+        }
     }
 }
 
@@ -1551,17 +1555,18 @@ compact_state game_state_impl<Policy>::recompute_payload_from_scratch() const {
 }
 
 template <typename Policy>
-template <typename P, typename>
 void game_state_impl<Policy>::assert_payload_consistent() const {
-    // Cannot accurately recompute STARTING_FACE_UP for face-down games
-    // (revealed cards are indistinguishable from originally-placed cards by
-    // board inspection alone). Only assert for fully face-up games.
-    if (rules.face_up != sol_rules::face_up_policy::ALL) return;
+    if constexpr (Policy::computes_payload) {
+        // Cannot accurately recompute STARTING_FACE_UP for face-down games
+        // (revealed cards are indistinguishable from originally-placed cards by
+        // board inspection alone). Only assert for fully face-up games.
+        if (rules.face_up != sol_rules::face_up_policy::ALL) return;
 
-    compact_state recomputed = recompute_payload_from_scratch();
-    assert(recomputed.matches(desc_store) &&
-           "Incremental payload diverged from scratch-recomputed payload — "
-           "make_move/undo_move descriptor update bug");
+        compact_state recomputed = recompute_payload_from_scratch();
+        assert(recomputed.matches(desc_store) &&
+               "Incremental payload diverged from scratch-recomputed payload — "
+               "make_move/undo_move descriptor update bug");
+    }
 }
 #endif // NDEBUG
 
@@ -1663,17 +1668,25 @@ ostream& operator<< (ostream& str, const game_state_impl<Policy>& gs) {
 
 #if defined(SOLVITAIRE_LRU_ONLY)
 template class game_state_impl<LRUPolicy>;
+template ostream& operator<<(ostream&, const game_state_impl<LRUPolicy>&);
 
 #elif defined(SOLVITAIRE_FLAT_ONLY)
 template class game_state_impl<FlatPolicy>;
 template class game_state_impl<PredecessorPolicy>;
+template ostream& operator<<(ostream&, const game_state_impl<FlatPolicy>&);
+template ostream& operator<<(ostream&, const game_state_impl<PredecessorPolicy>&);
 
 #elif defined(SOLVITAIRE_HASH_ONLY)
 template class game_state_impl<HashOnlyPolicy>;
+template ostream& operator<<(ostream&, const game_state_impl<HashOnlyPolicy>&);
 
 #else   // default binary — all four policies
 template class game_state_impl<FlatPolicy>;
 template class game_state_impl<HashOnlyPolicy>;
 template class game_state_impl<PredecessorPolicy>;
 template class game_state_impl<LRUPolicy>;
+template ostream& operator<<(ostream&, const game_state_impl<FlatPolicy>&);
+template ostream& operator<<(ostream&, const game_state_impl<HashOnlyPolicy>&);
+template ostream& operator<<(ostream&, const game_state_impl<PredecessorPolicy>&);
+template ostream& operator<<(ostream&, const game_state_impl<LRUPolicy>&);
 #endif

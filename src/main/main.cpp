@@ -46,13 +46,13 @@ namespace po = boost::program_options;
 
 typedef std::chrono::milliseconds millisec;
 
-const optional<sol_rules> gen_rules(command_line_helper&);
+const boost::optional<sol_rules> gen_rules(command_line_helper&);
 void solve_random_game(int, const sol_rules&, command_line_helper&);
 bool solve_input_files(vector<string>, const sol_rules&, command_line_helper&);
-void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name);
+void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optional<int> seed, boost::optional<const Document&> in_doc, string instance_name);
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
-                                        optional<int> seed, optional<const Document&> in_doc,
+                                        boost::optional<int> seed, boost::optional<const Document&> in_doc,
                                         bool force_lru = false,
                                         const std::string& cache_type = "auto");
 void print_version();
@@ -89,7 +89,7 @@ int main(int argc, const char* argv[]) {
 
     // Generates the rules of the solitaire from the game type
     // Skip if we are doing a benchmark-json which handles rules per instance
-    optional<sol_rules> rules;
+    boost::optional<sol_rules> rules;
     if (clh.get_benchmark_json().empty()) {
         rules = gen_rules(clh);
         if (!rules) return EXIT_FAILURE;
@@ -149,7 +149,7 @@ void print_version() {
 }
 
 // Generates the game rules given the command line options
-const optional<sol_rules> gen_rules(command_line_helper& clh) {
+const boost::optional<sol_rules> gen_rules(command_line_helper& clh) {
     try {
         if (!clh.get_solitaire_type().empty()) {
             return rules_parser::from_preset(clh.get_solitaire_type());
@@ -189,7 +189,7 @@ bool solve_input_files(const vector<string> input_files, const sol_rules& rules,
     return had_error;
 }
 
-void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> seed, optional<const Document&> in_doc, string instance_name) {
+void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optional<int> seed, boost::optional<const Document&> in_doc, string instance_name) {
     typedef pair<solver, solver::result> solve_sol;
 
     bool smart = clh.get_streamliners() == command_line_helper::streamliner_opt::SMART;
@@ -209,9 +209,9 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
     cout.flush();
     if (run_again)
         if (!clh.get_classify() && !clh.get_json_output()) cout << "Unsolvable using streamliner. Running again...\n";
-    optional<solve_sol> streamliner_solution = run_again
+    boost::optional<solve_sol> streamliner_solution = run_again
             ? solve_game(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type())
-            : optional<solve_sol>();
+            : boost::optional<solve_sol>();
 
     if (clh.get_json_output()) {
         pair<solver, solver::result> s = run_again ? *streamliner_solution : solution;
@@ -288,7 +288,7 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, optional<int> 
 
 pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                                         game_state::streamliner_options str_opts,
-                                        optional<int> seed, optional<const Document&> in_doc,
+                                        boost::optional<int> seed, boost::optional<const Document&> in_doc,
                                         bool force_lru,
                                         const std::string& cache_type) {
     game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru, cache_type) : game_state(rules, *in_doc, str_opts, force_lru, cache_type);

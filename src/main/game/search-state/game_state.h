@@ -48,6 +48,10 @@
 #include "../predecessor_state.h"
 #include "../parent_table.h"
 
+template <typename Policy> class game_state_impl;
+template <typename Policy>
+std::ostream& operator<<(std::ostream&, const game_state_impl<Policy>&);
+
 template <typename Policy>
 class game_state_impl {
     friend struct hasher;
@@ -92,16 +96,9 @@ public:
 
     template <typename P = Policy,
               typename = std::enable_if_t<P::computes_payload>>
-    const compact_state& get_payload() const {
-        return desc_store;
-    }
+    const compact_state& get_payload() const { return desc_store; }
 
-    template <typename P = Policy,
-              typename = std::enable_if_t<P::computes_payload>>
     void set_payload_depth(uint16_t depth);
-
-    template <typename P = Policy,
-              typename = std::enable_if_t<P::computes_payload>>
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
 
     /* Predecessor-based Zobrist (accordion games) */
@@ -114,15 +111,12 @@ public:
     template <typename P = Policy,
               typename = std::enable_if_t<P::computes_payload>>
     compact_state recompute_payload_from_scratch() const;  // Debug: rebuild payload from board state
-
-    template <typename P = Policy,
-              typename = std::enable_if_t<P::computes_payload>>
     void assert_payload_consistent() const;                // Debug: assert incremental payload matches recomputed
 #endif
 
     /* Printing */
 
-    friend std::ostream& operator<< (std::ostream& os, const game_state_impl<Policy>& gs);
+    friend std::ostream& operator<< <>(std::ostream& os, const game_state_impl<Policy>& gs);
 
 private:
     /* Constructors (& helper function) */
