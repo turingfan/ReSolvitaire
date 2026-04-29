@@ -30,24 +30,30 @@
 
 class state_printer {
 public:
-    static std::ostream& print(std::ostream&, const game_state&);
+    template <typename Policy>
+    static std::ostream& print(std::ostream&, const game_state_impl<Policy>&);
     static void print_move(std::ostream&, move);
 
 private:
     static void print_header(std::ostream&, const char*);
+    template <typename Policy>
     static void print_piles(std::ostream&,
                             const std::vector<pile::ref>&,
-                            const game_state&);
+                            const game_state_impl<Policy>&);
+    template <typename Policy>
     static void print_sequences(std::ostream&,
                             const std::vector<pile::ref>&,
-                            const game_state&);
+                            const game_state_impl<Policy>&);
+    template <typename Policy>
     static void print_top_of_piles(std::ostream&,
                                    const std::vector<pile::ref>&,
-                                   const game_state&);
+                                   const game_state_impl<Policy>&);
+    template <typename Policy>
     static void print_top_of_pile(std::ostream&, pile::ref,
-                                  const game_state&);
+                                  const game_state_impl<Policy>&);
+    template <typename Policy>
     static void print_accordion(std::ostream&, const std::list<pile::ref>&,
-                                  const game_state&);
+                                  const game_state_impl<Policy>&);
     static void print_card(std::ostream&, card);
 };
 

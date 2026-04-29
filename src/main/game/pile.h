@@ -30,9 +30,11 @@
 #include "sol_rules.h"
 #include "card.h"
 
+template <typename Policy> class game_state_impl;
+
 class pile {
     friend struct hasher;
-    friend class game_state;
+    template <typename P> friend class game_state_impl;
     friend struct cached_game_state;
 public:
     typedef uint8_t size_type;

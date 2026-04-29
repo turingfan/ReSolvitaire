@@ -1,6 +1,6 @@
 /*
   Solvitaire: a solver for perfect information solitaire games
-  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and 
+  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and
   Ian Gent <Ian.Gent@st-andrews.ac.uk>
 
   This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,8 @@ using std::rend;
 
 // Assesses whether the pile ref that was modified was a tableau, cell or
 // reserve pile, and if so makes the relevant function call
-void game_state::eval_pile_order(pile::ref pr, bool is_place) {
+template <typename Policy>
+void game_state_impl<Policy>::eval_pile_order(pile::ref pr, bool is_place) {
     if (!original_tableau_piles.empty()
         && pr >= original_tableau_piles[0]
         && pr < original_tableau_piles[0] + original_tableau_piles.size()) {
@@ -52,7 +53,8 @@ void game_state::eval_pile_order(pile::ref pr, bool is_place) {
 
 // Finds the pile ref in the list and evaluates whether it should be moved to
 // maintain the "pile order"
-void game_state::eval_pile_order(list<pile::ref>& pile_lst, pile::ref changed_pr,
+template <typename Policy>
+void game_state_impl<Policy>::eval_pile_order(list<pile::ref>& pile_lst, pile::ref changed_pr,
                                  bool is_place) {
     // Finds the first pile that is larger/smaller than the ref pile
     // (the comp pile).
@@ -98,3 +100,22 @@ void game_state::eval_pile_order(list<pile::ref>& pile_lst, pile::ref changed_pr
     }
 #endif
 }
+
+// ─── Explicit instantiations ──────────────────────────────────────────────────
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+template class game_state_impl<LRUPolicy>;
+
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+template class game_state_impl<FlatPolicy>;
+template class game_state_impl<PredecessorPolicy>;
+
+#elif defined(SOLVITAIRE_HASH_ONLY)
+template class game_state_impl<HashOnlyPolicy>;
+
+#else   // default binary — all four policies
+template class game_state_impl<FlatPolicy>;
+template class game_state_impl<HashOnlyPolicy>;
+template class game_state_impl<PredecessorPolicy>;
+template class game_state_impl<LRUPolicy>;
+#endif

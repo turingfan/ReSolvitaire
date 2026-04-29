@@ -1,6 +1,6 @@
 /*
   Solvitaire: a solver for perfect information solitaire games
-  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and 
+  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and
   Ian Gent <Ian.Gent@st-andrews.ac.uk>
 
   This program is free software; you can redistribute it and/or modify
@@ -26,18 +26,18 @@
 
 
 typedef sol_rules::build_policy pol;
-typedef game_state::streamliner_options sos;
 typedef sol_rules::stock_deal_type sdt;
 typedef sol_rules::spaces_policy s_pol;
 
 using std::max;
 using boost::optional;
 
-bool game_state::is_valid_auto_foundation_move(pile::ref target_pile) const {
+template <typename Policy>
+bool game_state_impl<Policy>::is_valid_auto_foundation_move(pile::ref target_pile) const {
     if (rules.foundations_only_comp_piles || rules.two_decks)
         return false;
-    else if (   stream_opts     == sos::AUTO_FOUNDATIONS
-             || stream_opts     == sos::BOTH
+    else if (   stream_opts     == streamliner_options::AUTO_FOUNDATIONS
+             || stream_opts     == streamliner_options::BOTH
              || rules.build_pol == pol::NO_BUILD
              || rules.build_pol == pol::SAME_SUIT)
         return true;
@@ -79,7 +79,7 @@ bool game_state::is_valid_auto_foundation_move(pile::ref target_pile) const {
 
     if (rules.build_pol == pol::RED_BLACK) {
 //  Only valid other_with_1 if no worrying back.
-//  E.g. see Shoot Me Klondike game 39209. Essential to worry back a long way and impossible 
+//  E.g. see Shoot Me Klondike game 39209. Essential to worry back a long way and impossible
 //  with old rules
 //  Also seen in King Albert deals
         return (other_within_2 && same_within_3) || (other_within_1 && !rules.foundations_removable);
@@ -90,7 +90,8 @@ bool game_state::is_valid_auto_foundation_move(pile::ref target_pile) const {
 }
 
 // Returns a dominance move if one is available
-optional<move> game_state::get_dominance_move() const {
+template <typename Policy>
+optional<move> game_state_impl<Policy>::get_dominance_move() const {
     if (rules.spaces_pol == s_pol::AUTO_RESERVE_THEN_WASTE || rules.spaces_pol == s_pol::AUTO_RESERVE_THEN_ANY) {
         optional<move> arm = auto_reserve_move();
         if (arm) return arm;
@@ -116,7 +117,7 @@ optional<move> game_state::get_dominance_move() const {
             continue;
         }
 
-       if (pr==stock) { 
+       if (pr==stock) {
 		assert(rules.stock_deal_count == 1 && rules.stock_redeal);
 		// multiple cards to deal with
 	        for (auto k_plus_mv : generate_k_plus_moves_to_check()) {
@@ -134,7 +135,7 @@ optional<move> game_state::get_dominance_move() const {
 			    return m;
 			}
 		}
-        } else { 
+        } else {
 		// only one card to deal with
 		card c = piles[pr].top_card();
 		pile::ref target_foundation = foundations[c.get_suit()];
@@ -156,8 +157,9 @@ optional<move> game_state::get_dominance_move() const {
     return boost::none;
 }
 
-optional<move> game_state::auto_reserve_move() const {
-    if ((rules.spaces_pol == s_pol::AUTO_RESERVE_THEN_WASTE || rules.spaces_pol == s_pol::AUTO_RESERVE_THEN_ANY) 
+template <typename Policy>
+optional<move> game_state_impl<Policy>::auto_reserve_move() const {
+    if ((rules.spaces_pol == s_pol::AUTO_RESERVE_THEN_WASTE || rules.spaces_pol == s_pol::AUTO_RESERVE_THEN_ANY)
 	&& !piles[reserve.front()].empty()) {
         for (auto to : tableau_piles) {
             if (piles[to].empty()) {
@@ -168,7 +170,8 @@ optional<move> game_state::auto_reserve_move() const {
     return boost::none;
 }
 
-optional<move> game_state::auto_waste_stock_move() const {
+template <typename Policy>
+optional<move> game_state_impl<Policy>::auto_waste_stock_move() const {
     if (!piles[waste].empty()) {
         for (auto to : tableau_piles) {
             if (piles[to].empty()) {
@@ -185,7 +188,8 @@ optional<move> game_state::auto_waste_stock_move() const {
     return boost::none;
 }
 
-bool game_state::is_ordered_pile(pile::ref pr) const {
+template <typename Policy>
+bool game_state_impl<Policy>::is_ordered_pile(pile::ref pr) const {
     if (piles[pr].size() != rules.max_rank) return false;
 
     card::suit_t s = piles[pr][0].get_suit();
@@ -198,7 +202,8 @@ bool game_state::is_ordered_pile(pile::ref pr) const {
 // For games where the foundations can be removed from, this dominance blocks
 // the foundations being removed from if the card that were to be removed would
 // go 'automatically' up
-bool game_state::dominance_blocks_foundation_move(pile::ref target_pile) {
+template <typename Policy>
+bool game_state_impl<Policy>::dominance_blocks_foundation_move(pile::ref target_pile) {
     assert(!piles[target_pile].empty());
 
     card target_card = piles[target_pile].top_card();
@@ -210,8 +215,28 @@ bool game_state::dominance_blocks_foundation_move(pile::ref target_pile) {
     return blocked;
 }
 
-card::rank_t game_state::foundation_base_convert(card::rank_t r) const {
+template <typename Policy>
+card::rank_t game_state_impl<Policy>::foundation_base_convert(card::rank_t r) const {
     card::rank_t s = (r - (foundations_base - card::rank_t(1)) + rules.max_rank) % rules.max_rank;
     if (s == 0) return rules.max_rank;
     return s;
 }
+
+// ─── Explicit instantiations ──────────────────────────────────────────────────
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+template class game_state_impl<LRUPolicy>;
+
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+template class game_state_impl<FlatPolicy>;
+template class game_state_impl<PredecessorPolicy>;
+
+#elif defined(SOLVITAIRE_HASH_ONLY)
+template class game_state_impl<HashOnlyPolicy>;
+
+#else   // default binary — all four policies
+template class game_state_impl<FlatPolicy>;
+template class game_state_impl<HashOnlyPolicy>;
+template class game_state_impl<PredecessorPolicy>;
+template class game_state_impl<LRUPolicy>;
+#endif

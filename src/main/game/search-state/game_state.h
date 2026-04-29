@@ -1,6 +1,6 @@
 /*
   Solvitaire: a solver for perfect information solitaire games
-  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and 
+  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and
   Ian Gent <Ian.Gent@st-andrews.ac.uk>
 
   This program is free software; you can redistribute it and/or modify
@@ -24,23 +24,13 @@
 #ifndef SOLVITAIRE_GAME_STATE_H
 #define SOLVITAIRE_GAME_STATE_H
 
-// Derived compile-time flag: 1 when the flat-cache Zobrist hash is compiled into
-// game_state. True for both SOLVITAIRE_FLAT_ONLY and SOLVITAIRE_HASH_ONLY.
-// compact_state is only present when SOLVITAIRE_HASH_ONLY is NOT defined.
-#if defined(SOLVITAIRE_FLAT_ONLY) || defined(SOLVITAIRE_HASH_ONLY)
-#  define SOLVITAIRE_COMPUTES_FLAT_HASH 1
-#elif defined(SOLVITAIRE_LRU_ONLY)
-#  define SOLVITAIRE_COMPUTES_FLAT_HASH 0
-#else
-#  define SOLVITAIRE_COMPUTES_FLAT_HASH 1   /* default binary: compile everything */
-#endif
-
 #include <vector>
 #include <list>
 #include <set>
 #include <string>
 #include <random>
 #include <functional>
+#include <type_traits>
 
 #include <boost/functional/hash.hpp>
 #include <boost/optional/optional.hpp>
@@ -52,15 +42,14 @@
 #include "../move.h"
 #include "../zobrist.h"
 #include "../descriptor.h"
-#ifndef SOLVITAIRE_HASH_ONLY
-#  include "../compact_state.h"
-#else
-#  include "../hash_descriptor_store.h"
-#endif
+#include "../compact_state.h"
+#include "../hash_descriptor_store.h"
+#include "../cache_policy.h"
 #include "../predecessor_state.h"
 #include "../parent_table.h"
 
-class game_state {
+template <typename Policy>
+class game_state_impl {
     friend struct hasher;
     friend class global_cache;
     friend struct cached_game_state;
@@ -74,11 +63,13 @@ public:
     /* Constructors */
 
     // Creates a game state representation from a JSON doc
-    explicit game_state(const sol_rules&, const rapidjson::Document&, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
+    explicit game_state_impl(const sol_rules&, const rapidjson::Document&, streamliner_options,
+                             bool /*force_lru*/ = false, const std::string& /*cache_type*/ = "");
     // Does the same from a seed
-    game_state(const sol_rules&, int seed, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
+    game_state_impl(const sol_rules&, int seed, streamliner_options,
+                    bool /*force_lru*/ = false, const std::string& /*cache_type*/ = "");
     // Does the same but with an initialiser list (useful for testing)
-    game_state(const sol_rules&, std::initializer_list<std::initializer_list<std::string>>);
+    game_state_impl(const sol_rules&, std::initializer_list<std::initializer_list<std::string>>);
 
     /* Altering state */
 
@@ -92,24 +83,26 @@ public:
     std::vector<move> get_legal_moves(move = move(move::mtype::regular));
     boost::optional<move> get_dominance_move() const;
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    /* Runtime policy flags (public: read by solver to avoid dead work) */
-    bool computing_flat_hash;     // true: maintain Zobrist hash + payload descriptor store
-    bool computing_flat_payload;  // true: cache uses full compact_state payload as key
-#endif
-
     /* State inspection */
 
     bool is_solved() const;
     const std::vector<pile>& get_data() const;
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
+
     uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
-#ifndef SOLVITAIRE_HASH_ONLY
-    const compact_state& get_payload() const { return payload; }
+
+    template <typename P = Policy,
+              typename = std::enable_if_t<P::computes_payload>>
+    const compact_state& get_payload() const {
+        return desc_store;
+    }
+
+    template <typename P = Policy,
+              typename = std::enable_if_t<P::computes_payload>>
     void set_payload_depth(uint16_t depth);
+
+    template <typename P = Policy,
+              typename = std::enable_if_t<P::computes_payload>>
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
-#endif
-#endif
 
     /* Predecessor-based Zobrist (accordion games) */
     uint64_t get_predecessor_zobrist_hash() const { return predecessor_zobrist_hash; }
@@ -117,19 +110,24 @@ public:
     void set_predecessor_payload_depth(uint8_t depth);
     bool uses_predecessor_cache() const { return rules.accordion_size > 0; }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(NDEBUG) && !defined(SOLVITAIRE_HASH_ONLY)
+#ifndef NDEBUG
+    template <typename P = Policy,
+              typename = std::enable_if_t<P::computes_payload>>
     compact_state recompute_payload_from_scratch() const;  // Debug: rebuild payload from board state
+
+    template <typename P = Policy,
+              typename = std::enable_if_t<P::computes_payload>>
     void assert_payload_consistent() const;                // Debug: assert incremental payload matches recomputed
 #endif
 
     /* Printing */
 
-    friend std::ostream& operator<< (std::ostream&, const game_state&);
+    friend std::ostream& operator<< (std::ostream& os, const game_state_impl<Policy>& gs);
 
 private:
     /* Constructors (& helper function) */
 
-    explicit game_state(const sol_rules&, streamliner_options, bool force_lru = false, const std::string& cache_type = "");
+    explicit game_state_impl(const sol_rules&, streamliner_options);
     static std::vector<card> gen_shuffled_deck(card::rank_t, bool, std::mt19937);
     template<class RandomIt, class URBG> static void shuffle(RandomIt, RandomIt, URBG&&);
 
@@ -215,19 +213,13 @@ private:
     bool skip_pile_ordering;
     card::rank_t foundations_base;
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
     /* Descriptor-aligned Zobrist hash and descriptor store */
     uint64_t zobrist_hash_value;
-#ifdef SOLVITAIRE_HASH_ONLY
-    hash_descriptor_store hash_desc;  // old-value store for incremental Zobrist XOR deltas
-#else
-    compact_state payload;            // cache key (copied into flat_cache clusters) + descriptor store
-#endif
+    typename Policy::descriptor_store_type desc_store;
     bool initially_face_up[52];  // true = card was face-up at initial deal (after turn_face_up)
 
     void init_payload_and_hash();     // Called at end of constructors
     void init_initially_face_up();    // Called after turn_face_up() in constructors
-#endif
 
     // Descriptor update helpers
     void update_card_descriptor(uint8_t cid, uint8_t new_desc);
@@ -235,9 +227,7 @@ private:
     uint8_t effective_waste_ptr() const;
     void update_waste_ptr_in_hash(uint8_t new_ptr);
     void update_hole_top_in_hash(uint8_t new_cid);
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
     uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
-#endif
     bool is_foundation_pile(pile::ref pr) const;
     uint8_t get_foundation_suit(pile::ref pr) const;
 
@@ -285,5 +275,20 @@ private:
 
     std::vector<pile> piles;
 };
+
+// ─── game_state typedef ───────────────────────────────────────────────────────
+// Preserves the game_state name for all callers that don't care about policy.
+// Variant binaries select a single policy; the default binary defaults to
+// FlatPolicy for code outside the dispatch switch (tests, benchmarks, utilities).
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+    using game_state = game_state_impl<LRUPolicy>;
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+    using game_state = game_state_impl<FlatPolicy>;
+#elif defined(SOLVITAIRE_HASH_ONLY)
+    using game_state = game_state_impl<HashOnlyPolicy>;
+#else
+    using game_state = game_state_impl<FlatPolicy>;
+#endif
 
 #endif //SOLVITAIRE_GAME_STATE_H

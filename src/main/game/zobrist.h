@@ -4,7 +4,6 @@
 #include <cstdint>
 
 struct sol_rules;
-class game_state;
 
 class zobrist_hash {
 public:

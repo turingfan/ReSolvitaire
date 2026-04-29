@@ -5,7 +5,7 @@
 #include <string>
 #include "sol_rules.h"
 
-class game_state;
+#include "search-state/game_state.h"
 
 class cache_interface {
 public:

@@ -1,6 +1,6 @@
 /*
   Solvitaire: a solver for perfect information solitaire games
-  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and 
+  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and
   Ian Gent <Ian.Gent@st-andrews.ac.uk>
 
   This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,8 @@ typedef sol_rules::stock_deal_type sdt;
 typedef sol_rules::face_up_policy fu;
 typedef sol_rules::foundations_init_type fit;
 
-void deal_parser::parse(game_state &gs, const rapidjson::Document& doc) {
+template <typename Policy>
+void deal_parser::parse(game_state_impl<Policy> &gs, const rapidjson::Document& doc) {
     // There are two stages to reading in the supplied deal. It is both put
     // through the deal schema validator, and also parsed into
     // the game state object (with some further checking done). The parsing is
@@ -60,7 +61,7 @@ void deal_parser::parse(game_state &gs, const rapidjson::Document& doc) {
     if (gs.rules.stock_size > 0) {
         parse_stock(gs, doc);
     }
-    
+
     // Construct waste
     if (gs.rules.stock_deal_t == sdt::WASTE) {
         parse_waste(gs, doc);
@@ -149,7 +150,8 @@ string deal_parser::deal_schema_json() {
     return schema_json;
 }
 
-void deal_parser::parse_tableau_piles(game_state &gs, const rapidjson::Document& doc) {
+template <typename Policy>
+void deal_parser::parse_tableau_piles(game_state_impl<Policy> &gs, const rapidjson::Document& doc) {
     assert(doc.HasMember("tableau piles"));
     const Value& json_tab_piles = doc["tableau piles"];
     assert(json_tab_piles.IsArray());
@@ -169,7 +171,8 @@ void deal_parser::parse_tableau_piles(game_state &gs, const rapidjson::Document&
     }
 }
 
-void deal_parser::parse_hole(game_state &gs, const Document& doc) {
+template <typename Policy>
+void deal_parser::parse_hole(game_state_impl<Policy> &gs, const Document& doc) {
     if (doc.HasMember("hole")) {
         const Value &json_hole = doc["hole"];
         assert(json_hole.IsString());
@@ -178,7 +181,8 @@ void deal_parser::parse_hole(game_state &gs, const Document& doc) {
     }
 }
 
-void deal_parser::parse_cells(game_state &gs, const Document& doc) {
+template <typename Policy>
+void deal_parser::parse_cells(game_state_impl<Policy> &gs, const Document& doc) {
     if (doc.HasMember("cells")) {
         const Value &json_cells = doc["cells"];
         assert(json_cells.IsArray());
@@ -204,7 +208,8 @@ void deal_parser::parse_cells(game_state &gs, const Document& doc) {
     }
 }
 
-void deal_parser::parse_stock(game_state &gs, const Document& doc) {
+template <typename Policy>
+void deal_parser::parse_stock(game_state_impl<Policy> &gs, const Document& doc) {
     if (doc.HasMember("stock")) {
         const Value &json_stock = doc["stock"];
         assert(json_stock.IsArray());
@@ -216,7 +221,8 @@ void deal_parser::parse_stock(game_state &gs, const Document& doc) {
     }
 }
 
-void deal_parser::parse_waste(game_state &gs, const Document& doc) {
+template <typename Policy>
+void deal_parser::parse_waste(game_state_impl<Policy> &gs, const Document& doc) {
     if (doc.HasMember("waste")) {
         const Value &json_waste = doc["waste"];
         assert(json_waste.IsArray());
@@ -228,7 +234,8 @@ void deal_parser::parse_waste(game_state &gs, const Document& doc) {
     }
 }
 
-void deal_parser::parse_reserve(game_state &gs, const Document& doc) {
+template <typename Policy>
+void deal_parser::parse_reserve(game_state_impl<Policy> &gs, const Document& doc) {
     assert(doc.HasMember("reserve"));
     const Value& json_reserve_piles = doc["reserve"];
     assert(json_reserve_piles.IsArray());
@@ -247,7 +254,8 @@ void deal_parser::parse_reserve(game_state &gs, const Document& doc) {
     }
 }
 
-void deal_parser::parse_sequences(game_state& gs, const rapidjson::Document& doc) {
+template <typename Policy>
+void deal_parser::parse_sequences(game_state_impl<Policy>& gs, const rapidjson::Document& doc) {
     assert(doc.HasMember("sequences"));
     const Value& json_seqs = doc["sequences"];
     assert(json_seqs.IsArray());
@@ -269,7 +277,8 @@ void deal_parser::parse_sequences(game_state& gs, const rapidjson::Document& doc
     }
 }
 
-void deal_parser::parse_accordion(game_state &gs, const Document& doc) {
+template <typename Policy>
+void deal_parser::parse_accordion(game_state_impl<Policy> &gs, const Document& doc) {
     assert(doc.HasMember("accordion"));
     const Value& json_accordion_piles = doc["accordion"];
     assert(json_accordion_piles.IsArray());
@@ -292,7 +301,8 @@ void deal_parser::parse_accordion(game_state &gs, const Document& doc) {
     }
 }
 
-bool deal_parser::parse_foundations(game_state &gs, const rapidjson::Document& doc) {
+template <typename Policy>
+bool deal_parser::parse_foundations(game_state_impl<Policy> &gs, const rapidjson::Document& doc) {
     if (!doc.HasMember("foundations")) return false;
 
     const Value& json_foundations = doc["foundations"];
@@ -314,7 +324,8 @@ bool deal_parser::parse_foundations(game_state &gs, const rapidjson::Document& d
     return true;
 }
 
-void deal_parser::fill_foundations(game_state &gs) {
+template <typename Policy>
+void deal_parser::fill_foundations(game_state_impl<Policy> &gs) {
     auto foundations_count = uint8_t(4 * (gs.rules.two_decks ? 2:1));
     assert(gs.foundations.size() == foundations_count);
 
@@ -322,3 +333,102 @@ void deal_parser::fill_foundations(game_state &gs) {
         gs.place_card(gs.foundations[f_idx], card(f_idx % uint8_t(4), 1));
     }
 }
+
+// ─── Explicit instantiations ──────────────────────────────────────────────────
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+template void deal_parser::parse<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<LRUPolicy>(game_state_impl<LRUPolicy>&);
+
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+template void deal_parser::parse<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<FlatPolicy>(game_state_impl<FlatPolicy>&);
+template void deal_parser::parse<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&);
+
+#elif defined(SOLVITAIRE_HASH_ONLY)
+template void deal_parser::parse<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&);
+
+#else   // default binary — all four policies
+template void deal_parser::parse<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<FlatPolicy>(game_state_impl<FlatPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<FlatPolicy>(game_state_impl<FlatPolicy>&);
+template void deal_parser::parse<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<HashOnlyPolicy>(game_state_impl<HashOnlyPolicy>&);
+template void deal_parser::parse<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<PredecessorPolicy>(game_state_impl<PredecessorPolicy>&);
+template void deal_parser::parse<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<LRUPolicy>(game_state_impl<LRUPolicy>&);
+#endif

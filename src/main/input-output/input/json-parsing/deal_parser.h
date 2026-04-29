@@ -31,21 +31,21 @@
 #include "../../../../../lib/rapidjson/document.h"
 #include "../../../../../lib/rapidjson/schema.h"
 
-class game_state;
+#include "../../../game/search-state/game_state.h"
 
 class deal_parser {
 public:
-    static void parse(game_state&, const rapidjson::Document&);
-    static void parse_tableau_piles(game_state&, const rapidjson::Document&);
-    static void parse_hole(game_state&, const rapidjson::Document&);
-    static void parse_cells(game_state&, const rapidjson::Document&);
-    static void parse_stock(game_state&, const rapidjson::Document&);
-    static void parse_waste(game_state&, const rapidjson::Document&);
-    static void parse_reserve(game_state&, const rapidjson::Document&);
-    static void parse_sequences(game_state&, const rapidjson::Document&);
-    static void parse_accordion(game_state&, const rapidjson::Document&);
-    static bool parse_foundations(game_state&, const rapidjson::Document&);
-    static void fill_foundations(game_state&);
+    template <typename Policy> static void parse(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void parse_tableau_piles(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void parse_hole(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void parse_cells(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void parse_stock(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void parse_waste(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void parse_reserve(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void parse_sequences(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void parse_accordion(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static bool parse_foundations(game_state_impl<Policy>&, const rapidjson::Document&);
+    template <typename Policy> static void fill_foundations(game_state_impl<Policy>&);
     static std::string deal_schema_json();
 };
 

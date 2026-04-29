@@ -1,6 +1,8 @@
 #ifndef SOLVITAIRE_CACHE_POLICY_H
 #define SOLVITAIRE_CACHE_POLICY_H
 
+#include <cstdint>
+
 // ─── cache_policy.h ──────────────────────────────────────────────────────────
 //
 // Dispatch policy tag types for game_state_impl<Policy>.  Each policy encodes
@@ -24,16 +26,17 @@
 
 // Forward declarations — full types needed only when descriptor_store_type
 // members are accessed (i.e., in game_state_impl, not here).
-class compact_state;
-class hash_descriptor_store;
+struct compact_state;
+struct hash_descriptor_store;
 
 // ─── FlatPolicy ──────────────────────────────────────────────────────────────
 // Used by generic_flat_cache<CompactStatePolicy>.  Maintains both the Zobrist
 // hash and the full compact_state payload descriptor.
 
 struct FlatPolicy {
-    static constexpr bool computes_hash    = true;
-    static constexpr bool computes_payload = true;
+    static constexpr bool computes_hash        = true;
+    static constexpr bool computes_payload     = true;
+    static constexpr bool skip_pile_ordering   = true;
     typedef compact_state descriptor_store_type;
 };
 
@@ -43,8 +46,9 @@ struct FlatPolicy {
 // instead as a lightweight old-value store for incremental XOR deltas.
 
 struct HashOnlyPolicy {
-    static constexpr bool computes_hash    = true;
-    static constexpr bool computes_payload = false;
+    static constexpr bool computes_hash        = true;
+    static constexpr bool computes_payload     = false;
+    static constexpr bool skip_pile_ordering   = true;
     typedef hash_descriptor_store descriptor_store_type;
 };
 
@@ -53,8 +57,9 @@ struct HashOnlyPolicy {
 // Maintains a predecessor-based Zobrist hash and compact_state descriptor.
 
 struct PredecessorPolicy {
-    static constexpr bool computes_hash    = true;
-    static constexpr bool computes_payload = true;
+    static constexpr bool computes_hash        = true;
+    static constexpr bool computes_payload     = true;
+    static constexpr bool skip_pile_ordering   = false;
     typedef compact_state descriptor_store_type;
 };
 
@@ -63,9 +68,24 @@ struct PredecessorPolicy {
 // canonicalises pile order internally and does not use Zobrist hashing.
 
 struct LRUPolicy {
-    static constexpr bool computes_hash    = false;
-    static constexpr bool computes_payload = false;
-    struct empty_descriptor_store {};
+    static constexpr bool computes_hash        = false;
+    static constexpr bool computes_payload     = false;
+    static constexpr bool skip_pile_ordering   = false;
+    // No-op stubs so that regular (non-constexpr) if-branches in
+    // game_state_impl<LRUPolicy> compile without dead-code removal.
+    struct empty_descriptor_store {
+        void    clear()                              {}
+        uint8_t get_descriptor(uint8_t)        const { return 0; }
+        void    set_descriptor(uint8_t, uint8_t)     {}
+        uint8_t get_foundation(uint8_t)        const { return 0; }
+        void    set_foundation(uint8_t, uint8_t)     {}
+        uint8_t get_waste_ptr()                const { return 0; }
+        void    set_waste_ptr(uint8_t)               {}
+        uint8_t get_hole_top()                 const { return 0; }
+        void    set_hole_top(uint8_t)                {}
+        void    set_depth(uint16_t)                  {}
+        uint64_t compute_hash()                const { return 0; }
+    };
     typedef empty_descriptor_store descriptor_store_type;
 };
 

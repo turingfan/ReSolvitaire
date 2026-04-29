@@ -1,6 +1,6 @@
 /*
   Solvitaire: a solver for perfect information solitaire games
-  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and 
+  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and
   Ian Gent <Ian.Gent@st-andrews.ac.uk>
 
   This program is free software; you can redistribute it and/or modify
@@ -59,11 +59,9 @@ typedef sol_rules::face_up_policy fu;
 typedef game_state::streamliner_options sos;
 typedef sol_rules::foundations_init_type fit;
 
-// SOLVITAIRE_COMPUTES_FLAT_HASH is derived in game_state.h (included above).
-
 // Static predecessor Zobrist table
-uint64_t game_state::Z_pred[52][110];
-bool game_state::Z_pred_initialised = false;
+template <typename Policy> uint64_t game_state_impl<Policy>::Z_pred[52][110];
+template <typename Policy> bool     game_state_impl<Policy>::Z_pred_initialised = false;
 
 //////////////////
 // CONSTRUCTORS //
@@ -71,8 +69,8 @@ bool game_state::Z_pred_initialised = false;
 
 // A private constructor used by both of the public ones. Initializes all of the
 // piles and pile refs specified by the rules
-game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts_, bool force_lru,
-                       const std::string& cache_type)
+template <typename Policy>
+game_state_impl<Policy>::game_state_impl(const sol_rules& s_rules, streamliner_options stream_opts_)
         : rules(s_rules)
         , stream_opts(stream_opts_)
         , foundations_base(card::rank_t(1))
@@ -81,14 +79,8 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
         , waste(255)
         , hole (255) {
     std::memset(predecessor_array, 0, 52);
-    bool suit_sym = stream_opts_ == streamliner_options::SUIT_SYMMETRY
-                 || stream_opts_ == streamliner_options::BOTH;
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    computing_flat_hash    = needs_flat_hash(s_rules, suit_sym, force_lru, cache_type);
-    computing_flat_payload = needs_flat_payload(s_rules, suit_sym, force_lru, cache_type);
-#else
-    (void)cache_type;
-#endif
+    skip_pile_ordering = Policy::skip_pile_ordering;
+
     // If there is a hole, creates pile
     if (rules.hole) {
         piles.emplace_back();
@@ -158,21 +150,20 @@ game_state::game_state(const sol_rules& s_rules, streamliner_options stream_opts
     }
 
     // Initialize Zobrist hash to zero (will be filled by init_payload_and_hash if needed)
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
     zobrist_hash_value = 0;
-#endif
-    skip_pile_ordering = use_new_cache(s_rules, suit_sym) && !force_lru;
 }
 
 // Constructs an initial game state from a JSON doc
-game_state::game_state(const sol_rules& s_rules, const Document& doc, streamliner_options s_opts, bool force_lru,
-                       const std::string& cache_type)
-        : game_state(s_rules, s_opts, force_lru, cache_type) {
+template <typename Policy>
+game_state_impl<Policy>::game_state_impl(const sol_rules& s_rules, const Document& doc,
+                                          streamliner_options s_opts,
+                                          bool /*force_lru*/, const std::string& /*cache_type*/)
+        : game_state_impl(s_rules, s_opts) {
     deal_parser::parse(*this, doc);
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    if (computing_flat_hash) init_payload_and_hash();
-    init_initially_face_up();
-#endif
+    if constexpr (Policy::computes_hash) {
+        init_payload_and_hash();
+        init_initially_face_up();
+    }
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -180,9 +171,11 @@ game_state::game_state(const sol_rules& s_rules, const Document& doc, streamline
 }
 
 // Constructs an initial game state from a seed
-game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s_opts, bool force_lru,
-                       const std::string& cache_type)
-        : game_state(s_rules, s_opts, force_lru, cache_type) {
+template <typename Policy>
+game_state_impl<Policy>::game_state_impl(const sol_rules& s_rules, int seed,
+                                          streamliner_options s_opts,
+                                          bool /*force_lru*/, const std::string& /*cache_type*/)
+        : game_state_impl(s_rules, s_opts) {
     auto rng = mt19937(seed);
     vector<card> deck = gen_shuffled_deck(rules.max_rank, rules.two_decks, rng);
 
@@ -191,7 +184,7 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
             card base_card = deck.front();
             deck.erase(find(begin(deck), end(deck), base_card));
             place_card(hole, base_card);
-	} else { 
+	} else {
 	    // Note following line introduces slight bias if there is  more than one deck.
             deck.erase(find(begin(deck), end(deck), card(rules.hole_base->c_str())));
             place_card(hole, card(rules.hole_base->c_str()));
@@ -203,7 +196,7 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
 
     // If the foundation base is random, picks the first card in the shuffled deck to be the base
     card::suit_t rand_suit = 0;
-    if (!rules.foundations_base) { 
+    if (!rules.foundations_base) {
 	card base_card = deck.front();
         foundations_base = base_card.get_rank();
         rand_suit = base_card.get_suit();
@@ -307,9 +300,9 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
         }
     }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    if (computing_flat_hash) init_payload_and_hash();
-#endif
+    if constexpr (Policy::computes_hash) {
+        init_payload_and_hash();
+    }
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -324,9 +317,9 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
                 piles[pr][0].turn_face_up();
             }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    init_initially_face_up();
-#endif
+    if constexpr (Policy::computes_hash) {
+        init_initially_face_up();
+    }
 
     // The size of all piles must equal the deck size
     int piles_sz = 0;
@@ -336,9 +329,10 @@ game_state::game_state(const sol_rules& s_rules, int seed, streamliner_options s
     }
 }
 
-game_state::game_state(const sol_rules& s_rules,
+template <typename Policy>
+game_state_impl<Policy>::game_state_impl(const sol_rules& s_rules,
                        std::initializer_list<std::initializer_list<string>> il)
-        : game_state(s_rules, sos::NONE) {pile::ref pr = 0;
+        : game_state_impl(s_rules, streamliner_options::NONE) {pile::ref pr = 0;
     for (auto& p_il : il) {
         for (const string& card_str : p_il) {
             card c(card_str.c_str(), s_rules.face_up == fu::TOP_CARDS);
@@ -357,10 +351,10 @@ game_state::game_state(const sol_rules& s_rules,
         }
     }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    if (computing_flat_hash) init_payload_and_hash();
-    init_initially_face_up();
-#endif
+    if constexpr (Policy::computes_hash) {
+        init_payload_and_hash();
+        init_initially_face_up();
+    }
     if (rules.accordion_size > 0) {
         init_predecessor_zobrist();
         init_predecessor_state();
@@ -368,7 +362,8 @@ game_state::game_state(const sol_rules& s_rules,
 }
 
 // Generates a randomly ordered vector of cards
-vector<card> game_state::gen_shuffled_deck(card::rank_t max_rank,
+template <typename Policy>
+vector<card> game_state_impl<Policy>::gen_shuffled_deck(card::rank_t max_rank,
                                            bool two_decks, mt19937 rng) {
     vector<card> deck;
 
@@ -382,12 +377,13 @@ vector<card> game_state::gen_shuffled_deck(card::rank_t max_rank,
 
     assert(deck.size() == pile::size_type(max_rank * (two_decks ? 8 : 4)));
 
-    game_state::shuffle(begin(deck), end(deck), rng);
+    game_state_impl<Policy>::shuffle(begin(deck), end(deck), rng);
     return deck;
 }
 
+template <typename Policy>
 template<class RandomIt, class URBG>
-void game_state::shuffle(RandomIt first, RandomIt last, URBG&& g) {
+void game_state_impl<Policy>::shuffle(RandomIt first, RandomIt last, URBG&& g) {
     typedef typename std::iterator_traits<RandomIt>::difference_type diff_t;
     typedef boost::random::uniform_int_distribution<diff_t> distr_t;
     typedef typename distr_t::param_type param_t;
@@ -406,10 +402,11 @@ void game_state::shuffle(RandomIt first, RandomIt last, URBG&& g) {
 // ALTERING STATE //
 ////////////////////
 
-void game_state::make_move(const move m) {
+template <typename Policy>
+void game_state_impl<Policy>::make_move(const move m) {
     switch (m.type) {
         case move::mtype::regular:
-	    make_regular_move(m); 
+	    make_regular_move(m);
             break;
         case move::mtype::built_group:
             make_built_group_move(m);
@@ -436,10 +433,11 @@ void game_state::make_move(const move m) {
 #endif
 }
 
-void game_state::undo_move(const move m) {
+template <typename Policy>
+void game_state_impl<Policy>::undo_move(const move m) {
     switch (m.type) {
         case move::mtype::regular:
-	    undo_regular_move(m); 
+	    undo_regular_move(m);
             break;
         case move::mtype::built_group:
             undo_built_group_move(m);
@@ -466,7 +464,8 @@ void game_state::undo_move(const move m) {
 #endif
 }
 
-void game_state::make_regular_move(const move m) {
+template <typename Policy>
+void game_state_impl<Policy>::make_regular_move(const move m) {
     assert(m.from < piles.size());
     assert(m.to   < piles.size());
 
@@ -483,24 +482,20 @@ void game_state::make_regular_move(const move m) {
         to_fs = get_foundation_suit(m.to);
     }
     uint8_t old_ht = 255;
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    if (m.to == hole) {
-#ifdef SOLVITAIRE_HASH_ONLY
-        if (computing_flat_hash) old_ht = hash_desc.get_hole_top();
-#else
-        if (computing_flat_hash) old_ht = payload.get_hole_top();
-#endif
+    if constexpr (Policy::computes_hash) {
+        if (m.to == hole) {
+            old_ht = desc_store.get_hole_top();
+        }
     }
-#endif
 
     // Pile operations
     place_card(m.to, take_card(m.from));
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    // Update moved card's descriptor
-    uint8_t new_desc = determine_destination_descriptor(m.to, moved);
-    update_card_descriptor(cid, new_desc);
-#endif
+    if constexpr (Policy::computes_hash) {
+        // Update moved card's descriptor
+        uint8_t new_desc = determine_destination_descriptor(m.to, moved);
+        update_card_descriptor(cid, new_desc);
+    }
 
     // Update foundation headers
     if (from_fs != 255) {
@@ -539,14 +534,12 @@ void game_state::make_regular_move(const move m) {
 
 }
 
-void game_state::undo_regular_move(const move m) {
+template <typename Policy>
+void game_state_impl<Policy>::undo_regular_move(const move m) {
     assert(m.to < piles.size());
 
     // Identify moved card BEFORE pile undo (it's at m.to)
     card moved = piles[m.to].top_card();
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
-#endif
 
     // === PILE OPERATIONS (restore physical state) ===
 
@@ -599,29 +592,31 @@ void game_state::undo_regular_move(const move m) {
         update_waste_ptr_in_hash(effective_waste_ptr());
     }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    // Moved card's old descriptor (recovered from restored pile state).
-    // For tableau piles with a face-down card now below the returned card,
-    // use the static initial-face-up table to distinguish:
-    //   - initially face-up (Klondike top-card deal): descriptor was STARTING=0
-    //   - initially face-down (revealed during play): descriptor was STARTING_FACE_UP=1
-    // All other positions are handled correctly by determine_destination_descriptor.
-    uint8_t old_desc = determine_destination_descriptor(m.from, moved);
-    if (!original_tableau_piles.empty()) {
-        pile::ref first_tab = original_tableau_piles.front();
-        pile::ref last_tab = original_tableau_piles.back();
-        if (m.from >= first_tab && m.from <= last_tab
-                && piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()) {
-            old_desc = initially_face_up[cid]
-                ? card_descriptor::STARTING
-                : card_descriptor::STARTING_FACE_UP;
+    if constexpr (Policy::computes_hash) {
+        uint8_t cid = zobrist_hash::card_id(moved.get_suit(), moved.get_rank());
+        // Moved card's old descriptor (recovered from restored pile state).
+        // For tableau piles with a face-down card now below the returned card,
+        // use the static initial-face-up table to distinguish:
+        //   - initially face-up (Klondike top-card deal): descriptor was STARTING=0
+        //   - initially face-down (revealed during play): descriptor was STARTING_FACE_UP=1
+        // All other positions are handled correctly by determine_destination_descriptor.
+        uint8_t old_desc = determine_destination_descriptor(m.from, moved);
+        if (!original_tableau_piles.empty()) {
+            pile::ref first_tab = original_tableau_piles.front();
+            pile::ref last_tab = original_tableau_piles.back();
+            if (m.from >= first_tab && m.from <= last_tab
+                    && piles[m.from].size() >= 2 && piles[m.from][1].is_face_down()) {
+                old_desc = initially_face_up[cid]
+                    ? card_descriptor::STARTING
+                    : card_descriptor::STARTING_FACE_UP;
+            }
         }
+        update_card_descriptor(cid, old_desc);
     }
-    update_card_descriptor(cid, old_desc);
-#endif
 }
 
-void game_state::make_built_group_move(move m) {
+template <typename Policy>
+void game_state_impl<Policy>::make_built_group_move(move m) {
     assert(m.from  <  piles.size()  );
     assert(m.to    <  piles.size()  );
 
@@ -635,8 +630,7 @@ void game_state::make_built_group_move(move m) {
         take_card(m.from);
     }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    {
+    if constexpr (Policy::computes_hash) {
         // After placement, bottom card is at piles[m.to][m.count - 1]
         card bottom = piles[m.to][m.count - 1];
         uint8_t bottom_cid = zobrist_hash::card_id(bottom.get_suit(), bottom.get_rank());
@@ -657,34 +651,35 @@ void game_state::make_built_group_move(move m) {
         }
         update_card_descriptor(bottom_cid, new_desc);
     }
-#endif
 
     // Handle reveal
     if (m.reveal_move) {
         assert(!piles[m.from].empty());
         assert(piles[m.from][0].is_face_down());
         piles[m.from][0].turn_face_up();
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-        card rev = piles[m.from][0];
-        uint8_t rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
-        // Bottom of pile → IN_SPACE; otherwise STARTING_FACE_UP
-        uint8_t rev_desc = (piles[m.from].size() == 1)
-            ? card_descriptor::IN_SPACE
-            : card_descriptor::STARTING_FACE_UP;
-        update_card_descriptor(rev_cid, rev_desc);
-#endif
+        if constexpr (Policy::computes_hash) {
+            card rev = piles[m.from][0];
+            uint8_t rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
+            // Bottom of pile → IN_SPACE; otherwise STARTING_FACE_UP
+            uint8_t rev_desc = (piles[m.from].size() == 1)
+                ? card_descriptor::IN_SPACE
+                : card_descriptor::STARTING_FACE_UP;
+            update_card_descriptor(rev_cid, rev_desc);
+        }
     }
 
 }
 
-void game_state::undo_built_group_move(move m) {
+template <typename Policy>
+void game_state_impl<Policy>::undo_built_group_move(move m) {
     assert(m.to < piles.size());
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
     // Capture bottom card identity before pile undo (still at m.to)
-    card bottom_pre_undo = piles[m.to][m.count - 1];
-    uint8_t bottom_cid = zobrist_hash::card_id(bottom_pre_undo.get_suit(), bottom_pre_undo.get_rank());
-#endif
+    uint8_t bottom_cid = 0;
+    if constexpr (Policy::computes_hash) {
+        card bottom_pre_undo = piles[m.to][m.count - 1];
+        bottom_cid = zobrist_hash::card_id(bottom_pre_undo.get_suit(), bottom_pre_undo.get_rank());
+    }
 
     // === PILE OPERATIONS (restore physical state) ===
 
@@ -702,17 +697,14 @@ void game_state::undo_built_group_move(move m) {
         assert(piles[m.from].size() > static_cast<pile::size_type>(m.count));
         assert(!piles[m.from][m.count].is_face_down());
         piles[m.from][m.count].turn_face_down();
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-        {
+        if constexpr (Policy::computes_hash) {
             card rev = piles[m.from][m.count];
             uint8_t rev_cid = zobrist_hash::card_id(rev.get_suit(), rev.get_rank());
             update_card_descriptor(rev_cid, card_descriptor::STARTING);
         }
-#endif
     }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    {
+    if constexpr (Policy::computes_hash) {
         // === HASH/PAYLOAD RECOVERY (all from restored pile state) ===
 
         // Recover bottom card's old descriptor.
@@ -752,10 +744,10 @@ void game_state::undo_built_group_move(move m) {
         }
         update_card_descriptor(bottom_cid, old_desc);
     }
-#endif
 }
 
-void game_state::make_stock_k_plus_move(const move m) {
+template <typename Policy>
+void game_state_impl<Policy>::make_stock_k_plus_move(const move m) {
 #ifndef NDEBUG
     assert(rules.stock_deal_t == sdt::WASTE);
     assert(m.from == stock);
@@ -790,11 +782,11 @@ void game_state::make_stock_k_plus_move(const move m) {
         }
     }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    // Update descriptor for played card
-    uint8_t new_desc = determine_destination_descriptor(m.to, played);
-    update_card_descriptor(played_cid, new_desc);
-#endif
+    if constexpr (Policy::computes_hash) {
+        // Update descriptor for played card
+        uint8_t new_desc = determine_destination_descriptor(m.to, played);
+        update_card_descriptor(played_cid, new_desc);
+    }
 
     // Update foundation/hole headers
     uint8_t to_fs = 255;
@@ -818,7 +810,8 @@ void game_state::make_stock_k_plus_move(const move m) {
 #endif
 }
 
-void game_state::undo_stock_k_plus_move(move m) {
+template <typename Policy>
+void game_state_impl<Policy>::undo_stock_k_plus_move(move m) {
     assert(m.to < piles.size());
 
 #ifndef NDEBUG
@@ -884,7 +877,8 @@ void game_state::undo_stock_k_plus_move(move m) {
     update_card_descriptor(played_cid, card_descriptor::STARTING);
 }
 
-void game_state::make_stock_to_all_tableau_move(move m) {
+template <typename Policy>
+void game_state_impl<Policy>::make_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
     assert(!use_new_cache(rules));  // KI-6: TABLEAU_PILES games always use LRU cache
 
@@ -893,17 +887,18 @@ void game_state::make_stock_to_all_tableau_move(move m) {
          tab_pr++) {
         place_card(tab_pr, take_card(stock));
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-        // Update dealt card's descriptor: STARTING → destination descriptor
-        card dealt = piles[tab_pr].top_card();
-        uint8_t cid = zobrist_hash::card_id(dealt.get_suit(), dealt.get_rank());
-        uint8_t new_desc = determine_destination_descriptor(tab_pr, dealt);
-        update_card_descriptor(cid, new_desc);
-#endif
+        if constexpr (Policy::computes_hash) {
+            // Update dealt card's descriptor: STARTING → destination descriptor
+            card dealt = piles[tab_pr].top_card();
+            uint8_t cid = zobrist_hash::card_id(dealt.get_suit(), dealt.get_rank());
+            uint8_t new_desc = determine_destination_descriptor(tab_pr, dealt);
+            update_card_descriptor(cid, new_desc);
+        }
     }
 }
 
-void game_state::undo_stock_to_all_tableau_move(move m) {
+template <typename Policy>
+void game_state_impl<Policy>::undo_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
     assert(!use_new_cache(rules));  // KI-6: TABLEAU_PILES games always use LRU cache
 
@@ -919,7 +914,8 @@ void game_state::undo_stock_to_all_tableau_move(move m) {
     }
 }
 
-void game_state::make_sequence_move(const move m) {
+template <typename Policy>
+void game_state_impl<Policy>::make_sequence_move(const move m) {
     // Note: sequence moves directly modify pile_vec entries without going through
     // place_card/take_card, so the Zobrist hash is NOT updated. This is acceptable
     // because sequence-based games will not use the new Zobrist-based cache (M5).
@@ -934,7 +930,8 @@ void game_state::make_sequence_move(const move m) {
     piles[to_seq_ref][to_card_idx] = from_card;
 }
 
-void game_state::undo_sequence_move(const move m) {
+template <typename Policy>
+void game_state_impl<Policy>::undo_sequence_move(const move m) {
     pile::ref to_seq_ref = m.to / rules.max_rank;
     pile::size_type to_card_idx = m.to % rules.max_rank;
     card to_card = piles[to_seq_ref][to_card_idx];
@@ -946,7 +943,8 @@ void game_state::undo_sequence_move(const move m) {
     piles[from_seq_ref][from_card_idx] = to_card;
 }
 
-void game_state::make_accordion_move(move m) {
+template <typename Policy>
+void game_state_impl<Policy>::make_accordion_move(move m) {
     // --- Predecessor updates (before pile move changes the board) ---
     predecessor_undo_frame frame = {0};
 
@@ -1019,7 +1017,8 @@ void game_state::make_accordion_move(move m) {
     accordion.remove(m.from);
 }
 
-void game_state::undo_accordion_move(move m) {
+template <typename Policy>
+void game_state_impl<Policy>::undo_accordion_move(move m) {
     // --- Standard accordion undo (pile operations + existing Zobrist) ---
     accordion.insert(upper_bound(begin(accordion), end(accordion), m.from), m.from);
     undo_built_group_move(m);
@@ -1047,7 +1046,8 @@ void game_state::undo_accordion_move(move m) {
 
 // Places a card on a pile and if it is on a tableau, cell or reserve pile,
 // reorders the pile refs so that the largest pile is first
-void game_state::place_card(pile::ref pr, card c) {
+template <typename Policy>
+void game_state_impl<Policy>::place_card(pile::ref pr, card c) {
     piles[pr].place(c);
 
 #ifndef NO_PILE_SYMMETRY
@@ -1060,7 +1060,8 @@ void game_state::place_card(pile::ref pr, card c) {
 }
 
 // Same as above but for taking cards
-card game_state::take_card(pile::ref pr) {
+template <typename Policy>
+card game_state_impl<Policy>::take_card(pile::ref pr) {
     card c = piles[pr].take();
 #ifndef NO_PILE_SYMMETRY
     // If the stock deals to the tableau piles, there is no pile symmetry
@@ -1073,7 +1074,8 @@ card game_state::take_card(pile::ref pr) {
 }
 
 #ifndef NDEBUG
-void game_state::check_face_down_consistent() const {
+template <typename Policy>
+void game_state_impl<Policy>::check_face_down_consistent() const {
     for (auto& p : original_tableau_piles) {
         if (piles[p].empty()) continue;
         // Makes sure the top cards of each tableau pile are face up
@@ -1087,20 +1089,20 @@ void game_state::check_face_down_consistent() const {
         }
 
         // Check that face-down cards have STARTING descriptor
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-        for (auto& c : piles[p].pile_vec) {
-            if (c.is_face_down()) {
-                uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
-                uint8_t desc = payload.get_descriptor(cid);
-                if (desc != card_descriptor::STARTING) {
-                    std::cerr << "DESCRIPTOR BUG: face-down card " << (int)cid
-                              << " has descriptor " << (int)desc
-                              << " (expected STARTING=0)" << std::endl;
-                    assert(false);
+        if constexpr (Policy::computes_hash) {
+            for (auto& c : piles[p].pile_vec) {
+                if (c.is_face_down()) {
+                    uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+                    uint8_t desc = desc_store.get_descriptor(cid);
+                    if (desc != card_descriptor::STARTING) {
+                        std::cerr << "DESCRIPTOR BUG: face-down card " << (int)cid
+                                  << " has descriptor " << (int)desc
+                                  << " (expected STARTING=0)" << std::endl;
+                        assert(false);
+                    }
                 }
             }
         }
-#endif
     }
 }
 #endif
@@ -1109,15 +1111,14 @@ void game_state::check_face_down_consistent() const {
 // ZOBRIST HASHING    //
 ////////////////////////
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-
 // Record which cards are face-up after the initial deal (including after turn_face_up()).
 // Also fixes up IN_SPACE descriptors for single-card tableau piles: when
 // init_payload_and_hash() runs before turn_face_up() (seed constructor), the top card
 // of a single-card pile is face-down at init time and gets STARTING=0. But a single-card
 // pile is semantically IN_SPACE (consistent with determine_destination_descriptor), so
 // we correct those here.
-void game_state::init_initially_face_up() {
+template <typename Policy>
+void game_state_impl<Policy>::init_initially_face_up() {
     memset(initially_face_up, 0, sizeof(initially_face_up));
     for (const auto& p : piles) {
         for (pile::size_type i = 0; i < p.size(); ++i) {
@@ -1138,164 +1139,133 @@ void game_state::init_initially_face_up() {
         if (piles[tab_ref].size() == 1 && !piles[tab_ref][0].is_face_down()) {
             card c = piles[tab_ref][0];
             uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
-#ifdef SOLVITAIRE_HASH_ONLY
-            if (computing_flat_hash && hash_desc.get_descriptor(cid) == card_descriptor::STARTING) {
-#else
-            if (computing_flat_hash && payload.get_descriptor(cid) == card_descriptor::STARTING) {
-#endif
+            if (desc_store.get_descriptor(cid) == card_descriptor::STARTING) {
                 update_card_descriptor(cid, card_descriptor::IN_SPACE);
             }
         }
     }
 }
 
-void game_state::init_payload_and_hash() {
-    if (!computing_flat_hash) return;
-#ifdef SOLVITAIRE_HASH_ONLY
-    hash_desc.clear();
-#else
-    payload.clear();
-#endif
-    zobrist_hash_value = 0;
+template <typename Policy>
+void game_state_impl<Policy>::init_payload_and_hash() {
+    if constexpr (Policy::computes_hash) {
+        desc_store.clear();
+        zobrist_hash_value = 0;
 
-    // All cards start with descriptor STARTING (0)
-    // XOR in Z_card[c][0] for all 52 cards
-    for (uint8_t c = 0; c < 52; ++c) {
-        zobrist_hash_value ^= zobrist_hash::card_key(c, card_descriptor::STARTING);
-    }
+        // All cards start with descriptor STARTING (0)
+        // XOR in Z_card[c][0] for all 52 cards
+        for (uint8_t c = 0; c < 52; ++c) {
+            zobrist_hash_value ^= zobrist_hash::card_key(c, card_descriptor::STARTING);
+        }
 
-    // Foundation tops
-    if (rules.foundations_present) {
-        for (uint8_t s = 0; s < 4; ++s) {
-            uint8_t top_rank = 0;
-            if (s < foundations.size()) {
-                top_rank = piles[foundations[s]].empty() ? 0 : piles[foundations[s]].top_card().get_rank();
+        // Foundation tops
+        if (rules.foundations_present) {
+            for (uint8_t s = 0; s < 4; ++s) {
+                uint8_t top_rank = 0;
+                if (s < foundations.size()) {
+                    top_rank = piles[foundations[s]].empty() ? 0 : piles[foundations[s]].top_card().get_rank();
+                }
+                desc_store.set_foundation(s, top_rank);
+                zobrist_hash_value ^= zobrist_hash::foundation_key(s, top_rank);
             }
-#ifdef SOLVITAIRE_HASH_ONLY
-            hash_desc.set_foundation(s, top_rank);
-#else
-            payload.set_foundation(s, top_rank);
-#endif
-            zobrist_hash_value ^= zobrist_hash::foundation_key(s, top_rank);
         }
-    }
 
-    // Hole top
-    if (rules.hole && !piles[hole].empty()) {
-        card top = piles[hole].top_card();
-        uint8_t cid = zobrist_hash::card_id(top.get_suit(), top.get_rank());
-#ifdef SOLVITAIRE_HASH_ONLY
-        hash_desc.set_hole_top(cid);
-#else
-        payload.set_hole_top(cid);
-#endif
-        zobrist_hash_value ^= zobrist_hash::hole_top_key(cid);
-    }
+        // Hole top
+        if (rules.hole && !piles[hole].empty()) {
+            card top = piles[hole].top_card();
+            uint8_t cid = zobrist_hash::card_id(top.get_suit(), top.get_rank());
+            desc_store.set_hole_top(cid);
+            zobrist_hash_value ^= zobrist_hash::hole_top_key(cid);
+        }
 
-    // Waste pointer: initial position = size of waste pile
-    // When waste-deal symmetry holds (redeal enabled and waste size divisible
-    // by deal count), use 0 to match LRU's position-independent encoding.
-    if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
-        uint8_t ptr = effective_waste_ptr();
-#ifdef SOLVITAIRE_HASH_ONLY
-        hash_desc.set_waste_ptr(ptr);
-#else
-        payload.set_waste_ptr(ptr);
-#endif
-        zobrist_hash_value ^= zobrist_hash::waste_key(ptr);
-    }
+        // Waste pointer: initial position = size of waste pile
+        // When waste-deal symmetry holds (redeal enabled and waste size divisible
+        // by deal count), use 0 to match LRU's position-independent encoding.
+        if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
+            uint8_t ptr = effective_waste_ptr();
+            desc_store.set_waste_ptr(ptr);
+            zobrist_hash_value ^= zobrist_hash::waste_key(ptr);
+        }
 
-    // Set positional descriptors for face-up tableau cards.
-    // This must match what determine_destination_descriptor() would compute,
-    // so that a card moved away and returned to the same position gets the
-    // same descriptor as it had initially.
-    for (auto tab_ref : original_tableau_piles) {
-        const pile& p = piles[tab_ref];
-        for (pile::size_type i = 0; i < p.size(); ++i) {
-            card c = p[i];
-            if (c.is_face_down()) continue;
+        // Set positional descriptors for face-up tableau cards.
+        // This must match what determine_destination_descriptor() would compute,
+        // so that a card moved away and returned to the same position gets the
+        // same descriptor as it had initially.
+        for (auto tab_ref : original_tableau_piles) {
+            const pile& p = piles[tab_ref];
+            for (pile::size_type i = 0; i < p.size(); ++i) {
+                card c = p[i];
+                if (c.is_face_down()) continue;
 
-            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
-            uint8_t new_desc;
-            if (i == p.size() - 1) {
-                // Bottom of pile
-                new_desc = card_descriptor::IN_SPACE;
-            } else {
-                // Card below this one is p[i+1]
-                card parent_card = p[i + 1];
-                // Face-down parent: card is above an unrevealed card at deal time.
-                // Descriptor stays STARTING (0) — no valid build relationship visible.
-                if (parent_card.is_face_down()) continue;
-                uint8_t parent_cid = zobrist_hash::card_id(
-                    parent_card.get_suit(), parent_card.get_rank());
-                uint8_t desc = parent_table::get_descriptor_for_parent(
-                    cid, parent_cid, rules.build_pol,
-                    foundations_base, rules.max_rank);
-                new_desc = (desc != 0) ? desc
-                    : static_cast<uint8_t>(card_descriptor::ROOT);
+                uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+                uint8_t new_desc;
+                if (i == p.size() - 1) {
+                    // Bottom of pile
+                    new_desc = card_descriptor::IN_SPACE;
+                } else {
+                    // Card below this one is p[i+1]
+                    card parent_card = p[i + 1];
+                    // Face-down parent: card is above an unrevealed card at deal time.
+                    // Descriptor stays STARTING (0) — no valid build relationship visible.
+                    if (parent_card.is_face_down()) continue;
+                    uint8_t parent_cid = zobrist_hash::card_id(
+                        parent_card.get_suit(), parent_card.get_rank());
+                    uint8_t desc = parent_table::get_descriptor_for_parent(
+                        cid, parent_cid, rules.build_pol,
+                        foundations_base, rules.max_rank);
+                    new_desc = (desc != 0) ? desc
+                        : static_cast<uint8_t>(card_descriptor::ROOT);
+                }
+                update_card_descriptor(cid, new_desc);
             }
-            update_card_descriptor(cid, new_desc);
         }
-    }
 
-    // Pre-filled cells: IN_CELL
-    for (auto c_ref : original_cells) {
-        if (!piles[c_ref].empty()) {
-            card c = piles[c_ref].top_card();
-            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
-            update_card_descriptor(cid, card_descriptor::IN_CELL);
+        // Pre-filled cells: IN_CELL
+        for (auto c_ref : original_cells) {
+            if (!piles[c_ref].empty()) {
+                card c = piles[c_ref].top_card();
+                uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+                update_card_descriptor(cid, card_descriptor::IN_CELL);
+            }
         }
-    }
 
-    // Hole cards
-    if (rules.hole && !piles[hole].empty()) {
-        for (pile::size_type i = 0; i < piles[hole].size(); ++i) {
-            card c = piles[hole][i];
-            uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
-            update_card_descriptor(cid, card_descriptor::IN_HOLE);
+        // Hole cards
+        if (rules.hole && !piles[hole].empty()) {
+            for (pile::size_type i = 0; i < piles[hole].size(); ++i) {
+                card c = piles[hole][i];
+                uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
+                update_card_descriptor(cid, card_descriptor::IN_HOLE);
+            }
         }
     }
 }
 
-#endif // SOLVITAIRE_COMPUTES_FLAT_HASH
-
-void game_state::update_card_descriptor(uint8_t cid, uint8_t new_desc) {
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    if (computing_flat_hash) {
-#ifdef SOLVITAIRE_HASH_ONLY
-        uint8_t old_desc = hash_desc.get_descriptor(cid);
-        hash_desc.set_descriptor(cid, new_desc);
-#else
-        uint8_t old_desc = payload.get_descriptor(cid);
-        payload.set_descriptor(cid, new_desc);
-#endif
+template <typename Policy>
+void game_state_impl<Policy>::update_card_descriptor(uint8_t cid, uint8_t new_desc) {
+    if constexpr (Policy::computes_hash) {
+        uint8_t old_desc = desc_store.get_descriptor(cid);
+        desc_store.set_descriptor(cid, new_desc);
         zobrist_hash_value ^= zobrist_hash::card_key(cid, old_desc)
                             ^ zobrist_hash::card_key(cid, new_desc);
+    } else {
+        (void)cid; (void)new_desc;
     }
-#else
-    (void)cid; (void)new_desc;
-#endif
 }
 
-void game_state::update_foundation_in_hash(uint8_t suit, uint8_t new_rank) {
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    if (computing_flat_hash) {
-#ifdef SOLVITAIRE_HASH_ONLY
-        uint8_t old_rank = hash_desc.get_foundation(suit);
-        hash_desc.set_foundation(suit, new_rank);
-#else
-        uint8_t old_rank = payload.get_foundation(suit);
-        payload.set_foundation(suit, new_rank);
-#endif
+template <typename Policy>
+void game_state_impl<Policy>::update_foundation_in_hash(uint8_t suit, uint8_t new_rank) {
+    if constexpr (Policy::computes_hash) {
+        uint8_t old_rank = desc_store.get_foundation(suit);
+        desc_store.set_foundation(suit, new_rank);
         zobrist_hash_value ^= zobrist_hash::foundation_key(suit, old_rank)
                             ^ zobrist_hash::foundation_key(suit, new_rank);
+    } else {
+        (void)suit; (void)new_rank;
     }
-#else
-    (void)suit; (void)new_rank;
-#endif
 }
 
-uint8_t game_state::effective_waste_ptr() const {
+template <typename Policy>
+uint8_t game_state_impl<Policy>::effective_waste_ptr() const {
     bool waste_deal_symmetry = rules.stock_redeal
         && piles[waste].size() % rules.stock_deal_count == 0;
     if (waste_deal_symmetry) {
@@ -1304,54 +1274,44 @@ uint8_t game_state::effective_waste_ptr() const {
     return static_cast<uint8_t>(piles[waste].size());
 }
 
-void game_state::update_waste_ptr_in_hash(uint8_t new_ptr) {
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    if (computing_flat_hash) {
-#ifdef SOLVITAIRE_HASH_ONLY
-        uint8_t old_ptr = hash_desc.get_waste_ptr();
-        hash_desc.set_waste_ptr(new_ptr);
-#else
-        uint8_t old_ptr = payload.get_waste_ptr();
-        payload.set_waste_ptr(new_ptr);
-#endif
+template <typename Policy>
+void game_state_impl<Policy>::update_waste_ptr_in_hash(uint8_t new_ptr) {
+    if constexpr (Policy::computes_hash) {
+        uint8_t old_ptr = desc_store.get_waste_ptr();
+        desc_store.set_waste_ptr(new_ptr);
         zobrist_hash_value ^= zobrist_hash::waste_key(old_ptr)
                             ^ zobrist_hash::waste_key(new_ptr);
+    } else {
+        (void)new_ptr;
     }
-#else
-    (void)new_ptr;
-#endif
 }
 
-void game_state::update_hole_top_in_hash(uint8_t new_cid) {
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-    if (computing_flat_hash) {
-#ifdef SOLVITAIRE_HASH_ONLY
-        uint8_t old_cid = hash_desc.get_hole_top();
-        hash_desc.set_hole_top(new_cid);
-#else
-        uint8_t old_cid = payload.get_hole_top();
-        payload.set_hole_top(new_cid);
-#endif
+template <typename Policy>
+void game_state_impl<Policy>::update_hole_top_in_hash(uint8_t new_cid) {
+    if constexpr (Policy::computes_hash) {
+        uint8_t old_cid = desc_store.get_hole_top();
+        desc_store.set_hole_top(new_cid);
         zobrist_hash_value ^= zobrist_hash::hole_top_key(old_cid)
                             ^ zobrist_hash::hole_top_key(new_cid);
+    } else {
+        (void)new_cid;
     }
-#else
-    (void)new_cid;
-#endif
 }
 
-bool game_state::is_foundation_pile(pile::ref pr) const {
+template <typename Policy>
+bool game_state_impl<Policy>::is_foundation_pile(pile::ref pr) const {
     return !foundations.empty()
         && pr >= foundations.front()
         && pr < foundations.front() + foundations.size();
 }
 
-uint8_t game_state::get_foundation_suit(pile::ref pr) const {
+template <typename Policy>
+uint8_t game_state_impl<Policy>::get_foundation_suit(pile::ref pr) const {
     return pr - foundations.front();
 }
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_card) const {
+template <typename Policy>
+uint8_t game_state_impl<Policy>::determine_destination_descriptor(pile::ref dest, card moved_card) const {
     // Foundation: card descriptor set to STARTING (0)
     if (is_foundation_pile(dest)) {
         return card_descriptor::STARTING;
@@ -1396,45 +1356,46 @@ uint8_t game_state::determine_destination_descriptor(pile::ref dest, card moved_
     // Reserve, stock, waste: keep STARTING
     return card_descriptor::STARTING;
 }
-#endif // SOLVITAIRE_COMPUTES_FLAT_HASH (determine_destination_descriptor)
 
-#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(SOLVITAIRE_HASH_ONLY)
-void game_state::set_payload_depth(uint16_t depth) {
-    if (computing_flat_payload) payload.set_depth(depth);
+template <typename Policy>
+template <typename P, typename>
+void game_state_impl<Policy>::set_payload_depth(uint16_t depth) {
+    desc_store.set_depth(depth);
 }
 
-void game_state::compute_hash_from_scratch() {
-    if (!computing_flat_hash) return;
+template <typename Policy>
+template <typename P, typename>
+void game_state_impl<Policy>::compute_hash_from_scratch() {
     // Recompute hash from the payload's current descriptor values
     zobrist_hash_value = 0;
     for (uint8_t c = 0; c < 52; ++c) {
-        zobrist_hash_value ^= zobrist_hash::card_key(c, payload.get_descriptor(c));
+        zobrist_hash_value ^= zobrist_hash::card_key(c, desc_store.get_descriptor(c));
     }
 
     // Foundation contributions
     if (rules.foundations_present) {
         for (uint8_t s = 0; s < 4; ++s) {
-            zobrist_hash_value ^= zobrist_hash::foundation_key(s, payload.get_foundation(s));
+            zobrist_hash_value ^= zobrist_hash::foundation_key(s, desc_store.get_foundation(s));
         }
     }
 
     // Hole top contribution
     if (rules.hole) {
-        zobrist_hash_value ^= zobrist_hash::hole_top_key(payload.get_hole_top());
+        zobrist_hash_value ^= zobrist_hash::hole_top_key(desc_store.get_hole_top());
     }
 
     // Waste pointer contribution (only for games with stock+waste)
     if (rules.stock_size > 0 && rules.stock_deal_t == sol_rules::stock_deal_type::WASTE) {
-        zobrist_hash_value ^= zobrist_hash::waste_key(payload.get_waste_ptr());
+        zobrist_hash_value ^= zobrist_hash::waste_key(desc_store.get_waste_ptr());
     }
 }
-#endif // SOLVITAIRE_COMPUTES_FLAT_HASH
 
 ////////////////////////
 // INSPECT GAME STATE //
 ////////////////////////
 
-bool game_state::is_solved() const {
+template <typename Policy>
+bool game_state_impl<Policy>::is_solved() const {
     bool solved = true;
     if (rules.hole) {
         solved = piles[hole].size()
@@ -1496,13 +1457,15 @@ bool game_state::is_solved() const {
     return solved;
 }
 
-const std::vector<pile>& game_state::get_data() const {
+template <typename Policy>
+const std::vector<pile>& game_state_impl<Policy>::get_data() const {
     return piles;
 }
 
 #ifndef NDEBUG
-#if SOLVITAIRE_COMPUTES_FLAT_HASH
-compact_state game_state::recompute_payload_from_scratch() const {
+template <typename Policy>
+template <typename P, typename>
+compact_state game_state_impl<Policy>::recompute_payload_from_scratch() const {
     compact_state cp;
     cp.clear();  // All 52 card descriptors default to STARTING(0)
 
@@ -1587,26 +1550,27 @@ compact_state game_state::recompute_payload_from_scratch() const {
     return cp;
 }
 
-void game_state::assert_payload_consistent() const {
-    if (!computing_flat_payload) return;
+template <typename Policy>
+template <typename P, typename>
+void game_state_impl<Policy>::assert_payload_consistent() const {
     // Cannot accurately recompute STARTING_FACE_UP for face-down games
     // (revealed cards are indistinguishable from originally-placed cards by
     // board inspection alone). Only assert for fully face-up games.
     if (rules.face_up != sol_rules::face_up_policy::ALL) return;
 
     compact_state recomputed = recompute_payload_from_scratch();
-    assert(recomputed.matches(payload) &&
+    assert(recomputed.matches(desc_store) &&
            "Incremental payload diverged from scratch-recomputed payload — "
            "make_move/undo_move descriptor update bug");
 }
-#endif // SOLVITAIRE_COMPUTES_FLAT_HASH
 #endif // NDEBUG
 
 ////////////////////////////////////
 // PREDECESSOR ZOBRIST (ACCORDION) //
 ////////////////////////////////////
 
-void game_state::init_predecessor_zobrist() {
+template <typename Policy>
+void game_state_impl<Policy>::init_predecessor_zobrist() {
     if (Z_pred_initialised) return;
 
     std::mt19937_64 rng(0xDEADBEEF42ULL);  // Fixed seed for reproducibility
@@ -1618,7 +1582,8 @@ void game_state::init_predecessor_zobrist() {
     Z_pred_initialised = true;
 }
 
-void game_state::init_predecessor_state() {
+template <typename Policy>
+void game_state_impl<Policy>::init_predecessor_state() {
     // Clear everything
     std::memset(predecessor_array, 0, 52);
     predecessor_zobrist_hash = 0;
@@ -1672,14 +1637,16 @@ void game_state::init_predecessor_state() {
     }
 }
 
-void game_state::update_predecessor(uint8_t card_id, uint8_t new_pred) {
+template <typename Policy>
+void game_state_impl<Policy>::update_predecessor(uint8_t card_id, uint8_t new_pred) {
     uint8_t old_pred = predecessor_array[card_id];
     predecessor_zobrist_hash ^= Z_pred[card_id][old_pred];
     predecessor_array[card_id] = new_pred;
     predecessor_zobrist_hash ^= Z_pred[card_id][new_pred];
 }
 
-void game_state::set_predecessor_payload_depth(uint8_t depth) {
+template <typename Policy>
+void game_state_impl<Policy>::set_predecessor_payload_depth(uint8_t depth) {
     pred_payload.set_depth(depth);
 }
 
@@ -1687,7 +1654,26 @@ void game_state::set_predecessor_payload_depth(uint8_t depth) {
 // PRINT //
 ///////////
 
-ostream& operator<< (ostream& str, const game_state& gs) {
+template <typename Policy>
+ostream& operator<< (ostream& str, const game_state_impl<Policy>& gs) {
     return state_printer::print(str, gs);
 }
 
+// ─── Explicit instantiations ──────────────────────────────────────────────────
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+template class game_state_impl<LRUPolicy>;
+
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+template class game_state_impl<FlatPolicy>;
+template class game_state_impl<PredecessorPolicy>;
+
+#elif defined(SOLVITAIRE_HASH_ONLY)
+template class game_state_impl<HashOnlyPolicy>;
+
+#else   // default binary — all four policies
+template class game_state_impl<FlatPolicy>;
+template class game_state_impl<HashOnlyPolicy>;
+template class game_state_impl<PredecessorPolicy>;
+template class game_state_impl<LRUPolicy>;
+#endif

@@ -1,6 +1,6 @@
 /*
   Solvitaire: a solver for perfect information solitaire games
-  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and 
+  Copyright (C) 2018 Charles Blake <thecharlesblake@live.co.uk> and
   Ian Gent <Ian.Gent@st-andrews.ac.uk>
 
   This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,8 @@ using std::list;
 
 typedef sol_rules::stock_deal_type sdt;
 
-ostream& state_printer::print(ostream& stream, const game_state& gs) {
+template <typename Policy>
+ostream& state_printer::print(ostream& stream, const game_state_impl<Policy>& gs) {
     if (gs.rules.foundations_present) {
         state_printer::print_header(stream, "Foundations");
         state_printer::print_top_of_piles(stream, gs.foundations, gs);
@@ -83,9 +84,10 @@ void state_printer::print_header(ostream& stream, const char* header) {
     stream << "\n";
 }
 
+template <typename Policy>
 void state_printer::print_piles(ostream& stream,
                                 const vector<pile::ref>& pile_rs,
-                                const game_state& gs) {
+                                const game_state_impl<Policy>& gs) {
     bool empty_row = false;
     pile::size_type row_idx = 0;
 
@@ -128,9 +130,10 @@ void state_printer::print_piles(ostream& stream,
     }
 }
 
+template <typename Policy>
 void state_printer::print_sequences(ostream& stream,
                                 const vector<pile::ref>& seq_rs,
-                                const game_state& gs) {
+                                const game_state_impl<Policy>& gs) {
     for (auto s : seq_rs) {
         stream << "\n";
         auto& pile = gs.piles[s];
@@ -147,9 +150,10 @@ void state_printer::print_sequences(ostream& stream,
     stream << "\n";
 }
 
+template <typename Policy>
 void state_printer::print_top_of_piles(ostream& stream,
                                        const vector<pile::ref>& vp,
-                                       const game_state& gs) {
+                                       const game_state_impl<Policy>& gs) {
     vector<pile::ref> top(vp);
 
     const auto len = top.size();
@@ -167,9 +171,10 @@ void state_printer::print_top_of_piles(ostream& stream,
     stream << "\n";
 }
 
+template <typename Policy>
 void state_printer::print_accordion(ostream& stream,
                                        const list<pile::ref>& vp,
-                                       const game_state& gs) {
+                                       const game_state_impl<Policy>& gs) {
     for (pile::ref p : vp) {
         print_card(stream, gs.piles[p].top_card());
         stream << "\t";
@@ -177,9 +182,10 @@ void state_printer::print_accordion(ostream& stream,
     stream << "\n";
 }
 
+template <typename Policy>
 void state_printer::print_top_of_pile(ostream& stream,
                                       const pile::ref pile_r,
-                                      const game_state& gs) {
+                                      const game_state_impl<Policy>& gs) {
     print_top_of_piles(stream, {pile_r}, gs);
 }
 
@@ -219,8 +225,67 @@ void state_printer::print_move(std::ostream& s, const move m) {
       << ", "
       << int(m.count)
       << ", "
-      << (m.reveal_move ? "true" : "false") 
+      << (m.reveal_move ? "true" : "false")
       << ", "
       << (m.dominance_move ? "dominance" : "regular")
       << ")\n";
 }
+
+// ─── Explicit instantiations ──────────────────────────────────────────────────
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+template ostream& state_printer::print<LRUPolicy>(ostream&, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_piles<LRUPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_sequences<LRUPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_top_of_piles<LRUPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_top_of_pile<LRUPolicy>(ostream&, pile::ref, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_accordion<LRUPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<LRUPolicy>&);
+
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+template ostream& state_printer::print<FlatPolicy>(ostream&, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_piles<FlatPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_sequences<FlatPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_top_of_piles<FlatPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_top_of_pile<FlatPolicy>(ostream&, pile::ref, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_accordion<FlatPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<FlatPolicy>&);
+template ostream& state_printer::print<PredecessorPolicy>(ostream&, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_piles<PredecessorPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_sequences<PredecessorPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_top_of_piles<PredecessorPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_top_of_pile<PredecessorPolicy>(ostream&, pile::ref, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_accordion<PredecessorPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<PredecessorPolicy>&);
+
+#elif defined(SOLVITAIRE_HASH_ONLY)
+template ostream& state_printer::print<HashOnlyPolicy>(ostream&, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_piles<HashOnlyPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_sequences<HashOnlyPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_top_of_piles<HashOnlyPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_top_of_pile<HashOnlyPolicy>(ostream&, pile::ref, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_accordion<HashOnlyPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<HashOnlyPolicy>&);
+
+#else   // default binary — all four policies
+template ostream& state_printer::print<FlatPolicy>(ostream&, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_piles<FlatPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_sequences<FlatPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_top_of_piles<FlatPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_top_of_pile<FlatPolicy>(ostream&, pile::ref, const game_state_impl<FlatPolicy>&);
+template void state_printer::print_accordion<FlatPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<FlatPolicy>&);
+template ostream& state_printer::print<HashOnlyPolicy>(ostream&, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_piles<HashOnlyPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_sequences<HashOnlyPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_top_of_piles<HashOnlyPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_top_of_pile<HashOnlyPolicy>(ostream&, pile::ref, const game_state_impl<HashOnlyPolicy>&);
+template void state_printer::print_accordion<HashOnlyPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<HashOnlyPolicy>&);
+template ostream& state_printer::print<PredecessorPolicy>(ostream&, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_piles<PredecessorPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_sequences<PredecessorPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_top_of_piles<PredecessorPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_top_of_pile<PredecessorPolicy>(ostream&, pile::ref, const game_state_impl<PredecessorPolicy>&);
+template void state_printer::print_accordion<PredecessorPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<PredecessorPolicy>&);
+template ostream& state_printer::print<LRUPolicy>(ostream&, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_piles<LRUPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_sequences<LRUPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_top_of_piles<LRUPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_top_of_pile<LRUPolicy>(ostream&, pile::ref, const game_state_impl<LRUPolicy>&);
+template void state_printer::print_accordion<LRUPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<LRUPolicy>&);
+#endif
