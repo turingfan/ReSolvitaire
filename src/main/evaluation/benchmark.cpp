@@ -33,10 +33,14 @@
 #include <cmath> // Keep cmath for sqrt
 #include <cstdio> // For FILE operations on Linux /proc/self/status
 #include <sys/resource.h> // For getrusage() memory measurement
+#include <type_traits>
 
 #include "../game/sol_rules.h" // Keep this for sol_rules
 #include "../game/search-state/game_state.h" // Keep this for game_state
-#include "../game/cache_factory.h"
+#include "../game/cache_interface.h"
+#include "../game/cache_policy.h"
+#include "../game/generic_flat_cache.h"
+#include "../game/global_cache.h"
 #include "../solver/solver.h"
 #include "../input-output/input/json-parsing/rules_parser.h"
 #include "../input-output/input/json-parsing/deal_parser.h"
@@ -94,6 +98,114 @@ static uint64_t get_virtual_memory_bytes() {
     return 0;
 }
 
+// ─── run_seed_impl<Policy> ───────────────────────────────────────────────────
+// Runs a single seed iteration with the given policy. Returns the solver result.
+
+template <typename Policy>
+static solver::result run_seed_impl(const sol_rules& rules, int seed,
+                                     game_state::streamliner_options str_opts,
+                                     uint64_t cache_capacity, uint64_t timeout_ms) {
+    game_state_impl<Policy> gs(rules, seed, static_cast<typename game_state_impl<Policy>::streamliner_options>(str_opts));
+
+    typename Policy::cache_type cache = [&]() {
+        if constexpr (std::is_same_v<typename Policy::cache_type, lru_cache>)
+            return lru_cache(gs, cache_capacity);
+        else
+            return typename Policy::cache_type(cache_capacity);
+    }();
+
+    solver_impl<Policy> sol(gs, cache);
+    return convert_solver_result<solver::result>(sol.run(chrono::milliseconds(timeout_ms)));
+}
+
+// ─── run_deal_impl<Policy> ───────────────────────────────────────────────────
+// Runs a single deal file iteration with the given policy.
+
+template <typename Policy>
+static solver::result run_deal_impl(const sol_rules& rules,
+                                     const rapidjson::Document& deal_doc,
+                                     game_state::streamliner_options str_opts,
+                                     uint64_t cache_capacity, uint64_t timeout_ms) {
+    game_state_impl<Policy> gs(rules, deal_doc, static_cast<typename game_state_impl<Policy>::streamliner_options>(str_opts));
+
+    typename Policy::cache_type cache = [&]() {
+        if constexpr (std::is_same_v<typename Policy::cache_type, lru_cache>)
+            return lru_cache(gs, cache_capacity);
+        else
+            return typename Policy::cache_type(cache_capacity);
+    }();
+
+    solver_impl<Policy> sol(gs, cache);
+    return convert_solver_result<solver::result>(sol.run(chrono::milliseconds(timeout_ms)));
+}
+
+// ─── dispatch helpers ────────────────────────────────────────────────────────
+
+static solver::result dispatch_run_seed(const sol_rules& rules, int seed,
+                                         game_state::streamliner_options str_opts,
+                                         uint64_t cache_capacity, uint64_t timeout_ms,
+                                         bool force_lru, const std::string& cache_type) {
+    bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
+                 || str_opts == game_state::streamliner_options::BOTH;
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+    (void)cache_type; (void)force_lru; (void)suit_sym;
+    return run_seed_impl<LRUPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+    (void)force_lru; (void)cache_type; (void)suit_sym;
+    if (use_predecessor_cache(rules))
+        return run_seed_impl<PredecessorPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    return run_seed_impl<FlatPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+#elif defined(SOLVITAIRE_HASH_ONLY)
+    (void)force_lru; (void)cache_type; (void)suit_sym;
+    return run_seed_impl<HashOnlyPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+#else
+    if (force_lru) {
+        return run_seed_impl<LRUPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
+        return run_seed_impl<HashOnlyPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    } else if (use_predecessor_cache(rules)) {
+        return run_seed_impl<PredecessorPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    } else if (use_new_cache(rules, suit_sym)) {
+        return run_seed_impl<FlatPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    } else {
+        return run_seed_impl<LRUPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    }
+#endif
+}
+
+static solver::result dispatch_run_deal(const sol_rules& rules,
+                                         const rapidjson::Document& deal_doc,
+                                         game_state::streamliner_options str_opts,
+                                         uint64_t cache_capacity, uint64_t timeout_ms,
+                                         const std::string& cache_type) {
+    bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
+                 || str_opts == game_state::streamliner_options::BOTH;
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+    (void)cache_type; (void)suit_sym;
+    return run_deal_impl<LRUPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+    (void)cache_type; (void)suit_sym;
+    if (use_predecessor_cache(rules))
+        return run_deal_impl<PredecessorPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+    return run_deal_impl<FlatPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+#elif defined(SOLVITAIRE_HASH_ONLY)
+    (void)cache_type; (void)suit_sym;
+    return run_deal_impl<HashOnlyPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+#else
+    if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
+        return run_deal_impl<HashOnlyPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+    } else if (use_predecessor_cache(rules)) {
+        return run_deal_impl<PredecessorPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+    } else if (use_new_cache(rules, suit_sym)) {
+        return run_deal_impl<FlatPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+    } else {
+        return run_deal_impl<LRUPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+    }
+#endif
+}
+
 void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state::streamliner_options str_opts, pair<int, int> seeds, int iterations, bool warmup, uint64_t timeout_ms, bool force_lru, const std::string& cache_type) {
     rapidjson::FileWriteStream os(stdout, benchmark_buffer, sizeof(benchmark_buffer));
     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
@@ -113,14 +225,8 @@ void benchmark::run(const sol_rules& rules, uint64_t cache_capacity, game_state:
         writer.StartArray();
 
         for (int i = 0; i < iterations + (warmup ? 1 : 0); ++i) {
-            game_state gs(rules, (int)seed, str_opts, force_lru);
-            bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
-                         || str_opts == game_state::streamliner_options::BOTH;
-            std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, gs, cache_capacity, cache_type, force_lru, suit_sym);
-            solver sol(gs, *cache_ptr);
-
             auto start = chrono::high_resolution_clock::now();
-            solver::result res = sol.run(chrono::milliseconds(timeout_ms));
+            solver::result res = dispatch_run_seed(rules, seed, str_opts, cache_capacity, timeout_ms, force_lru, cache_type);
             auto end = chrono::high_resolution_clock::now();
             uint64_t resident_memory = get_resident_memory_bytes();
             uint64_t virtual_memory = get_virtual_memory_bytes();
@@ -358,7 +464,6 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
         vector<uint64_t> memory_list;
 
         for (int i = 0; i < benchmark_iterations + (benchmark_warmup ? 1 : 0); ++i) {
-            unique_ptr<game_state> gs;
             try {
                 ifstream deal_file(full_path);
                 if (!deal_file) throw runtime_error("File not found");
@@ -368,30 +473,23 @@ void benchmark::run_json(const string& json_path, uint64_t cache_capacity, int b
                 if (deal_doc.HasParseError()) {
                     throw runtime_error("JSON parse error");
                 }
-                // Use Document for from-file constructor
-                gs = unique_ptr<game_state>(new game_state(rules, deal_doc, str_opts));
+
+                auto start = chrono::high_resolution_clock::now();
+                solver::result res = dispatch_run_deal(rules, deal_doc, str_opts, cache_capacity, timeout_ms, cache_type);
+                auto end = chrono::high_resolution_clock::now();
+                uint64_t resident_memory = get_resident_memory_bytes();
+
+                if (!benchmark_warmup || i > 0) {
+                    times.push_back(chrono::duration_cast<chrono::microseconds>(end - start).count());
+                    nodes_list.push_back((double)res.states_searched);
+                    memory_list.push_back(resident_memory);
+                }
             } catch (const exception& e) {
                 cerr << "Error evaluating instance " << full_path << ": " << e.what() << endl;
                 continue;
             } catch (...) {
                 cerr << "Unknown error evaluating instance " << full_path << endl;
                 continue;
-            }
-
-            bool suit_sym_json = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
-                              || str_opts == game_state::streamliner_options::BOTH;
-            // force_lru not available in run_json (known issue: benchmark.cpp KNOWN_ISSUES #2)
-            std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, *gs, cache_capacity, cache_type, false, suit_sym_json);
-            solver sol(*gs, *cache_ptr);
-            auto start = chrono::high_resolution_clock::now();
-            solver::result res = sol.run(chrono::milliseconds(timeout_ms));
-            auto end = chrono::high_resolution_clock::now();
-            uint64_t resident_memory = get_resident_memory_bytes();
-
-            if (!benchmark_warmup || i > 0) {
-                times.push_back(chrono::duration_cast<chrono::microseconds>(end - start).count());
-                nodes_list.push_back((double)res.states_searched);
-                memory_list.push_back(resident_memory);
             }
         }
 

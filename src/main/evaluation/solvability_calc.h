@@ -40,8 +40,10 @@ public:
 
     void calculate_solvability_percentage(uint64_t, int, uint, command_line_helper::streamliner_opt, const std::vector<int>&);
 
-private:
+public:
     typedef std::pair<int, solver::result> seed_result;
+
+private:
 
     struct seed_results {
         seed_results();
@@ -58,7 +60,7 @@ private:
 
     // Solving methods
     static void solver_thread(solvability_calc*, uint core);
-    static seed_result solve_seed(int, std::chrono::milliseconds, const sol_rules&, uint64_t, game_state::streamliner_options, bool force_lru = false, const std::string& cache_type = "auto");
+    static seed_result solve_seed(int, std::chrono::milliseconds, const sol_rules&, uint64_t, game_state::streamliner_options, const std::string& cache_type = "auto");
 
     const sol_rules& rules;
     const uint64_t cache_capacity;

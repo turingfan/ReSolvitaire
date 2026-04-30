@@ -29,14 +29,16 @@
 #include <atomic>
 #include <chrono>
 
-#include "../game/cache_interface.h"
 #include "../game/global_cache.h"
+#include "../game/generic_flat_cache.h"
 #include "../game/sol_rules.h"
+#include "../game/cache_policy.h"
 #include "../input-output/input/command_line_helper.h"
 
-class solver {
+template <typename Policy>
+class solver_impl {
 public:
-    cache_interface& cache;
+    typename Policy::cache_type& cache;
 
     struct node {
         node(move) noexcept;
@@ -61,36 +63,65 @@ public:
         std::chrono::milliseconds time;
     };
 
-    explicit solver(const game_state&, cache_interface&);
+    explicit solver_impl(const game_state_impl<Policy>&, typename Policy::cache_type&);
 
     result run(boost::optional<std::chrono::milliseconds> = boost::none);
 
     void print_solution() const;
     static void print_header(long, command_line_helper::streamliner_opt);
-    static void print_result_csv(solver::result);
+    static void print_result_csv(result);
     static void print_null_seed_info();
-    const std::vector<node> get_frontier() const;
+    const std::vector<node>& get_frontier() const;
 
-    const game_state init_state;
+    const game_state_impl<Policy> init_state;
 
 private:
     typedef std::chrono::high_resolution_clock clock;
     typedef std::chrono::milliseconds millisec;
 
-    result::type dfs(boost::optional<clock::time_point> = boost::none);
+    typename result::type dfs(boost::optional<clock::time_point> = boost::none);
 
     bool revert_to_last_node_with_children(boost::optional<lru_cache::item_list::iterator> = boost::none);
     void set_to_child();
 
-    bool using_flat_cache;
-    game_state state;
+    game_state_impl<Policy> state;
     std::vector<node> frontier;
 
     result res;
 
     node root;
-    std::vector<node>::iterator current_node;
+    typename std::vector<node>::iterator current_node;
 };
+
+// ─── solver typedef ──────────────────────────────────────────────────────────
+// Preserves the solver name for callers that don't need a specific policy.
+// solver::result, solver::print_header, etc. all work through this typedef.
+#if defined(SOLVITAIRE_LRU_ONLY)
+    using solver = solver_impl<LRUPolicy>;
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+    using solver = solver_impl<FlatPolicy>;
+#elif defined(SOLVITAIRE_HASH_ONLY)
+    using solver = solver_impl<HashOnlyPolicy>;
+#else
+    using solver = solver_impl<FlatPolicy>;
+#endif
+
+template <typename OutResult, typename InResult>
+OutResult convert_solver_result(const InResult& other) {
+    OutResult out;
+    out.sol_type = static_cast<typename OutResult::type>(other.sol_type);
+    out.states_searched = other.states_searched;
+    out.unique_states_searched = other.unique_states_searched;
+    out.backtracks = other.backtracks;
+    out.dominance_moves = other.dominance_moves;
+    out.states_removed_from_cache = other.states_removed_from_cache;
+    out.cache_size = other.cache_size;
+    out.cache_bucket_count = other.cache_bucket_count;
+    out.max_depth = other.max_depth;
+    out.depth = other.depth;
+    out.time = other.time;
+    return out;
+}
 
 std::ostream& operator<< (std::ostream&, const solver::result::type&);
 std::ostream& operator<< (std::ostream&, const solver::result&);

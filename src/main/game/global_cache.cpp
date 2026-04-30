@@ -9,13 +9,13 @@
 #include "global_cache.h"
 #include "../input-output/output/log_helper.h"
 #include "search-state/game_state.h"
+#include "cache_policy.h"
 
 using namespace std;
 using namespace boost;
 
 typedef sol_rules::build_policy pol;
 typedef sol_rules::stock_deal_type sdt;
-typedef game_state::streamliner_options sos;
 
 typedef boost::multi_index::multi_index_container<
         cached_game_state,
@@ -33,7 +33,8 @@ typedef boost::multi_index::multi_index_container<
 // CACHED GAME STATE //
 ///////////////////////
 
-cached_game_state::cached_game_state(const game_state& gs) : live(true) {
+template <typename GS>
+cached_game_state::cached_game_state(const GS& gs) : live(true) {
     data.reserve(52+18);  // Enough for each card and up to 18 piles
 
     if (gs.rules.hole) {
@@ -87,28 +88,31 @@ cached_game_state::cached_game_state(const game_state& gs) : live(true) {
     }
 }
 
-
-void cached_game_state::add_pile(pile::ref pr, const game_state& gs) {
+template <typename GS>
+void cached_game_state::add_pile(pile::ref pr, const GS& gs) {
     for (card c : gs.piles[pr].pile_vec) {
         add_card(c, gs);
     }
 }
 
-void cached_game_state::add_pile_in_reverse(pile::ref pr, const game_state& gs) {
+template <typename GS>
+void cached_game_state::add_pile_in_reverse(pile::ref pr, const GS& gs) {
     for (auto i = gs.piles[pr].pile_vec.size(); i-->0;) {
         card c = gs.piles[pr].pile_vec[i];
         add_card(c, gs);
     }
 }
 
-void cached_game_state::add_card(card c, const game_state& gs) {
+template <typename GS>
+void cached_game_state::add_card(card c, const GS& gs) {
     auto& target = data;
 
     // If the game is a 'hole-based' game, or suit-reduction is on, reduces
     // the cached suit of the card where possible
 
     bool is_suit_symmetry = (gs.rules.foundations_present
-            && (gs.stream_opts == sos::SUIT_SYMMETRY || gs.stream_opts == sos::BOTH))
+            && (gs.stream_opts == GS::streamliner_options::SUIT_SYMMETRY
+                || gs.stream_opts == GS::streamliner_options::BOTH))
             || gs.rules.hole;
 
     if (is_suit_symmetry) {
@@ -142,8 +146,7 @@ bool operator==(const cached_game_state& a, const cached_game_state& b) {
 // STATE HASHER //
 //////////////////
 
-hasher::hasher(const game_state& gs) : init_gs(gs) {
-}
+// hasher constructor is now a template defined inline in global_cache.h
 
 size_t hasher::operator()(const cached_game_state& cgs) const {
     size_t seed = 0;
@@ -161,15 +164,9 @@ std::size_t hasher::combine(std::size_t& seed, std::size_t value) const {
 size_t hasher::hash_value(card const& c) const {
     boost::hash<uint8_t> boost_hasher;
 
-    // If the game is a 'hole-based' game, or suit-reduction is enabled, hash
-    // the reduced suit
-    bool is_suit_symmetry = (init_gs.rules.foundations_present
-                             && (init_gs.stream_opts == sos::SUIT_SYMMETRY || init_gs.stream_opts == sos::BOTH))
-                            || init_gs.rules.hole;
-
     uint8_t suit_val;
     if (is_suit_symmetry) {
-        switch (init_gs.rules.build_pol) {
+        switch (build_pol) {
             case pol::SAME_SUIT:
                 suit_val = c.get_suit();
                 break;
@@ -203,7 +200,8 @@ size_t hasher::hash_value(card const& c) const {
  * See http://www.boost.org/libs/multi_index for library home page.
  */
 
-item_list::ctor_args_list lru_cache::get_init_tuple(const game_state& gs) {
+template <typename GS>
+item_list::ctor_args_list lru_cache::get_init_tuple(const GS& gs) {
     return boost::make_tuple(
             item_list::nth_index<0>::type::ctor_args(),
             boost::make_tuple(
@@ -215,11 +213,13 @@ item_list::ctor_args_list lru_cache::get_init_tuple(const game_state& gs) {
             );
 }
 
-lru_cache::lru_cache(const game_state& gs, uint64_t max_num_items_)
+template <typename GS>
+lru_cache::lru_cache(const GS& gs, uint64_t max_num_items_)
         : max_num_items(max_num_items_), cache(get_init_tuple(gs)), states_removed_from_cache(0) {
 }
 
-pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const game_state& gs) {
+template <typename GS>
+pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const GS& gs) {
     pair<item_list::iterator, bool> p = cache.push_front(cached_game_state(gs));
 
     if(!p.second){                              /* duplicate item */
@@ -295,3 +295,51 @@ std::string lru_cache::get_diagnostic_info(const game_state& gs) const {
     res += "\n";
     return res;
 }
+
+
+///////////////////////////
+// EXPLICIT INSTANTIATIONS
+///////////////////////////
+
+// game_state typedef = game_state_impl<FlatPolicy> in the default binary.
+// These instantiations cover the virtual override path (dual_cache tests)
+// and any direct use of lru_cache with game_state.
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+// LRU-only: game_state = game_state_impl<LRUPolicy>
+template cached_game_state::cached_game_state(const game_state_impl<LRUPolicy>&);
+template void cached_game_state::add_pile(pile::ref, const game_state_impl<LRUPolicy>&);
+template void cached_game_state::add_pile_in_reverse(pile::ref, const game_state_impl<LRUPolicy>&);
+template void cached_game_state::add_card(card, const game_state_impl<LRUPolicy>&);
+template lru_cache::lru_cache(const game_state_impl<LRUPolicy>&, uint64_t);
+template std::pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const game_state_impl<LRUPolicy>&);
+
+#elif defined(SOLVITAIRE_FLAT_ONLY) || defined(SOLVITAIRE_HASH_ONLY)
+// Flat-only / Hash-only: game_state = game_state_impl<FlatPolicy/HashOnlyPolicy>
+// lru_cache is not used in the solver, but virtual overrides are compiled
+// since lru_cache inherits cache_interface. Instantiate with game_state.
+template cached_game_state::cached_game_state(const game_state&);
+template void cached_game_state::add_pile(pile::ref, const game_state&);
+template void cached_game_state::add_pile_in_reverse(pile::ref, const game_state&);
+template void cached_game_state::add_card(card, const game_state&);
+template lru_cache::lru_cache(const game_state&, uint64_t);
+template std::pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const game_state&);
+
+#else
+// Default binary: all four policies. lru_cache used by LRUPolicy solver.
+// Virtual overrides use game_state = game_state_impl<FlatPolicy>.
+template cached_game_state::cached_game_state(const game_state_impl<FlatPolicy>&);
+template void cached_game_state::add_pile(pile::ref, const game_state_impl<FlatPolicy>&);
+template void cached_game_state::add_pile_in_reverse(pile::ref, const game_state_impl<FlatPolicy>&);
+template void cached_game_state::add_card(card, const game_state_impl<FlatPolicy>&);
+template lru_cache::lru_cache(const game_state_impl<FlatPolicy>&, uint64_t);
+template std::pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const game_state_impl<FlatPolicy>&);
+
+// LRUPolicy solver path (game_state_impl<LRUPolicy>)
+template cached_game_state::cached_game_state(const game_state_impl<LRUPolicy>&);
+template void cached_game_state::add_pile(pile::ref, const game_state_impl<LRUPolicy>&);
+template void cached_game_state::add_pile_in_reverse(pile::ref, const game_state_impl<LRUPolicy>&);
+template void cached_game_state::add_card(card, const game_state_impl<LRUPolicy>&);
+template lru_cache::lru_cache(const game_state_impl<LRUPolicy>&, uint64_t);
+template std::pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const game_state_impl<LRUPolicy>&);
+#endif

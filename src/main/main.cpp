@@ -20,6 +20,8 @@
 #include <boost/program_options.hpp>
 #include <boost/optional.hpp>
 #include <sys/resource.h>
+#include <functional>
+#include <sstream>
 
 #include "version.h"
 #include "../../lib/rapidjson/document.h"
@@ -30,7 +32,8 @@
 #include "input-output/input/json-parsing/json_helper.h"
 #include "input-output/input/json-parsing/rules_parser.h"
 #include "input-output/output/log_helper.h"
-#include "game/cache_factory.h"
+#include "game/cache_interface.h"
+#include "game/cache_policy.h"
 #include "game/zobrist.h"
 #include "solver/solver.h"
 #include "evaluation/solvability_calc.h"
@@ -46,15 +49,115 @@ namespace po = boost::program_options;
 
 typedef std::chrono::milliseconds millisec;
 
+// ─── solve_output ────────────────────────────────────────────────────────────
+// Non-templated return type from the dispatch branch. Lazy callbacks capture
+// the game_state_impl<Policy> inside type-erased std::function closures.
+// No work is done until the caller invokes them.
+
+struct solve_output {
+    solver::result result;
+    std::function<void()> print_solution;              // prints solution to cout; empty if not solved
+    std::function<void(std::ostream&)> print_init_state;  // streams init_state to given ostream
+};
+
+// ─── solve_game_impl<Policy> ─────────────────────────────────────────────────
+// Constructs game_state, cache, and solver for the given policy. Runs the
+// solver and returns solve_output with lazy callbacks.
+
+template <typename Policy>
+solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
+                              game_state::streamliner_options str_opts,
+                              boost::optional<int> seed,
+                              boost::optional<const Document&> in_doc) {
+    game_state_impl<Policy> gs = seed
+        ? game_state_impl<Policy>(rules, *seed, static_cast<typename game_state_impl<Policy>::streamliner_options>(str_opts))
+        : game_state_impl<Policy>(rules, *in_doc, static_cast<typename game_state_impl<Policy>::streamliner_options>(str_opts));
+
+    typename Policy::cache_type cache = [&]() {
+        if constexpr (std::is_same_v<typename Policy::cache_type, lru_cache>)
+            return lru_cache(gs, cache_capacity);
+        else
+            return typename Policy::cache_type(cache_capacity);
+    }();
+
+    solver_impl<Policy> sol(gs, cache);
+    auto res = sol.run(std::chrono::milliseconds(timeout));
+
+    solve_output out;
+    out.result = convert_solver_result<solver::result>(res);
+
+    // Capture init_state for lazy printing (one copy; type-erased inside std::function)
+    auto init_copy = sol.init_state;
+    out.print_init_state = [init_copy](std::ostream& os) { os << init_copy; };
+
+    if (res.sol_type == solver_impl<Policy>::result::type::SOLVED) {
+        // Extract just the move sequence (vector<::move> is non-templated) — cheap
+        std::vector<::move> solution_moves;
+        auto it = sol.get_frontier().begin();
+        ++it;  // skip root node (null move)
+        for (; it != sol.get_frontier().end(); ++it)
+            solution_moves.push_back(it->mv);
+        uint64_t n = res.states_searched;
+
+        out.print_solution = [init_copy, solution_moves, n]() {
+            game_state_impl<Policy> state_copy = init_copy;
+            std::cout << "Solution:\n" << state_copy << "\n";
+            if (n > 1) {
+                for (const auto& m : solution_moves) {
+                    state_copy.make_move(m);
+                    std::cout << state_copy << "\n";
+                }
+            }
+            std::cout << "\n";
+        };
+    }
+    return out;
+}
+
+// ─── dispatch_solve ──────────────────────────────────────────────────────────
+// Selects the correct policy at compile time based on game rules and options.
+
+solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
+                             game_state::streamliner_options str_opts,
+                             boost::optional<int> seed,
+                             boost::optional<const Document&> in_doc,
+                             bool force_lru,
+                             const std::string& cache_type) {
+    bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
+                 || str_opts == game_state::streamliner_options::BOTH;
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+    (void)cache_type; (void)force_lru; (void)suit_sym;
+    return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+    (void)force_lru; (void)cache_type; (void)suit_sym;
+    if (use_predecessor_cache(rules))
+        return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+#elif defined(SOLVITAIRE_HASH_ONLY)
+    (void)force_lru; (void)cache_type; (void)suit_sym;
+    return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+#else
+    if (force_lru) {
+        return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
+        return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    } else if (use_predecessor_cache(rules)) {
+        return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    } else if (use_new_cache(rules, suit_sym)) {
+        return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    } else {
+        return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    }
+#endif
+}
+
+// ─── Forward declarations ────────────────────────────────────────────────────
+
 const boost::optional<sol_rules> gen_rules(command_line_helper&);
 void solve_random_game(int, const sol_rules&, command_line_helper&);
 bool solve_input_files(vector<string>, const sol_rules&, command_line_helper&);
 void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optional<int> seed, boost::optional<const Document&> in_doc, string instance_name);
-pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
-                                        game_state::streamliner_options str_opts,
-                                        boost::optional<int> seed, boost::optional<const Document&> in_doc,
-                                        bool force_lru = false,
-                                        const std::string& cache_type = "auto");
 void print_version();
 
 // Decides what to do given supplied command-line options
@@ -190,8 +293,6 @@ bool solve_input_files(const vector<string> input_files, const sol_rules& rules,
 }
 
 void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optional<int> seed, boost::optional<const Document&> in_doc, string instance_name) {
-    typedef pair<solver, solver::result> solve_sol;
-
     bool smart = clh.get_streamliners() == command_line_helper::streamliner_opt::SMART;
 
     uint64_t timeout;
@@ -203,45 +304,45 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optiona
         timeout = clh.get_timeout();
         str_opt = clh.get_streamliners_game_state();
     }
-    solve_sol solution = solve_game(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type());
+    solve_output solution = dispatch_solve(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type());
 
-    bool run_again = smart && solution.second.sol_type != solver::result::type::SOLVED;
+    bool run_again = smart && solution.result.sol_type != solver::result::type::SOLVED;
     cout.flush();
     if (run_again)
         if (!clh.get_classify() && !clh.get_json_output()) cout << "Unsolvable using streamliner. Running again...\n";
-    boost::optional<solve_sol> streamliner_solution = run_again
-            ? solve_game(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type())
-            : boost::optional<solve_sol>();
+    boost::optional<solve_output> streamliner_solution = run_again
+            ? dispatch_solve(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type())
+            : boost::optional<solve_output>();
 
     if (clh.get_json_output()) {
-        pair<solver, solver::result> s = run_again ? *streamliner_solution : solution;
+        solve_output& s = run_again ? *streamliner_solution : solution;
         StringBuffer sb;
         Writer<StringBuffer> writer(sb);
         writer.StartObject();
         writer.Key("instance_name");
         writer.String(instance_name.c_str());
         writer.Key("solution_type");
-        writer.String(s.second.sol_type == solver::result::type::SOLVED ? "winnable" :
-                      s.second.sol_type == solver::result::type::UNSOLVABLE ? "unsolvable" :
-                      s.second.sol_type == solver::result::type::TIMEOUT ? "timeout" : "failed");
+        writer.String(s.result.sol_type == solver::result::type::SOLVED ? "winnable" :
+                      s.result.sol_type == solver::result::type::UNSOLVABLE ? "unsolvable" :
+                      s.result.sol_type == solver::result::type::TIMEOUT ? "timeout" : "failed");
         writer.Key("states_searched");
-        writer.Uint64(s.second.states_searched);
+        writer.Uint64(s.result.states_searched);
         writer.Key("unique_states");
-        writer.Uint64(s.second.unique_states_searched);
+        writer.Uint64(s.result.unique_states_searched);
         writer.Key("backtracks");
-        writer.Uint64(s.second.backtracks);
+        writer.Uint64(s.result.backtracks);
         writer.Key("max_depth");
-        writer.Uint64(s.second.max_depth);
+        writer.Uint64(s.result.max_depth);
         writer.Key("dominance_moves");
-        writer.Uint64(s.second.dominance_moves);
+        writer.Uint64(s.result.dominance_moves);
         writer.Key("states_removed_from_cache");
-        writer.Uint64(s.second.states_removed_from_cache);
+        writer.Uint64(s.result.states_removed_from_cache);
         writer.Key("cache_size");
-        writer.Uint64(s.second.cache_size);
+        writer.Uint64(s.result.cache_size);
         writer.Key("cache_buckets");
-        writer.Uint64(s.second.cache_bucket_count);
+        writer.Uint64(s.result.cache_bucket_count);
         writer.Key("final_depth");
-        writer.Uint64(s.second.depth);
+        writer.Uint64(s.result.depth);
         // Memory measurement (getrusage RUSAGE_SELF)
         {
             struct rusage usage;
@@ -260,44 +361,30 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optiona
         cout << sb.GetString() << endl;
     } else if (clh.get_classify()) {
         if (seed) cout << *seed;
-        solver::print_result_csv(solution.second);
+        solver::print_result_csv(solution.result);
         if (smart) {
             if (run_again) {
-                solver::print_result_csv(streamliner_solution->second);
-                cout << ", " << streamliner_solution->second.sol_type;
+                solver::print_result_csv(streamliner_solution->result);
+                cout << ", " << streamliner_solution->result.sol_type;
             } else {
                 solver::print_null_seed_info();
-                cout << ", " << solution.second.sol_type;
+                cout << ", " << solution.result.sol_type;
             }
         } else {
-            cout << ", " << solution.second.sol_type;
+            cout << ", " << solution.result.sol_type;
         }
         cout << "\n";
     } else {
-        pair<solver, solver::result> s = run_again ? *streamliner_solution : solution;
+        solve_output& s = run_again ? *streamliner_solution : solution;
 
-        if (s.second.sol_type == solver::result::type::SOLVED) {
-            s.first.print_solution();
+        if (s.result.sol_type == solver::result::type::SOLVED) {
+            s.print_solution();   // lazy: replay happens here and only here
         } else {
-            cout << "Deal:\n" << s.first.init_state << "\n";
+            cout << "Deal:\n";
+            s.print_init_state(cout);  // lazy: init_state streamed here
+            cout << "\n";
         }
-        cout << s.second;
+        cout << s.result;
     }
     cout.flush();
-}
-
-pair<solver, solver::result> solve_game(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
-                                        game_state::streamliner_options str_opts,
-                                        boost::optional<int> seed, boost::optional<const Document&> in_doc,
-                                        bool force_lru,
-                                        const std::string& cache_type) {
-    game_state gs = seed ? game_state(rules, *seed, str_opts, force_lru, cache_type) : game_state(rules, *in_doc, str_opts, force_lru, cache_type);
-
-    bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
-                 || str_opts == game_state::streamliner_options::BOTH;
-    std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, gs, cache_capacity, cache_type, force_lru, suit_sym);
-
-    solver sol(gs, *cache_ptr);
-    solver::result res = sol.run(std::chrono::milliseconds(timeout));
-    return make_pair(sol, res);
 }

@@ -67,9 +67,10 @@ public:
         // std::vector destructor handles the fallback path.
     }
 
-    // ── cache_interface ───────────────────────────────────────────────────────
+    // ── Template methods (solver calls these directly — zero virtual dispatch) ─
 
-    bool insert(const game_state& gs) override {
+    template <typename GS>
+    bool insert_t(const GS& gs) {
         const uint64_t hash = Policy::hash_of(gs);
         const payload_type& payload = Policy::payload_of(gs);
         const uint64_t idx = cluster_index(hash);
@@ -89,7 +90,8 @@ public:
         return true;
     }
 
-    bool contains(const game_state& gs) const override {
+    template <typename GS>
+    bool contains_t(const GS& gs) const {
         const uint64_t hash = Policy::hash_of(gs);
         const payload_type& payload = Policy::payload_of(gs);
         const uint64_t idx = cluster_index(hash);
@@ -100,6 +102,16 @@ public:
 
         return check_slot1(cl, payload, hash,
                 typename hash_guard_select<Policy::HAS_HASH_GUARD>::type{});
+    }
+
+    // ── cache_interface virtual overrides (thin wrappers for dual_cache tests) ─
+
+    bool insert(const game_state& gs) override {
+        return this->template insert_t<game_state>(gs);
+    }
+
+    bool contains(const game_state& gs) const override {
+        return this->template contains_t<game_state>(gs);
     }
 
     void clear() override {

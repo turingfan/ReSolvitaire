@@ -27,7 +27,8 @@
 
 #include "solvability_calc.h"
 #include "../solver/solver.h"
-#include "../game/cache_factory.h"
+#include "../game/cache_interface.h"
+#include "../game/cache_policy.h"
 #include "binomial_ci.h"
 #include <memory>
 
@@ -96,12 +97,12 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
         boost::optional<seed_result> stream_res, no_stream_res, final_res;
 
         if (sc->stream_opt == cmd_sos::SMART) {
-            stream_res = solve_seed(my_seed, (sc->timeout/10), sc->rules, sc->cache_capacity, sos::BOTH, false, sc->cache_type_val);
+            stream_res = solve_seed(my_seed, (sc->timeout/10), sc->rules, sc->cache_capacity, sos::BOTH, sc->cache_type_val);
 
             switch (stream_res->second.sol_type) {
                 case solver::result::type::UNSOLVABLE:
                 case solver::result::type::TIMEOUT:
-                    no_stream_res = solve_seed(my_seed, sc->timeout, sc->rules, sc->cache_capacity, sos::NONE, false, sc->cache_type_val);
+                    no_stream_res = solve_seed(my_seed, sc->timeout, sc->rules, sc->cache_capacity, sos::NONE, sc->cache_type_val);
                     final_res = *no_stream_res;
                     break;
                 default:
@@ -110,7 +111,7 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
             }
         } else {
             no_stream_res = solve_seed(my_seed, sc->timeout, sc->rules, sc->cache_capacity,
-                                       command_line_helper::convert_streamliners(sc->stream_opt), false, sc->cache_type_val);
+                                       command_line_helper::convert_streamliners(sc->stream_opt), sc->cache_type_val);
             final_res = *no_stream_res;
         }
 
@@ -141,19 +142,71 @@ void solvability_calc::solver_thread(solvability_calc* sc, uint core) {
     }
 }
 
+// ─── solve_seed_impl<Policy> ─────────────────────────────────────────────────
+
+template <typename Policy>
+static solvability_calc::seed_result solve_seed_impl(int seed, millisec timeout, const sol_rules& rules,
+                                                      uint64_t cache_capacity) {
+    game_state_impl<Policy> gs(rules, seed, game_state::streamliner_options::NONE);
+
+    typename Policy::cache_type cache = [&]() {
+        if constexpr (std::is_same_v<typename Policy::cache_type, lru_cache>)
+            return lru_cache(gs, cache_capacity);
+        else
+            return typename Policy::cache_type(cache_capacity);
+    }();
+
+    solver_impl<Policy> sol(gs, cache);
+    return solvability_calc::seed_result(seed, convert_solver_result<solver::result>(sol.run(boost::optional<std::chrono::milliseconds>(timeout))));
+}
+
+// Overload for non-NONE streamliner options
+template <typename Policy>
+static solvability_calc::seed_result solve_seed_impl_with_opts(int seed, millisec timeout, const sol_rules& rules,
+                                                                uint64_t cache_capacity,
+                                                                game_state::streamliner_options stream_opt) {
+    game_state_impl<Policy> gs(rules, seed, static_cast<typename game_state_impl<Policy>::streamliner_options>(stream_opt));
+
+    typename Policy::cache_type cache = [&]() {
+        if constexpr (std::is_same_v<typename Policy::cache_type, lru_cache>)
+            return lru_cache(gs, cache_capacity);
+        else
+            return typename Policy::cache_type(cache_capacity);
+    }();
+
+    solver_impl<Policy> sol(gs, cache);
+    return solvability_calc::seed_result(seed, convert_solver_result<solver::result>(sol.run(boost::optional<std::chrono::milliseconds>(timeout))));
+}
+
 solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec timeout, const sol_rules& rules,
                                                           uint64_t cache_capacity,
                                                           game_state::streamliner_options stream_opt,
-                                                          bool force_lru,
                                                           const std::string& cache_type) {
-    game_state gs(rules, seed, stream_opt, force_lru);
-
     bool suit_sym = stream_opt == game_state::streamliner_options::SUIT_SYMMETRY
                  || stream_opt == game_state::streamliner_options::BOTH;
-    std::unique_ptr<cache_interface> cache_ptr = make_cache(rules, gs, cache_capacity, cache_type, force_lru, suit_sym);
 
-    solver sol(gs, *cache_ptr);
-    return seed_result(seed, sol.run(boost::optional<std::chrono::milliseconds>(timeout)));
+#if defined(SOLVITAIRE_LRU_ONLY)
+    (void)cache_type; (void)suit_sym;
+    return solve_seed_impl_with_opts<LRUPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+    (void)cache_type; (void)suit_sym;
+    if (use_predecessor_cache(rules))
+        return solve_seed_impl_with_opts<PredecessorPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+    return solve_seed_impl_with_opts<FlatPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+#elif defined(SOLVITAIRE_HASH_ONLY)
+    (void)cache_type; (void)suit_sym;
+    return solve_seed_impl_with_opts<HashOnlyPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+#else
+    if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
+        return solve_seed_impl_with_opts<HashOnlyPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+    } else if (use_predecessor_cache(rules)) {
+        return solve_seed_impl_with_opts<PredecessorPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+    } else if (use_new_cache(rules, suit_sym)) {
+        return solve_seed_impl_with_opts<FlatPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+    } else {
+        return solve_seed_impl_with_opts<LRUPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+    }
+#endif
 }
 
 

@@ -33,13 +33,6 @@
 
 #include "solver.h"
 #include "../game/move.h"
-#if !defined(SOLVITAIRE_LRU_ONLY)
-#include "../game/flat_cache.h"
-#include "../game/predecessor_flat_cache.h"
-#include "../game/hash_only_cache.h"
-#include "../game/dual_cache.h"
-#include "../game/generic_flat_cache.h"
-#endif
 #include "../input-output/output/log_helper.h"
 #include "../input-output/output/state_printer.h"
 #include "../input-output/input/command_line_helper.h"
@@ -64,26 +57,14 @@ void sigint_handler(int i) {
     sigint = i == 1 ? true : true;
 }
 
-solver::solver(const game_state& gs, cache_interface& c)
+template <typename Policy>
+solver_impl<Policy>::solver_impl(const game_state_impl<Policy>& gs, typename Policy::cache_type& c)
         : cache(c)
         , init_state(gs)
         , state(gs)
         , frontier()
         , root(move(move::mtype::null))
         , current_node() {
-#if !defined(SOLVITAIRE_LRU_ONLY)
-    using_flat_cache =
-#ifndef SOLVITAIRE_HASH_ONLY
-                       (dynamic_cast<flat_cache*>(&cache) != nullptr)
-                    ||
-#endif
-                       (dynamic_cast<predecessor_flat_cache*>(&cache) != nullptr)
-                    || (dynamic_cast<hash_only_cache*>(&cache) != nullptr)
-                    || (dynamic_cast<dual_cache*>(&cache) != nullptr)
-                    || (dynamic_cast<generic_flat_cache_base*>(&cache) != nullptr);
-#else
-    using_flat_cache = false;
-#endif
     frontier.push_back(root);
     current_node = begin(frontier);
     res.states_searched = 0;
@@ -95,17 +76,19 @@ solver::solver(const game_state& gs, cache_interface& c)
     res.depth = 0;
 }
 
-solver::node::node(const move m) noexcept
+template <typename Policy>
+solver_impl<Policy>::node::node(const ::move m) noexcept
         : mv(m), child_moves(), cache_state() {
 }
 
-solver::result solver::run(boost::optional<millisec> timeout) {
+template <typename Policy>
+typename solver_impl<Policy>::result solver_impl<Policy>::run(boost::optional<millisec> timeout) {
     // Set interrupt handler
     signal(SIGINT, sigint_handler);
 
     // Set timings
     const clock::time_point start_time = clock::now();
-    result::type res_type = timeout ? dfs(start_time + *timeout) : dfs();
+    typename result::type res_type = timeout ? dfs(start_time + *timeout) : dfs();
     res.sol_type = res_type;
     res.states_removed_from_cache = cache.get_states_removed_from_cache();
     res.cache_size = cache.size();
@@ -114,7 +97,8 @@ solver::result solver::run(boost::optional<millisec> timeout) {
     return res;
 }
 
-solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
+template <typename Policy>
+typename solver_impl<Policy>::result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> end_time) {
     bool states_exhausted = false;
 
     while(!(state.is_solved() || states_exhausted)) {
@@ -141,25 +125,25 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
             try {
                 // Caches the current state
                 bool is_new_state;
-                if (using_flat_cache) {
-#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(SOLVITAIRE_HASH_ONLY)
-                    if (state.computing_flat_payload)
+                if constexpr (Policy::computes_hash) {
+                    // Flat-cache path: set payload depth, then insert directly
+                    if constexpr (Policy::computes_payload) {
                         state.set_payload_depth(static_cast<uint16_t>(
                             min(res.depth, static_cast<uint64_t>(UINT16_MAX))));
-#endif
+                    }
                     if (state.uses_predecessor_cache()) {
                         state.set_predecessor_payload_depth(static_cast<uint8_t>(
                             min(res.depth, static_cast<uint64_t>(UINT8_MAX))));
                     }
-                    is_new_state = cache.insert(state);
+                    is_new_state = cache.insert_t(state);
 #ifndef NDEBUG
-#if SOLVITAIRE_COMPUTES_FLAT_HASH && !defined(SOLVITAIRE_HASH_ONLY)
-                    if (state.computing_flat_payload) state.assert_payload_consistent();
-#endif
+                    if constexpr (Policy::computes_payload) {
+                        state.assert_payload_consistent();
+                    }
 #endif
                 } else {
-                    auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);
-                    pair<lru_cache::item_list::iterator, bool> insert_res = lru_cache_ref.insert_with_iterator(state);
+                    // LRU-cache path: insert with iterator for live-bit tracking
+                    pair<lru_cache::item_list::iterator, bool> insert_res = cache.insert_with_iterator(state);
                     current_node->cache_state = insert_res.first;
                     is_new_state = insert_res.second;
                 }
@@ -170,7 +154,7 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
 
                     // If there are none, reverts to the last node with children
                     if (next_moves.empty()) {
-                        if (using_flat_cache) {
+                        if constexpr (Policy::computes_hash) {
                             states_exhausted = revert_to_last_node_with_children();
                         } else {
                             states_exhausted = revert_to_last_node_with_children(current_node->cache_state);
@@ -217,14 +201,16 @@ solver::result::type solver::dfs(boost::optional<clock::time_point> end_time) {
 
 // If an iterator to the current state is supplied to the function, will also
 // make sure to turn the 'live' bit off upon backtracking
-bool solver::revert_to_last_node_with_children(optional<lru_cache::item_list::iterator> cur_state) {
+template <typename Policy>
+bool solver_impl<Policy>::revert_to_last_node_with_children(optional<lru_cache::item_list::iterator> cur_state) {
     if (current_node == begin(frontier))
         return true;
 
     // Turns the 'live' bit false on the state we are backtracking out of
-    if (cur_state) {
-        auto& lru_cache_ref = dynamic_cast<lru_cache&>(cache);
-        lru_cache_ref.set_non_live(*cur_state);
+    if constexpr (!Policy::computes_hash) {
+        if (cur_state) {
+            cache.set_non_live(*cur_state);
+        }
     }
 
     state.undo_move(current_node->mv);
@@ -237,7 +223,11 @@ bool solver::revert_to_last_node_with_children(optional<lru_cache::item_list::it
 
     if (! current_node->mv.dominance_move) {
         if (cache.get_states_removed_from_cache() == 0) {
-            assert(cache.contains(state));
+            if constexpr (Policy::computes_hash) {
+                assert(cache.contains_t(state));
+            } else {
+                assert(cache.contains(state));
+            }
         }
         LOG_DEBUG("(undo move)");
     } else {
@@ -262,7 +252,8 @@ bool solver::revert_to_last_node_with_children(optional<lru_cache::item_list::it
     }
 }
 
-void solver::set_to_child() {
+template <typename Policy>
+void solver_impl<Policy>::set_to_child() {
     assert(!current_node->child_moves.empty());
 
     move b = current_node->child_moves.back();
@@ -272,12 +263,13 @@ void solver::set_to_child() {
     current_node = prev(end(frontier));
 }
 
-void solver::print_solution() const {
+template <typename Policy>
+void solver_impl<Policy>::print_solution() const {
     std::flush(clog);
     std::flush(cout);
 
     auto i = begin(frontier);
-    game_state state_copy = init_state;
+    game_state_impl<Policy> state_copy = init_state;
 
     cout << "Solution:\n";
     cout << state_copy << "\n";
@@ -290,6 +282,8 @@ void solver::print_solution() const {
     }
     cout << "\n";
 }
+
+// ─── Free functions (not templated — use solver typedef) ─────────────────────
 
 std::ostream& operator<< (std::ostream& out, const solver::result::type& rt) {
     switch(rt) {
@@ -327,7 +321,8 @@ std::ostream& operator<< (std::ostream& out, const solver::result& r) {
             << "Time Taken (milliseconds): " << r.time.count()               << "\n";
 }
 
-void solver::print_header(long t, command_line_helper::streamliner_opt stream_opt) {
+template <typename Policy>
+void solver_impl<Policy>::print_header(long t, command_line_helper::streamliner_opt stream_opt) {
     cout << "Calculating solvability percentage...\n\n";
     if (stream_opt == command_line_helper::streamliner_opt::SMART) {
         cout << ", (Streamliner Results:) "
@@ -362,8 +357,9 @@ void solver::print_header(long t, command_line_helper::streamliner_opt stream_op
     cout << fixed << setprecision(3);
 }
 
-void solver::print_result_csv(solver::result res) {
-    cout << ", " << res.sol_type
+template <typename Policy>
+void solver_impl<Policy>::print_result_csv(typename solver_impl<Policy>::result res) {
+    cout << ", " << static_cast<solver::result::type>(res.sol_type)
          << ", " << res.time.count()
          << ", " << res.states_searched
          << ", " << res.unique_states_searched
@@ -376,10 +372,30 @@ void solver::print_result_csv(solver::result res) {
          << ", " << res.depth;
 }
 
-void solver::print_null_seed_info() {
+template <typename Policy>
+void solver_impl<Policy>::print_null_seed_info() {
     cout << ", , , , , , , , , , , ";
 }
 
-const vector<solver::node> solver::get_frontier() const {
+template <typename Policy>
+const vector<typename solver_impl<Policy>::node>& solver_impl<Policy>::get_frontier() const {
     return frontier;
 }
+
+
+///////////////////////////
+// EXPLICIT INSTANTIATIONS
+///////////////////////////
+
+#if defined(SOLVITAIRE_LRU_ONLY)
+template class solver_impl<LRUPolicy>;
+#elif defined(SOLVITAIRE_FLAT_ONLY)
+template class solver_impl<FlatPolicy>;
+#elif defined(SOLVITAIRE_HASH_ONLY)
+template class solver_impl<HashOnlyPolicy>;
+#else
+template class solver_impl<FlatPolicy>;
+template class solver_impl<HashOnlyPolicy>;
+template class solver_impl<PredecessorPolicy>;
+template class solver_impl<LRUPolicy>;
+#endif

@@ -41,10 +41,10 @@ struct cached_game_state {
     typedef std::vector<card> state_data;
     typedef state_data::size_type size_type;
 
-    explicit cached_game_state(const game_state&);
-    void add_pile(pile::ref, const game_state&);
-    void add_pile_in_reverse(pile::ref, const game_state&);
-    void add_card(card, const game_state&);
+    template <typename GS> explicit cached_game_state(const GS&);
+    template <typename GS> void add_pile(pile::ref, const GS&);
+    template <typename GS> void add_pile_in_reverse(pile::ref, const GS&);
+    template <typename GS> void add_card(card, const GS&);
     void add_card_divider();
 
     state_data data;
@@ -54,13 +54,23 @@ struct cached_game_state {
 bool operator==(const cached_game_state&, const cached_game_state&);
 
 struct hasher {
-    explicit hasher(const game_state&);
+    // Template constructor — extracts fields from any game_state_impl<Policy>
+    template <typename GS>
+    explicit hasher(const GS& gs)
+        : build_pol(gs.rules.build_pol)
+        , is_suit_symmetry(
+              (gs.rules.foundations_present
+                  && (gs.stream_opts == GS::streamliner_options::SUIT_SYMMETRY
+                      || gs.stream_opts == GS::streamliner_options::BOTH))
+              || gs.rules.hole) {}
+
     std::size_t operator() (const cached_game_state&) const;
 
     std::size_t hash_value(const card&) const;
     std::size_t combine(std::size_t&, std::size_t) const;
 
-    const game_state& init_gs;
+    sol_rules::build_policy build_pol;
+    bool is_suit_symmetry;  // precomputed from rules + stream_opts
 };
 
 class lru_cache : public cache_interface {
@@ -76,12 +86,13 @@ public:
             >
     > item_list;
 
-    explicit lru_cache(const game_state&, uint64_t);
+    template <typename GS> explicit lru_cache(const GS&, uint64_t);
 
-    // Original insert method (returns iterator)
-    std::pair<item_list::iterator, bool> insert_with_iterator(const game_state&);
+    // Template insert (solver calls directly — zero virtual dispatch)
+    template <typename GS>
+    std::pair<item_list::iterator, bool> insert_with_iterator(const GS&);
 
-    // cache_interface implementation
+    // cache_interface virtual overrides (thin wrappers for dual_cache tests)
     bool insert(const game_state&) override;
     bool contains(const game_state&) const override;
     void clear() override;
@@ -94,7 +105,8 @@ public:
     item_list::size_type cached_size() const;
 
 private:
-    static item_list::ctor_args_list get_init_tuple(const game_state&);
+    template <typename GS>
+    static item_list::ctor_args_list get_init_tuple(const GS&);
 
     uint64_t max_num_items;
     item_list cache;

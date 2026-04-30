@@ -69,10 +69,12 @@ struct CompactStatePolicy {
         compact_state entries[2];
     };
 
-    static uint64_t hash_of(const game_state& gs) {
+    template <typename GS>
+    static uint64_t hash_of(const GS& gs) {
         return gs.get_zobrist_hash();
     }
-    static const compact_state& payload_of(const game_state& gs) {
+    template <typename GS>
+    static const compact_state& payload_of(const GS& gs) {
         return gs.get_payload();
     }
 
@@ -127,10 +129,12 @@ struct HashOnlyClusterPolicy {
     }
     // Both hash_of and payload_of return the normalised hash: the stored value
     // IS the identity of the state, and it is also used for cluster indexing.
-    static uint64_t hash_of(const game_state& gs) {
+    template <typename GS>
+    static uint64_t hash_of(const GS& gs) {
         return normalise(gs.get_zobrist_hash());
     }
-    static uint64_t payload_of(const game_state& gs) {
+    template <typename GS>
+    static uint64_t payload_of(const GS& gs) {
         return normalise(gs.get_zobrist_hash());
     }
 
@@ -180,10 +184,12 @@ struct PredecessorClusterPolicy {
         cache_line lines[2];
     };
 
-    static uint64_t hash_of(const game_state& gs) {
+    template <typename GS>
+    static uint64_t hash_of(const GS& gs) {
         return gs.get_predecessor_zobrist_hash();
     }
-    static const predecessor_state& payload_of(const game_state& gs) {
+    template <typename GS>
+    static const predecessor_state& payload_of(const GS& gs) {
         return gs.get_predecessor_payload();
     }
 
