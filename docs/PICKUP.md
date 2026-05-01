@@ -1,7 +1,7 @@
 # Pickup: feature/templated-dispatch
 
 **Last updated:** 2026-05-01
-**Branch:** `feature/templated-dispatch-wip-commit3a` (from `dev` at `1dd0882`)
+**Branch:** `feature/templated-dispatch` (from `dev` at `1dd0882`)
 
 ## What This Branch Does
 
