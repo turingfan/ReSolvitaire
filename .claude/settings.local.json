@@ -71,7 +71,16 @@
       "Bash(docker --version)",
       "Bash(podman --version)",
       "Bash(container --version)",
-      "Bash(container help:*)"
+      "Bash(container help:*)",
+      "Bash(ls:*)",
+      "Bash(ctest -R \"regression_level[123]\" --output-on-failure)",
+      "Bash(./build.sh --release --unit-tests --variants)",
+      "Bash(ctest -R \"regression_level1_\\(flat|hash_only|lru\\)\" --output-on-failure)",
+      "Bash(grep -n \"CommutativeTableauPiles\\\\|CommutativeReserve\\\\|CommutativeCells\" src/test/cache_tests/*.cpp)",
+      "Bash(ctest -R \"unit_tests|regression_level[123]\" --output-on-failure)",
+      "Bash(cmake --build cmake-build-release --target solvitaire-flat)",
+      "Bash(ctest -R \"unit_tests|regression_level[123]\")",
+      "Bash(git rm:*)"
     ]
   }
 }
