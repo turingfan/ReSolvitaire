@@ -84,7 +84,7 @@ solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t 
     auto res = sol.run(std::chrono::milliseconds(timeout));
 
     solve_output out;
-    out.result = convert_solver_result<solver::result>(res);
+    out.result = res;
 
     // Capture init_state for lazy printing (one copy; type-erased inside std::function)
     auto init_copy = sol.init_state;
@@ -130,12 +130,16 @@ solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uint64_t c
     (void)cache_type; (void)force_lru; (void)suit_sym;
     return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
 #elif defined(SOLVITAIRE_FLAT_ONLY)
-    (void)force_lru; (void)cache_type; (void)suit_sym;
+    (void)force_lru; (void)cache_type;
     if (use_predecessor_cache(rules))
         return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    if (!use_new_cache(rules, suit_sym))
+        throw std::runtime_error("flat-only binary: game requires LRU cache");
     return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
 #elif defined(SOLVITAIRE_HASH_ONLY)
-    (void)force_lru; (void)cache_type; (void)suit_sym;
+    (void)force_lru; (void)cache_type;
+    if (!use_new_cache(rules, suit_sym))
+        throw std::runtime_error("hash-only binary: game requires LRU cache");
     return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
 #else
     if (force_lru) {

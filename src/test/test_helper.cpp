@@ -28,6 +28,9 @@
 #include "test_helper.h"
 #include "../main/game/search-state/game_state.h"
 #include "../main/game/global_cache.h"
+#include "../main/game/cache_policy.h"
+#include "../main/game/generic_flat_cache.h"
+#include "../main/game/generic_flat_cache_policies.h"
 #include "../main/solver/solver.h"
 #include "../main/input-output/input/json-parsing/json_helper.h"
 #include "../main/input-output/input/json-parsing/rules_parser.h"
@@ -42,6 +45,10 @@ using std::ostream;
 typedef std::initializer_list<std::initializer_list<std::string>> string_il;
 typedef game_state::streamliner_options sos;
 
+// Integration tests use LRU policy to match pre-template behavior
+using lru_game_state = game_state_impl<LRUPolicy>;
+using lru_solver = solver_impl<LRUPolicy>;
+
 
 bool test_helper::is_solvable(const std::string& input_file, const std::string& preset_type) {
     if (!std::ifstream(input_file)) {
@@ -52,9 +59,9 @@ bool test_helper::is_solvable(const std::string& input_file, const std::string& 
     const Document in_doc = json_helper::get_file_json(input_file);
     const sol_rules rules = rules_parser::from_preset(preset_type);
 
-    game_state gs(rules, in_doc, sos::NONE);
+    lru_game_state gs(rules, in_doc, lru_game_state::streamliner_options::NONE);
     lru_cache cache(gs, 1000000);
-    solver sol(gs, cache);
+    lru_solver sol(gs, cache);
 
     return sol.run().sol_type == solver::result::type::SOLVED;
 }
@@ -77,7 +84,7 @@ void test_helper::run_foundations_dominance_test(sol_rules::build_policy policy,
             {"4D","3D","2D","AD"}
     });
 
-    lru_cache cache(gs, 1000000);
+    generic_flat_cache<CompactStatePolicy> cache(1000000);
     solver sol(gs, cache);
     sol.run();
 

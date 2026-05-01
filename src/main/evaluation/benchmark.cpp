@@ -115,7 +115,7 @@ static solver::result run_seed_impl(const sol_rules& rules, int seed,
     }();
 
     solver_impl<Policy> sol(gs, cache);
-    return convert_solver_result<solver::result>(sol.run(chrono::milliseconds(timeout_ms)));
+    return sol.run(chrono::milliseconds(timeout_ms));
 }
 
 // ─── run_deal_impl<Policy> ───────────────────────────────────────────────────
@@ -136,7 +136,7 @@ static solver::result run_deal_impl(const sol_rules& rules,
     }();
 
     solver_impl<Policy> sol(gs, cache);
-    return convert_solver_result<solver::result>(sol.run(chrono::milliseconds(timeout_ms)));
+    return sol.run(chrono::milliseconds(timeout_ms));
 }
 
 // ─── dispatch helpers ────────────────────────────────────────────────────────

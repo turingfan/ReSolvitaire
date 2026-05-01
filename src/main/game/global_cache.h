@@ -92,6 +92,16 @@ public:
     template <typename GS>
     std::pair<item_list::iterator, bool> insert_with_iterator(const GS&);
 
+    // Template insert/contains (for use with any game_state_impl<Policy>)
+    template <typename GS>
+    bool insert_t(const GS& gs) {
+        return insert_with_iterator(gs).second;
+    }
+    template <typename GS>
+    bool contains_t(const GS& gs) const {
+        return cache.template get<1>().count(cached_game_state(gs)) > 0;
+    }
+
     // cache_interface virtual overrides (thin wrappers for dual_cache tests)
     bool insert(const game_state&) override;
     bool contains(const game_state&) const override;

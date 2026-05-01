@@ -76,13 +76,12 @@ solver_impl<Policy>::solver_impl(const game_state_impl<Policy>& gs, typename Pol
     res.depth = 0;
 }
 
-template <typename Policy>
-solver_impl<Policy>::node::node(const ::move m) noexcept
+solver_node::solver_node(const ::move m) noexcept
         : mv(m), child_moves(), cache_state() {
 }
 
 template <typename Policy>
-typename solver_impl<Policy>::result solver_impl<Policy>::run(boost::optional<millisec> timeout) {
+solver_result solver_impl<Policy>::run(boost::optional<millisec> timeout) {
     // Set interrupt handler
     signal(SIGINT, sigint_handler);
 
@@ -98,7 +97,7 @@ typename solver_impl<Policy>::result solver_impl<Policy>::run(boost::optional<mi
 }
 
 template <typename Policy>
-typename solver_impl<Policy>::result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> end_time) {
+solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> end_time) {
     bool states_exhausted = false;
 
     while(!(state.is_solved() || states_exhausted)) {
@@ -285,28 +284,28 @@ void solver_impl<Policy>::print_solution() const {
 
 // ─── Free functions (not templated — use solver typedef) ─────────────────────
 
-std::ostream& operator<< (std::ostream& out, const solver::result::type& rt) {
+std::ostream& operator<< (std::ostream& out, const solver_result::type& rt) {
     switch(rt) {
-        case solver::result::type::TIMEOUT:
+        case solver_result::type::TIMEOUT:
             out << "timed-out";
             break;
-        case solver::result::type::SOLVED:
+        case solver_result::type::SOLVED:
             out << "solved";
             break;
-        case solver::result::type::UNSOLVABLE:
+        case solver_result::type::UNSOLVABLE:
             out << "unsolvable";
             break;
-        case solver::result::type::MEM_LIMIT:
+        case solver_result::type::MEM_LIMIT:
             out << "memory-limit-reached";
             break;
-        case solver::result::type::TERMINATED:
+        case solver_result::type::TERMINATED:
             out << "terminated";
             break;
     }
     return out;
 }
 
-std::ostream& operator<< (std::ostream& out, const solver::result& r) {
+std::ostream& operator<< (std::ostream& out, const solver_result& r) {
     return out
             << "Solution Type: "             << r.sol_type                   << "\n"
             << "States Searched: "           << r.states_searched            << "\n"
@@ -358,8 +357,8 @@ void solver_impl<Policy>::print_header(long t, command_line_helper::streamliner_
 }
 
 template <typename Policy>
-void solver_impl<Policy>::print_result_csv(typename solver_impl<Policy>::result res) {
-    cout << ", " << static_cast<solver::result::type>(res.sol_type)
+void solver_impl<Policy>::print_result_csv(solver_result res) {
+    cout << ", " << res.sol_type
          << ", " << res.time.count()
          << ", " << res.states_searched
          << ", " << res.unique_states_searched
@@ -391,6 +390,7 @@ const vector<typename solver_impl<Policy>::node>& solver_impl<Policy>::get_front
 template class solver_impl<LRUPolicy>;
 #elif defined(SOLVITAIRE_FLAT_ONLY)
 template class solver_impl<FlatPolicy>;
+template class solver_impl<PredecessorPolicy>;
 #elif defined(SOLVITAIRE_HASH_ONLY)
 template class solver_impl<HashOnlyPolicy>;
 #else

@@ -35,33 +35,40 @@
 #include "../game/cache_policy.h"
 #include "../input-output/input/command_line_helper.h"
 
+// ─── Policy-independent types ────────────────────────────────────────────────
+// Extracted from solver_impl so they are the same type across all Policy
+// instantiations and can be used freely in non-templated code.
+
+struct solver_node {
+    solver_node(move) noexcept;
+    const move mv;
+    std::vector<move> child_moves;
+    boost::optional<lru_cache::item_list::iterator> cache_state; // Optional, as dominance moves aren't cached
+};
+
+struct solver_result {
+    enum class type { TIMEOUT, SOLVED, UNSOLVABLE, MEM_LIMIT, TERMINATED };
+
+    type sol_type;
+    uint64_t states_searched;
+    uint64_t unique_states_searched;
+    uint64_t backtracks;
+    uint64_t dominance_moves;
+    uint64_t states_removed_from_cache;
+    uint64_t cache_size;
+    uint64_t cache_bucket_count;
+    uint64_t max_depth;
+    uint64_t depth;
+    std::chrono::milliseconds time;
+};
+
 template <typename Policy>
 class solver_impl {
 public:
     typename Policy::cache_type& cache;
 
-    struct node {
-        node(move) noexcept;
-        const move mv;
-        std::vector<move> child_moves;
-        boost::optional<lru_cache::item_list::iterator> cache_state; // Optional, as dominance moves aren't cached
-    };
-
-    struct result {
-        enum class type { TIMEOUT, SOLVED, UNSOLVABLE, MEM_LIMIT, TERMINATED };
-
-        type sol_type;
-        uint64_t states_searched;
-        uint64_t unique_states_searched;
-        uint64_t backtracks;
-        uint64_t dominance_moves;
-        uint64_t states_removed_from_cache;
-        uint64_t cache_size;
-        uint64_t cache_bucket_count;
-        uint64_t max_depth;
-        uint64_t depth;
-        std::chrono::milliseconds time;
-    };
+    using node = solver_node;
+    using result = solver_result;
 
     explicit solver_impl(const game_state_impl<Policy>&, typename Policy::cache_type&);
 
@@ -106,25 +113,8 @@ private:
     using solver = solver_impl<FlatPolicy>;
 #endif
 
-template <typename OutResult, typename InResult>
-OutResult convert_solver_result(const InResult& other) {
-    OutResult out;
-    out.sol_type = static_cast<typename OutResult::type>(other.sol_type);
-    out.states_searched = other.states_searched;
-    out.unique_states_searched = other.unique_states_searched;
-    out.backtracks = other.backtracks;
-    out.dominance_moves = other.dominance_moves;
-    out.states_removed_from_cache = other.states_removed_from_cache;
-    out.cache_size = other.cache_size;
-    out.cache_bucket_count = other.cache_bucket_count;
-    out.max_depth = other.max_depth;
-    out.depth = other.depth;
-    out.time = other.time;
-    return out;
-}
-
-std::ostream& operator<< (std::ostream&, const solver::result::type&);
-std::ostream& operator<< (std::ostream&, const solver::result&);
+std::ostream& operator<< (std::ostream&, const solver_result::type&);
+std::ostream& operator<< (std::ostream&, const solver_result&);
 void sigint_handler(int i);
 
 #endif //SOLVITAIRE_SOLVER_H

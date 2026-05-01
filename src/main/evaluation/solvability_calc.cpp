@@ -157,7 +157,7 @@ static solvability_calc::seed_result solve_seed_impl(int seed, millisec timeout,
     }();
 
     solver_impl<Policy> sol(gs, cache);
-    return solvability_calc::seed_result(seed, convert_solver_result<solver::result>(sol.run(boost::optional<std::chrono::milliseconds>(timeout))));
+    return solvability_calc::seed_result(seed, sol.run(boost::optional<std::chrono::milliseconds>(timeout)));
 }
 
 // Overload for non-NONE streamliner options
@@ -175,7 +175,7 @@ static solvability_calc::seed_result solve_seed_impl_with_opts(int seed, millise
     }();
 
     solver_impl<Policy> sol(gs, cache);
-    return solvability_calc::seed_result(seed, convert_solver_result<solver::result>(sol.run(boost::optional<std::chrono::milliseconds>(timeout))));
+    return solvability_calc::seed_result(seed, sol.run(boost::optional<std::chrono::milliseconds>(timeout)));
 }
 
 solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec timeout, const sol_rules& rules,

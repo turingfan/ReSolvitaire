@@ -26,33 +26,35 @@
 #include "../test_helper.h"
 #include "../../main/game/search-state/game_state.h"
 #include "../../main/game/global_cache.h"
+#include "../../main/game/cache_policy.h"
 
 typedef sol_rules::build_policy pol;
 typedef std::initializer_list<std::initializer_list<std::string>> string_il;
+using lru_gs = game_state_impl<LRUPolicy>;
 
 TEST(GlobalCache, CommutativeTableauPiles) {
     sol_rules rules;
     rules.tableau_pile_count = 3;
     rules.build_pol = sol_rules::build_policy::SAME_SUIT;
     rules.two_decks = true;  // LRU commutativity requires pile ordering; two_decks makes use_new_cache return false
-    game_state gs(rules, string_il{{},{},{}});
+    lru_gs gs(rules, string_il{{},{},{}});
     lru_cache cache(gs, 1000);
 
-    cache.insert               (game_state(rules, {{"AC"},{"2D"},{"3H"}}));
-    ASSERT_TRUE (cache.contains(game_state(rules, {{"2D"},{"3H"},{"AC"}})));
-    ASSERT_FALSE(cache.contains(game_state(rules, {{"3H"},{"2D"},{"3H"}})));
+    cache.insert_t               (lru_gs(rules, {{"AC"},{"2D"},{"3H"}}));
+    ASSERT_TRUE (cache.contains_t(lru_gs(rules, {{"2D"},{"3H"},{"AC"}})));
+    ASSERT_FALSE(cache.contains_t(lru_gs(rules, {{"3H"},{"2D"},{"3H"}})));
 
     // Test with empty piles
     cache.clear();
-    cache.insert               (game_state(rules, {{"4C"},{"5D"},{}}));
-    ASSERT_TRUE (cache.contains(game_state(rules, {{},{"4C"},{"5D"}})));
-    ASSERT_FALSE(cache.contains(game_state(rules, {{},{"4C"},{}})));
+    cache.insert_t               (lru_gs(rules, {{"4C"},{"5D"},{}}));
+    ASSERT_TRUE (cache.contains_t(lru_gs(rules, {{},{"4C"},{"5D"}})));
+    ASSERT_FALSE(cache.contains_t(lru_gs(rules, {{},{"4C"},{}})));
 
     // Test with piles of size > 1
     cache.clear();
-    cache.insert               (game_state(rules, {{"6C","7D"},{"8C"},{"9D"}}));
-    ASSERT_TRUE (cache.contains(game_state(rules, {{"8C"},{"6C","7D"},{"9D"}})));
-    ASSERT_FALSE(cache.contains(game_state(rules, {{"8C"},{"6C","KD"},{"9D"}})));
+    cache.insert_t               (lru_gs(rules, {{"6C","7D"},{"8C"},{"9D"}}));
+    ASSERT_TRUE (cache.contains_t(lru_gs(rules, {{"8C"},{"6C","7D"},{"9D"}})));
+    ASSERT_FALSE(cache.contains_t(lru_gs(rules, {{"8C"},{"6C","KD"},{"9D"}})));
 }
 
 TEST(GlobalCache, CommutativeReserve) {
@@ -60,24 +62,24 @@ TEST(GlobalCache, CommutativeReserve) {
     rules.reserve_size = 3;
     rules.build_pol = sol_rules::build_policy::SAME_SUIT;
     rules.two_decks = true;  // LRU commutativity requires pile ordering; two_decks makes use_new_cache return false
-    game_state gs(rules, string_il{{},{},{}});
+    lru_gs gs(rules, string_il{{},{},{}});
     lru_cache cache(gs, 1000);
 
-    cache.insert               (game_state(rules, {{"AC"},{"2D"},{"3H"}}));
-    ASSERT_TRUE (cache.contains(game_state(rules, {{"2D"},{"3H"},{"AC"}})));
-    ASSERT_FALSE(cache.contains(game_state(rules, {{"3H"},{"2D"},{"3H"}})));
+    cache.insert_t               (lru_gs(rules, {{"AC"},{"2D"},{"3H"}}));
+    ASSERT_TRUE (cache.contains_t(lru_gs(rules, {{"2D"},{"3H"},{"AC"}})));
+    ASSERT_FALSE(cache.contains_t(lru_gs(rules, {{"3H"},{"2D"},{"3H"}})));
 
     // Test with empty piles
     cache.clear();
-    cache.insert               (game_state(rules, {{"4C"},{"5D"},{}}));
-    ASSERT_TRUE (cache.contains(game_state(rules, {{},{"4C"},{"5D"}})));
-    ASSERT_FALSE(cache.contains(game_state(rules, {{},{"4C"},{}})));
+    cache.insert_t               (lru_gs(rules, {{"4C"},{"5D"},{}}));
+    ASSERT_TRUE (cache.contains_t(lru_gs(rules, {{},{"4C"},{"5D"}})));
+    ASSERT_FALSE(cache.contains_t(lru_gs(rules, {{},{"4C"},{}})));
 
     // Test with piles of size > 1
     cache.clear();
-    cache.insert               (game_state(rules, {{"6C","7D"},{"8C"},{"9D"}}));
-    ASSERT_TRUE (cache.contains(game_state(rules, {{"8C"},{"6C","7D"},{"9D"}})));
-    ASSERT_FALSE(cache.contains(game_state(rules, {{"8C"},{"6C","KD"},{"9D"}})));
+    cache.insert_t               (lru_gs(rules, {{"6C","7D"},{"8C"},{"9D"}}));
+    ASSERT_TRUE (cache.contains_t(lru_gs(rules, {{"8C"},{"6C","7D"},{"9D"}})));
+    ASSERT_FALSE(cache.contains_t(lru_gs(rules, {{"8C"},{"6C","KD"},{"9D"}})));
 }
 
 TEST(GlobalCache, CommutativeCells) {
@@ -85,16 +87,16 @@ TEST(GlobalCache, CommutativeCells) {
     rules.cells = 3;
     rules.build_pol = sol_rules::build_policy::SAME_SUIT;
     rules.two_decks = true;  // LRU commutativity requires pile ordering; two_decks makes use_new_cache return false
-    game_state gs(rules, string_il{{},{},{}});
+    lru_gs gs(rules, string_il{{},{},{}});
     lru_cache cache(gs, 1000);
 
-    cache.insert               (game_state(rules, {{"AC"},{"2D"},{"3H"}}));
-    ASSERT_TRUE (cache.contains(game_state(rules, {{"2D"},{"3H"},{"AC"}})));
-    ASSERT_FALSE(cache.contains(game_state(rules, {{"3H"},{"2D"},{"3H"}})));
+    cache.insert_t               (lru_gs(rules, {{"AC"},{"2D"},{"3H"}}));
+    ASSERT_TRUE (cache.contains_t(lru_gs(rules, {{"2D"},{"3H"},{"AC"}})));
+    ASSERT_FALSE(cache.contains_t(lru_gs(rules, {{"3H"},{"2D"},{"3H"}})));
 
     // Test with empty piles
     cache.clear();
-    cache.insert               (game_state(rules, {{"4C"},{"5D"},{}}));
-    ASSERT_TRUE (cache.contains(game_state(rules, {{},{"4C"},{"5D"}})));
-    ASSERT_FALSE(cache.contains(game_state(rules, {{},{"4C"},{}})));
+    cache.insert_t               (lru_gs(rules, {{"4C"},{"5D"},{}}));
+    ASSERT_TRUE (cache.contains_t(lru_gs(rules, {{},{"4C"},{"5D"}})));
+    ASSERT_FALSE(cache.contains_t(lru_gs(rules, {{},{"4C"},{}})));
 }
