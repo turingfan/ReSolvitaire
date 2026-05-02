@@ -49,29 +49,4 @@ inline bool use_predecessor_cache(const sol_rules& rules) {
     return rules.accordion_size > 0;
 }
 
-// Returns true if game_state needs to compute and maintain the Zobrist hash
-// (and therefore maintain compact_state payload as a descriptor tracking store — KI-9).
-// True for all flat-cache variants: flat, hash-only, predecessor.
-// When cache_type is empty (test construction, dual_cache) both flags default to true
-// so existing behaviour is preserved — see KI-10.
-inline bool needs_flat_hash(const sol_rules& rules, bool suit_sym,
-                             bool force_lru, const std::string& cache_type) {
-    if (cache_type.empty()) return true;   // KI-10: safe default for tests / dual_cache
-    if (force_lru) return false;
-    return use_predecessor_cache(rules)
-        || cache_type == "hash-only"
-        || use_new_cache(rules, suit_sym);
-}
-
-// Returns true if the cache uses the full compact_state payload as a cache key
-// (flat_cache and predecessor_flat_cache). False for hash-only (hash only) and LRU.
-// Note: computing_flat_payload is always a strict subset of computing_flat_hash.
-inline bool needs_flat_payload(const sol_rules& rules, bool suit_sym,
-                                bool force_lru, const std::string& cache_type) {
-    if (cache_type.empty()) return true;   // KI-10: safe default for tests / dual_cache
-    if (force_lru) return false;
-    if (cache_type == "hash-only") return false;
-    return use_predecessor_cache(rules) || use_new_cache(rules, suit_sym);
-}
-
 #endif

@@ -1,6 +1,6 @@
 # Pickup: feature/templated-dispatch
 
-**Last updated:** 2026-05-01
+**Last updated:** 2026-05-02
 **Branch:** `feature/templated-dispatch` (from `dev` at `1dd0882`)
 
 ## What This Branch Does
@@ -8,7 +8,9 @@
 Replaces the dual mechanism (runtime booleans + preprocessor `#ifdef` guards) for cache policy selection in `game_state` with a single C++ template approach: `game_state_impl<Policy>`. Also templates the solver and cache layer to eliminate all virtual dispatch from the DFS hot path (Option B2).
 
 Design document: `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`
-Full plan: `docs/templated-dispatch/commit3-plan.md` (includes 2026-04-28 amendment)
+Original plan: `docs/templated-dispatch/ImplementationPlan.md`
+Commits 3a/3b plan: `docs/templated-dispatch/commit3-plan.md` (includes 2026-04-28 amendment)
+Commits 4-6 plan: `docs/templated-dispatch/commits-4-6-plan.md`
 
 ## Commits Done
 
@@ -57,17 +59,34 @@ Full plan: `docs/templated-dispatch/commit3-plan.md` (includes 2026-04-28 amendm
 - **All tests pass:** unit tests 2/2, Level 1-3 regression 12/12 (all four variants, node counts enforced)
 - **Skipped tests (KI-18):** dual_cache parity tests and related diagnostics disabled with `#if 0` — need architectural redesign for templated solver
 
+### Commit 4: Rescue tests + remove dead code
+- Rescued 2 skipped tests in `solver_cache_selection_test.cpp`:
+  - `BlackHoleUsesNewCache`: rewritten to use `solver_impl<FlatPolicy>` + `generic_flat_cache<CompactStatePolicy>`
+  - `SolverWithFlatCacheProducesSameOutcome`: rewritten for determinism testing with templated solver
+- Deleted `cache_factory.h` — `make_cache()` had zero callers after templated dispatch
+- Removed `needs_flat_hash()` and `needs_flat_payload()` from `cache_interface.h` — zero callers
+- Conditional `zobrist_hash_value` member for LRU deferred: only 8 bytes dead storage, all code paths already eliminated by `if constexpr`, C++17 conditional member approaches add disproportionate complexity
+- **All tests pass:** unit tests 2/2 (3/3 solver selection tests), Level 1 regression 4/4
+
+## Next: Commit 5 — Remove legacy cache code
+
+Per `docs/templated-dispatch/commits-4-6-plan.md`:
+- Delete legacy cache implementations (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`)
+- Delete `dual_cache.h` and all disabled dual-cache test files
+- Convert `predecessor_cache_test.cpp` to use `generic_flat_cache<PredecessorClusterPolicy>`
+- Update CMakeLists.txt
+
 ## Key Decisions
 
 - C++ standard: C++17 (`if constexpr`)
-- Conditional members: save ~90 bytes for LRU (use EBO) — deferred
+- Conditional members: template conversion already saved ~90 bytes via `empty_descriptor_store`; remaining dead `zobrist_hash_value` (8 bytes) deferred — complexity vs savings not justified in C++17
 - Solver: template on Policy (Option B2 — zero virtual dispatch)
 - Cache layer: `Policy::cache_type` = `generic_flat_cache<*>` for flat variants, `lru_cache` for LRU
-- Old concrete caches (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`) kept for dual_cache parity tests only
+- Old concrete caches (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`) to be removed in Commit 5
 - `cache_interface` retained for test infrastructure, not used in solver
 - `solve_game()` return type: Option C (reporting inside dispatch switch)
 - `skip_pile_ordering`: Flat=true, HashOnly=true, Predecessor=false (conservative), LRU=false
-- All `#ifdef` guards eliminated by end of phase
+- `SOLVITAIRE_COMPUTES_FLAT_HASH` eliminated; `SOLVITAIRE_*_ONLY` guards retained (build-variant mechanism, not legacy policy logic)
 - Testing: node-count oracles enforce identical traversal for Level 1-3
 - Workflow: Opus plans each commit, writes prompts for lower model, verifies
 
