@@ -117,7 +117,7 @@ solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t 
 // ─── dispatch_solve ──────────────────────────────────────────────────────────
 // Selects the correct policy at compile time based on game rules and options.
 
-solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
+static solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                              game_state::streamliner_options str_opts,
                              boost::optional<int> seed,
                              boost::optional<const Document&> in_doc,
