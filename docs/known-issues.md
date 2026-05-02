@@ -154,14 +154,15 @@ Investigation commit: `4c4b022`
 
 ### 8. Redundant Hash/Payload Computation in Default Binary for LRU Games
 
-**Status:** RESOLVED by templated dispatch (Commits 3a + 3b on `feature/templated-dispatch-wip-commit3a`)
+**Status:** RESOLVED by templated dispatch (Phase A, branch `feature/templated-dispatch`, Commits 0-6)
 **Impact:** Was: wasted hash and payload computation on every DFS move for LRU games
 **Proposal doc:** `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`
 
 `game_state_impl<Policy>` uses `if constexpr (Policy::computes_hash)` to eliminate all
-hash/payload computation at compile time for `LRUPolicy`. The dispatch switch in
-`main.cpp` selects the correct Policy once per solve; inside the DFS loop there are
-zero branches and zero dead stores. Pending completion of Commit 3b (test fixes).
+hash/payload computation at compile time for `LRUPolicy`. `solver_impl<Policy>` holds
+`Policy::cache_type&` directly — zero virtual dispatch in the DFS hot path. Legacy
+concrete caches (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`) removed;
+all flat variants now use `generic_flat_cache<ClusterPolicy>`.
 
 ### 14. Descriptor State Tracked Only Inside `compact_state payload`
 
@@ -239,30 +240,22 @@ Measured allocations match theory (e.g., 50M clusters: 800 MB vs 3,200 MB).
 
 This approach generalises: `solvitaire-flat` and `solvitaire-lru` could have per-variant oracles generated similarly if node-count validation is desired for those variants.
 
-### 18. Dual-Cache Parity Tests Incompatible With Templated Solver Architecture
+### 18. Cache Parity Testing Needs New Approach
 
-**Status:** Open; tests disabled with `#if 0` in Commit 3b
-**Impact:** No parity cross-checking between cache implementations until tests are redesigned
+**Status:** Open; old dual-cache infrastructure deleted in Commit 5
+**Impact:** No parity cross-checking between cache implementations until search trace is built
 
-The `dual_cache` test infrastructure (`dual_cache_test.cpp`, `generic_flat_dual_cache_test.cpp`,
-`predecessor_dual_cache_test.cpp`) and related diagnostics (`mismatch_analyzer.cpp`,
-`mismatch_diagnostic.cpp`) rely on instantiating the solver with a `cache_interface&`
-(virtual dispatch). After Commit 3b, `solver_impl<Policy>` holds `Policy::cache_type&`
-directly — it cannot accept a polymorphic `cache_interface`.
+The old `dual_cache` test infrastructure (wrapping two `cache_interface` implementations)
+was incompatible with `solver_impl<Policy>` holding `Policy::cache_type&` directly. All
+dual-cache test files and the `dual_cache.h` wrapper were deleted in Commit 5 as part of
+legacy cache removal.
 
-**Why this matters:** Dual-cache parity tests were valuable for catching correctness bugs
-during the flat-cache development (e.g. KI-16). The capability should be preserved going
-forward but may need a different approach than the current infrastructure.
-
-**Possible approaches:**
-1. Template `dual_cache` on two policies, running two `solver_impl` instances in parallel
-   and comparing results after each move
-2. Run two separate solves (one per policy) and compare final outcomes + node counts
-3. A test-only solver variant that accepts `cache_interface&` for parity checking
-
-**Current state:** Tests disabled with `#if 0` wrapping all test bodies. This is a coarse
-mechanism — some non-dual-cache tests in these files may be independently valid and should
-be reviewed for selective re-enablement.
+**Planned replacement:** Search trace infrastructure — instrument `solver_impl<Policy>` to
+log moves made (shared notation from `move.h`), cache insert/contains results (hit/miss),
+and eviction events. Run two solves with different policies, diff the traces. This is more
+powerful than the old approach: also useful for debugging, performance analysis, and
+regression diagnosis. Hashes are NOT logged (hashing can legitimately change); move
+sequences are the invariant.
 
 ### 17. Byte-Array Descriptor Store Not Yet Used on Flat-Cache Path
 

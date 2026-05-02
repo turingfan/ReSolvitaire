@@ -1,9 +1,8 @@
 # Proposal: Templated game_state with Single Runtime Dispatch
 
 **Date:** 2026-04-16  
-**Status:** Accepted in principle — deferred until after Phase 3 workpackage is complete  
-**Prerequisite:** Phase 3 completed, including Phase 3 boolean-guard short-term fix (see §Short-Term Fix)  
-**Tracked in:** `docs/known-issues.md` §8
+**Status:** Implemented (Phase A complete, branch `feature/templated-dispatch`, Commits 0-6)  
+**Tracked in:** `docs/known-issues.md` §8 (RESOLVED)
 
 ---
 

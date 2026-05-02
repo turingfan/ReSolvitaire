@@ -111,20 +111,18 @@ Key CLI options: `--type`, `--random <seed>`, `--json`, `--reveal-hidden`, `--st
 ### Core Flow
 
 1. `main.cpp` parses CLI args via `command_line_helper`, constructs `sol_rules` (from preset or JSON), and dispatches to solver, benchmarking, or solvability modes.
-2. `solver.cpp` runs DFS. At each node it calls `game_state::get_dominance_move()` (free simplifications), then `game_state::get_legal_moves()`, then recurses. States are hashed and checked against the transposition table to avoid revisiting.
-3. `game_state` manages pile state with copy/restore semantics for backtracking. It holds multiple pile arrays: `foundations`, `tableau`, `cells`, `reserve`, `waste`, `stock`.
-4. Cache selection (`cache_factory.h:make_cache()`): 4-way selection — Accordion games use `predecessor_flat_cache` (128-byte clusters, predecessor-encoded state); most single-deck games use `flat_cache` (descriptor-based Zobrist, 64-byte clusters) or `hash_only_cache` (hash-only, 16-byte clusters); two-deck, spider-stock, and suit-symmetry games fall back to `lru_cache` (Boost MultiIndex, pile-order canonicalised).
+2. `solver_impl<Policy>` runs DFS. At each node it calls `game_state::get_dominance_move()` (free simplifications), then `game_state::get_legal_moves()`, then recurses. States are hashed and checked against the transposition table to avoid revisiting. The solver is templated on cache policy — zero virtual dispatch in the DFS hot path.
+3. `game_state_impl<Policy>` manages pile state with copy/restore semantics for backtracking. It holds multiple pile arrays: `foundations`, `tableau`, `cells`, `reserve`, `waste`, `stock`. Hash/payload computation is controlled at compile time via `if constexpr (Policy::computes_hash)`.
+4. Cache dispatch (`main.cpp:dispatch_solve()`): compile-time policy selection — Accordion games use `PredecessorPolicy` (128-byte clusters, predecessor-encoded state); most single-deck games use `FlatPolicy` (descriptor-based Zobrist, 64-byte clusters) or `HashOnlyPolicy` (hash-only, 16-byte clusters); two-deck, spider-stock, and suit-symmetry games use `LRUPolicy` / `lru_cache` (Boost MultiIndex, pile-order canonicalised). All flat variants use `generic_flat_cache<ClusterPolicy>`.
 
 ### Key Classes
 
 | Class | File | Purpose |
 |---|---|---|
-| `solver` | `src/main/solver/solver.h/cpp` | DFS engine, result reporting |
-| `game_state` | `src/main/game/search-state/game_state.h/cpp` | State, move generation, undo |
-| `flat_cache` | `src/main/game/flat_cache.h/cpp` | Fast transposition table (descriptor Zobrist, 64-byte clusters) |
-| `hash_only_cache` | `src/main/game/hash_only_cache.h/cpp` | Hash-only flat cache (16-byte clusters, no payload) |
-| `predecessor_flat_cache` | `src/main/game/predecessor_flat_cache.h/cpp` | Accordion predecessor-encoded cache (128-byte clusters) |
-| `cache_factory.h` | `src/main/game/cache_factory.h` | Centralised `make_cache()` — 4-way cache selection |
+| `solver_impl<Policy>` | `src/main/solver/solver.h/cpp` | Templated DFS engine, result reporting |
+| `game_state_impl<Policy>` | `src/main/game/search-state/game_state.h/cpp` | State, move generation, undo |
+| `cache_policy.h` | `src/main/game/cache_policy.h` | Policy structs: `FlatPolicy`, `HashOnlyPolicy`, `PredecessorPolicy`, `LRUPolicy` |
+| `generic_flat_cache<P>` | `src/main/game/generic_flat_cache.h` | Templated flat transposition table (cluster size varies by policy) |
 | `lru_cache` | `src/main/game/global_cache.h/cpp` | Transposition table with LRU eviction (Boost MultiIndex) |
 | `platform_memory.h` | `src/main/game/platform_memory.h` | mmap lazy allocation RAII (`platform::lazy_buffer`) |
 | `sol_rules` | `src/main/game/sol_rules.h/cpp` | Game rule enums (build policy, space policy, etc.) |

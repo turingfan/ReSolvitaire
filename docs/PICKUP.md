@@ -8,9 +8,7 @@
 Replaces the dual mechanism (runtime booleans + preprocessor `#ifdef` guards) for cache policy selection in `game_state` with a single C++ template approach: `game_state_impl<Policy>`. Also templates the solver and cache layer to eliminate all virtual dispatch from the DFS hot path (Option B2).
 
 Design document: `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`
-Original plan: `docs/templated-dispatch/ImplementationPlan.md`
-Commits 3a/3b plan: `docs/templated-dispatch/commit3-plan.md` (includes 2026-04-28 amendment)
-Commits 4-6 plan: `docs/templated-dispatch/commits-4-6-plan.md`
+Plans and prompts: archived to `01-Knowledge-Base/Archive/templated-dispatch/`
 
 ## Commits Done
 
@@ -82,11 +80,17 @@ Commits 4-6 plan: `docs/templated-dispatch/commits-4-6-plan.md`
 - Updated `CMakeLists.txt` to remove all deleted files
 - **All tests pass:** unit tests 2/2, Level 1 regression 4/4
 
-## Next: Commit 6 — Final verification + docs
+### Commit 6: Final verification + docs
+- Level 1-3 regression: 12/12 (all four variants, node counts enforced)
+- Updated `docs/proposals/PROPOSAL-templated-game-state-dispatch.md` — status to "Implemented"
+- Updated `docs/known-issues.md` — KI-8 wording, KI-18 updated (dual-cache deleted, search trace planned)
+- Updated `CLAUDE.md` architecture section (solver/game_state templated, legacy caches removed)
+- Archived `docs/templated-dispatch/` to `01-Knowledge-Base/Archive/templated-dispatch/`
+- **Phase A complete.**
 
-Per `docs/templated-dispatch/commits-4-6-plan.md`:
-- Full Level 1-3 regression + container build
-- Update proposal doc, known-issues, CLAUDE.md, PICKUP, AI-Pickup
+## Phase A Status: COMPLETE
+
+All templated dispatch work is done. Branch ready for merge planning to `dev`.
 
 ## Key Decisions
 
