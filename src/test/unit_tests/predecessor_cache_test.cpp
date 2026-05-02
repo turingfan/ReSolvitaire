@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../../main/game/predecessor_flat_cache.h"
+#include "../../main/game/generic_flat_cache.h"
 #include "../../main/game/predecessor_state.h"
 #include "../../main/game/zobrist.h"
 #include "../../main/game/search-state/game_state.h"
@@ -29,7 +29,7 @@ TEST(PredecessorCacheNonAccordion, FreeCellDoesNotUsePredecessorCache) {
 
 // Test 3: Basic insert and contains
 TEST_F(PredecessorCacheTest, BasicInsertAndContains) {
-    predecessor_flat_cache cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     EXPECT_TRUE(cache.insert(gs));
@@ -39,7 +39,7 @@ TEST_F(PredecessorCacheTest, BasicInsertAndContains) {
 
 // Test 4: Duplicate insert returns false
 TEST_F(PredecessorCacheTest, DuplicateInsertReturnsFalse) {
-    predecessor_flat_cache cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs(rules, 42, game_state::streamliner_options::NONE);
 
     EXPECT_TRUE(cache.insert(gs));
@@ -49,7 +49,7 @@ TEST_F(PredecessorCacheTest, DuplicateInsertReturnsFalse) {
 
 // Test 5: Different states are distinct
 TEST_F(PredecessorCacheTest, DifferentStatesAreDistinct) {
-    predecessor_flat_cache cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs1(rules, 1, game_state::streamliner_options::NONE);
     game_state gs2(rules, 2, game_state::streamliner_options::NONE);
 
@@ -62,7 +62,7 @@ TEST_F(PredecessorCacheTest, DifferentStatesAreDistinct) {
 
 // Test 6: State after move is different
 TEST_F(PredecessorCacheTest, StateAfterMoveIsDifferent) {
-    predecessor_flat_cache cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     cache.insert(gs);
@@ -77,7 +77,7 @@ TEST_F(PredecessorCacheTest, StateAfterMoveIsDifferent) {
 
 // Test 7: Undo restores to cached state
 TEST_F(PredecessorCacheTest, UndoRestoresToCachedState) {
-    predecessor_flat_cache cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     uint64_t hash_before = gs.get_predecessor_zobrist_hash();
@@ -147,7 +147,7 @@ TEST_F(PredecessorCacheTest, PredecessorHashChangesAfterMove) {
 
 // Test 9: Clear empties the cache
 TEST_F(PredecessorCacheTest, ClearEmptiesCache) {
-    predecessor_flat_cache cache(1000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(1000);
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
     cache.insert(gs);
@@ -160,7 +160,7 @@ TEST_F(PredecessorCacheTest, ClearEmptiesCache) {
 
 // Test 10: Multiple moves and undos maintain consistency
 TEST_F(PredecessorCacheTest, MultipleMovesAndUndos) {
-    predecessor_flat_cache cache(10000);
+    generic_flat_cache<PredecessorClusterPolicy> cache(10000);
     game_state gs(rules, 5, game_state::streamliner_options::NONE);
 
     // Insert initial state

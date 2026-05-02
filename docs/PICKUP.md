@@ -68,13 +68,25 @@ Commits 4-6 plan: `docs/templated-dispatch/commits-4-6-plan.md`
 - Conditional `zobrist_hash_value` member for LRU deferred: only 8 bytes dead storage, all code paths already eliminated by `if constexpr`, C++17 conditional member approaches add disproportionate complexity
 - **All tests pass:** unit tests 2/2 (3/3 solver selection tests), Level 1 regression 4/4
 
-## Next: Commit 5 — Remove legacy cache code
+### Commit 5: Remove legacy cache code
+- Deleted legacy cache implementations (zero production callers, fully superseded by `generic_flat_cache<Policy>`):
+  - `flat_cache.h/cpp`, `hash_only_cache.h/cpp`, `predecessor_flat_cache.h/cpp`
+- Deleted `dual_cache.h` (all consumers were `#if 0`, includes deleted `flat_cache.h`)
+- Deleted legacy cache test files (fully covered by `generic_flat_cache_test.cpp`):
+  - `flat_cache_test.cpp`, `hash_only_cache_test.cpp`
+- Deleted disabled dual-cache test files (all `#if 0`):
+  - `dual_cache_test.cpp`, `generic_flat_dual_cache_test.cpp`, `predecessor_dual_cache_test.cpp`
+  - `mismatch_analyzer.cpp`, `mismatch_diagnostic.cpp`
+- Converted `predecessor_cache_test.cpp` to use `generic_flat_cache<PredecessorClusterPolicy>` (unique predecessor-semantic tests preserved)
+- Removed `USE_GENERIC_CACHE` CMake option (dead after cache_factory.h deletion)
+- Updated `CMakeLists.txt` to remove all deleted files
+- **All tests pass:** unit tests 2/2, Level 1 regression 4/4
+
+## Next: Commit 6 — Final verification + docs
 
 Per `docs/templated-dispatch/commits-4-6-plan.md`:
-- Delete legacy cache implementations (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`)
-- Delete `dual_cache.h` and all disabled dual-cache test files
-- Convert `predecessor_cache_test.cpp` to use `generic_flat_cache<PredecessorClusterPolicy>`
-- Update CMakeLists.txt
+- Full Level 1-3 regression + container build
+- Update proposal doc, known-issues, CLAUDE.md, PICKUP, AI-Pickup
 
 ## Key Decisions
 
@@ -82,7 +94,7 @@ Per `docs/templated-dispatch/commits-4-6-plan.md`:
 - Conditional members: template conversion already saved ~90 bytes via `empty_descriptor_store`; remaining dead `zobrist_hash_value` (8 bytes) deferred — complexity vs savings not justified in C++17
 - Solver: template on Policy (Option B2 — zero virtual dispatch)
 - Cache layer: `Policy::cache_type` = `generic_flat_cache<*>` for flat variants, `lru_cache` for LRU
-- Old concrete caches (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`) to be removed in Commit 5
+- Legacy concrete caches (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`) removed in Commit 5
 - `cache_interface` retained for test infrastructure, not used in solver
 - `solve_game()` return type: Option C (reporting inside dispatch switch)
 - `skip_pile_ordering`: Flat=true, HashOnly=true, Predecessor=false (conservative), LRU=false
