@@ -201,7 +201,7 @@ The CMakeLists.txt defines three variant executable targets (`solvitaire-flat`, 
 
 ### 12. Hash-Only vs Flat Cache Total Memory Usage Discrepancy Under Investigation
 
-**Status:** Open; requires further investigation  
+**Status:** RESOLVED: human error in running experiments. Led to optimisations separately. 
 **Impact:** Memory efficiency claims for hash-only cache not yet confirmed under realistic benchmarks
 
 **Observed:** Cache cluster allocations are correct in theory:
@@ -240,22 +240,6 @@ Measured allocations match theory (e.g., 50M clusters: 800 MB vs 3,200 MB).
 
 This approach generalises: `solvitaire-flat` and `solvitaire-lru` could have per-variant oracles generated similarly if node-count validation is desired for those variants.
 
-### 18. Cache Parity Testing Needs New Approach
-
-**Status:** Open; old dual-cache infrastructure deleted in Commit 5
-**Impact:** No parity cross-checking between cache implementations until search trace is built
-
-The old `dual_cache` test infrastructure (wrapping two `cache_interface` implementations)
-was incompatible with `solver_impl<Policy>` holding `Policy::cache_type&` directly. All
-dual-cache test files and the `dual_cache.h` wrapper were deleted in Commit 5 as part of
-legacy cache removal.
-
-**Planned replacement:** Search trace infrastructure — instrument `solver_impl<Policy>` to
-log moves made (shared notation from `move.h`), cache insert/contains results (hit/miss),
-and eviction events. Run two solves with different policies, diff the traces. This is more
-powerful than the old approach: also useful for debugging, performance analysis, and
-regression diagnosis. Hashes are NOT logged (hashing can legitimately change); move
-sequences are the invariant.
 
 ### 17. Byte-Array Descriptor Store Not Yet Used on Flat-Cache Path
 
@@ -276,6 +260,24 @@ separately copy into a `compact_state` for the actual cache key.
 
 Magnitude TBD — benchmark before acting. Only worth doing if profiling shows nibble
 operations are a measurable fraction of total solve time.
+
+
+### 18. Cache Parity Testing Needs New Approach
+
+**Status:** Open; old dual-cache infrastructure deleted in Commit 5
+**Impact:** No parity cross-checking between cache implementations until search trace is built
+
+The old `dual_cache` test infrastructure (wrapping two `cache_interface` implementations)
+was incompatible with `solver_impl<Policy>` holding `Policy::cache_type&` directly. All
+dual-cache test files and the `dual_cache.h` wrapper were deleted in Commit 5 as part of
+legacy cache removal.
+
+**Planned replacement:** Search trace infrastructure — instrument `solver_impl<Policy>` to
+log moves made (shared notation from `move.h`), cache insert/contains results (hit/miss),
+and eviction events. Run two solves with different policies, diff the traces. This is more
+powerful than the old approach: also useful for debugging, performance analysis, and
+regression diagnosis. Hashes are NOT logged (hashing can legitimately change); move
+sequences are the invariant.
 
 ---
 

@@ -80,7 +80,13 @@
       "Bash(ctest -R \"unit_tests|regression_level[123]\" --output-on-failure)",
       "Bash(cmake --build cmake-build-release --target solvitaire-flat)",
       "Bash(ctest -R \"unit_tests|regression_level[123]\")",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(./bin/unit_tests:*)",
+      "Bash(ctest -R \"regression_level[1-3]\" --output-on-failure)",
+      "Bash(./scripts/container-build.sh:*)",
+      "Bash(container rmi:*)",
+      "Bash(container builder:*)",
+      "Bash(container system:*)"
     ]
   }
 }
