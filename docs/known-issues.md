@@ -113,6 +113,35 @@ python3 scripts/compare_benchmarks.py \
 
 **Future fix:** Could add `/usr/bin/time` measurement to modern solver benchmarks for accuracy.
 
+### 7. Accordion Debug Assert Crash (`assert_payload_consistent`)
+
+**Affected test:** `PredecessorDualCacheTest.AccordionAgreement` (deleted in Commit 5; see below)
+**Status:** Open; deferred — may become moot if `PredecessorPolicy` is removed in Phase B
+**Impact:** In debug builds, accordion moves produce incorrect incremental payload; underlying descriptor update bug still present in code
+
+In debug builds, `assert_payload_consistent()` fires during accordion moves: the incremental
+`compact_state` payload diverges from the scratch-recomputed payload. This means
+`make_move`/`undo_move` contains a descriptor update bug specific to accordion moves.
+
+Confirmed pre-existing at commit `4c4b022`, before any Phase 0/1 work. Root cause is a bug
+in the descriptor update logic for accordion moves — unrelated to the pile-first undo
+refactor or templated dispatch. `assert_payload_consistent()` is still compiled in and called
+at `solver.cpp:140` (in debug builds only); `generic_flat_cache_test.cpp:14–17` has a comment
+warning future developers about this crash signature.
+
+The test that caught it (`PredecessorDualCacheTest.AccordionAgreement`) was deleted in
+Commit 5 as part of dual-cache infrastructure removal. The underlying bug is therefore
+untested but still present.
+
+**Why deferred:** Accordion uses `PredecessorPolicy`, which was out of scope for Phase 1
+(pile-first undo) and Phase A (templated dispatch). Decision to ignore was made in commit
+`706cb6d`.
+
+**Pending decision for Phase B:** If `PredecessorPolicy` is retired when the flat cache is
+extended to accordion games (Phase B), this bug becomes moot — the buggy descriptor update
+code would be removed along with the policy. If `PredecessorPolicy` is retained, this bug
+needs fixing before accordion regression tests can be run in debug mode.
+
 ### 13. Per-Variant Oracles for `solvitaire-hash-only` Node Counts (Option B partially done)
 
 **Status:** Levels 1–4 done; Level 5 still uses `--compare-outcome-only`
