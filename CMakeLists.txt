@@ -80,6 +80,8 @@ set(sources_game
 set(sources_solver
         src/main/solver/solver.cpp
         src/main/solver/solver.h
+        src/main/solver/search_trace.cpp
+        src/main/solver/search_trace.h
 )
 
 set(sources_evaluation
@@ -261,6 +263,19 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "The build configuration" FORCE)
 endif()
 
+# Search trace — on by default for debug builds, off for release.
+# Override with -DSOLVITAIRE_TRACE=ON/OFF at configure time.
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    option(SOLVITAIRE_TRACE "Enable search trace instrumentation" ON)
+else()
+    option(SOLVITAIRE_TRACE "Enable search trace instrumentation" OFF)
+endif()
+if(SOLVITAIRE_TRACE)
+    message(STATUS "Search trace: ENABLED (SOLVITAIRE_SEARCH_TRACE)")
+else()
+    message(STATUS "Search trace: disabled")
+endif()
+
 add_executable(solvitaire ${main} ${sources})
 set_property(TARGET solvitaire PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_link_libraries(solvitaire PRIVATE ${Boost_LIBRARIES})
@@ -288,6 +303,13 @@ target_link_libraries(solvitaire-lru PRIVATE ${Boost_LIBRARIES})
 
 add_executable(unit_tests ${sources_test} ${sources})
 target_link_libraries(unit_tests PRIVATE gtest_main ${Boost_LIBRARIES})
+
+# Apply search trace define to all targets now that they are all declared.
+if(SOLVITAIRE_TRACE)
+    foreach(tgt solvitaire solvitaire-flat solvitaire-hash-only solvitaire-lru unit_tests)
+        target_compile_definitions(${tgt} PRIVATE SOLVITAIRE_SEARCH_TRACE)
+    endforeach()
+endif()
 
 enable_testing()
 
