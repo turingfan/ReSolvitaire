@@ -1,7 +1,8 @@
 # Proposal: Search Trace Infrastructure
 
-**Date:** 2026-05-04
-**Status:** Proposed — awaiting review before implementation
+**Date:** 2026-05-04  
+**Updated:** 2026-05-05  
+**Status:** Approved — implementation plan at `docs/search-trace/implementation-plan.md`
 **Tracked in:** `docs/known-issues.md` §18
 
 ---
@@ -68,46 +69,54 @@ considering the actual use case, gzip was dropped:
 Investigated spdlog, loguru, Quill, NanoLog, Boost.Log, and log4cplus. Conclusion:
 **a small bespoke implementation is the right choice.** The reasons:
 
-- No library natively provides gzip output, a monotonic operation counter, or our exact
-  fixed-field line format. Every library would require a custom formatter and counter
-  wrapper — roughly the same effort as writing directly.
+- No library natively provides a monotonic operation counter or our exact fixed-field line
+  format. Every library would require a custom formatter and counter wrapper — roughly the
+  same effort as writing directly.
 - Our use case is narrow: single-threaded, one output file, ~12 event types, plain text.
   General-purpose logging libraries bring threading infrastructure, log-level hierarchies,
   and sink management that we don't need.
-- Total implementation is approximately 80–100 lines in `search_trace.cpp`. There is no
-  meaningful complexity to delegate.
+- Total implementation is approximately 80–100 lines in `search_trace.cpp`.
 
 **Patterns adopted from library research:**
 
 - **`#ifdef SOLVITAIRE_SEARCH_TRACE` for compile-time elimination** — macros expand to
   `((void)0)` when the guard is not defined. Same approach as spdlog's
   `SPDLOG_ACTIVE_LEVEL`. Compiler completely removes call sites and their arguments.
-- **`if (trace_writer::instance().enabled())` for runtime gate** — a plain `bool` check
-  inside the enabled macro path. Because the solver is single-threaded, no atomic or
-  memory-order overhead is needed. The branch is perfectly predicted after the first call.
+- **Plain `bool` runtime gate** — single-threaded, no atomic needed. Branch is perfectly
+  predicted after the first call.
 - **Lazy evaluation is safe here** — macro arguments are simple values (a `move` struct, a
   depth `uint64_t`, a count `size_t`). No expensive expressions at callsites, so argument
   evaluation when disabled is not a concern. Worth a comment in the header for future
   maintainers.
-- **Stack-buffer formatting** — `snprintf` into a local `char[128]` per event, then
+- **Stack-buffer formatting** — `snprintf` into a local `char[256]` per event, then
   `fwrite`. No heap allocation per event.
+
+---
+
+## Build Default: On in Debug, Off in Release
+
+Tracing is primarily a debugging and validation tool. The CMake option defaults:
+
+- **Debug builds** (`./build.sh --debug`): `SOLVITAIRE_SEARCH_TRACE` defined by default,
+  including the regular `solvitaire` binary and all variant targets.
+- **Release builds** (`./build.sh` or `./build.sh --release`): `SOLVITAIRE_SEARCH_TRACE`
+  not defined by default. Can be enabled explicitly with `-DSOLVITAIRE_TRACE=ON` at
+  configure time.
+
+This means tracing is available whenever a developer is running a debug build, without
+any extra flags — and is completely absent from production release binaries.
 
 ---
 
 ## Compile-Time Guard
 
-A new CMake option `SOLVITAIRE_TRACE` (default OFF) defines the macro
-`SOLVITAIRE_SEARCH_TRACE` in the preprocessor. All trace callsites are wrapped in this
-guard. The option is independent of release/debug mode; it can be combined with either.
-Variant build targets (`solvitaire-flat`, `solvitaire-hash-only`, `solvitaire-lru`) can
-each be built with or without tracing — they are the intended targets for cross-policy
-comparison.
-
 ```cmake
-option(SOLVITAIRE_TRACE "Enable search trace instrumentation" OFF)
+option(SOLVITAIRE_TRACE "Enable search trace instrumentation"
+       $<IF:$<CONFIG:Debug>,ON,OFF>)
 if(SOLVITAIRE_TRACE)
-    target_compile_definitions(solvitaire PRIVATE SOLVITAIRE_SEARCH_TRACE)
-    # ... also for variant targets if needed
+    foreach(tgt solvitaire solvitaire-flat solvitaire-hash-only solvitaire-lru)
+        target_compile_definitions(${tgt} PRIVATE SOLVITAIRE_SEARCH_TRACE)
+    endforeach()
 endif()
 ```
 
@@ -120,6 +129,7 @@ endif()
 | `src/main/solver/search_trace.h` | Public API: macros + `trace_writer` class declaration |
 | `src/main/solver/search_trace.cpp` | Implementation: plain file write, line formatting, singleton |
 | `src/test/unit_tests/search_trace_test.cpp` | Unit tests for trace output and comparison |
+| `scripts/compare_traces.py` | Header-stripping diff helper for integration tests |
 
 Callsites in `solver.cpp` add one macro call per event. No other files need significant
 changes.
@@ -129,7 +139,7 @@ changes.
 ## Runtime Flags
 
 Two new CLI options (only meaningful when `SOLVITAIRE_SEARCH_TRACE` defined; silently
-ignored otherwise, with a warning):
+ignored otherwise with a stderr warning):
 
 ```
 --trace <path>            Write trace to <path> (plain text).
@@ -144,17 +154,23 @@ ignored otherwise, with a warning):
 
 ## Trace Format
 
-### Header (3 lines + blank separator)
+### Header
 
 ```
 TRACE v=1
+DATE 2026-05-05T14:32:01
+CMD ./solvitaire --type klondike --random 42 --trace run.trace
 GAME type=klondike seed=42 streamliner=none
 POLICY flat
 
 ```
 
-The header is stripped before diffing (see Testing section). `POLICY` is one of `flat`,
-`hash-only`, `predecessor`, `lru` — set from the dispatch branch in `main.cpp`.
+Five lines plus a blank separator before the event stream. The DATE field uses ISO 8601
+local time. The CMD field is the full reconstructed argv, which makes it easy to re-run
+the exact solve. The header is stripped before diffing (`tail -n +6`).
+
+`POLICY` is one of `flat`, `hash-only`, `predecessor`, `lru` — set from the dispatch
+branch in `main.cpp`.
 
 ### Event Lines
 
@@ -168,14 +184,16 @@ then key=value fields. All fields are always present in fixed order (missing fie
 0000000003 QUERY
 0000000004 MISS
 0000000005 INSERT
-0000000006 MOVE  t=regular f=0 to=2 c=1 rev=0 flip=0 dom=0
-0000000007 QUERY
-0000000008 HIT
-0000000009 DEPTH d=0
-0000000010 UNDO  t=regular f=13 to=0 c=1 rev=0 flip=0 dom=0
-0000000011 EVICT
-0000000012 DOM   t=regular f=5 to=foundations c=1 rev=0 flip=0 dom=1
-0000000013 UNDO  t=regular f=5 to=foundations c=1 rev=0 flip=0 dom=1
+0000000006 LEGAL n=7
+0000000007 MOVE  t=regular f=0 to=2 c=1 rev=0 flip=0 dom=0
+0000000008 QUERY
+0000000009 HIT
+0000000010 DEPTH d=0
+0000000011 UNDO  t=regular f=13 to=0 c=1 rev=0 flip=0 dom=0
+0000000012 EVICT
+0000000013 DOM   t=regular f=5 to=foundations c=1 rev=0 flip=0 dom=1
+0000000014 UNDO  t=regular f=5 to=foundations c=1 rev=0 flip=0 dom=1
+0000000015 SOLVED
 ```
 
 **Event types:**
@@ -250,7 +268,6 @@ compiler removes all callsites and their arguments entirely.
 When defined, each macro calls into the singleton with a runtime enable check:
 
 ```cpp
-// search_trace.h — enabled path
 #define STRACE_MOVE(mv)  trace_writer::instance().write_move(mv)
 // etc.
 ```
@@ -295,29 +312,37 @@ inside `lru_cache` at the eviction path. These are the only callsites outside `s
 
 ```cpp
 class trace_writer {
-    FILE*    file_  = nullptr;
-    uint64_t op_    = 0;        // plain uint64_t — single-threaded, no atomic needed
+    FILE*    file_    = nullptr;
+    uint64_t op_      = 0;      // plain uint64_t — single-threaded, no atomic needed
     bool     enabled_ = false;
+    uint64_t break_at_ = UINT64_MAX;
 
 public:
     static trace_writer& instance();   // Meyer's singleton
 
-    void open(const std::string& path);  // called when --trace parsed
-    void close();                        // RAII destructor
+    void open(const std::string& path, int argc, char** argv);
+    void close();                      // called from destructor
 
     bool enabled() const { return enabled_; }
+    void set_break_at(uint64_t n) { break_at_ = n; }
 
     void write_move(const move& mv);
     void write_undo(const move& mv);
-    void write_event(const char* keyword);         // for no-field events
+    void write_event(const char* keyword);
     void write_depth(uint64_t d);
     void write_legal(size_t n);
-    // etc.
+    void write_init(const std::string& game_type, int seed,
+                    const std::string& streamliner, const std::string& policy);
 
 private:
-    void write_line(const char* fmt, ...);  // snprintf into char[128], then fwrite
+    void write_line(const char* fmt, ...);  // snprintf into char[256], then fwrite
 };
 ```
+
+The `break_at_` check happens inside `write_line`: after incrementing `op_`, if
+`op_ == break_at_`, the solver is interrupted and the game state printed. The game state
+access requires the solver to pass `state` through to the trace call at that point —
+the implementation plan details how this is wired.
 
 ---
 
@@ -325,17 +350,40 @@ private:
 
 Every `write_line` increments `op_` before writing. The counter value appears on the line.
 
-`--trace-break-at N` re-runs the same solve with tracing enabled (to `--trace` path if
-given, otherwise `/dev/null`). When `op_` reaches N:
+`--trace-break-at N` re-runs the same solve with tracing enabled to the same `--trace`
+path (overwriting it). When `op_` reaches N, the current game state is printed to stdout
+and the process exits cleanly. This lets a developer take the first-differing operation
+number from a `diff` output and immediately inspect the state at that point.
 
-```cpp
-std::cout << "=== BREAK AT OPERATION " << N << " ===\n";
-std::cout << state;          // existing game_state stream operator
-std::exit(0);
-```
+---
 
-This lets a developer identify the operation number where traces first diverge (from
-`diff` output) and then inspect the exact game state at that point.
+## Cross-Policy Comparison Semantics
+
+Cache hits and misses are **identical between flat and LRU** up to the first true capacity
+eviction by either cache. Before any eviction, both caches retain all inserted states and
+therefore agree on every HIT/MISS decision. After an eviction, the evicted state may be
+re-inserted as a false new state, causing the traces to diverge — this is expected and
+correct. The `--until-evict` integration test therefore compares flat vs LRU (not just
+flat vs flat) and asserts identity up to the first `EVICT` line in either trace.
+
+---
+
+## Reference Builds for Merge Validation
+
+Before `feature/templated-dispatch` is merged, reference binaries must be built from
+`dev` with tracing enabled. The workflow:
+
+1. Implement search trace on `dev` (this work).
+2. Build and save the `dev` reference trace-enabled binaries
+   (`solvitaire-flat`, `solvitaire-hash-only`, `solvitaire-lru`).
+3. Merge `dev` (with tracing) into `feature/templated-dispatch`.
+4. Build the same three trace-enabled binaries from the merged branch.
+5. Run `compare_traces.py` across a validation suite (several seeds, multiple game types).
+6. Zero divergence → merge is safe.
+
+The reference binaries are not committed to the repo. The procedure for building them is
+documented in `docs/search-trace/merge-validation-procedure.md` (written when tracing
+lands on `dev`).
 
 ---
 
@@ -343,26 +391,25 @@ This lets a developer identify the operation number where traces first diverge (
 
 ### Unit tests (GoogleTest, within `unit_tests` binary)
 
-1. **Header format** — `STRACE_INIT` produces the correct 3-line header + blank separator.
+1. **Header format** — `STRACE_INIT` produces the correct 5-line header + blank separator,
+   including DATE and CMD fields.
 2. **Event ordering** — solve a trivial 1-card instance; verify events appear in the
-   correct sequence (MOVE, DEPTH, QUERY, MISS, INSERT, ..., UNDO, DEPTH).
+   correct sequence (MOVE, DEPTH, QUERY, MISS, INSERT, LEGAL, ..., UNDO, DEPTH).
 3. **Operation counter** — verify counter is strictly monotonically increasing with no gaps.
 4. **No-op when disabled** — when runtime flag is off, no file is created, counter stays 0.
 
 ### Integration tests (script-driven, CTest targets)
 
-These require a trace-enabled build (`-DSOLVITAIRE_TRACE=ON`). A helper script
+These require a trace-enabled build (`-DSOLVITAIRE_TRACE=ON` or debug build).
 `scripts/compare_traces.py` handles header stripping and diff:
 
 ```bash
 # Exact full identity (same binary, same seed — must be identical)
-compare_traces.py --binary-a ./solvitaire-flat --binary-b ./solvitaire-flat \
-    --game klondike --seed 42
-# Expected: zero diff lines
+compare_traces.py --binary ./solvitaire-flat --game klondike --seed 42
 
-# Identity until first eviction (flat vs hash-only — same traversal until eviction)
+# Identity until first eviction (flat vs LRU — identical until capacity eviction)
 compare_traces.py --until-evict \
-    --binary-a ./solvitaire-flat --binary-b ./solvitaire-hash-only \
+    --binary-a ./solvitaire-flat --binary-b ./solvitaire-lru \
     --game freecell --seed 1
 
 # Identity until timeout
@@ -376,67 +423,38 @@ compare_traces.py --binary-a ./dev-build/solvitaire-flat \
                   --game klondike --seed 42
 ```
 
-The script exits non-zero if traces diverge and prints the first differing operation
-number, so `--trace-break-at` can be used immediately for inspection.
+The script exits non-zero on divergence and prints the first differing operation number.
 
 **CTest targets:**
 
 | Target | What it checks |
 |---|---|
-| `trace_identity_flat` | flat binary, two seeds, exact identity with self |
-| `trace_identity_lru` | lru binary, two seeds, exact identity with self |
-| `trace_until_eviction` | flat vs hash-only, identity until first eviction |
+| `trace_identity_flat` | flat binary, same seed run twice, exact identity |
+| `trace_identity_lru` | lru binary, same seed run twice, exact identity |
+| `trace_until_eviction` | flat vs LRU, identity until first eviction |
 | `trace_until_timeout` | flat binary, timed-out instance, partial identity |
 
 ---
 
-## Additional Thoughts
+## Additional Notes
 
 ### Why a singleton, not a solver member
 
-`solver_impl<Policy>` is templated; passing a `trace_writer&` through it is possible but
-adds noise to every template instantiation. Since the solver is single-threaded and there
-is only ever one active trace per run, a global singleton (with a runtime enable gate) is
-simpler and keeps callsites as one-liners without any context threading.
+`solver_impl<Policy>` is templated; passing a `trace_writer&` through it adds noise to
+every template instantiation. Since the solver is single-threaded and there is only ever
+one active trace per run, a global singleton with a runtime enable gate is simpler and
+keeps callsites as one-liners without any context threading.
 
 ### LRU eviction semantics
 
 The LRU cache's `set_non_live` call marks a state as backtracked-from but the entry stays
 in cache. True eviction happens when the Boost MultiIndex list overflows capacity. The
-trace logs `EVICT` only on actual capacity evictions, not `set_non_live`. The distinction
-matters for diffing flat vs LRU traces: flat and LRU evictions are structurally different
-events and will diverge legitimately — the `--until-evict` test is specifically for
-catching divergences *before* any eviction.
-
-### `LEGAL` event usefulness
-
-Logging the legal-move count at each node adds ~15% to trace volume but is very useful
-for diagnosing divergences. If two traces agree on every MOVE/UNDO but disagree on a
-LEGAL count at some depth, the divergence is in move generation, not caching — a
-completely different bug class.
+trace logs `EVICT` only on actual capacity evictions, not `set_non_live`.
 
 ### Trace size (plain text)
 
-Klondike, 60-second timeout: roughly 10–50 million DFS nodes. At ~7 events per node and
-~30 bytes per line, that is 2–10 GB. For merge validation, runs should be chosen to be
+Klondike, 60-second timeout: roughly 10–50 million DFS nodes. At ~8 events per node and
+~35 bytes per line, that is 3–14 GB. For merge validation, runs should be chosen to be
 tractable (short seeds, not full timeout runs) to keep traces in the tens-of-MB range.
 If archiving or large-run comparison is ever needed, gzip can be added as a self-contained
-change to `search_trace.cpp` (swap `FILE*` for `gzFile` or use `gzip-hpp` from Mapbox —
-a single-header zlib wrapper).
-
----
-
-## Open Questions for Ian
-
-1. **EVICT semantics for LRU** — flat and LRU evictions are structurally different. Should
-   the `--until-evict` test use flat-vs-flat only, or is there value in comparing flat and
-   LRU up to the point where their traversal first diverges for any reason (a HIT/MISS
-   difference would show up before eviction)?
-
-2. **Variant build targets** — for merge validation we need `solvitaire-flat` from both
-   `dev` and `feature/templated-dispatch` built with `-DSOLVITAIRE_TRACE=ON`. Should this
-   be a separate named CMake target (e.g., `solvitaire-flat-trace`) or just a documented
-   configure-time flag?
-
-3. **`LEGAL` event** — include by default (adds ~15% volume), or guard behind an
-   additional flag (e.g., `--trace-legal`)?
+change to `search_trace.cpp`.
