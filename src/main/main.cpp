@@ -36,6 +36,7 @@
 #include "game/cache_policy.h"
 #include "game/zobrist.h"
 #include "solver/solver.h"
+#include "solver/search_trace.h"
 #include "evaluation/solvability_calc.h"
 #include "evaluation/benchmark.h"
 #include <memory>
@@ -175,6 +176,32 @@ int main(int argc, const char* argv[]) {
     if (!clh.parse(argc, argv)) {
         return EXIT_FAILURE;
     }
+
+#ifdef SOLVITAIRE_SEARCH_TRACE
+    if (!clh.get_trace_path().empty()) {
+        trace_writer::instance().open(clh.get_trace_path(), argc, argv);
+        const string str_name = [&]() -> string {
+            switch (clh.get_streamliners()) {
+                case command_line_helper::streamliner_opt::NONE:             return "none";
+                case command_line_helper::streamliner_opt::AUTO_FOUNDATIONS: return "auto-foundations";
+                case command_line_helper::streamliner_opt::SUIT_SYMMETRY:   return "suit-symmetry";
+                case command_line_helper::streamliner_opt::BOTH:            return "both";
+                case command_line_helper::streamliner_opt::SMART:           return "smart";
+                default:                                                     return "unknown";
+            }
+        }();
+        STRACE_INIT(clh.get_solitaire_type(), clh.get_random_deal(),
+                    str_name, clh.get_cache_type());
+    }
+    if (clh.has_break_at()) {
+        trace_writer::instance().set_break_at(clh.get_break_at_n());
+    }
+#else
+    if (!clh.get_trace_path().empty() || clh.has_break_at()) {
+        std::cerr << "Warning: --trace/--trace-break-at ignored "
+                     "(not built with SOLVITAIRE_TRACE)\n";
+    }
+#endif
 
     // If the user has asked for the list of preset game types, prints it
     if (clh.get_available_game_types()) {

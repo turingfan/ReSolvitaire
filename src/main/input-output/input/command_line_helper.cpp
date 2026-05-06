@@ -90,7 +90,11 @@ command_line_helper::command_line_helper()
             ("force-lru", "Force use of LRU cache even for flat-cache games")
             ("cache-type", po::value<string>()->default_value("auto"),
              "Select cache implementation. Options: 'auto' (default, chooses flat or lru based on game), "
-             "'hash-only' (stores only Zobrist hash — no payload, faster but weaker deduplication).");
+             "'hash-only' (stores only Zobrist hash — no payload, faster but weaker deduplication).")
+            ("trace", po::value<string>(),
+             "write search trace to file (requires SOLVITAIRE_SEARCH_TRACE build)")
+            ("trace-break-at", po::value<uint64_t>(),
+             "halt and print game state at trace operation N");
 
     po::options_description hidden_options("Hidden options");
     hidden_options.add_options()
@@ -238,6 +242,14 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
     reveal_hidden = (vm.count("reveal-hidden") != 0);
     debug = (vm.count("debug") != 0);
     force_lru_cache = (vm.count("force-lru") != 0);
+
+    if (vm.count("trace")) {
+        trace_path = vm["trace"].as<string>();
+    }
+    if (vm.count("trace-break-at")) {
+        has_break_at_ = true;
+        break_at_n = vm["trace-break-at"].as<uint64_t>();
+    }
 
     cache_type = vm["cache-type"].as<string>();
     if (cache_type != "auto" && cache_type != "hash-only") {
@@ -433,6 +445,18 @@ bool command_line_helper::get_force_lru_cache() const {
 
 const std::string& command_line_helper::get_cache_type() const {
     return cache_type;
+}
+
+const std::string& command_line_helper::get_trace_path() const {
+    return trace_path;
+}
+
+bool command_line_helper::has_break_at() const {
+    return has_break_at_;
+}
+
+uint64_t command_line_helper::get_break_at_n() const {
+    return break_at_n;
 }
 
 bool command_line_helper::get_version() {

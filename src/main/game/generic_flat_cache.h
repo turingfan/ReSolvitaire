@@ -1,6 +1,7 @@
 #ifndef SOLVITAIRE_GENERIC_FLAT_CACHE_H
 #define SOLVITAIRE_GENERIC_FLAT_CACHE_H
 
+
 // ─── generic_flat_cache.h ─────────────────────────────────────────────────────
 //
 // A single flat, open-addressed hash table template that subsumes flat_cache,

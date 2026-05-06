@@ -7,6 +7,7 @@
 #include <boost/functional/hash.hpp>
 
 #include "global_cache.h"
+#include "../solver/search_trace.h"
 #include "../input-output/output/log_helper.h"
 #include "search-state/game_state.h"
 #include "cache_policy.h"
@@ -238,6 +239,7 @@ pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const GS& gs) {
                 throw runtime_error("All items in cache are live and cache is full");
             }
         }
+        STRACE_EVICT();
         cache.pop_back();
         states_removed_from_cache++;
     }

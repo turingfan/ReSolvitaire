@@ -62,6 +62,9 @@ public:
     const std::string& get_cache_type() const;
     bool get_version();
     static game_state::streamliner_options convert_streamliners(streamliner_opt);
+    const std::string& get_trace_path() const;
+    bool has_break_at() const;
+    uint64_t get_break_at_n() const;
 
 private:
     bool assess_errors();
@@ -106,6 +109,9 @@ private:
     bool debug = false;
     bool force_lru_cache = false;
     std::string cache_type = "auto";
+    std::string trace_path;
+    bool has_break_at_ = false;
+    uint64_t break_at_n = 0;
 };
 
 #endif //SOLVITAIRE_COMMAND_LINE_HELPER_H

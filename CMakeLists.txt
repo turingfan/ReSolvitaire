@@ -73,6 +73,7 @@ set(sources_game
 set(sources_solver
         src/main/solver/solver.cpp
         src/main/solver/solver.h
+        src/main/solver/search_trace.h
 )
 
 set(sources_evaluation
@@ -130,6 +131,8 @@ set(sources_test_unit
         src/test/unit_tests/predecessor_cache_test.cpp
         src/test/unit_tests/generic_flat_cache_compile_test.cpp
         src/test/unit_tests/generic_flat_cache_test.cpp
+        src/test/unit_tests/search_trace_test.cpp
+        src/test/unit_tests/search_trace_agreement_test.cpp
 )
 
 set(sources_test_helper
@@ -261,13 +264,167 @@ target_compile_definitions(solvitaire-lru PRIVATE SOLVITAIRE_LRU_ONLY)
 set_property(TARGET solvitaire-lru PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_link_libraries(solvitaire-lru PRIVATE ${Boost_LIBRARIES})
 
+###############################################################################
+## Search trace — always-defined trace-variant binaries + optional CTest gate ##
+##                                                                            ##
+## Gated on SOLVITAIRE_TRACE (set by ./build.sh --trace → cmake-build-trace).##
+## The four *-trace executables are ALWAYS defined regardless of the option  ##
+## so they can be built via ./build.sh --trace which sets                    ##
+## -DSOLVITAIRE_TRACE=ON. The CTest targets are only registered when the     ##
+## option is ON.                                                              ##
+###############################################################################
 
+# Always add search_trace.cpp to the sources it needs
+set(sources_trace src/main/solver/search_trace.cpp)
+
+# -trace variant binaries always defined; SOLVITAIRE_SEARCH_TRACE always set on them
+add_executable(solvitaire-trace      ${main} ${sources} ${sources_trace})
+target_compile_definitions(solvitaire-trace      PRIVATE SOLVITAIRE_SEARCH_TRACE)
+target_link_libraries(solvitaire-trace      PRIVATE ${Boost_LIBRARIES})
+
+add_executable(solvitaire-flat-trace ${main} ${sources} ${sources_trace})
+target_compile_definitions(solvitaire-flat-trace PRIVATE SOLVITAIRE_FLAT_ONLY SOLVITAIRE_SEARCH_TRACE)
+target_link_libraries(solvitaire-flat-trace PRIVATE ${Boost_LIBRARIES})
+
+add_executable(solvitaire-hash-only-trace ${main} ${sources} ${sources_trace})
+target_compile_definitions(solvitaire-hash-only-trace PRIVATE SOLVITAIRE_HASH_ONLY SOLVITAIRE_SEARCH_TRACE)
+target_link_libraries(solvitaire-hash-only-trace PRIVATE ${Boost_LIBRARIES})
+
+add_executable(solvitaire-lru-trace  ${main} ${sources} ${sources_trace})
+target_compile_definitions(solvitaire-lru-trace  PRIVATE SOLVITAIRE_LRU_ONLY SOLVITAIRE_SEARCH_TRACE)
+target_link_libraries(solvitaire-lru-trace  PRIVATE ${Boost_LIBRARIES})
+
+option(SOLVITAIRE_TRACE "Enable search trace CTest targets (requires trace-variant binaries)" OFF)
+if(SOLVITAIRE_TRACE)
+    message(STATUS "Search trace: ENABLED on all targets (SOLVITAIRE_SEARCH_TRACE)")
+    # Also enable on the standard binaries when SOLVITAIRE_TRACE is ON
+    foreach(tgt solvitaire solvitaire-flat solvitaire-hash-only solvitaire-lru)
+        target_compile_definitions(${tgt} PRIVATE SOLVITAIRE_SEARCH_TRACE)
+        target_sources(${tgt} PRIVATE ${sources_trace})
+    endforeach()
+
+    ###########################################################################
+    ## Trace CTest targets                                                   ##
+    ##                                                                       ##
+    ## trace_identity_flat   flat-trace binary, same seed twice — prefix match  ##
+    ## trace_identity_lru    lru-trace binary,  same seed twice — prefix match  ##
+    ## trace_until_eviction  flat-trace vs lru-trace, match until first EVICT   ##
+    ## trace_until_timeout   flat-trace timed-out instance, prefix match        ##
+    ##                                                                       ##
+    ## Solver args follow -- to avoid argparse ambiguity in compare_traces.py.  ##
+    ## --until-timeout 10000 caps each comparison to the first 10 000 events.   ##
+    ## trace_until_eviction uses --cache-capacity 200 to force early evictions. ##
+    ###########################################################################
+
+    # trace_identity_flat: run solvitaire-flat-trace twice with the same seed;
+    # the first 10 000 events must be byte-identical.
+    add_test(NAME trace_identity_flat
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-timeout" "10000"
+            "--binary" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--" "--type" "black-hole" "--random" "1" "--timeout" "30000"
+    )
+    set_tests_properties(trace_identity_flat PROPERTIES TIMEOUT 120)
+
+    # trace_identity_lru: same test with the LRU-trace binary.
+    add_test(NAME trace_identity_lru
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-timeout" "10000"
+            "--binary" "$<TARGET_FILE:solvitaire-lru-trace>"
+            "--" "--type" "black-hole" "--random" "1" "--timeout" "30000"
+    )
+    set_tests_properties(trace_identity_lru PROPERTIES TIMEOUT 120)
+
+    # trace_until_eviction: flat-trace vs lru-trace on the same seed with a
+    # tiny cache (200 states) to force early evictions.  Both traces must
+    # agree up to (not including) the first EVICT in either stream.
+    add_test(NAME trace_until_eviction
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-lru-trace>"
+            "--" "--type" "black-hole" "--random" "1"
+            "--cache-capacity" "200" "--timeout" "30000"
+    )
+    set_tests_properties(trace_until_eviction PROPERTIES TIMEOUT 120)
+
+    # trace_until_timeout: run a hard instance (klondike) twice with a
+    # wall-clock timeout so both runs end mid-search.  The first 10 000
+    # events of both partial traces must be byte-identical.
+    add_test(NAME trace_until_timeout
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-timeout" "10000"
+            "--binary" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--" "--type" "klondike" "--random" "1" "--timeout" "30000"
+    )
+    set_tests_properties(trace_until_timeout PROPERTIES TIMEOUT 120)
+
+    ###########################################################################
+    ## Trace regression: old-vs-new binary comparison                        ##
+    ##                                                                        ##
+    ## trace_regression_level1  — all 150 Level 1 instances (no timeout;     ##
+    ##                            instances solve quickly; full comparison)   ##
+    ## trace_regression_level2  — all 160 Level 2 instances (5s solver       ##
+    ##                            timeout to keep traces manageable)          ##
+    ##                                                                        ##
+    ## Reference binary: 05-Executables/reference/solvitaire-trace-reference-##
+    ##   mac-arm64 (macOS) or solvitaire-trace-reference-linux-amd64 (Linux) ##
+    ## Built from: feature/search-trace commit f077558 (Commit E)            ##
+    ## SHA-1: be81a19a26339833610467d78b635f4f97a9899e (mac-arm64)          ##
+    ##                                                                        ##
+    ## Run via: ctest -R trace_regression --output-on-failure                ##
+    ###########################################################################
+
+    # Platform-detect the reference binary.
+    if(APPLE)
+        set(TRACE_REF_BIN
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-mac-arm64")
+    else()
+        set(TRACE_REF_BIN
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-linux-amd64")
+    endif()
+
+    # trace_regression_level1: all 150 Level 1 instances, no solver timeout.
+    # Instances are small JSON files in tests/resources/level1/ and solve fast.
+    # CTest ceiling: 30 min (generous; typical run ~5-10 min in trace mode).
+    add_test(NAME trace_regression_level1
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/trace_regression.py"
+            "--level"      "1"
+            "--ref-binary" "${TRACE_REF_BIN}"
+            "--cur-binary" "$<TARGET_FILE:solvitaire-trace>"
+            "--tests-dir"  "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+    )
+    set_tests_properties(trace_regression_level1 PROPERTIES TIMEOUT 1800)
+
+    # trace_regression_level2: all 160 Level 2 instances, 5s solver timeout.
+    # Uses --random <seed> invocation (no instance files on disk).
+    # CTest ceiling: 60 min (generous; typical run ~15-30 min in trace mode).
+    add_test(NAME trace_regression_level2
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/trace_regression.py"
+            "--level"      "2"
+            "--ref-binary" "${TRACE_REF_BIN}"
+            "--cur-binary" "$<TARGET_FILE:solvitaire-trace>"
+            "--tests-dir"  "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+            "--timeout-ms" "5000"
+    )
+    set_tests_properties(trace_regression_level2 PROPERTIES TIMEOUT 3600)
+
+else()
+    message(STATUS "Search trace: disabled on regular targets (solvitaire-*-trace always available)")
+endif()
 
 ###############################################################################
 ## testing ####################################################################
 ###############################################################################
 
-add_executable(unit_tests ${sources_test} ${sources})
+add_executable(unit_tests ${sources_test} ${sources} ${sources_trace})
+target_compile_definitions(unit_tests PRIVATE SOLVITAIRE_SEARCH_TRACE)
 target_link_libraries(unit_tests PRIVATE gtest_main ${Boost_LIBRARIES})
 
 enable_testing()

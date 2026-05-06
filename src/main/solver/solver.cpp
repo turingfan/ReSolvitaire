@@ -32,6 +32,7 @@
 #include <signal.h>
 
 #include "solver.h"
+#include "search_trace.h"
 #include "../game/move.h"
 #include "../input-output/output/log_helper.h"
 #include "../input-output/output/state_printer.h"
@@ -102,8 +103,10 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
 
     while(!(state.is_solved() || states_exhausted)) {
         if (end_time && clock::now() >= *end_time) {
+            STRACE_RESULT("TIMEOUT");
             return result::type::TIMEOUT;
         } else if (sigint) {
+            STRACE_RESULT("TERMINATED");
             return result::type::TERMINATED;
         }
 
@@ -124,6 +127,7 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
             try {
                 // Caches the current state
                 bool is_new_state;
+                STRACE_QUERY();
                 if constexpr (Policy::computes_hash) {
                     // Flat-cache path: set payload depth, then insert directly
                     if constexpr (Policy::computes_payload) {
@@ -146,10 +150,13 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
                     current_node->cache_state = insert_res.first;
                     is_new_state = insert_res.second;
                 }
+                if (is_new_state) { STRACE_MISS(); STRACE_INSERT(); }
+                else              { STRACE_HIT(); }
 
                 if (is_new_state) {
                     // Gets the legal moves in the current state
                     vector<move> next_moves = state.get_legal_moves(current_node->mv);
+                    STRACE_LEGAL(next_moves.size());
 
                     // If there are none, reverts to the last node with children
                     if (next_moves.empty()) {
@@ -177,7 +184,9 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
         if (!states_exhausted) {
             set_to_child();
             state.make_move(current_node->mv);
+            STRACE_MOVE(current_node->mv);
             res.depth++;
+            STRACE_DEPTH(res.depth);
             res.max_depth = max(res.depth, res.max_depth);
             if (current_node->mv.dominance_move) res.dominance_moves++;
         }
@@ -187,9 +196,11 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
     }
 
     if (state.is_solved()) {
+        STRACE_RESULT("SOLVED");
         return result::type::SOLVED;
     } else {
         assert(states_exhausted);
+        STRACE_RESULT("UNSOLV");
         return result::type::UNSOLVABLE;
     }
 }
@@ -213,7 +224,9 @@ bool solver_impl<Policy>::revert_to_last_node_with_children(optional<lru_cache::
     }
 
     state.undo_move(current_node->mv);
+    STRACE_UNDO(current_node->mv);
     res.depth--;
+    STRACE_DEPTH(res.depth);
     res.backtracks++;
 
 #ifndef NDEBUG
