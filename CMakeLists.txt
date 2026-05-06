@@ -367,14 +367,21 @@ if(SOLVITAIRE_TRACE)
     ## Run via: ctest -R trace_regression --output-on-failure                ##
     ###########################################################################
 
-    # Platform-detect the reference binary.
-    if(APPLE)
-        set(TRACE_REF_BIN
-            "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-mac-arm64")
-    else()
-        set(TRACE_REF_BIN
-            "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-linux-amd64")
+    # Reference binary path — user-configurable via -DTRACE_REF_BIN=/path/to/binary.
+    # Defaults to the conventional location in 05-Executables/reference/ relative
+    # to the repo root; override if your reference binary lives elsewhere.
+    if(NOT DEFINED CACHE{TRACE_REF_BIN} OR TRACE_REF_BIN STREQUAL "")
+        if(APPLE)
+            set(_default_ref_bin
+                "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-mac-arm64")
+        else()
+            set(_default_ref_bin
+                "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-linux-amd64")
+        endif()
+        set(TRACE_REF_BIN "${_default_ref_bin}" CACHE PATH
+            "Path to the reference solvitaire-trace binary for trace regression tests")
     endif()
+    message(STATUS "Trace reference binary: ${TRACE_REF_BIN}")
 
     # trace_regression_level1: all 150 Level 1 instances, no solver timeout.
     # Instances are small JSON files in tests/resources/level1/ and solve fast.
