@@ -308,12 +308,14 @@ if(SOLVITAIRE_TRACE)
     ##                                                                       ##
     ## trace_identity_flat   flat-trace binary, same seed twice — prefix match  ##
     ## trace_identity_lru    lru-trace binary,  same seed twice — prefix match  ##
-    ## trace_until_eviction  flat-trace vs lru-trace, match until first EVICT   ##
     ## trace_until_timeout   flat-trace timed-out instance, prefix match        ##
+    ##                                                                       ##
+    ## trace_until_eviction was removed: on feature/search-trace the lru-only   ##
+    ## binary exits for flat-eligible games making the test vacuously pass; on  ##
+    ## this branch the lru binary runs, exposing pile-order divergence.         ##
     ##                                                                       ##
     ## Solver args follow -- to avoid argparse ambiguity in compare_traces.py.  ##
     ## --until-timeout 10000 caps each comparison to the first 10 000 events.   ##
-    ## trace_until_eviction uses --cache-capacity 200 to force early evictions. ##
     ###########################################################################
 
     # trace_identity_flat: run solvitaire-flat-trace twice with the same seed;
@@ -336,20 +338,6 @@ if(SOLVITAIRE_TRACE)
             "--" "--type" "black-hole" "--random" "1" "--timeout" "30000"
     )
     set_tests_properties(trace_identity_lru PROPERTIES TIMEOUT 120)
-
-    # trace_until_eviction: flat-trace vs lru-trace on the same seed with a
-    # tiny cache (200 states) to force early evictions.  Both traces must
-    # agree up to (not including) the first EVICT in either stream.
-    add_test(NAME trace_until_eviction
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
-            "--until-evict"
-            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
-            "--binary-b" "$<TARGET_FILE:solvitaire-lru-trace>"
-            "--" "--type" "black-hole" "--random" "1"
-            "--cache-capacity" "200" "--timeout" "30000"
-    )
-    set_tests_properties(trace_until_eviction PROPERTIES TIMEOUT 120)
 
     # trace_until_timeout: run a hard instance (klondike) twice with a
     # wall-clock timeout so both runs end mid-search.  The first 10 000
