@@ -37,63 +37,104 @@ Build outputs go to `cmake-build-release/` or `cmake-build-debug/`.
 
 ## Testing
 
+**There are three required test gates. All three must pass before any commit.**
+
+### Gate 1 — Release build
+
 ```bash
-# All unit tests
-cd cmake-build-release && ctest -R unit_tests --output-on-failure
-
-# Run a single integration test (e.g., klondike)
-cd cmake-build-release && ctest -R klondike --output-on-failure
-
-# Level 1 regression (150 instances, ~2 min)
+./build.sh --release --unit-tests
+cd cmake-build-release && ctest -R ^unit_tests$ --output-on-failure
 cd cmake-build-release && ctest -R regression_level1 --output-on-failure
-
-# Levels 2–5 regression (longer; see docs/regression_suite_guide.md)
-cd cmake-build-release && ctest -R regression_level2 --output-on-failure
 ```
 
-Tests are compiled into the `unit_tests` binary (GoogleTest). CTest definitions are in `CMakeLists.txt` lines 225–288.
+### Gate 2 — Trace build
+
+```bash
+./build.sh --trace
+cd cmake-build-trace && ctest -R ^unit_tests$ --output-on-failure
+cd cmake-build-trace && ctest -R trace_ --output-on-failure
+```
+
+The trace build (`cmake-build-trace`) uses `Release + SOLVITAIRE_TRACE=ON`. It runs
+`SearchTraceTest.*` and `SearchTraceAgreementTest.*` unit tests plus four CTest targets:
+`trace_identity_flat`, `trace_identity_lru`, `trace_until_timeout`,
+`trace_regression_level1` (and `trace_regression_level2`). These are **no-ops** in
+release and debug builds — only this gate exercises them.
+
+`trace_regression_level1/2` requires reference binaries in
+`../../05-Executables/reference/` — see `05-Executables/reference/README.md`.
+
+### Gate 3 — Debug build
+
+```bash
+./build.sh --debug --unit-tests
+cd cmake-build-debug && ctest -R ^unit_tests$ --output-on-failure
+```
+
+### Build configurations
+
+| Directory | Built by | `SOLVITAIRE_SEARCH_TRACE`? | What's unique |
+|---|---|---|---|
+| `cmake-build-release` | `./build.sh --release --unit-tests` | No | Standard release; variant regression tests |
+| `cmake-build-debug` | `./build.sh --debug --unit-tests` | No | Debug symbols; catches UB/assert failures |
+| `cmake-build-trace` | `./build.sh --trace` | Yes | Trace variant binaries + SearchTrace* tests |
+
+Use `ctest -R ^unit_tests$` (anchored regex) not `ctest -R unit_tests` — the unanchored
+form also matches `unit_tests_full` (~5 minutes).
+
+### Trace testing in detail
+
+See `docs/regression_suite_guide.md` §8 for full trace testing documentation,
+including `compare_traces.py`, `trace_regression.py`, and the reference binary system.
+
+**Quick trace comparison (two runs of the same binary):**
+
+```bash
+./cmake-build-trace/bin/solvitaire-trace --type klondike --random 1 \
+    --trace /tmp/a.trace
+./cmake-build-trace/bin/solvitaire-trace --type klondike --random 1 \
+    --trace /tmp/b.trace
+python3 scripts/compare_traces.py --full /tmp/a.trace /tmp/b.trace
+```
+
+**Break at a specific event (for debugging divergence):**
+
+```bash
+./cmake-build-trace/bin/solvitaire-trace --type klondike --random 1 \
+    --trace /tmp/a.trace --trace-break-at 500
+```
 
 ## Linux / Container Testing
 
-The `dev` branch includes a working `Dockerfile` and helper script for building and testing on Linux without native dependencies.
-
-### Using the container-build.sh script (macOS / container CLI)
+The `dev` branch includes a `Dockerfile` and `scripts/container-build.sh` for building
+and testing on Linux. The script auto-detects `container` CLI (recommended), `docker`,
+or `podman`.
 
 ```bash
-# Build the Linux image
+# Build only
 ./scripts/container-build.sh
 
-# Build and run unit tests inside the container
+# Release: unit tests + Level 1 regression + variant regressions
 ./scripts/container-build.sh --test
-
-# Build and run Level 1 regression inside the container
 ./scripts/container-build.sh --regression
+./scripts/container-build.sh --variants
 
-# Interactive shell in container
+# Trace: unit_tests + trace_identity + trace_until_timeout
+./scripts/container-build.sh --trace-test
+
+# Trace regression (needs Linux reference binary in 05-Executables/reference/)
+./scripts/container-build.sh --trace-regression
+
+# Extract Linux trace reference binary from container image
+./scripts/container-build.sh --extract-trace-binary
+
+# Interactive shell
 container run --rm -it solvitaire-dev bash
 ```
 
-The script auto-detects the available container runtime: `container` CLI (recommended), `docker`, or `podman`.
-
-### Direct Docker / Podman usage
-
-```bash
-# Build the image
-docker build -t solvitaire-dev .
-
-# Run unit tests
-docker run --rm solvitaire-dev \
-    bash -c "cd cmake-build-release && ctest -R unit_tests --output-on-failure"
-
-# Run Level 1 regression
-docker run --rm solvitaire-dev \
-    bash -c "cd cmake-build-release && ctest -R regression_level1 --output-on-failure"
-
-# Interactive shell
-docker run --rm -it solvitaire-dev bash
-```
-
-**Note:** The Dockerfile uses `ubuntu:22.04` and installs only essential build dependencies (`build-essential`, `cmake`, `libboost-program-options-dev`, `git`, `python3`, `ca-certificates`). The build runs `./build.sh --release` and `./build.sh --release --unit-tests`, including a smoke test of unit tests, before producing the image.
+**Note:** The Dockerfile builds all three configurations (release + trace + debug not
+included; release and trace only). Memory limit for test runs is `-m 7g` due to
+`flat_cache` mmap virtual address reservation.
 
 ## Running the Solver
 

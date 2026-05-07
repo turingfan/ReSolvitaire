@@ -374,3 +374,149 @@ Preset game types use `--type <name>`; custom rules use `--custom-rules <path>`.
 The `canfield-strict` variant is an example of a custom-rules game — its rules file
 is at `tests/rules/canfield-strict.json` and oracle entries reference it via the
 `"custom_rules"` field.
+
+---
+
+## 8. Trace Testing
+
+The trace build (`cmake-build-trace`, built with `./build.sh --trace`) instruments the
+DFS solver to emit structured one-line-per-event text logs. This enables three types of
+testing beyond outcome-level regression: identity checks, timeout-boundary checks, and
+reference-binary comparison.
+
+### Trace-enabled binaries
+
+`./build.sh --trace` produces four binaries in `cmake-build-trace/bin/`:
+
+| Binary | Cache policy | Use |
+|---|---|---|
+| `solvitaire-trace` | Default (flat/LRU/predecessor by game type) | Reference binary comparison |
+| `solvitaire-flat-trace` | Flat only (`SOLVITAIRE_FLAT_ONLY`) | Identity and timeout tests |
+| `solvitaire-lru-trace` | LRU only (`SOLVITAIRE_LRU_ONLY`) | Identity tests |
+| `solvitaire-hash-only-trace` | Hash-only | (available; not used in CTest targets) |
+
+### Generating a trace
+
+```bash
+./cmake-build-trace/bin/solvitaire-trace \
+    --type klondike --random 1 --trace /tmp/run.trace
+```
+
+The trace file has a 5-line header (skipped by comparison tools) followed by one event
+per line. Events: `QUERY`, `HIT`, `MISS`, `INSERT`, `EVICT`, `LEGAL`, `MOVE`, `UNDO`,
+`DOM`, `DEPTH`, `SOLVED`/`UNSOLV`/`TIMEOUT`.
+
+To stop the solver at a specific event number (useful for debugging divergence):
+
+```bash
+./cmake-build-trace/bin/solvitaire-trace \
+    --type klondike --random 1 --trace /tmp/run.trace --trace-break-at 500
+```
+
+### Comparing two traces with `compare_traces.py`
+
+```bash
+# Full comparison (every event must match)
+python3 scripts/compare_traces.py --full /tmp/a.trace /tmp/b.trace
+
+# Stop comparison at first TIMEOUT event (for traces where one run may time out)
+python3 scripts/compare_traces.py --until-timeout 60000 /tmp/a.trace /tmp/b.trace
+
+# Run two solver invocations directly (compare_traces.py spawns them)
+python3 scripts/compare_traces.py --binary cmake-build-trace/bin/solvitaire-flat-trace \
+    --full -- --type klondike --random 1
+
+# Two different binaries
+python3 scripts/compare_traces.py \
+    --binary-a cmake-build-trace/bin/solvitaire-trace \
+    --binary-b /path/to/reference/solvitaire-trace \
+    --full -- --type klondike --random 1
+```
+
+Exit code 0 = identical; 1 = divergence (first differing line printed).
+
+### CTest trace targets (run from `cmake-build-trace/`)
+
+```bash
+cd cmake-build-trace
+
+# Unit tests including SearchTraceTest.* and SearchTraceAgreementTest.*
+ctest -R ^unit_tests$ --output-on-failure
+
+# All trace_ targets at once
+ctest -R trace_ --output-on-failure
+```
+
+| CTest target | What it checks | Binary |
+|---|---|---|
+| `trace_identity_flat` | Same seed run twice → identical trace | `solvitaire-flat-trace` |
+| `trace_identity_lru` | Same seed run twice → identical trace | `solvitaire-lru-trace` |
+| `trace_until_timeout` | Timed-out instance: trace matches up to TIMEOUT event | `solvitaire-flat-trace` |
+| `trace_regression_level1` | 150 Level 1 instances vs reference binary | `solvitaire-trace` |
+| `trace_regression_level2` | 160 Level 2 instances vs reference binary (5s timeout) | `solvitaire-trace` |
+
+`trace_regression_level1/2` require reference binaries — see below.
+
+### Reference binaries and `trace_regression.py`
+
+Reference binaries are stored in `../../05-Executables/reference/` (outside the repo):
+
+| File | Platform | Purpose |
+|---|---|---|
+| `solvitaire-trace-reference-mac-arm64` | macOS ARM64 | Trace regression on macOS |
+| `solvitaire-trace-reference-linux-amd64` | Linux (ARM64 container) | Trace regression in container |
+
+The reference binary is the `solvitaire-trace` binary built from the commit when the
+trace infrastructure was first established. If the search logic hasn't changed, the
+current binary must produce byte-identical traces. Any divergence is a regression.
+
+**If the reference binary is lost:** rebuild from the established commit, or use the
+current binary to establish a new baseline (record the commit hash).
+
+**Running `trace_regression.py` directly:**
+
+```bash
+# Level 1 (150 instances, no timeout — all solve fast)
+python3 scripts/trace_regression.py \
+    --level 1 \
+    --ref-binary ../../05-Executables/reference/solvitaire-trace-reference-mac-arm64 \
+    --cur-binary cmake-build-trace/bin/solvitaire-trace \
+    --tests-dir tests
+
+# Level 2 (160 instances, 5s trace timeout)
+python3 scripts/trace_regression.py \
+    --level 2 \
+    --ref-binary ../../05-Executables/reference/solvitaire-trace-reference-mac-arm64 \
+    --cur-binary cmake-build-trace/bin/solvitaire-trace \
+    --tests-dir tests \
+    --timeout-ms 5000
+```
+
+### Linux trace testing via container
+
+```bash
+# Build and run trace identity + timeout tests (no reference binary needed)
+./scripts/container-build.sh --trace-test
+
+# Run trace_regression_level1 against Linux reference binary
+# (05-Executables/reference/solvitaire-trace-reference-linux-amd64 must exist)
+./scripts/container-build.sh --trace-regression
+
+# Extract solvitaire-trace binary from container (to establish/update Linux reference)
+./scripts/container-build.sh --extract-trace-binary
+# Then copy to reference location:
+cp solvitaire-trace-linux-amd64 \
+   ../../05-Executables/reference/solvitaire-trace-reference-linux-amd64
+```
+
+### Agreement tests (`SearchTraceAgreementTest`)
+
+`src/test/unit_tests/search_trace_agreement_test.cpp` (compiled into `unit_tests`,
+active only in trace build) contains:
+
+- **`HashOnlyVsFlat_Klondike50Seeds`**: runs hash-only and flat policies on 50 Klondike
+  seeds, compares traces up to the first TIMEOUT event. Valid because both policies use
+  `skip_pile_ordering=true` (same search tree).
+
+Flat vs LRU comparison is **not** possible in independent runs — see KI-20 in
+`docs/known-issues.md`.
