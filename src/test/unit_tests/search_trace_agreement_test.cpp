@@ -3,38 +3,25 @@
 // Trace-based agreement tests replacing the dual-cache agreement tests that were
 // removed from feature/templated-dispatch.
 //
-// WHAT IS TESTED HERE (perfect-agreement games only):
+// WHAT IS TESTED HERE:
 //
-//   Suite 1 — FlatVsLRU: fortunes-favor (3 seeds) only.
-//             flat_cache and lru_cache agree for this game in separate runs.
-//             flower-garden and seahaven-towers are excluded — see KI-20.
-//             Source: dual_cache_test.cpp run_perfect_agreement_test.
-//
-//   Suite 2 — HashOnlyVsFlat: 50 klondike seeds.
+//   HashOnlyVsFlat: 50 klondike seeds.
 //             Source: hash_only_cache_test.cpp DualCacheAgreementWithFlatOnKlondike.
 //
-// WHY ONLY FORTUNES-FAVOR AND HASH-ONLY-VS-FLAT:
+// WHY HASH-ONLY-VS-FLAT ONLY (no FlatVsLRU):
 //
 //   The original dual_cache mechanism ran BOTH caches on the SAME single DFS
 //   traversal — one solver, one search tree, two caches consulted at each node.
-//   This allowed direct node-by-node comparison of HIT/MISS decisions, including
-//   asymmetric cases where one cache is strictly better than the other.
+//   This allowed direct node-by-node comparison of HIT/MISS decisions.
 //
-//   With the trace approach, each cache runs in a separate process/invocation.
-//   Search trees diverge whenever the two caches have different notions of state
-//   identity:
-//
-//   - Asymmetric-agreement games (flat_better: free-cell, bakers-game, eight-off,
-//     somerset; lru_better: spanish-patience, klondike-deal-1): one cache prunes
-//     more branches, trivially diverging the trees.
-//
-//   - "Perfect-agreement" in dual_cache terms (flower-garden, seahaven-towers):
-//     lru_cache canonicalizes tableau pile order; flat_cache does not.  In separate
-//     runs, interchangeable tableau columns cause hit/miss decisions to diverge
-//     almost immediately (seahaven-towers seed 1: event 293).
-//
-//   FortunesFavor is the exception: its structure does not trigger pile-order
-//   canonicalization, so flat and lru agree in independent runs.
+//   With the trace approach, each cache runs in a separate invocation.
+//   Flat and LRU cannot produce identical traces in independent runs because
+//   lru_cache canonicalizes tableau pile order (game_state_impl<LRUPolicy> has
+//   skip_pile_ordering=false) while flat does not (skip_pile_ordering=true).
+//   Even "perfect-agreement" games diverge immediately in independent runs
+//   because the two game states explore moves in different orders from the start.
+//   The dual_cache "perfect agreement" invariant only held because both caches
+//   shared the same pile-ordered (LRU) game state on a single search tree.
 //
 //   hash_only_cache uses the same Zobrist hash as flat_cache (same state encoding,
 //   no pile canonicalization), so they produce byte-identical event streams up to
@@ -42,8 +29,6 @@
 //   the two cache implementations run at different wall-clock speeds (16-byte vs
 //   64-byte clusters), causing them to hit the solver timeout at different event
 //   counts.
-//
-//   See KI-20 for full details.
 //
 // HOW FULL COMPARISON WORKS:
 //
@@ -68,9 +53,8 @@
 
 #include <boost/optional.hpp>
 
-#include "../../main/game/flat_cache.h"
-#include "../../main/game/global_cache.h"
-#include "../../main/game/hash_only_cache.h"
+#include "../../main/game/generic_flat_cache.h"
+#include "../../main/game/cache_policy.h"
 #include "../../main/game/search-state/game_state.h"
 #include "../../main/game/zobrist.h"
 #include "../../main/input-output/input/json-parsing/rules_parser.h"
@@ -85,8 +69,6 @@ namespace {
 
 static const int      HEADER_LINES    = 6;        // TRACE DATE CMD GAME POLICY <blank>
 static const char*    k_fake_argv[]   = {"unit_tests"};
-static const uint64_t CAP_AGREE       = 10000000; // 10M — matches dual_cache_test.cpp default
-static const int      TIMEOUT_AGREE   = 10000;    // 10s  — matches dual_cache_test.cpp
 static const uint64_t CAP_HASHONLY    = 200000000;// 200M — matches DualCacheAgreementWithFlatOnKlondike
 static const int      TIMEOUT_HASHONLY = 5000;    // 5s   — matches DualCacheAgreementWithFlatOnKlondike
 
@@ -168,24 +150,9 @@ void run_with_flat(const std::string& path,
                    int timeout_ms) {
     trace_writer::instance().open(path, 1, k_fake_argv);
     trace_writer::instance().write_init(game_type, seed, "none", "flat");
-    game_state gs(rules, seed, game_state::streamliner_options::NONE);
-    flat_cache cache(cap);
-    solver sol(gs, cache);
-    sol.run(boost::optional<std::chrono::milliseconds>(timeout_ms));
-    trace_writer::instance().close();
-}
-
-void run_with_lru(const std::string& path,
-                  const sol_rules& rules,
-                  int seed,
-                  const std::string& game_type,
-                  uint64_t cap,
-                  int timeout_ms) {
-    trace_writer::instance().open(path, 1, k_fake_argv);
-    trace_writer::instance().write_init(game_type, seed, "none", "lru");
-    game_state gs(rules, seed, game_state::streamliner_options::NONE);
-    lru_cache cache(gs, cap);
-    solver sol(gs, cache);
+    game_state_impl<FlatPolicy> gs(rules, seed, game_state::streamliner_options::NONE);
+    generic_flat_cache<CompactStatePolicy> cache(cap);
+    solver_impl<FlatPolicy> sol(gs, cache);
     sol.run(boost::optional<std::chrono::milliseconds>(timeout_ms));
     trace_writer::instance().close();
 }
@@ -198,9 +165,9 @@ void run_with_hash_only(const std::string& path,
                         int timeout_ms) {
     trace_writer::instance().open(path, 1, k_fake_argv);
     trace_writer::instance().write_init(game_type, seed, "none", "hash-only");
-    game_state gs(rules, seed, game_state::streamliner_options::NONE);
-    hash_only_cache cache(cap);
-    solver sol(gs, cache);
+    game_state_impl<HashOnlyPolicy> gs(rules, seed, game_state_impl<HashOnlyPolicy>::streamliner_options::NONE);
+    generic_flat_cache<HashOnlyClusterPolicy> cache(cap);
+    solver_impl<HashOnlyPolicy> sol(gs, cache);
     sol.run(boost::optional<std::chrono::milliseconds>(timeout_ms));
     trace_writer::instance().close();
 }
@@ -228,45 +195,10 @@ protected:
         std::remove(path_a_.c_str());
         std::remove(path_b_.c_str());
     }
-
-    // Run flat and LRU for one seed and compare full traces.
-    void check_flat_lru(const std::string& preset, int seed) {
-        std::remove(path_a_.c_str());
-        std::remove(path_b_.c_str());
-        trace_writer::instance().close();
-        sol_rules rules = rules_parser::from_preset(preset);
-        run_with_flat(path_a_, rules, seed, preset, CAP_AGREE, TIMEOUT_AGREE);
-        run_with_lru (path_b_, rules, seed, preset, CAP_AGREE, TIMEOUT_AGREE);
-        compare_traces_full(path_a_, path_b_, preset + " seed " + std::to_string(seed));
-    }
 };
 
 // ---------------------------------------------------------------------------
-// Suite 1: Flat vs LRU — FortunesFavor only
-//
-// dual_cache_test.cpp classified flower-garden, fortunes-favor, and seahaven-towers
-// as "perfect agreement" games (lru_only_hits==0, flat_only_hits==0 on the shared
-// search tree).  However, that invariant does NOT imply identical traces in separate
-// runs.  flat_cache uses descriptor-based Zobrist without pile canonicalization;
-// lru_cache canonicalizes tableau pile order.  For games with interchangeable tableau
-// columns (seahaven-towers, flower-garden), lru sees some states as HITs that flat
-// sees as MISSes (or vice versa), diverging the search trees almost immediately.
-//
-// FortunesFavor is the exception: its game structure does not trigger
-// pile-order canonicalization, so flat and lru agree on every node in separate
-// runs and the traces are byte-identical.
-//
-// See KI-20 for full details and why seahaven-towers and flower-garden were removed.
-// ---------------------------------------------------------------------------
-
-TEST_F(SearchTraceAgreementTest, FlatVsLRU_FortunesFavor) {
-    // 3 seeds — matches run_perfect_agreement_test("fortunes-favor", 3)
-    for (int seed = 1; seed <= 3; ++seed)
-        check_flat_lru("fortunes-favor", seed);
-}
-
-// ---------------------------------------------------------------------------
-// Suite 2: Hash-only vs flat — 50 klondike seeds
+// Hash-only vs flat — 50 klondike seeds
 //
 // hash_only_cache uses the same Zobrist hash as flat_cache but stores no payload.
 // Perfect agreement is expected: same hash → same HIT/MISS at every node.
