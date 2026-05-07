@@ -128,19 +128,19 @@ Ported the search trace infrastructure from `feature/search-trace` onto
   `solver_impl<Policy>` instead of concrete `flat_cache`/`hash_only_cache`
 - `trace_until_eviction` CTest removed (was vacuously passing on feature/search-trace)
 
-### Gate results (all on macOS ARM64)
+### Gate results
 
-| Test | Result |
-|---|---|
-| unit_tests (208/208) | ✓ |
-| trace_identity_flat/lru | ✓ |
-| trace_until_timeout | ✓ |
-| trace_regression_level1 (150 instances) | ✓ |
-| trace_regression_level2 (160 instances) | ✓ |
+| Test | macOS ARM64 | Linux ARM64 (container) |
+|---|---|---|
+| unit_tests (208/208) | ✓ | ✓ |
+| trace_identity_flat/lru | ✓ | ✓ |
+| trace_until_timeout | ✓ | ✓ |
+| trace_regression_level1 (150 instances) | ✓ | ✓ |
+| trace_regression_level2 (160 instances) | ✓ | — (not run on Linux) |
 
 **Conclusion:** `feature/templated-dispatch` produces byte-identical search behaviour
-to the `feature/search-trace` reference binary across all 310 test instances.
-Safe to merge.
+to the `feature/search-trace` reference binary across all 310 test instances on macOS,
+and all 150 Level 1 instances on Linux. Safe to merge.
 
 ## Key Decisions
 
