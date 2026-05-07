@@ -42,9 +42,10 @@ Running the flat cache with suit-symmetry would still give correct outcomes, but
 higher node counts (no suit-symmetric deduplication in the cache), causing timeouts on
 instances that are fast with LRU.
 
-**Current mitigation (`cache_interface.h`):** `use_new_cache()` returns `false` when
-suit-symmetry is active, so the solver automatically falls back to LRU. This restores
-correct and efficient behaviour for those games.
+**Current mitigation:** The templated dispatch switch in `main.cpp` routes suit-symmetry
+games to `solver_impl<LRUPolicy>`, so the solver automatically falls back to LRU.
+(`cache_interface.h` and `use_new_cache()` were removed in `feature/templated-dispatch`
+Commit 5; the routing is now handled at the dispatch level.)
 
 **Remaining gaps:**
 - The flat cache code path is never exercised by any regression oracle instance that
@@ -180,47 +181,28 @@ separately copy into a `compact_state` for the actual cache key.
 Magnitude TBD — benchmark before acting. Only worth doing if profiling shows nibble
 operations are a measurable fraction of total solve time.
 
-### 19. `docs/` Folder Needs Cleanup
+### 20. Reduced Metamorphic Testing: Flat vs LRU Agreement No Longer Tested
 
-**Status:** Open; deferred housekeeping
-**Impact:** Stale and duplicated content in `docs/` may cause confusion
+**Status:** Open — test removed; gap acknowledged
+**Impact:** Less metamorphic test coverage between flat and LRU cache policies
 
-The `docs/` folder has accumulated content from multiple development phases and may
-contain stale reference docs, directories that should be archived, and duplication
-between `docs/resolved-bugs/` and `01-Knowledge-Base/Dev-Logs/resolved-bugs/`. A
-deliberate cleanup pass is needed to:
-- Archive or remove completed-branch documentation
-- Consolidate resolved-bug records into a single canonical location
-- Verify all active docs are current and correctly placed per `AGENTS.md`
+The old `dual_cache` infrastructure tested that flat and LRU caches agreed on outcomes
+for the same instances (`DualCacheTest`). With templated dispatch, `solver_impl<Policy>`
+holds `Policy::cache_type&` directly and the dual-cache wrapper is gone.
 
-**Where to address:** Housekeeping session before or after `feature/templated-dispatch`
-merges to `dev`.
+`FlatVsLRU_FortunesFavor` was removed from `search_trace_agreement_test.cpp` because
+flat and LRU produce different search trees in independent runs: `LRUPolicy` has
+`skip_pile_ordering=false` (pile order canonicalized), `FlatPolicy` has
+`skip_pile_ordering=true` (not canonicalized). Traces diverge from the first move.
 
-### 18. Cache Parity Testing — RESOLVED via search trace
+The original dual_cache agreement held because both caches shared the same pile-ordered
+game state (`force_lru=true`). That invariant is no longer expressible in the templated
+architecture without significant extra infrastructure.
 
-**Status:** Resolved on `feature/templated-dispatch-trace`
-**Resolution:** Search trace infrastructure ported from `feature/search-trace`;
-`search_trace_agreement_test.cpp` provides `HashOnlyVsFlat_Klondike50Seeds` (50 seeds,
-trace comparison to first TIMEOUT event). `FlatVsLRU` comparison is not possible in
-independent runs — see KI-20.
+`HashOnlyVsFlat_Klondike50Seeds` (50 seeds, `search_trace_agreement_test.cpp`) remains
+and provides some cross-policy coverage. Outcome-level agreement between flat and LRU
+is verified indirectly by regression oracles (both produce same solve/unsolve results)
+but not at the search-event level.
 
-The old `dual_cache` test infrastructure (wrapping two `cache_interface` implementations)
-was incompatible with `solver_impl<Policy>` holding `Policy::cache_type&` directly. All
-dual-cache test files and the `dual_cache.h` wrapper were deleted in Commit 5.
-
-### 20. Flat vs LRU Trace Comparison Not Possible in Independent Runs
-
-**Status:** Closed — test removed; understanding documented here
-
-`lru_cache` canonicalizes tableau pile order (`game_state_impl<LRUPolicy>` has
-`skip_pile_ordering=false`); `generic_flat_cache` does not (`game_state_impl<FlatPolicy>`
-has `skip_pile_ordering=true`). When run independently, the two solvers explore different
-search trees from the first move. No game can produce byte-identical flat vs lru traces
-in separate runs.
-
-The original `dual_cache` test showed "perfect agreement" for some games (including
-fortunes-favor) because both caches ran on the **same** pile-ordered game state
-(`force_lru=true`). That invariant does not transfer to independent runs.
-
-`FlatVsLRU_FortunesFavor` was removed from `search_trace_agreement_test.cpp`.
-`HashOnlyVsFlat` remains valid because both policies use `skip_pile_ordering=true`.
+**Possible future fix:** A test that runs both policies and compares outcomes (not traces)
+on a shared set of instances, or a mode that forces pile ordering on the flat path.

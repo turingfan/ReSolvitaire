@@ -27,7 +27,7 @@ directory: `bug_root_descriptor_false_positives.md`,
 
 **Status:** RESOLVED by templated dispatch (Phase A, branch `feature/templated-dispatch`, Commits 0-6)
 **Impact:** Was: wasted hash and payload computation on every DFS move for LRU games
-**Proposal doc:** `docs/proposals/PROPOSAL-templated-game-state-dispatch.md`
+**Proposal doc:** archived to `01-Knowledge-Base/Archive/templated-dispatch/PROPOSAL-templated-game-state-dispatch.md`
 
 `game_state_impl<Policy>` uses `if constexpr (Policy::computes_hash)` to eliminate all
 hash/payload computation at compile time for `LRUPolicy`. `solver_impl<Policy>` holds
@@ -112,7 +112,7 @@ The runtime `computing_flat_hash`/`computing_flat_payload` flags and `cache_type
 constructor parameter have been removed. `game_state_impl<Policy>` uses compile-time
 Policy traits instead. Unit tests use `game_state` typedef (→ `FlatPolicy`) and always
 compute hash/payload, which is correct for test purposes. Dual-cache test infrastructure
-itself was redesigned — see KI-18 in `known-issues.md`.
+itself was redesigned — see KI-18 below.
 
 ---
 
@@ -141,6 +141,32 @@ reported hundreds of flat-only hits starting at operation 221. Investigation con
 
 **Details:** See `docs/investigation/INVESTIGATION_COMPLETE.md` for full analysis.
 Investigation commit: `4c4b022`
+
+---
+
+## KI-18. Cache Parity Testing
+
+**Status:** RESOLVED — `feature/templated-dispatch-trace` (landed on `dev` 2026-05-07)
+**Resolution:** Search trace infrastructure provides `HashOnlyVsFlat_Klondike50Seeds`
+(50 seeds, `search_trace_agreement_test.cpp`): traces compared to first TIMEOUT event.
+`FlatVsLRU` comparison is not possible in independent runs — see KI-20 below.
+
+The old `dual_cache` test infrastructure was incompatible with `solver_impl<Policy>`
+holding `Policy::cache_type&` directly. All dual-cache test files and `dual_cache.h`
+were deleted in Commit 5 of `feature/templated-dispatch`.
+
+---
+
+## KI-19. `docs/` Folder Needs Cleanup
+
+**Status:** RESOLVED — housekeeping session 2026-05-07 (after `feature/templated-dispatch` landed on `dev`)
+**Resolution:** Removed completed-branch documentation:
+- `docs/proposals/PROPOSAL-search-trace.md` and `PROPOSAL-templated-game-state-dispatch.md` — archived to `01-Knowledge-Base/Archive/`
+- `docs/stream-a-hash-only/` and `docs/stream-b-accordion-predecessor/` — archived to `01-Knowledge-Base/Archive/`
+- `docs/cache-redesign/active/PICKUP.md`, `docs/development_log.md`, `docs/dev-branch-plan.md` — removed (stale mac-dev / diagnostic session content)
+- Resolved issues KI-18, KI-19, KI-20 moved from `known-issues.md` to this file.
+- `01-Knowledge-Base/Archive/README.md` updated.
+- KI-3 mitigation note updated (`cache_interface.h`/`use_new_cache()` replaced by templated dispatch switch in `main.cpp`).
 
 ---
 
