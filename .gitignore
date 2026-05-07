@@ -26,6 +26,7 @@
 # CMake
 cmake-build-debug/
 cmake-build-release/
+cmake-build-trace/
 build/
 build-archive/
 
