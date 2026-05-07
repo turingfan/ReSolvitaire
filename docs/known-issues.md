@@ -196,19 +196,31 @@ deliberate cleanup pass is needed to:
 **Where to address:** Housekeeping session before or after `feature/templated-dispatch`
 merges to `dev`.
 
-### 18. Cache Parity Testing Needs New Approach
+### 18. Cache Parity Testing — RESOLVED via search trace
 
-**Status:** Open; old dual-cache infrastructure deleted in Commit 5
-**Impact:** No parity cross-checking between cache implementations until search trace is built
+**Status:** Resolved on `feature/templated-dispatch-trace`
+**Resolution:** Search trace infrastructure ported from `feature/search-trace`;
+`search_trace_agreement_test.cpp` provides `HashOnlyVsFlat_Klondike50Seeds` (50 seeds,
+trace comparison to first TIMEOUT event). `FlatVsLRU` comparison is not possible in
+independent runs — see KI-20.
 
 The old `dual_cache` test infrastructure (wrapping two `cache_interface` implementations)
 was incompatible with `solver_impl<Policy>` holding `Policy::cache_type&` directly. All
-dual-cache test files and the `dual_cache.h` wrapper were deleted in Commit 5 as part of
-legacy cache removal.
+dual-cache test files and the `dual_cache.h` wrapper were deleted in Commit 5.
 
-**Planned replacement:** Search trace infrastructure — instrument `solver_impl<Policy>` to
-log moves made (shared notation from `move.h`), cache insert/contains results (hit/miss),
-and eviction events. Run two solves with different policies, diff the traces. This is more
-powerful than the old approach: also useful for debugging, performance analysis, and
-regression diagnosis. Hashes are NOT logged (hashing can legitimately change); move
-sequences are the invariant.
+### 20. Flat vs LRU Trace Comparison Not Possible in Independent Runs
+
+**Status:** Closed — test removed; understanding documented here
+
+`lru_cache` canonicalizes tableau pile order (`game_state_impl<LRUPolicy>` has
+`skip_pile_ordering=false`); `generic_flat_cache` does not (`game_state_impl<FlatPolicy>`
+has `skip_pile_ordering=true`). When run independently, the two solvers explore different
+search trees from the first move. No game can produce byte-identical flat vs lru traces
+in separate runs.
+
+The original `dual_cache` test showed "perfect agreement" for some games (including
+fortunes-favor) because both caches ran on the **same** pile-ordered game state
+(`force_lru=true`). That invariant does not transfer to independent runs.
+
+`FlatVsLRU_FortunesFavor` was removed from `search_trace_agreement_test.cpp`.
+`HashOnlyVsFlat` remains valid because both policies use `skip_pile_ordering=true`.

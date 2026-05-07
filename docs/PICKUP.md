@@ -1,7 +1,8 @@
-# Pickup: feature/templated-dispatch
+# Pickup: feature/templated-dispatch / feature/templated-dispatch-trace
 
-**Last updated:** 2026-05-02
-**Branch:** `feature/templated-dispatch` (from `dev` at `1dd0882`)
+**Last updated:** 2026-05-07
+**Branch:** `feature/templated-dispatch-trace` (from `feature/templated-dispatch`)
+**Parent branch:** `feature/templated-dispatch` (from `dev` at `1dd0882`)
 
 ## What This Branch Does
 
@@ -91,6 +92,55 @@ Plans and prompts: archived to `01-Knowledge-Base/Archive/templated-dispatch/`
 ## Phase A Status: COMPLETE
 
 All templated dispatch work is done. Branch ready for merge planning to `dev`.
+
+---
+
+## feature/templated-dispatch-trace — Trace Validation (COMPLETE)
+
+**Purpose:** Short-lived branch to validate that `feature/templated-dispatch` produces
+byte-identical search behaviour to the `feature/search-trace` reference binary.
+Once validated, merge this branch back to `feature/templated-dispatch`, then merge
+`feature/templated-dispatch` to `dev` (after `feature/search-trace` has merged first).
+
+### What was done
+
+Ported the search trace infrastructure from `feature/search-trace` onto
+`feature/templated-dispatch`:
+
+- `search_trace.h/cpp` added; `STRACE_*` callsites in `solver.cpp` and
+  `global_cache.cpp`; CLI flags `--trace`/`--trace-break-at` wired; `main.cpp` opens
+  trace on startup
+- `CMakeLists.txt`: `-trace` variant targets, `SOLVITAIRE_TRACE` option, trace CTest
+  targets (`trace_identity_flat/lru`, `trace_until_timeout`, `trace_regression_level1/2`)
+- `build.sh`: `--trace` flag
+- `search_trace_test.cpp`: unit tests for trace infrastructure
+- `search_trace_agreement_test.cpp`: `HashOnlyVsFlat_Klondike50Seeds` (50 seeds)
+  — `FlatVsLRU_FortunesFavor` removed; see KI-20 update in `docs/known-issues.md`
+- Variant-binary CTest guard: `if(NOT SOLVITAIRE_TRACE)` around
+  `regression_levelN_{flat,hash_only,lru}` targets
+
+### Adaptation required vs feature/search-trace
+
+- `generic_flat_cache.h` had no `STRACE_EVICT()` calls (reference binary used
+  `flat_cache.cpp` which also had none); the initial port incorrectly added EVICT calls
+  which were then removed to match the reference
+- `search_trace_agreement_test.cpp` updated to use `generic_flat_cache<Policy>` and
+  `solver_impl<Policy>` instead of concrete `flat_cache`/`hash_only_cache`
+- `trace_until_eviction` CTest removed (was vacuously passing on feature/search-trace)
+
+### Gate results (all on macOS ARM64)
+
+| Test | Result |
+|---|---|
+| unit_tests (208/208) | ✓ |
+| trace_identity_flat/lru | ✓ |
+| trace_until_timeout | ✓ |
+| trace_regression_level1 (150 instances) | ✓ |
+| trace_regression_level2 (160 instances) | ✓ |
+
+**Conclusion:** `feature/templated-dispatch` produces byte-identical search behaviour
+to the `feature/search-trace` reference binary across all 310 test instances.
+Safe to merge.
 
 ## Key Decisions
 
