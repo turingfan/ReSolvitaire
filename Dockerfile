@@ -22,7 +22,7 @@ RUN echo "Build timestamp: $CACHEBUST"
 COPY . /workspace/
 
 # Remove any stale host build dirs (container CLI may not honour .dockerignore)
-RUN rm -rf cmake-build-release cmake-build-debug build build-archive
+RUN rm -rf cmake-build-release cmake-build-debug cmake-build-trace build build-archive
 
 # Two separate RUN steps so cmake configure is cached independently of compile
 RUN cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
@@ -31,5 +31,15 @@ RUN cmake --build cmake-build-release --target solvitaire \
  && cmake --build cmake-build-release --target solvitaire-hash-only \
  && cmake --build cmake-build-release --target solvitaire-lru \
  && cmake --build cmake-build-release --target unit_tests
+
+# Build trace variant (for pre-merge validation against feature/search-trace reference binary).
+# cmake-build-trace uses Release + SOLVITAIRE_TRACE=ON.
+# solvitaire-flat-trace and solvitaire-lru-trace are needed for trace_identity_* tests.
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -Bcmake-build-trace -H. \
+ && cmake --build cmake-build-trace --target solvitaire \
+ && cmake --build cmake-build-trace --target solvitaire-trace \
+ && cmake --build cmake-build-trace --target solvitaire-flat-trace \
+ && cmake --build cmake-build-trace --target solvitaire-lru-trace \
+ && cmake --build cmake-build-trace --target unit_tests
 
 CMD ["/workspace/cmake-build-release/bin/solvitaire"]

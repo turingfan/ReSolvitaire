@@ -13,6 +13,13 @@ IMAGE_NAME="solvitaire-dev"
 TEST_FLAG=""
 REGRESSION_FLAG=""
 VARIANTS_FLAG=""
+TRACE_TEST_FLAG=""
+TRACE_REGRESSION_FLAG=""
+EXTRACT_TRACE_BINARY_FLAG=""
+# Conventional location of the Linux reference binary (relative to repo root).
+# cmake-build-trace configures its TRACE_REF_BIN to this path inside the container.
+LINUX_REF_BIN_HOST="$(cd "$(dirname "$0")/.." && pwd)/../../05-Executables/reference/solvitaire-trace-reference-linux-amd64"
+LINUX_REF_BIN_CONTAINER="/05-Executables/reference/solvitaire-trace-reference-linux-amd64"
 # Default to --no-cache: the 'container' CLI v0.9 does not reliably
 # invalidate the COPY layer when source files change, so cached builds
 # silently use stale sources. Use --use-cache to opt in to caching
@@ -27,12 +34,18 @@ print_usage() {
 Usage: ./scripts/container-build.sh [OPTIONS]
 
 Options:
-  --test        Run unit tests after build
-  --regression  Run regression_level1 tests after build (main binary only)
-  --variants    Run regression_level1 tests for all three variant binaries
-                (solvitaire-flat, solvitaire-hash-only, solvitaire-lru)
-  --use-cache   Allow cached layers (faster on slow networks, but may use stale sources)
-  (no options)  Build the container image only
+  --test                 Run unit tests after build (cmake-build-release)
+  --regression           Run regression_level1 tests after build (main binary only)
+  --variants             Run regression_level1 tests for all three variant binaries
+                         (solvitaire-flat, solvitaire-hash-only, solvitaire-lru)
+  --trace-test           Run unit_tests + trace_identity + trace_until_timeout from cmake-build-trace
+                         (excludes trace_regression — those need the Linux reference binary)
+  --trace-regression     Run trace_regression_level1 inside the container using the Linux reference
+                         binary from 05-Executables/reference/ (must exist; run --extract-trace-binary
+                         on the reference build first to create it)
+  --extract-trace-binary Copy solvitaire-trace binary from container to ./solvitaire-trace-linux-amd64
+  --use-cache            Allow cached layers (faster on slow networks, but may use stale sources)
+  (no options)           Build the container image only
 
 The container image is tagged as '$IMAGE_NAME' and requires a container
 runtime (the 'container' CLI, Docker, or Podman) to be available on PATH.
@@ -52,10 +65,13 @@ EOF
 # Parse arguments
 for arg in "$@"; do
     case "$arg" in
-        --test)       TEST_FLAG="1" ;;
-        --regression) REGRESSION_FLAG="1" ;;
-        --variants)   VARIANTS_FLAG="1" ;;
-        --use-cache)  NO_CACHE_FLAG="" ;;
+        --test)                 TEST_FLAG="1" ;;
+        --regression)           REGRESSION_FLAG="1" ;;
+        --variants)             VARIANTS_FLAG="1" ;;
+        --trace-test)           TRACE_TEST_FLAG="1" ;;
+        --trace-regression)     TRACE_REGRESSION_FLAG="1" ;;
+        --extract-trace-binary) EXTRACT_TRACE_BINARY_FLAG="1" ;;
+        --use-cache)            NO_CACHE_FLAG="" ;;
         --help|-h)    print_usage; exit 0 ;;
         *)
             echo "Unknown argument: $arg"
@@ -116,7 +132,42 @@ if [ -n "$VARIANTS_FLAG" ]; then
         bash -c "cd cmake-build-release && ctest -R 'regression_level1_(flat|hash_only|lru)' --output-on-failure"
 fi
 
-if [ -z "$TEST_FLAG" ] && [ -z "$REGRESSION_FLAG" ] && [ -z "$VARIANTS_FLAG" ]; then
+if [ -n "$TRACE_TEST_FLAG" ]; then
+    echo ""
+    echo "Running unit_tests and trace identity/timeout CTests inside container (memory limit: $MEMORY_LIMIT)..."
+    echo "(trace_regression tests are excluded here — they need the Linux reference binary; use --extract-trace-binary first)"
+    $CONTAINER_CMD run --rm -m "$MEMORY_LIMIT" "$IMAGE_NAME" \
+        bash -c "cd cmake-build-trace && ctest -R '^unit_tests$' --output-on-failure && ctest -R '^(trace_identity|trace_until_timeout)' --output-on-failure"
+fi
+
+if [ -n "$TRACE_REGRESSION_FLAG" ]; then
+    echo ""
+    if [ ! -f "$LINUX_REF_BIN_HOST" ]; then
+        echo "Error: Linux reference binary not found at:"
+        echo "  $LINUX_REF_BIN_HOST"
+        echo "Run './scripts/container-build.sh --extract-trace-binary' on the reference build first."
+        exit 1
+    fi
+    echo "Running trace_regression_level1 inside container (memory limit: $MEMORY_LIMIT)..."
+    echo "  Reference binary: $LINUX_REF_BIN_HOST"
+    $CONTAINER_CMD run --rm -m "$MEMORY_LIMIT" \
+        -v "${LINUX_REF_BIN_HOST}:${LINUX_REF_BIN_CONTAINER}:ro" \
+        "$IMAGE_NAME" \
+        bash -c "cd cmake-build-trace && ctest -R '^trace_regression_level1$' --output-on-failure"
+fi
+
+if [ -n "$EXTRACT_TRACE_BINARY_FLAG" ]; then
+    echo ""
+    echo "Extracting solvitaire-trace binary from container..."
+    EXTRACT_DIR=$(mktemp -d)
+    $CONTAINER_CMD run --rm -v "${EXTRACT_DIR}:/output" "$IMAGE_NAME" \
+        cp /workspace/cmake-build-trace/bin/solvitaire-trace /output/solvitaire-trace-linux-amd64
+    mv "${EXTRACT_DIR}/solvitaire-trace-linux-amd64" ./solvitaire-trace-linux-amd64
+    rm -rf "${EXTRACT_DIR}"
+    echo "Binary extracted to: ./solvitaire-trace-linux-amd64"
+fi
+
+if [ -z "$TEST_FLAG" ] && [ -z "$REGRESSION_FLAG" ] && [ -z "$VARIANTS_FLAG" ] && [ -z "$TRACE_TEST_FLAG" ] && [ -z "$TRACE_REGRESSION_FLAG" ] && [ -z "$EXTRACT_TRACE_BINARY_FLAG" ]; then
     echo ""
     echo "To run tests in the container:"
     echo "  $CONTAINER_CMD run --rm -m $MEMORY_LIMIT $IMAGE_NAME \\"
