@@ -8,8 +8,14 @@ Files are not duplicated here — this index points to their canonical locations
 ## Current State
 
 The `dev` branch is the primary working branch (cross-platform macOS + Linux).
-The most recent completed work is the variant-build fix and hash-only descriptor store
-(known-issues #11 and #14, all 5 commits merged April 2026).
+
+Most recently merged: `feature/search-trace` (2026-05-07) — search trace
+infrastructure for pre-merge validation of `feature/templated-dispatch`.
+
+In progress: `feature/templated-dispatch` — templates `game_state` and `solver`
+on cache policy, eliminating runtime dispatch. Trace validation against the
+`feature/search-trace` reference binaries passed on both macOS and Linux.
+Merge to `dev` deferred for final decision.
 
 ---
 
@@ -20,13 +26,15 @@ The most recent completed work is the variant-build fix and hash-only descriptor
 
 ### Testing
 - [`docs/regression_suite_guide.md`](../regression_suite_guide.md) — how to run levels 1–5 regression tests
+- `CLAUDE.md` (root) — all three build gates (release, trace, debug) and testing commands
 
 ### Next Planned Work
-- [`docs/proposals/PROPOSAL-templated-game-state-dispatch.md`](../proposals/PROPOSAL-templated-game-state-dispatch.md) — templating `game_state` on cache policy (known-issues #8); deferred until after benchmarking
+- `feature/templated-dispatch` — awaiting merge decision; branch + trace validation complete
 
-### Recently Completed Work (reference)
-- [`docs/fix-variant-build-hash-only/PICKUP.md`](../fix-variant-build-hash-only/PICKUP.md) — branch summary, commit table, session log
-- [`docs/fix-variant-build-hash-only/implementation_plan.md`](../fix-variant-build-hash-only/implementation_plan.md) — detailed per-commit plan and rationale
+### Recently Completed Work (archived to 01-Knowledge-Base/Archive/)
+- `search-trace/` — search trace infrastructure (merged 2026-05-07)
+- `templated-dispatch/` — phase A planning and design (work ongoing on branch)
+- `fix-variant-build-hash-only/` — variant build fix and hash-only descriptor store
 
 ### Background / Architecture Narrative
 - [`docs/cache-redesign/OVERVIEW.md`](../cache-redesign/OVERVIEW.md) — full narrative of the cache redesign effort
