@@ -511,6 +511,12 @@ set_tests_properties(regression_level5 PROPERTIES TIMEOUT 450000)
 
 ###############################################################################
 ## Variant-binary regression targets                                         ##
+## Suppressed in SOLVITAIRE_TRACE builds: variant binaries (solvitaire-flat ##
+## etc.) are not built by build.sh --trace.  Run from cmake-build-release.  ##
+###############################################################################
+if(NOT SOLVITAIRE_TRACE)
+###############################################################################
+## (inner block — remove the if/endif when SOLVITAIRE_TRACE guard removed)  ##
 ##                                                                           ##
 ## 15 targets: regression_levelN_{flat,hash_only,lru} for N=1..5            ##
 ##                                                                           ##
@@ -685,6 +691,8 @@ add_test(NAME regression_level5_lru
         "--force-lru" "--skip-ineligible" "--compare-outcome-only"
 )
 set_tests_properties(regression_level5_lru PROPERTIES TIMEOUT 450000)
+
+endif() # NOT SOLVITAIRE_TRACE
 
 ###############################################################################
 ## packaging ##################################################################
