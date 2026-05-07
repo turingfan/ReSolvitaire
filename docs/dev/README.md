@@ -9,13 +9,16 @@ Files are not duplicated here — this index points to their canonical locations
 
 The `dev` branch is the primary working branch (cross-platform macOS + Linux).
 
-Most recently merged: `feature/search-trace` (2026-05-07) — search trace
-infrastructure for pre-merge validation of `feature/templated-dispatch`.
+Most recently landed (2026-05-07):
+- **`feature/templated-dispatch`** — `game_state` and `solver` templated on cache
+  policy (`game_state_impl<Policy>`, `solver_impl<Policy>`). Legacy concrete caches
+  (`flat_cache`, `hash_only_cache`, `predecessor_flat_cache`, `dual_cache`,
+  `cache_factory`) removed. Byte-identical search behaviour verified via trace
+  regression against reference binaries on macOS and Linux.
+- **`feature/search-trace`** — search trace infrastructure (`search_trace.h/cpp`,
+  `STRACE_*` callsites, `compare_traces.py`, `trace_regression.py`, CTest targets).
 
-In progress: `feature/templated-dispatch` — templates `game_state` and `solver`
-on cache policy, eliminating runtime dispatch. Trace validation against the
-`feature/search-trace` reference binaries passed on both macOS and Linux.
-Merge to `dev` deferred for final decision.
+Previous dev state (old concrete-cache system) preserved on branch `cache-v1`.
 
 ---
 
@@ -29,11 +32,12 @@ Merge to `dev` deferred for final decision.
 - `CLAUDE.md` (root) — all three build gates (release, trace, debug) and testing commands
 
 ### Next Planned Work
-- `feature/templated-dispatch` — awaiting merge decision; branch + trace validation complete
+- Benchmarking: compare templated-dispatch vs old concrete-cache system
+  (use `cache-v1` branch as baseline)
 
 ### Recently Completed Work (archived to 01-Knowledge-Base/Archive/)
-- `search-trace/` — search trace infrastructure (merged 2026-05-07)
-- `templated-dispatch/` — phase A planning and design (work ongoing on branch)
+- `templated-dispatch/` — full phase A plan, design decisions, session logs
+- `search-trace/` — search trace infrastructure design and implementation plan
 - `fix-variant-build-hash-only/` — variant build fix and hash-only descriptor store
 
 ### Background / Architecture Narrative
