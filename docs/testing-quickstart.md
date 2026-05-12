@@ -73,10 +73,10 @@ Use `ctest -R ^unit_tests$` (anchored regex) — plain `unit_tests` matches othe
 
 ## Adding a test
 
-See `docs/regression_suite_guide.md` for the full workflow:
-- §3: adding Level 1 instances (JSON files + oracle entry)
-- §4–5: adding Level 2–5 entries (seed-based)
-- §8: trace testing and reference binary system
+See `docs/testing-guide.md` for the full workflow:
+- §5–6: adding regression instances (Level 1 JSON files, Level 2–5 seeds)
+- §10: trace testing and reference binary system
+- §11: adding new game types to the regression suite
 
 ## Troubleshooting
 

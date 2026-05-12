@@ -96,7 +96,7 @@ Use `ctest -R ^unit_tests$` (anchored regex) to avoid matching other targets.
 
 ### Trace testing in detail
 
-See `docs/regression_suite_guide.md` §8 for full trace testing documentation,
+See `docs/testing-guide.md` §10 for full trace testing documentation,
 including `compare_traces.py` (also handles regression mode) and the reference binary system.
 
 **Quick trace comparison (two runs of the same binary):**
@@ -213,7 +213,7 @@ Face-down cards are encoded with **lowercase** suit letters in JSON (`"as"` = fa
 | 4 | ~160 | `--random <seed>` | 600s | ~100 min |
 | 5 | ~160 | `--random <seed>` | 1800s | ~600 min |
 
-Oracle files are JSON arrays; each entry stores `outcome`, `states_searched`, `backtracks`, and `streamliner`. The Python harness (`scripts/regression_runner.py`) drives CTest, invokes the solver, and compares results. See `docs/regression_suite_guide.md` for the full workflow.
+Oracle files are JSON arrays; each entry stores `outcome`, `states_searched`, `backtracks`, and `streamliner`. The Python harness (`scripts/regression_runner.py`) drives CTest, invokes the solver, and compares results. See `docs/testing-guide.md` for the full workflow.
 
 ## Known Issues
 

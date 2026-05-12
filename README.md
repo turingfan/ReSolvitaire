@@ -21,16 +21,11 @@ The primary development branch is `dev`, which is tested on macOS (Apple Silicon
 brew install cmake boost
 ```
 
-**Build:**
+**Build and test:**
 ```bash
-./build.sh                          # release build (default)
-./build.sh --release --unit-tests   # also build test binary
-```
-
-**Test:**
-```bash
-cd cmake-build-release
-ctest -R '^unit_tests$' --output-on-failure
+./build.sh                            # release build (default)
+python3 scripts/run_tests.py          # all 3 gates (release/trace/debug)
+python3 scripts/run_tests.py --quick  # unit tests only (~5 min)
 ```
 
 **Run:**
@@ -47,16 +42,11 @@ ctest -R '^unit_tests$' --output-on-failure
 sudo apt-get install build-essential cmake libboost-program-options-dev git python3
 ```
 
-**Build:**
+**Build and test:**
 ```bash
-./build.sh                          # release build
-./build.sh --release --unit-tests   # also build test binary
-```
-
-**Test:**
-```bash
-cd cmake-build-release
-ctest -R '^unit_tests$' --output-on-failure
+./build.sh                            # release build (default)
+python3 scripts/run_tests.py          # all 3 gates (release/trace/debug)
+python3 scripts/run_tests.py --quick  # unit tests only (~5 min)
 ```
 
 **Run:**
@@ -116,6 +106,18 @@ Key options: `--type`, `--random <seed>`, `--json`, `--timeout <ms>`,
 `--solvability <N>`.
 
 ---
+
+## Testing
+
+The project uses a 3-gate testing model (release, trace, debug). All three gates must
+pass before committing. See `docs/testing-quickstart.md` for a quick introduction and
+`docs/testing-guide.md` for the comprehensive reference.
+
+```bash
+python3 scripts/run_tests.py          # all 3 gates — required before every commit
+python3 scripts/run_tests.py --quick  # unit tests only, all 3 configs
+python3 scripts/run_tests.py --gate release --skip-build  # single gate, pre-built
+```
 
 ## Help
 
