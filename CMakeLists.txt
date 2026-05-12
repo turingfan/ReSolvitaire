@@ -412,33 +412,42 @@ if(SOLVITAIRE_TRACE)
 
 else()
     message(STATUS "Search trace: disabled on regular targets (solvitaire-*-trace always available)")
+
+    # Make trace tests visible (but disabled) in non-trace builds so that
+    # ctest -N shows they exist rather than silently omitting them.
+    add_test(NAME trace_tests_not_available
+        COMMAND ${CMAKE_COMMAND} -E echo
+        "Trace CTest targets require cmake-build-trace. Run: ./build.sh --trace"
+    )
+    set_tests_properties(trace_tests_not_available PROPERTIES DISABLED TRUE)
 endif()
 
 ###############################################################################
 ## testing ####################################################################
 ###############################################################################
 
+# unit_tests binary — GoogleTest suite containing both unit tests and
+# integration tests (per-game solvability).  Always compiled with
+# SOLVITAIRE_SEARCH_TRACE so that SearchTraceTest and
+# SearchTraceAgreementTest (metamorphic hash-only-vs-flat) run in every
+# build config.  These GTest-level trace tests validate the trace writer
+# and cache agreement; they are distinct from the CTest trace_* targets
+# (trace_identity, trace_regression) which only exist in the trace build
+# and validate trace identity against reference binaries.
 add_executable(unit_tests ${sources_test} ${sources} ${sources_trace})
 target_compile_definitions(unit_tests PRIVATE SOLVITAIRE_SEARCH_TRACE)
 target_link_libraries(unit_tests PRIVATE gtest_main ${Boost_LIBRARIES})
 
 enable_testing()
 
-# Run the GoogleTest suite.  Working directory is the project root so that
-# integration tests can resolve paths like "tests/resources/unit_tests/…"
+# Run the full GoogleTest suite.  Working directory is the project root so
+# that integration tests can resolve paths like "tests/resources/unit_tests/…"
 #
-# unit_tests       — M6 default: excludes DualCacheTest and MismatchDiagnostic
-#                    (DualCacheTest targets M5 behaviour; MismatchDiagnostic is
-#                    a diagnostic tool, not a regression gate)
-# unit_tests_full  — all tests including DualCacheTest; use near end of M6
-#                    for regression verification
+# Note: DualCacheTest and MismatchDiagnostic were previously excluded via
+# --gtest_filter; both test suites were removed when dual_cache was deleted
+# during templated dispatch.  The filter and unit_tests_full target were
+# removed as stale in the testing-rationalisation branch (KI-21).
 add_test(NAME unit_tests
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        COMMAND "$<TARGET_FILE:unit_tests>"
-                "--gtest_filter=-DualCacheTest.*:MismatchDiagnostic.*"
-)
-
-add_test(NAME unit_tests_full
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "$<TARGET_FILE:unit_tests>"
 )

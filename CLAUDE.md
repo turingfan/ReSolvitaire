@@ -79,8 +79,7 @@ cd cmake-build-debug && ctest -R ^unit_tests$ --output-on-failure
 | `cmake-build-debug` | `./build.sh --debug --unit-tests` | No | Debug symbols; catches UB/assert failures |
 | `cmake-build-trace` | `./build.sh --trace` | Yes | Trace variant binaries + SearchTrace* tests |
 
-Use `ctest -R ^unit_tests$` (anchored regex) not `ctest -R unit_tests` — the unanchored
-form also matches `unit_tests_full` (~5 minutes).
+Use `ctest -R ^unit_tests$` (anchored regex) to avoid matching other targets.
 
 ### Trace testing in detail
 

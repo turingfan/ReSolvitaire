@@ -2,7 +2,7 @@
 
 **Branch:** `feature/testing-rationalisation`
 **Last updated:** 2026-05-12
-**Status:** Plan lodged; implementation not yet started
+**Status:** Deliverable 1 complete
 
 ## What this branch does
 
@@ -18,7 +18,13 @@ See `docs/Testing/testing-rationalisation-plan.md` for full plan.
 ## Current state
 
 - [x] Plan written and committed
-- [ ] Deliverable 1: GTest structure clarification
+- [x] Deliverable 1: GTest structure clarification
+  - Removed stale `--gtest_filter` (DualCacheTest/MismatchDiagnostic don't exist in code)
+  - Removed `unit_tests_full` target (identical to `unit_tests` now)
+  - Added explanatory comments about unit_tests binary (always has SOLVITAIRE_SEARCH_TRACE)
+  - Added disabled `trace_tests_not_available` guard in non-trace builds
+  - Updated CLAUDE.md to remove `unit_tests_full` reference
+  - Verified: `unit_tests` passes in release build (106s)
 - [ ] Deliverable 2: Trace script consolidation
 - [ ] Deliverable 3: Unified test driver
 - [ ] Deliverable 4: Quick-start document
