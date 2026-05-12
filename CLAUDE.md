@@ -39,6 +39,19 @@ Build outputs go to `cmake-build-release/` or `cmake-build-debug/`.
 
 **There are three required test gates. All three must pass before any commit.**
 
+**Quick-start:** See `docs/testing-quickstart.md` for the entry-level guide.
+
+```bash
+# All 3 gates (unit tests + level 1 regression) — required before every commit
+python3 scripts/run_tests.py
+
+# Fast check (unit tests only, all 3 configs, ~5 min)
+python3 scripts/run_tests.py --quick
+
+# Single gate, skip rebuild
+python3 scripts/run_tests.py --gate release --skip-build
+```
+
 ### Gate 1 — Release build
 
 ```bash
@@ -84,7 +97,7 @@ Use `ctest -R ^unit_tests$` (anchored regex) to avoid matching other targets.
 ### Trace testing in detail
 
 See `docs/regression_suite_guide.md` §8 for full trace testing documentation,
-including `compare_traces.py`, `trace_regression.py`, and the reference binary system.
+including `compare_traces.py` (also handles regression mode) and the reference binary system.
 
 **Quick trace comparison (two runs of the same binary):**
 

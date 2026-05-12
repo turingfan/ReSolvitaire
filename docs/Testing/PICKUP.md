@@ -2,7 +2,7 @@
 
 **Branch:** `feature/testing-rationalisation`
 **Last updated:** 2026-05-12
-**Status:** Deliverable 3 complete
+**Status:** All deliverables complete
 
 ## What this branch does
 
@@ -34,8 +34,11 @@ See `docs/Testing/testing-rationalisation-plan.md` for full plan.
   - Created `scripts/run_tests.py` wrapping the 3-gate workflow
   - Supports --gate, --quick, --level N, --skip-build, --dry-run
   - Verified: dry-run output correct for all flag combinations; unit_tests still pass
-- [ ] Deliverable 4: Quick-start document
+- [x] Deliverable 4: Quick-start document
+  - Created `docs/testing-quickstart.md` (98 lines)
+  - Updated CLAUDE.md: added run_tests.py snippet, fixed stale trace_regression.py reference
+  - Verified: unit_tests still pass in release
 
 ## What to do next
 
-Start Deliverable 4: write `docs/testing-quickstart.md` (under 100 lines) and update CLAUDE.md to reference run_tests.py and the quickstart doc.
+Branch is complete. Merge `feature/testing-rationalisation` into `dev`.
