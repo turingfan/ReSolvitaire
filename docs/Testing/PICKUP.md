@@ -2,7 +2,7 @@
 
 **Branch:** `feature/testing-rationalisation`
 **Last updated:** 2026-05-12
-**Status:** Deliverable 2 complete
+**Status:** Deliverable 3 complete
 
 ## What this branch does
 
@@ -30,9 +30,12 @@ See `docs/Testing/testing-rationalisation-plan.md` for full plan.
   - Updated 2 CTest targets in CMakeLists.txt to call compare_traces.py --regression
   - Deleted `scripts/trace_regression.py`
   - Verified: unit_tests passes in release build (106s)
-- [ ] Deliverable 3: Unified test driver
+- [x] Deliverable 3: Unified test driver
+  - Created `scripts/run_tests.py` wrapping the 3-gate workflow
+  - Supports --gate, --quick, --level N, --skip-build, --dry-run
+  - Verified: dry-run output correct for all flag combinations; unit_tests still pass
 - [ ] Deliverable 4: Quick-start document
 
 ## What to do next
 
-Start Deliverable 3: implement `scripts/run_tests.py` — a thin wrapper around `build.sh` + `ctest` that drives the 3-gate workflow with the CLI described in the plan.
+Start Deliverable 4: write `docs/testing-quickstart.md` (under 100 lines) and update CLAUDE.md to reference run_tests.py and the quickstart doc.
