@@ -2,7 +2,7 @@
 
 **Branch:** `feature/testing-rationalisation`
 **Last updated:** 2026-05-12
-**Status:** Deliverable 1 complete
+**Status:** Deliverable 2 complete
 
 ## What this branch does
 
@@ -25,10 +25,14 @@ See `docs/Testing/testing-rationalisation-plan.md` for full plan.
   - Added disabled `trace_tests_not_available` guard in non-trace builds
   - Updated CLAUDE.md to remove `unit_tests_full` reference
   - Verified: `unit_tests` passes in release build (106s)
-- [ ] Deliverable 2: Trace script consolidation
+- [x] Deliverable 2: Trace script consolidation
+  - Added `--regression` mode to `compare_traces.py` (stream_compare, build_cmd, run_instance, run_regression)
+  - Updated 2 CTest targets in CMakeLists.txt to call compare_traces.py --regression
+  - Deleted `scripts/trace_regression.py`
+  - Verified: unit_tests passes in release build (106s)
 - [ ] Deliverable 3: Unified test driver
 - [ ] Deliverable 4: Quick-start document
 
 ## What to do next
 
-Start Deliverable 1: investigate whether DualCacheTest passes on current dev, then update CMakeLists.txt with comments and the silent no-op guard.
+Start Deliverable 3: implement `scripts/run_tests.py` — a thin wrapper around `build.sh` + `ctest` that drives the 3-gate workflow with the CLI described in the plan.

@@ -388,10 +388,11 @@ if(SOLVITAIRE_TRACE)
     # CTest ceiling: 30 min (generous; typical run ~5-10 min in trace mode).
     add_test(NAME trace_regression_level1
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/trace_regression.py"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--regression"
             "--level"      "1"
-            "--ref-binary" "${TRACE_REF_BIN}"
-            "--cur-binary" "$<TARGET_FILE:solvitaire-trace>"
+            "--binary-a"   "${TRACE_REF_BIN}"
+            "--binary-b"   "$<TARGET_FILE:solvitaire-trace>"
             "--tests-dir"  "${CMAKE_CURRENT_SOURCE_DIR}/tests"
     )
     set_tests_properties(trace_regression_level1 PROPERTIES TIMEOUT 1800)
@@ -401,10 +402,11 @@ if(SOLVITAIRE_TRACE)
     # CTest ceiling: 60 min (generous; typical run ~15-30 min in trace mode).
     add_test(NAME trace_regression_level2
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/trace_regression.py"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--regression"
             "--level"      "2"
-            "--ref-binary" "${TRACE_REF_BIN}"
-            "--cur-binary" "$<TARGET_FILE:solvitaire-trace>"
+            "--binary-a"   "${TRACE_REF_BIN}"
+            "--binary-b"   "$<TARGET_FILE:solvitaire-trace>"
             "--tests-dir"  "${CMAKE_CURRENT_SOURCE_DIR}/tests"
             "--timeout-ms" "5000"
     )
