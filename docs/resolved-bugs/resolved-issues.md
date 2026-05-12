@@ -170,6 +170,34 @@ were deleted in Commit 5 of `feature/templated-dispatch`.
 
 ---
 
+## KI-21. Testing Infrastructure Complexity Needs Rationalisation
+
+**Status:** RESOLVED — `feature/testing-rationalisation` (landed on `dev` 2026-05-12)
+**Impact:** Was: high cognitive overhead for running or extending tests; no single entry point
+
+**Resolution:** Four changes on `feature/testing-rationalisation`:
+
+1. **GTest cleanup:** Removed stale `--gtest_filter` (excluded `DualCacheTest` and
+   `MismatchDiagnostic` which no longer exist in the codebase). Removed `unit_tests_full`
+   CTest target (identical to `unit_tests`). Added explanatory comments about the
+   `unit_tests` binary always having `SOLVITAIRE_SEARCH_TRACE=ON`. Added disabled
+   `trace_tests_not_available` guard in non-trace builds so `ctest -N` shows they exist.
+
+2. **Trace script consolidation:** Merged `trace_regression.py` into `compare_traces.py`
+   via a `--regression` mode. Updated 2 CTest targets. Deleted `trace_regression.py`.
+
+3. **Unified test driver:** `scripts/run_tests.py` wraps the 3-gate build+test workflow.
+   Builds automatically before testing. Supports `--gate`, `--quick`, `--level N`,
+   `--skip-build`, `--dry-run`.
+
+4. **Quick-start doc:** `docs/testing-quickstart.md` — landing page for new contributors
+   covering the 3-gate model, GTest vs CTest distinction, CTest targets, troubleshooting.
+   `CLAUDE.md` updated with `run_tests.py` usage.
+
+**Archive:** `01-Knowledge-Base/Archive/testing-rationalisation/`
+
+---
+
 ## Earlier Resolved Bugs (pre-KI numbering)
 
 The following bugs were fixed before the KI numbering scheme was introduced.
