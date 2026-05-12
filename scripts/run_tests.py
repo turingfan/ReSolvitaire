@@ -115,6 +115,11 @@ def run_gate(gate, level, quick, skip_build, dry_run):
     # Build step
     if skip_build:
         print('  [build skipped]', flush=True)
+        if not os.path.isdir(build_dir):
+            print(f'\n  ERROR: build directory not found: {build_dir}', flush=True)
+            print(f'  Run without --skip-build, or build manually:', flush=True)
+            print(f'    {BUILD_SCRIPT} {" ".join(cfg["build_args"])}', flush=True)
+            return False
     else:
         build_cmd = [BUILD_SCRIPT] + cfg['build_args']
         rc = run_cmd(build_cmd, dry_run, cwd=REPO_ROOT)
