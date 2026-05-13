@@ -238,7 +238,7 @@ bool solver_impl<Policy>::revert_to_last_node_with_children(optional<lru_cache::
             if constexpr (Policy::computes_hash) {
                 assert(cache.contains_t(state));
             } else {
-                assert(cache.contains(state));
+                assert(cache.contains_t(state));
             }
         }
         LOG_DEBUG("(undo move)");
