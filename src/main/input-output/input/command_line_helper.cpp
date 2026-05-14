@@ -94,7 +94,9 @@ command_line_helper::command_line_helper()
             ("trace", po::value<string>(),
              "write search trace to file (requires SOLVITAIRE_SEARCH_TRACE build)")
             ("trace-break-at", po::value<uint64_t>(),
-             "halt and print game state at trace operation N");
+             "halt and print game state at trace operation N")
+            ("trace-find-hash", po::value<string>(),
+             "halt and print game state at first new-state insertion with this Zobrist hash (hex, e.g. 0xdeadbeef)");
 
     po::options_description hidden_options("Hidden options");
     hidden_options.add_options()
@@ -249,6 +251,10 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
     if (vm.count("trace-break-at")) {
         has_break_at_ = true;
         break_at_n = vm["trace-break-at"].as<uint64_t>();
+    }
+    if (vm.count("trace-find-hash")) {
+        has_find_hash_ = true;
+        find_hash_val = std::stoull(vm["trace-find-hash"].as<string>(), nullptr, 16);
     }
 
     cache_type = vm["cache-type"].as<string>();
@@ -457,6 +463,14 @@ bool command_line_helper::has_break_at() const {
 
 uint64_t command_line_helper::get_break_at_n() const {
     return break_at_n;
+}
+
+bool command_line_helper::has_find_hash() const {
+    return has_find_hash_;
+}
+
+uint64_t command_line_helper::get_find_hash() const {
+    return find_hash_val;
 }
 
 bool command_line_helper::get_version() {

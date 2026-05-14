@@ -34,11 +34,13 @@ RUN cmake --build cmake-build-release --target solvitaire \
 
 # Build trace variant (for pre-merge validation against feature/search-trace reference binary).
 # cmake-build-trace uses Release + SOLVITAIRE_TRACE=ON.
-# solvitaire-flat-trace and solvitaire-lru-trace are needed for trace_identity_* tests.
+# Trace variant binaries: flat and lru needed for trace_identity_* tests;
+# hash-only needed for SearchTraceAgreementTest and manual collision investigation.
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -Bcmake-build-trace -H. \
  && cmake --build cmake-build-trace --target solvitaire \
  && cmake --build cmake-build-trace --target solvitaire-trace \
  && cmake --build cmake-build-trace --target solvitaire-flat-trace \
+ && cmake --build cmake-build-trace --target solvitaire-hash-only-trace \
  && cmake --build cmake-build-trace --target solvitaire-lru-trace \
  && cmake --build cmake-build-trace --target unit_tests
 

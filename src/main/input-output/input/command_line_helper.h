@@ -65,6 +65,8 @@ public:
     const std::string& get_trace_path() const;
     bool has_break_at() const;
     uint64_t get_break_at_n() const;
+    bool has_find_hash() const;
+    uint64_t get_find_hash() const;
 
 private:
     bool assess_errors();
@@ -112,6 +114,8 @@ private:
     std::string trace_path;
     bool has_break_at_ = false;
     uint64_t break_at_n = 0;
+    bool has_find_hash_ = false;
+    uint64_t find_hash_val = 0;
 };
 
 #endif //SOLVITAIRE_COMMAND_LINE_HELPER_H

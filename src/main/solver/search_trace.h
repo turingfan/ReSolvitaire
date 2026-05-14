@@ -31,6 +31,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <functional>
+#include <iostream>
 #include <string>
 
 class trace_writer {
@@ -58,9 +59,32 @@ public:
     void set_break_at(uint64_t n) { break_at_ = n; }
 
     // Register a callback that prints the current game state to stdout.
-    // Called when the operation counter reaches break_at_.
+    // Called when the operation counter reaches break_at_, or when
+    // check_hash_break() fires a find-hash match.
     void set_break_state_printer(std::function<void()> printer) {
         break_printer_ = printer;
+    }
+
+    // Set a Zobrist hash to search for. When check_hash_break() is called
+    // with a matching hash (at a new-state insertion), the break printer fires.
+    // Pass 0 to disable (0 is never a valid Zobrist hash in practice).
+    void set_find_hash(uint64_t h) { find_hash_ = h; }
+    uint64_t find_hash() const { return find_hash_; }
+
+    // Called after each new-state insertion (MISS) with the state's Zobrist
+    // hash. If it matches find_hash_, fires the break printer and exits.
+    void check_hash_break(uint64_t h) {
+        if (find_hash_ == 0 || h != find_hash_) return;
+        std::cout << "=== FOUND HASH " << std::hex << h << std::dec
+                  << " AT OPERATION " << op_ << " ===\n";
+        if (break_printer_) {
+            break_printer_();
+        } else {
+            std::cout << "(game state printer not yet registered)\n";
+        }
+        std::fflush(stdout);
+        if (file_) std::fflush(file_);
+        std::exit(0);
     }
 
     // Event writers — called via macros below.
@@ -75,7 +99,8 @@ private:
     FILE*    file_     = nullptr;
     uint64_t op_       = 0;          // monotonic counter; plain uint64_t (single-threaded)
     bool     enabled_  = false;
-    uint64_t break_at_ = UINT64_MAX;
+    uint64_t break_at_  = UINT64_MAX;
+    uint64_t find_hash_ = 0;
     std::function<void()> break_printer_;
 
     void write_line(const char* body);  // body must be pre-formatted
