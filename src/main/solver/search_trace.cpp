@@ -74,6 +74,7 @@ void trace_writer::close() {
         enabled_       = false;
         op_            = 0;
         break_at_      = UINT64_MAX;
+        find_hash_     = 0;
         break_printer_ = nullptr;
     }
 }

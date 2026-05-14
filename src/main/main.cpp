@@ -196,6 +196,9 @@ int main(int argc, const char* argv[]) {
     if (clh.has_break_at()) {
         trace_writer::instance().set_break_at(clh.get_break_at_n());
     }
+    if (clh.has_find_hash()) {
+        trace_writer::instance().set_find_hash(clh.get_find_hash());
+    }
 #else
     if (!clh.get_trace_path().empty() || clh.has_break_at()) {
         std::cerr << "Warning: --trace/--trace-break-at ignored "

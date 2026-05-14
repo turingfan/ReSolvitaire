@@ -75,6 +75,17 @@ solver_impl<Policy>::solver_impl(const game_state_impl<Policy>& gs, typename Pol
     res.states_removed_from_cache = 0;
     res.max_depth = 0;
     res.depth = 0;
+#ifdef SOLVITAIRE_SEARCH_TRACE
+    trace_writer::instance().set_break_state_printer([this]() {
+        if constexpr (Policy::computes_hash) {
+            std::cout << "hash: 0x" << std::hex << state.get_zobrist_hash()
+                      << std::dec << '\n';
+        }
+        state_printer::print(std::cout, state);
+        std::cout << '\n';
+        std::cout.flush();
+    });
+#endif
 }
 
 solver_node::solver_node(const ::move m) noexcept
@@ -139,6 +150,12 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
                             min(res.depth, static_cast<uint64_t>(UINT8_MAX))));
                     }
                     is_new_state = cache.insert_t(state);
+#ifdef SOLVITAIRE_SEARCH_TRACE
+                    if (is_new_state) {
+                        trace_writer::instance().check_hash_break(
+                            state.get_zobrist_hash());
+                    }
+#endif
 #ifndef NDEBUG
                     if constexpr (Policy::computes_payload) {
                         state.assert_payload_consistent();
@@ -238,7 +255,7 @@ bool solver_impl<Policy>::revert_to_last_node_with_children(optional<lru_cache::
             if constexpr (Policy::computes_hash) {
                 assert(cache.contains_t(state));
             } else {
-                assert(cache.contains(state));
+                assert(cache.contains_t(state));
             }
         }
         LOG_DEBUG("(undo move)");

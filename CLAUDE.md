@@ -39,6 +39,19 @@ Build outputs go to `cmake-build-release/` or `cmake-build-debug/`.
 
 **There are three required test gates. All three must pass before any commit.**
 
+**Quick-start:** See `docs/testing-quickstart.md` for the entry-level guide.
+
+```bash
+# All 3 gates (unit tests + level 1 regression) — required before every commit
+python3 scripts/run_tests.py
+
+# Fast check (unit tests only, all 3 configs, ~5 min)
+python3 scripts/run_tests.py --quick
+
+# Single gate, skip rebuild
+python3 scripts/run_tests.py --gate release --skip-build
+```
+
 ### Gate 1 — Release build
 
 ```bash
@@ -79,13 +92,12 @@ cd cmake-build-debug && ctest -R ^unit_tests$ --output-on-failure
 | `cmake-build-debug` | `./build.sh --debug --unit-tests` | No | Debug symbols; catches UB/assert failures |
 | `cmake-build-trace` | `./build.sh --trace` | Yes | Trace variant binaries + SearchTrace* tests |
 
-Use `ctest -R ^unit_tests$` (anchored regex) not `ctest -R unit_tests` — the unanchored
-form also matches `unit_tests_full` (~5 minutes).
+Use `ctest -R ^unit_tests$` (anchored regex) to avoid matching other targets.
 
 ### Trace testing in detail
 
-See `docs/regression_suite_guide.md` §8 for full trace testing documentation,
-including `compare_traces.py`, `trace_regression.py`, and the reference binary system.
+See `docs/testing-guide.md` §10 for full trace testing documentation,
+including `compare_traces.py` (also handles regression mode) and the reference binary system.
 
 **Quick trace comparison (two runs of the same binary):**
 
@@ -201,7 +213,7 @@ Face-down cards are encoded with **lowercase** suit letters in JSON (`"as"` = fa
 | 4 | ~160 | `--random <seed>` | 600s | ~100 min |
 | 5 | ~160 | `--random <seed>` | 1800s | ~600 min |
 
-Oracle files are JSON arrays; each entry stores `outcome`, `states_searched`, `backtracks`, and `streamliner`. The Python harness (`scripts/regression_runner.py`) drives CTest, invokes the solver, and compares results. See `docs/regression_suite_guide.md` for the full workflow.
+Oracle files are JSON arrays; each entry stores `outcome`, `states_searched`, `backtracks`, and `streamliner`. The Python harness (`scripts/regression_runner.py`) drives CTest, invokes the solver, and compares results. See `docs/testing-guide.md` for the full workflow.
 
 ## Known Issues
 

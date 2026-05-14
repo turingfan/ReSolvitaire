@@ -207,35 +207,3 @@ but not at the search-event level.
 **Possible future fix:** A test that runs both policies and compares outcomes (not traces)
 on a shared set of instances, or a mode that forces pile ordering on the flat path.
 
----
-
-### 21. Testing Infrastructure Complexity Needs Rationalisation
-
-**Status:** Open — acknowledged debt
-**Impact:** High cognitive overhead for anyone running or extending tests
-
-The testing infrastructure has grown organically across multiple feature branches and is
-now difficult to navigate:
-
-- **Three build configurations** (`cmake-build-release`, `cmake-build-trace`,
-  `cmake-build-debug`), each with distinct CTest targets and test sets
-- **Multiple variant binaries** in the trace build (`solvitaire-trace`,
-  `solvitaire-flat-trace`, `solvitaire-hash-only-trace`, `solvitaire-lru-trace`)
-- **Multiple Python scripts** with overlapping concerns:
-  `regression_runner.py`, `compare_traces.py`, `trace_regression.py`,
-  `curate_test_sets.py`, `generate_baseline.py`
-- **Reference binaries** (macOS ARM64, Linux ARM64) with baked-in paths that must
-  match the container mount point exactly
-- **Container-based Linux testing** with its own flags
-  (`--trace-test`, `--trace-regression`, `--extract-trace-binary`) that mirror but
-  do not unify with the native CTest workflow
-- **Documentation spread** across `CLAUDE.md`, `docs/regression_suite_guide.md`, and
-  inline CTest output — no single entry point for a new contributor
-
-This has not caused failures, but the three-gate requirement and non-obvious
-interactions (e.g. trace tests are silent no-ops outside the trace build) make the
-system fragile against future changes.
-
-**Possible future fix:** A unified test driver script that wraps all three gates,
-consolidation of the Python trace scripts, and a contributor-facing test quick-start
-document separate from `CLAUDE.md`.

@@ -150,10 +150,17 @@ if [ -n "$TRACE_REGRESSION_FLAG" ]; then
     fi
     echo "Running trace_regression_level1 inside container (memory limit: $MEMORY_LIMIT)..."
     echo "  Reference binary: $LINUX_REF_BIN_HOST"
+    # Mount the reference binary to a temp path, then copy+chmod inside the container.
+    # Direct mounting to the final path works for file access but the Apple 'container'
+    # CLI does not preserve the execute bit on volume mounts, so the binary cannot be
+    # run directly from the mount point.
     $CONTAINER_CMD run --rm -m "$MEMORY_LIMIT" \
-        -v "${LINUX_REF_BIN_HOST}:${LINUX_REF_BIN_CONTAINER}:ro" \
+        -v "${LINUX_REF_BIN_HOST}:/tmp/solvitaire-trace-ref-src:ro" \
         "$IMAGE_NAME" \
-        bash -c "cd cmake-build-trace && ctest -R '^trace_regression_level1$' --output-on-failure"
+        bash -c "mkdir -p '$(dirname "$LINUX_REF_BIN_CONTAINER")' && \
+                 cp /tmp/solvitaire-trace-ref-src '${LINUX_REF_BIN_CONTAINER}' && \
+                 chmod +x '${LINUX_REF_BIN_CONTAINER}' && \
+                 cd cmake-build-trace && ctest -R '^trace_regression_level1\$' --output-on-failure"
 fi
 
 if [ -n "$EXTRACT_TRACE_BINARY_FLAG" ]; then
