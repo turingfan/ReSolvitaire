@@ -6,9 +6,29 @@ on:
   pull_request:
     branches: [dev, master]
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Three jobs mirror the three required local gates (docs/testing-quickstart.md):
+#
+#   release  — both platforms: release build, unit tests, regression level 1
+#   trace    — Linux only:     trace build, unit tests (incl. SearchTraceAgreement*),
+#                              trace identity + timeout CTest targets
+#   debug    — Linux only:     debug build, unit tests
+#
+# Trace and debug run Linux-only: the failure modes they catch (NDEBUG bugs,
+# trace infrastructure regressions) are not platform-specific, and restricting
+# to Linux keeps runner-minute usage reasonable.
+#
+# trace_regression_level1/2 require reference binaries not stored in the repo
+# and are intentionally excluded from CI.
+# ─────────────────────────────────────────────────────────────────────────────
+
 jobs:
-  build-and-test:
+
+  # ── Gate 1: Release ─────────────────────────────────────────────────────────
+  release:
+    name: Release (${{ matrix.os }})
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-22.04, macos-latest]
 
@@ -38,7 +58,7 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install boost && brew link boost || brew link --overwrite boost
 
-      - name: Configure cmake
+      - name: Configure (release)
         run: |
           if [ "$RUNNER_OS" = "macOS" ]; then
             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix boost)" -Bcmake-build-release -H.
@@ -46,7 +66,7 @@ jobs:
             cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
           fi
 
-      - name: Build all targets
+      - name: Build (release)
         run: |
           cmake --build cmake-build-release --target solvitaire
           cmake --build cmake-build-release --target solvitaire-flat
@@ -54,8 +74,61 @@ jobs:
           cmake --build cmake-build-release --target solvitaire-lru
           cmake --build cmake-build-release --target unit_tests
 
-      - name: Run unit tests
+      - name: Unit tests (release)
         run: cd cmake-build-release && ctest -R '^unit_tests$' --output-on-failure
 
-      - name: Run regression level 1
+      - name: Regression level 1
         run: cd cmake-build-release && ctest -R regression_level1 --output-on-failure
+
+  # ── Gate 2: Trace ───────────────────────────────────────────────────────────
+  trace:
+    name: Trace (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libboost-program-options-dev python3
+
+      - name: Configure (trace)
+        run: cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -Bcmake-build-trace -H.
+
+      - name: Build (trace)
+        run: |
+          cmake --build cmake-build-trace --target unit_tests
+          cmake --build cmake-build-trace --target solvitaire-flat-trace
+          cmake --build cmake-build-trace --target solvitaire-lru-trace
+
+      - name: Unit tests (trace — includes SearchTraceTest.* and SearchTraceAgreementTest.*)
+        run: cd cmake-build-trace && ctest -R '^unit_tests$' --output-on-failure
+        timeout-minutes: 10
+
+      - name: Trace identity and timeout targets
+        run: cd cmake-build-trace && ctest -R '^trace_identity|^trace_until_timeout' --output-on-failure
+        timeout-minutes: 10
+
+  # ── Gate 3: Debug ───────────────────────────────────────────────────────────
+  debug:
+    name: Debug (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libboost-program-options-dev python3
+
+      - name: Configure (debug)
+        run: cmake -DCMAKE_BUILD_TYPE=Debug -Bcmake-build-debug -H.
+
+      - name: Build (debug)
+        run: cmake --build cmake-build-debug --target unit_tests
+
+      - name: Unit tests (debug)
+        run: cd cmake-build-debug && ctest -R '^unit_tests$' --output-on-failure
+        timeout-minutes: 10
