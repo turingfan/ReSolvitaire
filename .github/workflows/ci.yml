@@ -7,16 +7,17 @@ on:
     branches: [dev, master]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Three jobs mirror the three required local gates (docs/testing-quickstart.md):
+# Three jobs mirror the three required local gates (docs/testing-quickstart.md),
+# each running on both ubuntu-22.04 and macos-latest:
 #
-#   release  — both platforms: release build, unit tests, regression level 1
-#   trace    — Linux only:     trace build, unit tests (incl. SearchTraceAgreement*),
-#                              trace identity + timeout CTest targets
-#   debug    — Linux only:     debug build, unit tests
+#   release  — release build, unit tests, regression level 1
+#   trace    — trace build, unit tests (incl. SearchTraceAgreement*),
+#              trace identity + timeout CTest targets
+#   debug    — debug build, unit tests
 #
-# Trace and debug run Linux-only: the failure modes they catch (NDEBUG bugs,
-# trace infrastructure regressions) are not platform-specific, and restricting
-# to Linux keeps runner-minute usage reasonable.
+# Running all three gates on both platforms catches compiler-specific issues:
+# Apple Clang and GCC can expose different bugs (e.g. NDEBUG type errors,
+# constexpr if behaviour). The incremental macOS cost is acceptable.
 #
 # trace_regression_level1/2 require reference binaries not stored in the repo
 # and are intentionally excluded from CI.
@@ -82,19 +83,45 @@ jobs:
 
   # ── Gate 2: Trace ───────────────────────────────────────────────────────────
   trace:
-    name: Trace (ubuntu-22.04)
-    runs-on: ubuntu-22.04
+    name: Trace (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake libboost-program-options-dev python3
 
+      - name: Cache Homebrew packages (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /usr/local/Cellar/boost
+            /opt/homebrew/Cellar/boost
+          key: homebrew-boost-${{ runner.arch }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: homebrew-boost-${{ runner.arch }}-
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install boost && brew link boost || brew link --overwrite boost
+
       - name: Configure (trace)
-        run: cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -Bcmake-build-trace -H.
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -DCMAKE_PREFIX_PATH="$(brew --prefix boost)" -Bcmake-build-trace -H.
+          else
+            cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -Bcmake-build-trace -H.
+          fi
 
       - name: Build (trace)
         run: |
@@ -112,19 +139,45 @@ jobs:
 
   # ── Gate 3: Debug ───────────────────────────────────────────────────────────
   debug:
-    name: Debug (ubuntu-22.04)
-    runs-on: ubuntu-22.04
+    name: Debug (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake libboost-program-options-dev python3
 
+      - name: Cache Homebrew packages (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /usr/local/Cellar/boost
+            /opt/homebrew/Cellar/boost
+          key: homebrew-boost-${{ runner.arch }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: homebrew-boost-${{ runner.arch }}-
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install boost && brew link boost || brew link --overwrite boost
+
       - name: Configure (debug)
-        run: cmake -DCMAKE_BUILD_TYPE=Debug -Bcmake-build-debug -H.
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="$(brew --prefix boost)" -Bcmake-build-debug -H.
+          else
+            cmake -DCMAKE_BUILD_TYPE=Debug -Bcmake-build-debug -H.
+          fi
 
       - name: Build (debug)
         run: cmake --build cmake-build-debug --target unit_tests
