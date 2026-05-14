@@ -31,15 +31,17 @@
 //
 // HOW COMPARISON WORKS:
 //
-//   We verify that flat and hash-only agree on the *final outcome* of each seed
-//   (SOLVED, UNSOLVABLE, or TIMEOUT).  Byte-identical trace comparison is not used
-//   because the two policies have different cluster sizes (64 bytes vs 16 bytes),
-//   which causes different eviction patterns over long searches.  Specifically,
-//   hash-only's smaller clusters can lose an entry that flat retains, causing
-//   hash-only to MISS a state that flat correctly HITs.  The final answer is always
-//   the same (both caches are sound), but the intermediate event streams diverge.
-//   Empirically confirmed on klondike seed 31: state first inserted in both caches
-//   at op 8996141, but hash-only evicted it before op 18003107 while flat did not.
+//   Traces are compared line-by-line up to the first EVICT event in either
+//   trace.  Before any eviction both caches use the same hash function and the
+//   same cluster layout so HIT/MISS decisions must agree exactly.  After the
+//   first eviction, flat (64-byte clusters) and hash-only (16-byte clusters)
+//   displace different entries at different times, causing legitimate divergence.
+//   We stop at that boundary rather than reporting a spurious failure.
+//
+//   The one remaining exception: hash-only can produce a false HIT (Zobrist
+//   hash collision) before any eviction, which would appear as a divergence
+//   and correctly fail the test.  This is expected to be extremely rare over
+//   50 seeds at the search depths used here.
 //
 // These tests are no-ops in release and debug builds (no SOLVITAIRE_SEARCH_TRACE).
 // They execute only in cmake-build-trace (./build.sh --trace).
@@ -74,42 +76,71 @@ static const uint64_t CAP_HASHONLY    = 200000000;// 200M — matches DualCacheA
 static const int      TIMEOUT_HASHONLY = 5000;    // 5s   — matches DualCacheAgreementWithFlatOnKlondike
 
 // ---------------------------------------------------------------------------
-// Outcome extraction
+// Streaming comparison until first eviction or timeout
 //
-// Reads a trace file and returns the final RESULT keyword (SOLVED, UNSOLV,
-// TIMEOUT, TERMINATED, or MEM-LIMIT) from the last RESULT line.
-// Returns empty string if no RESULT line is found.
+// Opens both trace files, skips HEADER_LINES header lines, then reads one
+// line at a time from both simultaneously.  Stops cleanly (pass) when either
+// trace emits an EVICT or TIMEOUT event — subsequent divergence is expected
+// due to different cluster-eviction rates.  Fails on the first mismatch
+// before that boundary (which would indicate a genuine hash collision).
 // ---------------------------------------------------------------------------
 
-static std::string extract_outcome(const std::string& path) {
-    std::ifstream f(path);
-    if (!f.is_open()) return "";
-    std::string line, outcome;
-    while (std::getline(f, line)) {
-        // RESULT lines look like: "0001234567 SOLVED" or "0001234567 UNSOLV" etc.
-        auto pos = line.find(" SOLVED");
-        if (pos != std::string::npos) { outcome = "SOLVED"; continue; }
-        pos = line.find(" UNSOLV");
-        if (pos != std::string::npos) { outcome = "UNSOLV"; continue; }
-        pos = line.find(" TIMEOUT");
-        if (pos != std::string::npos) { outcome = "TIMEOUT"; continue; }
-        pos = line.find(" TERMINATED");
-        if (pos != std::string::npos) { outcome = "TERMINATED"; continue; }
+static const int HEADER_LINES = 6;   // TRACE DATE CMD GAME POLICY <blank>
+
+static bool skip_header(std::ifstream& fh) {
+    std::string line;
+    for (int i = 0; i < HEADER_LINES; ++i) {
+        if (!std::getline(fh, line)) return false;
     }
-    return outcome;
+    return true;
 }
 
-void compare_outcomes(const std::string& path_a,
-                      const std::string& path_b,
-                      const std::string& label) {
-    std::string out_a = extract_outcome(path_a);
-    std::string out_b = extract_outcome(path_b);
-    ASSERT_FALSE(out_a.empty()) << label << ": no outcome found in trace A: " << path_a;
-    ASSERT_FALSE(out_b.empty()) << label << ": no outcome found in trace B: " << path_b;
-    // Both agree if either timed out (hash-only explores more due to eviction differences)
-    if (out_a == "TIMEOUT" || out_b == "TIMEOUT") return;
-    EXPECT_EQ(out_a, out_b) << label << ": outcome mismatch (flat=" << out_a
-                             << " hash-only=" << out_b << ")";
+void compare_traces_until_evict(const std::string& path_a,
+                                const std::string& path_b,
+                                const std::string& label) {
+    std::ifstream fa(path_a), fb(path_b);
+    ASSERT_TRUE(fa.is_open()) << label << ": cannot open trace A: " << path_a;
+    ASSERT_TRUE(fb.is_open()) << label << ": cannot open trace B: " << path_b;
+    ASSERT_TRUE(skip_header(fa)) << label << ": trace A header too short";
+    ASSERT_TRUE(skip_header(fb)) << label << ": trace B header too short";
+
+    std::string line_a, line_b;
+    std::size_t event_idx = 0;
+    bool        got_event = false;
+
+    while (true) {
+        bool ok_a = static_cast<bool>(std::getline(fa, line_a));
+        bool ok_b = static_cast<bool>(std::getline(fb, line_b));
+
+        if (!ok_a && !ok_b) break;  // both ended cleanly — success
+
+        if (ok_a != ok_b) {
+            ADD_FAILURE() << label << ": traces have different lengths — "
+                          << (ok_a ? "A longer than B" : "B longer than A")
+                          << " at event index " << event_idx;
+            return;
+        }
+
+        // Stop at the first EVICT or TIMEOUT in either trace: after this point
+        // differential eviction makes the search paths legitimately diverge.
+        bool a_boundary = (line_a.find(" EVICT")   != std::string::npos ||
+                           line_a.find(" TIMEOUT")  != std::string::npos);
+        bool b_boundary = (line_b.find(" EVICT")   != std::string::npos ||
+                           line_b.find(" TIMEOUT")  != std::string::npos);
+        if (a_boundary || b_boundary) break;
+
+        got_event = true;
+        if (line_a != line_b) {
+            ADD_FAILURE() << label << " diverges at event " << event_idx
+                          << "\n  A: " << line_a
+                          << "\n  B: " << line_b
+                          << "\n  (divergence before any EVICT — likely hash collision)";
+            return;
+        }
+        ++event_idx;
+    }
+
+    EXPECT_TRUE(got_event) << label << ": no events in either trace";
 }
 
 // ---------------------------------------------------------------------------
@@ -177,8 +208,9 @@ protected:
 // Hash-only vs flat — 50 klondike seeds
 //
 // hash_only_cache uses the same Zobrist hash as flat_cache but stores no payload.
-// Final outcome (SOLVED/UNSOLVABLE/TIMEOUT) must agree; intermediate HIT/MISS
-// decisions can diverge due to different cluster-eviction rates (16 vs 64 bytes).
+// Traces are compared until the first EVICT in either trace — before any eviction
+// both must agree exactly.  Divergence before first EVICT would indicate a rare
+// Zobrist hash collision and is treated as a test failure.
 // cap=200M matches the original test; mmap lazy allocation means physical memory
 // is proportional to states actually visited, not the full reservation.
 //
@@ -198,9 +230,9 @@ TEST_F(SearchTraceAgreementTest, HashOnlyVsFlat_Klondike50Seeds) {
         run_with_hash_only(path_b_, rules, seed, "klondike-deal-1",
                            CAP_HASHONLY, TIMEOUT_HASHONLY);
 
-        compare_outcomes(path_a_, path_b_,
-                         "klondike-deal-1 hash-only vs flat seed " +
-                         std::to_string(seed));
+        compare_traces_until_evict(path_a_, path_b_,
+                                   "klondike-deal-1 hash-only vs flat seed " +
+                                   std::to_string(seed));
     }
 }
 

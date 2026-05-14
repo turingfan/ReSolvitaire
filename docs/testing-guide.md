@@ -504,12 +504,34 @@ The trace file has a 5-line header (skipped by comparison tools) followed by one
 per line. Events: `QUERY`, `HIT`, `MISS`, `INSERT`, `EVICT`, `LEGAL`, `MOVE`, `UNDO`,
 `DOM`, `DEPTH`, `SOLVED`/`UNSOLV`/`TIMEOUT`.
 
-To stop the solver at a specific event number (useful for debugging divergence):
+### Debugging divergence
+
+**Break at a specific event** — stop the solver at event N, print the game state to stdout, and exit:
 
 ```bash
-./cmake-build-trace/bin/solvitaire-trace \
+./cmake-build-trace/bin/solvitaire-flat-trace \
     --type klondike --random 1 --trace /tmp/run.trace --trace-break-at 500
 ```
+
+The game state (and Zobrist hash, for flat/hash-only policies) is printed when the
+break fires.  The trace file is complete up to that event.
+
+**Find the first insertion of a specific hash** — halt and print the game state the
+first time a new-state MISS is recorded with a given Zobrist hash (hex, `0x` prefix):
+
+```bash
+./cmake-build-trace/bin/solvitaire-flat-trace \
+    --type klondike --random 1 --trace /tmp/run.trace \
+    --trace-find-hash 0x715820e6e00760fa
+```
+
+This is useful for investigating trace divergence.  Typical workflow:
+
+1. Find the operation number where the two traces diverge (using `compare_traces.py`).
+2. Run `--trace-break-at N` on the flat binary to get the hash of the diverging state.
+3. Run `--trace-find-hash <hash>` on both flat and hash-only to find when each binary
+   first saw that hash.  If they fire at different operations, the caches diverged due
+   to eviction.  If only one fires, it is a genuine Zobrist hash collision.
 
 ### Comparing two traces with `compare_traces.py`
 
@@ -631,14 +653,25 @@ cp solvitaire-trace-linux-amd64 \
 ### Agreement tests (`SearchTraceAgreementTest`)
 
 `src/test/unit_tests/search_trace_agreement_test.cpp` (compiled into `unit_tests`,
-active in all build configs via `SOLVITAIRE_SEARCH_TRACE`) contains:
+active only in the trace build via `SOLVITAIRE_SEARCH_TRACE`) contains:
 
 - **`HashOnlyVsFlat_Klondike50Seeds`**: runs hash-only and flat policies on 50 Klondike
-  seeds, compares traces up to the first TIMEOUT event. Valid because both policies use
-  `skip_pile_ordering=true` (same search tree).
+  seeds and compares traces **until the first `EVICT` event in either trace**.
 
-Flat vs LRU comparison is **not** possible in independent runs — see KI-20 in
-`docs/known-issues.md`.
+  **Why until-evict:** both policies use the same Zobrist hash and the same game-state
+  encoding (`skip_pile_ordering=true`), so their HIT/MISS decisions must agree exactly
+  as long as neither cache has evicted anything.  After the first eviction, the two
+  policies have different cluster sizes (16-byte hash-only vs 64-byte flat) and will
+  displace different entries at different times — the search paths legitimately diverge.
+  Comparing beyond that point would produce false failures.
+
+  **What it still catches:** a Zobrist hash collision (hash-only HIT where flat says
+  MISS) would appear as a line mismatch *before* any EVICT and would correctly fail the
+  test.  This is expected to be extremely rare at the search depths used here.
+
+Flat vs LRU comparison is **not** possible in independent runs — LRU canonicalises
+tableau pile order while flat does not, so the two search trees diverge immediately.
+See `docs/known-issues.md`.
 
 ---
 
