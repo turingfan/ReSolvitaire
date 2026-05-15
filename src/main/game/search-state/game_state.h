@@ -45,6 +45,7 @@
 #include "../compact_state.h"
 #include "../hash_descriptor_store.h"
 #include "../cache_policy.h"
+#include "../flat_descriptor_engine.h"
 #include "../predecessor_state.h"
 #include "../parent_table.h"
 
@@ -92,11 +93,11 @@ public:
     bool is_solved() const;
     const std::vector<pile>& get_data() const;
 
-    uint64_t get_zobrist_hash() const { return zobrist_hash_value; }
+    uint64_t get_zobrist_hash() const { return desc_engine.get_hash(); }
 
     template <typename P = Policy,
               typename = std::enable_if_t<P::computes_payload>>
-    const compact_state& get_payload() const { return desc_store; }
+    const compact_state& get_payload() const { return desc_engine.get_store(); }
 
     void set_payload_depth(uint16_t depth);
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
@@ -207,21 +208,17 @@ private:
     bool skip_pile_ordering;
     card::rank_t foundations_base;
 
-    /* Descriptor-aligned Zobrist hash and descriptor store */
-    uint64_t zobrist_hash_value;
-    typename Policy::descriptor_store_type desc_store;
-    bool initially_face_up[52];  // true = card was face-up at initial deal (after turn_face_up)
+    /* Descriptor engine (holds hash value, descriptor store, face-up table) */
+    typename Policy::descriptor_engine desc_engine;
 
     void init_payload_and_hash();     // Called at end of constructors
     void init_initially_face_up();    // Called after turn_face_up() in constructors
 
-    // Descriptor update helpers
-    void update_card_descriptor(uint8_t cid, uint8_t new_desc);
-    void update_foundation_in_hash(uint8_t suit, uint8_t new_rank);
+    // Construct descriptor context from current game state
+    descriptor_context make_desc_ctx() const;
+
+    // Pile-inspection utilities (not descriptor logic — used by all policies)
     uint8_t effective_waste_ptr() const;
-    void update_waste_ptr_in_hash(uint8_t new_ptr);
-    void update_hole_top_in_hash(uint8_t new_cid);
-    uint8_t determine_destination_descriptor(pile::ref dest, card moved_card) const;
     bool is_foundation_pile(pile::ref pr) const;
     uint8_t get_foundation_suit(pile::ref pr) const;
 

@@ -26,6 +26,8 @@
 // members are accessed (i.e., in game_state_impl, not here).
 struct compact_state;
 struct hash_descriptor_store;
+template <typename DescStore> class flat_descriptor_engine;
+struct null_descriptor_engine;
 
 // Forward declarations for cache_type typedefs — full types are defined in
 // generic_flat_cache.h and global_cache.h respectively.
@@ -44,6 +46,7 @@ struct FlatPolicy {
     static constexpr bool computes_payload     = true;
     static constexpr bool skip_pile_ordering   = true;
     typedef compact_state descriptor_store_type;
+    typedef flat_descriptor_engine<compact_state> descriptor_engine;
     typedef generic_flat_cache<CompactStatePolicy> cache_type;
 };
 
@@ -57,6 +60,7 @@ struct HashOnlyPolicy {
     static constexpr bool computes_payload     = false;
     static constexpr bool skip_pile_ordering   = true;
     typedef hash_descriptor_store descriptor_store_type;
+    typedef flat_descriptor_engine<hash_descriptor_store> descriptor_engine;
     typedef generic_flat_cache<HashOnlyClusterPolicy> cache_type;
 };
 
@@ -69,6 +73,7 @@ struct PredecessorPolicy {
     static constexpr bool computes_payload     = true;
     static constexpr bool skip_pile_ordering   = false;
     typedef compact_state descriptor_store_type;
+    typedef flat_descriptor_engine<compact_state> descriptor_engine;
     typedef generic_flat_cache<PredecessorClusterPolicy> cache_type;
 };
 
@@ -82,6 +87,7 @@ struct LRUPolicy {
     static constexpr bool skip_pile_ordering   = false;
     struct empty_descriptor_store {};
     typedef empty_descriptor_store descriptor_store_type;
+    typedef null_descriptor_engine descriptor_engine;
     typedef lru_cache cache_type;
 };
 
