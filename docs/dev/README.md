@@ -9,10 +9,15 @@ Files are not duplicated here — this index points to their canonical locations
 
 The `dev` branch is the primary working branch (cross-platform macOS + Linux).
 
-Most recently landed (2026-05-12):
-- **`feature/testing-rationalisation`** — KI-21: unified test driver (`run_tests.py`),
-  trace script consolidation (`compare_traces.py --regression`), GTest cleanup,
-  testing quickstart doc, comprehensive testing guide.
+Most recently landed (2026-05-14/15):
+- **`feature/testing-rationalisation`** — KI-21 + extensions: unified test driver
+  (`run_tests.py`), trace script consolidation (`compare_traces.py --regression`),
+  GTest cleanup, testing quickstart + comprehensive testing guide. Bug fixes:
+  `build.sh` failure masking, debug build `contains_t` compile error,
+  `BlackHoleUsesNewCache` debug timeout, container trace regression permission error.
+  Trace infrastructure: `--trace-find-hash` CLI option, break printer wired up,
+  `SearchTraceAgreementTest` fixed (compare until first EVICT, not full trace).
+  CI extended to all 3 gates on both ubuntu-22.04 and macos-latest.
 
 Previously landed (2026-05-07):
 - **`feature/templated-dispatch`** — `game_state` and `solver` templated on cache
@@ -42,7 +47,7 @@ Previous dev state (old concrete-cache system) preserved on branch `cache-v1`.
   (use `cache-v1` branch as baseline)
 
 ### Recently Completed Work (archived to 01-Knowledge-Base/Archive/)
-- `testing-rationalisation/` — KI-21: unified test driver, trace consolidation, docs
+- `testing-rationalisation/` — KI-21: unified test driver, trace consolidation, docs, bug fixes
 - `templated-dispatch/` — full phase A plan, design decisions, session logs
 - `search-trace/` — search trace infrastructure design and implementation plan
 - `fix-variant-build-hash-only/` — variant build fix and hash-only descriptor store
