@@ -51,7 +51,5 @@ Previous dev state (old concrete-cache system) preserved on branch `cache-v1`.
 - `templated-dispatch/` — full phase A plan, design decisions, session logs
 - `search-trace/` — search trace infrastructure design and implementation plan
 - `fix-variant-build-hash-only/` — variant build fix and hash-only descriptor store
-
-### Background / Architecture Narrative
-- [`docs/cache-redesign/OVERVIEW.md`](../cache-redesign/OVERVIEW.md) — full narrative of the cache redesign effort
-- [`docs/cache-redesign/flat_cache_branch_summary.md`](../cache-redesign/flat_cache_branch_summary.md) — flat cache benchmark results and design summary
+- `cache-redesign/` — full cache redesign narrative, active plans, benchmarks, specs
+- `refactoring/` — refactoring phases 1-3 plans, dev logs, investigation docs
