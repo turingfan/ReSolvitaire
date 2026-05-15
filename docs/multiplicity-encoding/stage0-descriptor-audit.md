@@ -93,7 +93,7 @@ removed or become a no-op if foundation tops are confirmed derivable.
 
 **What it does:** XOR-delta for hole top card ID change.
 
-**Multiplicity note:** v4 replaces this with the `MLK_HOLE_TOP` descriptor. The separate
+**Multiplicity note:** v4 replaces this with the `MLD_HOLE_TOP` descriptor. The separate
 metadata field is eliminated; instead the engine updates the top card's descriptor from
 `MLK_PERMANENT` to `MLK_HOLE_TOP` (or vice versa).
 
