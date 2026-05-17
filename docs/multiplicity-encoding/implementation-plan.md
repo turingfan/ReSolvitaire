@@ -274,9 +274,19 @@ foundations and waste; the hole top case is already resolved:
 - **Foundation tops:** if the set of PERMANENT cards uniquely determines each foundation's
   top rank, then foundation metadata is redundant. This holds when foundations are built in
   strict rank order (all standard games). Verify across the game library.
-- **Waste pointer:** the claim is that the set of cards currently in stock+waste, combined
-  with the fixed initial deal order, uniquely determines the waste pointer position. This
-  holds when stock is not reshuffled. Verify for redeal games.
+- **Waste pointer (RESOLVED):** the v4 design's claim that stock/waste card identity
+  alone determines the deal position is incorrect for redeal games. The existing flat
+  cache uses a `waste_deal_symmetry` optimisation: when `stock_redeal` is enabled and
+  `waste.size() % stock_deal_count == 0`, the stock/waste partition is irrelevant
+  (the player can always re-deal to reach the same accessible cards), so the flat cache
+  sets `waste_ptr = 0` and gives all stock/waste cards the same descriptor (`STARTING`).
+  **Resolution:** the multiplicity engine replicates this: when `waste_deal_symmetry`
+  holds, all stock and waste cards receive the same locative descriptor (`MLD_IN_STOCK`),
+  collapsing the stock/waste distinction. When the symmetry does NOT hold
+  (`waste.size() % stock_deal_count != 0`), cards are distinguished as `MLD_IN_STOCK`
+  vs `MLD_IN_WASTE`. This produces exact pre-eviction match with the flat cache on
+  Klondike (deal-3, redeal enabled). Verified on 20 seeds: exact match with zero
+  evictions; acceptable divergence with evictions (different cluster sizes).
 - **Hole top (RESOLVED):** the PERMANENT descriptor is insufficient for hole games. Multiple
   cards in the hole all have PERMANENT, but the *order* matters — the hole top determines
   which cards can be played next. Two states with the same set of hole cards but different

@@ -123,7 +123,18 @@ public:
             }
         }
 
-        // ── Stock → IN_STOCK ─────────────────────────────────────────────────
+        // ── Stock/Waste ──────────────────────────────────────────────────────
+        // Waste-deal symmetry: when stock_redeal is enabled and
+        // waste.size() % stock_deal_count == 0, the stock/waste partition is
+        // irrelevant — you can always re-deal to reach the same accessible
+        // cards. In this case, all stock+waste cards get the same descriptor
+        // (MLD_IN_STOCK) so the cache correctly deduplicates equivalent states.
+        // When the symmetry does NOT hold, IN_STOCK vs IN_WASTE distinguishes
+        // the current deal position.
+        bool waste_deal_sym = ctx.rules.stock_redeal
+            && ctx.waste != pile::ref(255)
+            && ctx.piles[ctx.waste].size() % ctx.rules.stock_deal_count == 0;
+
         if (ctx.stock != pile::ref(255)) {
             const pile& sp = ctx.piles[ctx.stock];
             for (pile::size_type i = 0; i < sp.size(); i++) {
@@ -133,13 +144,13 @@ public:
             }
         }
 
-        // ── Waste → IN_WASTE ─────────────────────────────────────────────────
         if (ctx.waste != pile::ref(255)) {
             const pile& wp = ctx.piles[ctx.waste];
+            uint8_t waste_loc = waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE;
             for (pile::size_type i = 0; i < wp.size(); i++) {
                 card c = wp[i];
                 descriptors[card_cid(c)] =
-                    multiplicity_descriptor::make_locative(MLD_IN_WASTE);
+                    multiplicity_descriptor::make_locative(waste_loc);
             }
         }
 

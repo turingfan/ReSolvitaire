@@ -25,7 +25,12 @@ The canonical copy lives here; the Knowledge Base copy is a snapshot from when i
 - `recompute_all()` called after every `make_move`/`undo_move` (from-scratch strategy)
 - CLI opt-in via `--cache-type multiplicity`
 - Wired through `main.cpp`, `benchmark.cpp`, `solvability_calc.cpp`, `deal_parser.cpp`, `state_printer.cpp`, all `.legal_moves`, `.dominance_moves`, `.pile_order`, `solver.cpp` explicit instantiation blocks
-- All 3 build gates pass (release + debug + trace); 8-seed Klondike spot-check: solvability matches `--cache-type auto`
+- Waste-deal symmetry: when `stock_redeal && waste.size() % stock_deal_count == 0`,
+  all stock+waste cards get `MLD_IN_STOCK` (collapsing the distinction), matching the
+  flat cache's `waste_ptr = 0` / `STARTING` equivalence. Without this, the multiplicity
+  cache produces false negatives on redeal games.
+- All 3 build gates pass (release + debug + trace); 20-seed Klondike spot-check:
+  exact pre-eviction match on `states_searched` with `--cache-type auto`
 
 **Stage 0.1 — Descriptor interface audit** (committed)
 - `docs/multiplicity-encoding/stage0-descriptor-audit.md`
