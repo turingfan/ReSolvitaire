@@ -20,10 +20,12 @@
 
 #include <cstdint>
 #include <cstring>
+#include <type_traits>
 #ifndef SOLVITAIRE_HASH_ONLY
 #  include "compact_state.h"
 #endif
 #include "predecessor_state.h"
+#include "multiplicity_descriptor_store.h"
 #include "search-state/game_state.h"
 
 // ─── Dispatch tag types ───────────────────────────────────────────────────────
@@ -242,6 +244,83 @@ struct PredecessorClusterPolicy {
     // zero the guard to indicate "no slot-1 entry yet"
     static void clear_slot1_guard(cluster& cl) {
         cl.lines[0].other_hash = 0;
+    }
+};
+
+
+// ─── MultiplicityClusterPolicy ───────────────────────────────────────────────
+//
+// Payload: multiplicity_descriptor_store (64 B). Two entries per cluster → 128 B,
+// aligned to 128 B (two cache lines).
+// No hash guard (HAS_HASH_GUARD = false). TwoBig1 depth-preferred replacement
+// (same strategy as CompactStatePolicy).
+
+struct MultiplicityClusterPolicy {
+    typedef multiplicity_descriptor_store payload_type;
+    typedef insert_depth_tag insert_strategy;
+    static const bool HAS_HASH_GUARD = false;
+
+    // Two 64-byte entries = 128 bytes, aligned to 128 B (two cache lines)
+    struct alignas(128) cluster {
+        multiplicity_descriptor_store entries[2];
+    };
+
+    template <typename GS>
+    static uint64_t hash_of(const GS& gs) {
+        return gs.get_zobrist_hash();
+    }
+
+    // payload_of dispatches on whether GS uses multiplicity_descriptor_store.
+    // The false branch is only reachable from generic_flat_cache's virtual
+    // insert/contains overrides (which pass the default game_state typedef) —
+    // those overrides are never called in practice for MultiplicityPolicy.
+    template <typename GS>
+    static const multiplicity_descriptor_store& payload_of(const GS& gs) {
+        return payload_of_impl(gs, typename std::is_same<
+            typename GS::descriptor_store_type,
+            multiplicity_descriptor_store>::type{});
+    }
+
+private:
+    template <typename GS>
+    static const multiplicity_descriptor_store& payload_of_impl(const GS& gs, std::true_type) {
+        return gs.get_payload();
+    }
+    template <typename GS>
+    static const multiplicity_descriptor_store& payload_of_impl(const GS&, std::false_type) {
+        // Unreachable in practice: virtual cache_interface overrides with the default
+        // game_state (FlatPolicy) are never called for MultiplicityPolicy.
+        static multiplicity_descriptor_store dummy;
+        return dummy;
+    }
+
+public:
+
+    static bool is_occupied(const cluster& cl, int slot) {
+        return cl.entries[slot].is_occupied();
+    }
+    // Compare bytes 3-54 (slot data only; excludes occupied flag and depth)
+    static bool matches(const cluster& cl, int slot,
+                        const multiplicity_descriptor_store& payload) {
+        return cl.entries[slot].matches(payload);
+    }
+    // Depth of an existing slot entry (bytes 1-2 of multiplicity_descriptor_store)
+    static uint16_t get_depth(const cluster& cl, int slot) {
+        return cl.entries[slot].get_depth();
+    }
+    // Depth of the incoming payload
+    static uint16_t depth_of_new(const multiplicity_descriptor_store& payload) {
+        return payload.get_depth();
+    }
+    // Write payload into slot, marking it occupied
+    static void write_slot(cluster& cl, int slot,
+                           const multiplicity_descriptor_store& payload) {
+        cl.entries[slot] = payload;
+        cl.entries[slot].set_occupied(true);
+    }
+    // Copy one slot to another (full store copy, including occupied flag)
+    static void copy_slot(cluster& cl, int dst, int src) {
+        cl.entries[dst] = cl.entries[src];
     }
 };
 

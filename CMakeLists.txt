@@ -68,6 +68,11 @@ set(sources_game
         src/main/game/parent_table.cpp
         src/main/game/predecessor_state.h
         src/main/game/predecessor_state.cpp
+        src/main/game/multiplicity_descriptor.h
+        src/main/game/multiplicity_descriptor_store.h
+        src/main/game/multiplicity_descriptor_engine.h
+        src/main/game/multiplicity_zobrist.h
+        src/main/game/multiplicity_zobrist.cpp
 )
 
 set(sources_solver

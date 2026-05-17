@@ -18,6 +18,15 @@ The canonical copy lives here; the Knowledge Base copy is a snapshot from when i
 
 ## What's Done
 
+**Stage 1 — From-scratch multiplicity hash, no symmetry** (committed)
+- `MultiplicityPolicy` added to `cache_policy.h` alongside existing policies
+- `multiplicity_descriptor.h`, `multiplicity_descriptor_store.h`, `multiplicity_descriptor_engine.h`, `multiplicity_zobrist.h/cpp` — new files
+- `MultiplicityClusterPolicy` in `generic_flat_cache_policies.h` — 128-byte cluster, two 64-byte `multiplicity_descriptor_store` entries
+- `recompute_all()` called after every `make_move`/`undo_move` (from-scratch strategy)
+- CLI opt-in via `--cache-type multiplicity`
+- Wired through `main.cpp`, `benchmark.cpp`, `solvability_calc.cpp`, `deal_parser.cpp`, `state_printer.cpp`, all `.legal_moves`, `.dominance_moves`, `.pile_order`, `solver.cpp` explicit instantiation blocks
+- All 3 build gates pass (release + debug + trace); 8-seed Klondike spot-check: solvability matches `--cache-type auto`
+
 **Stage 0.1 — Descriptor interface audit** (committed)
 - `docs/multiplicity-encoding/stage0-descriptor-audit.md`
 - Catalogued all 24 `if constexpr (Policy::computes_hash)` blocks in game_state.cpp
@@ -52,21 +61,13 @@ The canonical copy lives here; the Knowledge Base copy is a snapshot from when i
 
 ## What's Next
 
-**Stage 1** — From-scratch multiplicity hash, no symmetry.
+**Stage 2** — Suit-symmetry canonicalisation.
 
-Key tasks (see `implementation-plan.md` Stage 1 for detail):
-1. `multiplicity_descriptor.h` — new descriptor types (MLD_*, MPD)
-2. `multiplicity_descriptor_store.h` — 52-entry store + 64-byte payload buffer
-3. `multiplicity_zobrist.h` — Z[52][80] table, seed `0xDEADBEEF12345678`
-4. `multiplicity_descriptor_engine.h` — engine with `init()`, `on_card_moved()` etc.,
-   dirty-flag lazy recompute strategy
-5. `MultiplicityPolicy` in `cache_policy.h` and `MultiplicityClusterPolicy` in
-   `generic_flat_cache_policies.h`
-6. Dispatch wiring: `--cache-type multiplicity` CLI opt-in
-7. Validation: solvability + states-searched must match FlatPolicy exactly
-   (pre-eviction; post-eviction divergence acceptable)
+Do not proceed to Stage 2 without Ian's approval.
 
-After Stage 1, Stage 2 adds suit-symmetry. Do not proceed to Stage 2 without Ian's approval.
+Key tasks (see `implementation-plan.md` Stage 2 for detail):
+- Map suits to canonical permutation before computing descriptors
+- Validate: solvability still matches; states_searched should drop on suit-symmetric games
 
 ## Key Files
 

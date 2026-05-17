@@ -426,6 +426,10 @@ void game_state_impl<Policy>::make_move(const move m) {
             break;
     }
 
+    if constexpr (Policy::computes_multiplicity_descriptor) {
+        desc_engine.recompute_all(make_desc_ctx());
+    }
+
 #ifndef NDEBUG
     check_face_down_consistent();
 #endif
@@ -455,6 +459,10 @@ void game_state_impl<Policy>::undo_move(const move m) {
         case move::mtype::null:
             assert(false);
             break;
+    }
+
+    if constexpr (Policy::computes_multiplicity_descriptor) {
+        desc_engine.recompute_all(make_desc_ctx());
     }
 
 #ifndef NDEBUG
@@ -1095,7 +1103,8 @@ void game_state_impl<Policy>::check_face_down_consistent() const {
         }
 
         // Check that face-down cards have STARTING descriptor
-        if constexpr (Policy::computes_hash) {
+        // (flat engine only; multiplicity engine encodes face-down state differently)
+        if constexpr (Policy::computes_hash && !Policy::computes_multiplicity_descriptor) {
             for (auto& c : piles[p].pile_vec) {
                 if (c.is_face_down()) {
                     uint8_t cid = zobrist_hash::card_id(c.get_suit(), c.get_rank());
@@ -1138,7 +1147,9 @@ void game_state_impl<Policy>::init_payload_and_hash() {
 template <typename Policy>
 descriptor_context game_state_impl<Policy>::make_desc_ctx() const {
     return { piles, rules, foundations, original_tableau_piles,
-             original_cells, hole, foundations_base };
+             original_cells, hole, foundations_base,
+             stock, waste,
+             original_reserve.empty() ? nullptr : &original_reserve };
 }
 
 template <typename Policy>
@@ -1339,7 +1350,9 @@ compact_state game_state_impl<Policy>::recompute_payload_from_scratch() const {
 
 template <typename Policy>
 void game_state_impl<Policy>::assert_payload_consistent() const {
-    if constexpr (Policy::computes_payload) {
+    // Multiplicity engine is always-recomputed from scratch, so incremental
+    // consistency checks don't apply; skip to avoid compact_state mismatch.
+    if constexpr (Policy::computes_payload && !Policy::computes_multiplicity_descriptor) {
         // Cannot accurately recompute STARTING_FACE_UP for face-down games
         // (revealed cards are indistinguishable from originally-placed cards by
         // board inspection alone). Only assert for fully face-up games.
@@ -1463,13 +1476,15 @@ template ostream& operator<<(ostream&, const game_state_impl<PredecessorPolicy>&
 template class game_state_impl<HashOnlyPolicy>;
 template ostream& operator<<(ostream&, const game_state_impl<HashOnlyPolicy>&);
 
-#else   // default binary — all four policies
+#else   // default binary — all policies
 template class game_state_impl<FlatPolicy>;
 template class game_state_impl<HashOnlyPolicy>;
 template class game_state_impl<PredecessorPolicy>;
 template class game_state_impl<LRUPolicy>;
+template class game_state_impl<MultiplicityPolicy>;
 template ostream& operator<<(ostream&, const game_state_impl<FlatPolicy>&);
 template ostream& operator<<(ostream&, const game_state_impl<HashOnlyPolicy>&);
 template ostream& operator<<(ostream&, const game_state_impl<PredecessorPolicy>&);
 template ostream& operator<<(ostream&, const game_state_impl<LRUPolicy>&);
+template ostream& operator<<(ostream&, const game_state_impl<MultiplicityPolicy>&);
 #endif

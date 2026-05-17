@@ -46,6 +46,7 @@
 #include "../hash_descriptor_store.h"
 #include "../cache_policy.h"
 #include "../flat_descriptor_engine.h"
+#include "../multiplicity_descriptor_engine.h"
 #include "../predecessor_state.h"
 #include "../parent_table.h"
 
@@ -93,11 +94,14 @@ public:
     bool is_solved() const;
     const std::vector<pile>& get_data() const;
 
+    // Expose the policy's descriptor store type for use by cache policy traits
+    typedef typename Policy::descriptor_store_type descriptor_store_type;
+
     uint64_t get_zobrist_hash() const { return desc_engine.get_hash(); }
 
     template <typename P = Policy,
               typename = std::enable_if_t<P::computes_payload>>
-    const compact_state& get_payload() const { return desc_engine.get_store(); }
+    const typename P::descriptor_store_type& get_payload() const { return desc_engine.get_store(); }
 
     void set_payload_depth(uint16_t depth);
     void compute_hash_from_scratch();  // For testing: recompute hash from payload
@@ -110,7 +114,7 @@ public:
 
 #ifndef NDEBUG
     template <typename P = Policy,
-              typename = std::enable_if_t<P::computes_payload>>
+              typename = std::enable_if_t<P::computes_payload && !P::computes_multiplicity_descriptor>>
     compact_state recompute_payload_from_scratch() const;  // Debug: rebuild payload from board state
     void assert_payload_consistent() const;                // Debug: assert incremental payload matches recomputed
 #endif

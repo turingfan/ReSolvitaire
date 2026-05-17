@@ -90,7 +90,8 @@ command_line_helper::command_line_helper()
             ("force-lru", "Force use of LRU cache even for flat-cache games")
             ("cache-type", po::value<string>()->default_value("auto"),
              "Select cache implementation. Options: 'auto' (default, chooses flat or lru based on game), "
-             "'hash-only' (stores only Zobrist hash — no payload, faster but weaker deduplication).")
+             "'hash-only' (stores only Zobrist hash — no payload, faster but weaker deduplication), "
+             "'multiplicity' (experimental multiplicity encoding Stage 1, single-deck no-symmetry games).")
             ("trace", po::value<string>(),
              "write search trace to file (requires SOLVITAIRE_SEARCH_TRACE build)")
             ("trace-break-at", po::value<uint64_t>(),
@@ -258,8 +259,8 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
     }
 
     cache_type = vm["cache-type"].as<string>();
-    if (cache_type != "auto" && cache_type != "hash-only") {
-        LOG_ERROR ("Error: invalid --cache-type: " + cache_type + ". Must be 'auto' or 'hash-only'.");
+    if (cache_type != "auto" && cache_type != "hash-only" && cache_type != "multiplicity") {
+        LOG_ERROR ("Error: invalid --cache-type: " + cache_type + ". Must be 'auto', 'hash-only', or 'multiplicity'.");
         return false;
     }
 

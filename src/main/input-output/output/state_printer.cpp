@@ -288,4 +288,10 @@ template void state_printer::print_sequences<LRUPolicy>(ostream&, const vector<p
 template void state_printer::print_top_of_piles<LRUPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<LRUPolicy>&);
 template void state_printer::print_top_of_pile<LRUPolicy>(ostream&, pile::ref, const game_state_impl<LRUPolicy>&);
 template void state_printer::print_accordion<LRUPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<LRUPolicy>&);
+template ostream& state_printer::print<MultiplicityPolicy>(ostream&, const game_state_impl<MultiplicityPolicy>&);
+template void state_printer::print_piles<MultiplicityPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<MultiplicityPolicy>&);
+template void state_printer::print_sequences<MultiplicityPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<MultiplicityPolicy>&);
+template void state_printer::print_top_of_piles<MultiplicityPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<MultiplicityPolicy>&);
+template void state_printer::print_top_of_pile<MultiplicityPolicy>(ostream&, pile::ref, const game_state_impl<MultiplicityPolicy>&);
+template void state_printer::print_accordion<MultiplicityPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<MultiplicityPolicy>&);
 #endif

@@ -40,6 +40,10 @@ struct descriptor_context {
     const std::vector<pile::ref>& original_cells;
     pile::ref hole;
     card::rank_t foundations_base;
+    // Additional fields used by multiplicity_descriptor_engine (ignored by flat engine):
+    pile::ref stock = 255;                               // 255 = no stock
+    pile::ref waste = 255;                               // 255 = no waste
+    const std::vector<pile::ref>* reserve_piles = nullptr; // null = no reserve
 };
 
 // ─── flat_descriptor_engine ─────────────────────────────────────────────────

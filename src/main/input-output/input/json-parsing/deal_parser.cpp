@@ -431,4 +431,15 @@ template void deal_parser::parse_sequences<LRUPolicy>(game_state_impl<LRUPolicy>
 template void deal_parser::parse_accordion<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
 template bool deal_parser::parse_foundations<LRUPolicy>(game_state_impl<LRUPolicy>&, const rapidjson::Document&);
 template void deal_parser::fill_foundations<LRUPolicy>(game_state_impl<LRUPolicy>&);
+template void deal_parser::parse<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&);
 #endif
