@@ -52,10 +52,15 @@ games).
 
 ### Design Decisions
 
-1. **Coexistence.** The multiplicity cache is a new policy alongside existing ones, not a
-   replacement. This allows (a) regression testing against existing policies and
-   (b) performance comparison, since existing policies may be faster where symmetry is
-   not needed. This is the purpose of the template infrastructure.
+1. **Coexistence now, replacement later.** The multiplicity cache is introduced as a new
+   policy alongside existing ones. This allows (a) regression testing against existing
+   policies and (b) performance comparison. However, the long-term intent is that
+   `MultiplicityPolicy` will eventually *replace* `PredecessorPolicy` entirely — once
+   `MultiplicityPolicy` can encode accordion-style predecessor relationships (the same
+   thing `PredecessorPolicy` does for accordion games), `PredecessorPolicy` becomes
+   redundant and can be deleted. The dual-system redundancy during the transition is
+   an accepted temporary state. Any agent working in this area should not invest effort
+   in improving or extending `PredecessorPolicy`.
 
 2. **From-scratch first.** Stages 1–2 use from-scratch payload/hash recomputation on every
    cache operation. Performance will be poor but correctness is provable. Incremental

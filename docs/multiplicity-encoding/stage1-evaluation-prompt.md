@@ -7,6 +7,18 @@ Opus can evaluate whether the implementation is correct, complete, and sound.
 
 ---
 
+## Architectural Intent: PredecessorPolicy is Temporary
+
+`PredecessorPolicy` currently handles accordion games using a 64-byte predecessor-encoded
+state. The long-term intent is that `MultiplicityPolicy` will eventually *replace*
+`PredecessorPolicy` entirely — once it can encode accordion-style predecessor relationships,
+`PredecessorPolicy` becomes redundant and can be deleted. This context matters when
+evaluating design choices: the dual-system redundancy (flat `desc_engine` stubs running
+alongside the predecessor-specific system) is an accepted temporary state, and no effort
+should be spent improving `PredecessorPolicy` itself.
+
+---
+
 ## What Stage 1 Was Supposed to Do
 
 Stage 1 of the multiplicity encoding plan was:
