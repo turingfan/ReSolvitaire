@@ -5,7 +5,8 @@ You are implementing Stage 2 of the multiplicity encoding for ReSolvitaire. Stag
 symmetry. Stage 2 adds suit-symmetry canonicalisation so the flat cache can deduplicate
 states that differ only by suit permutation.
 
-Read CLAUDE.md for build/test commands. All 3 test gates must pass before committing.
+Read CLAUDE.md for build/test commands and `01-Knowledge-Base/AGENTS.md` for mandatory
+process rules. All 3 test gates must pass before committing.
 
 ---
 
