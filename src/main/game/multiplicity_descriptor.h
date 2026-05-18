@@ -31,11 +31,12 @@ enum multiplicity_locative : uint8_t {
     MLD_IN_WASTE   = 3,   // Waste pile
     MLD_IN_RESERVE = 4,   // Reserve pile
     MLD_HOLE_TOP   = 5,   // Top card of hole pile (hole games only)
-    MLD_IN_SPACE   = 6,   // Bottom of tableau pile (pile-symmetric: k omitted)
-    // Values 7..27 are reserved for future use (L=28 total locative columns)
+    MLD_IN_SPACE   = 6,   // Bottom of tableau pile; +k for pile k when not pile-symmetric
+    // Values 7..27: MLD_IN_SPACE+1..MLD_IN_SPACE+21 for pile-indexed games,
+    // plus headroom for future locative kinds.
 };
 
-static constexpr uint8_t MLD_COUNT = 7;   // number of locative kinds in use
+static constexpr uint8_t MLD_COUNT = 7;   // number of locative base kinds (not counting pile-indexed variants)
 
 // ─── Per-card descriptor ──────────────────────────────────────────────────────
 

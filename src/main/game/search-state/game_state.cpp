@@ -892,7 +892,7 @@ void game_state_impl<Policy>::undo_stock_k_plus_move(move m) {
 template <typename Policy>
 void game_state_impl<Policy>::make_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
-    assert(!use_new_cache(rules));  // KI-6: TABLEAU_PILES games always use LRU cache
+    assert(!use_new_cache(rules));  // TABLEAU_PILES: not eligible for flat cache
 
     for (pile::ref tab_pr = original_tableau_piles.front();
          tab_pr < pile::ref(original_tableau_piles.front() + m.count);
@@ -912,7 +912,7 @@ void game_state_impl<Policy>::make_stock_to_all_tableau_move(move m) {
 template <typename Policy>
 void game_state_impl<Policy>::undo_stock_to_all_tableau_move(move m) {
     assert(rules.stock_deal_t == sdt::TABLEAU_PILES);
-    assert(!use_new_cache(rules));  // KI-6: TABLEAU_PILES games always use LRU cache
+    assert(!use_new_cache(rules));  // TABLEAU_PILES: not eligible for flat cache
 
     // Restore each dealt card's descriptor back to STARTING before pile ops
     for (pile::ref tab_pr = original_tableau_piles.front() + m.count;
@@ -1146,10 +1146,13 @@ void game_state_impl<Policy>::init_payload_and_hash() {
 
 template <typename Policy>
 descriptor_context game_state_impl<Policy>::make_desc_ctx() const {
-    return { piles, rules, foundations, original_tableau_piles,
-             original_cells, hole, foundations_base,
-             stock, waste,
-             original_reserve.empty() ? nullptr : &original_reserve };
+    descriptor_context ctx = { piles, rules, foundations, original_tableau_piles,
+                               original_cells, hole, foundations_base,
+                               stock, waste,
+                               original_reserve.empty() ? nullptr : &original_reserve };
+    ctx.suit_sym = (stream_opts == streamliner_options::SUIT_SYMMETRY
+                    || stream_opts == streamliner_options::BOTH);
+    return ctx;
 }
 
 template <typename Policy>

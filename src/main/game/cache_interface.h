@@ -50,11 +50,14 @@ inline bool use_predecessor_cache(const sol_rules& rules) {
 }
 
 // Helper function to determine if a game can use the multiplicity cache.
-// Same eligibility as use_new_cache: single-deck, no sequences, no accordion,
-// no spider-stock dealing, and no suit-symmetry (multiplicity handles suit
-// symmetry in later stages; Stage 1 does not canonicalise suits).
-inline bool use_multiplicity_cache(const sol_rules& rules, bool suit_symmetry_active = false) {
-    return use_new_cache(rules, suit_symmetry_active);
+// Eligibility: single-deck, no sequences, no accordion.
+// TABLEAU_PILES games are now supported via pile-indexed in_space(k) descriptors (Stage 2B).
+// Suit-symmetry is now supported (Stage 2), so suit_symmetry_active is ignored.
+inline bool use_multiplicity_cache(const sol_rules& rules,
+                                    bool /*suit_symmetry_active*/ = false) {
+    return !rules.two_decks
+        && rules.sequence_count == 0
+        && rules.accordion_size == 0;
 }
 
 #endif

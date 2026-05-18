@@ -44,6 +44,9 @@ struct descriptor_context {
     pile::ref stock = 255;                               // 255 = no stock
     pile::ref waste = 255;                               // 255 = no waste
     const std::vector<pile::ref>* reserve_piles = nullptr; // null = no reserve
+    // Used by multiplicity_descriptor_engine to determine symmetry mode.
+    // Computed from stream_opts in make_desc_ctx(); ignored by flat engines.
+    bool suit_sym = false;
 };
 
 // ─── flat_descriptor_engine ─────────────────────────────────────────────────
