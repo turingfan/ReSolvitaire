@@ -9,8 +9,8 @@
 //   Byte 0:      Occupied flag (0 = empty slot in cluster)
 //   Bytes 1–2:   Depth (uint16_t big-endian, excluded from equality comparison)
 //   Bytes 3–54:  Slot data — one byte per card (52 cards, single-deck)
-//   Bytes 55–62: Reserved / hash-guard (zeroed in Stage 1; used in later stages)
-//   Byte 63:     Reserved (0)
+//   Byte 55:     Reserved (0)
+//   Bytes 56–63: Reserved / hash-guard (zeroed in Stage 1; 8-byte aligned)
 //
 // Equality comparison: memcmp over bytes 3–54 (slot data only, 52 bytes).
 //

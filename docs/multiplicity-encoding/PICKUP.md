@@ -81,6 +81,16 @@ Stage 2 is complete (2A, 2B, 2C all done). Ready for Stage 3.
 - Issue 2: Scheme A needed to propagate across classes — fixed by folding Scheme A
   into the fixpoint loop via `collapsed_pos()` helper
 
+**Hash-guard optimisation** (not yet committed)
+- `MultiplicityClusterPolicy` now uses hash-guard on slot 1, same as
+  `PredecessorClusterPolicy` — avoids second cache-line fetch when slot 1's hash
+  doesn't match the probe hash
+- Payload layout corrected: byte 55 = reserved padding, bytes 56-63 = hash guard
+  (8-byte aligned)
+- Uses `insert_predecessor_tag` strategy with guard maintenance; `HAS_HASH_GUARD = true`
+- `copy_slot` copies only bytes 0-55 (payload), not the hash guard
+- Spec (`multiplicity_encoding_v5.tex`) updated to match
+
 ## What's Next
 
 **Stage 3** — Incremental computation specification document (before implementing
@@ -98,6 +108,7 @@ Stage 2 is fully validated. Do not proceed to Stage 3 without Ian's approval.
 | `src/main/game/multiplicity_zobrist.h/cpp` | Zobrist table Z[class][column] |
 | `src/main/game/multiplicity_static_class.h` | Static class structure for symmetry modes |
 | `src/main/game/flat_descriptor_engine.h` | Flat descriptor engine + descriptor_context |
+| `src/main/game/generic_flat_cache_policies.h` | Cluster policies: CompactState, HashOnly, Predecessor, Multiplicity |
 | `src/main/game/cache_policy.h` | Policy structs with engine typedefs |
 | `src/main/game/cache_interface.h` | use_multiplicity_cache() eligibility |
 | `src/main/game/search-state/game_state.h/cpp` | State class, move logic |

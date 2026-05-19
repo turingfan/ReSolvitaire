@@ -252,15 +252,22 @@ struct PredecessorClusterPolicy {
 //
 // Payload: multiplicity_descriptor_store (64 B). Two entries per cluster → 128 B,
 // aligned to 128 B (two cache lines).
-// No hash guard (HAS_HASH_GUARD = false). TwoBig1 depth-preferred replacement
-// (same strategy as CompactStatePolicy).
+//
+// Hash-guard optimisation (same as PredecessorClusterPolicy): the other_hash
+// field lives at bytes 56-63 of each 64-byte entry (8-byte aligned within the
+// cache line). The comparison range (memcmp bytes 3-54) excludes these bytes.
+// Before fetching slot 1's payload (cache line 1), we compare the guard hash
+// against the probe hash; if they differ, we skip the cache-line-1 fetch.
+//
+// TwoBig1 depth-preferred replacement with guard maintenance.
 
 struct MultiplicityClusterPolicy {
     typedef multiplicity_descriptor_store payload_type;
-    typedef insert_depth_tag insert_strategy;
-    static const bool HAS_HASH_GUARD = false;
+    typedef insert_predecessor_tag insert_strategy;
+    static const bool HAS_HASH_GUARD = true;
 
-    // Two 64-byte entries = 128 bytes, aligned to 128 B (two cache lines)
+    // Two 64-byte entries = 128 bytes, aligned to 128 B (two cache lines).
+    // The other_hash field overlays bytes 56-63 of each entry.
     struct alignas(128) cluster {
         multiplicity_descriptor_store entries[2];
     };
@@ -294,12 +301,26 @@ private:
         return dummy;
     }
 
+    // ── other_hash accessor helpers ──────────────────────────────────────────
+    // The other_hash field is stored at bytes 56-63 of multiplicity_descriptor_store,
+    // overlaying the reserved/hash-guard region of the payload layout.
+    // Uses memcpy to avoid strict-aliasing UB on the uint8_t[] array.
+
+    static uint64_t other_hash_val(const multiplicity_descriptor_store& entry) {
+        uint64_t val;
+        std::memcpy(&val, entry.data + 56, sizeof(val));
+        return val;
+    }
+    static void set_other_hash(multiplicity_descriptor_store& entry, uint64_t h) {
+        std::memcpy(entry.data + 56, &h, sizeof(h));
+    }
+
 public:
 
     static bool is_occupied(const cluster& cl, int slot) {
         return cl.entries[slot].is_occupied();
     }
-    // Compare bytes 3-54 (slot data only; excludes occupied flag and depth)
+    // Compare bytes 3-54 (slot data only; excludes occupied flag, depth, and hash guard)
     static bool matches(const cluster& cl, int slot,
                         const multiplicity_descriptor_store& payload) {
         return cl.entries[slot].matches(payload);
@@ -318,9 +339,28 @@ public:
         cl.entries[slot] = payload;
         cl.entries[slot].set_occupied(true);
     }
-    // Copy one slot to another (full store copy, including occupied flag)
+    // Copy payload only (NOT other_hash) — same semantics as PredecessorClusterPolicy.
+    // Copies bytes 0-55 of the entry (occupied flag, depth, slot data, reserved byte).
     static void copy_slot(cluster& cl, int dst, int src) {
-        cl.entries[dst] = cl.entries[src];
+        std::memcpy(cl.entries[dst].data, cl.entries[src].data, 56);
+    }
+
+    // ── Hash-guard accessors ─────────────────────────────────────────────────
+    // entries[0] bytes 56-63 store the hash of the entry in slot 1.
+    // entries[1] bytes 56-63 store the hash of the entry in slot 0.
+    // Only entries[0]'s guard is read in the hot path (contains / insert).
+
+    static uint64_t get_guard_hash(const cluster& cl) {
+        return other_hash_val(cl.entries[0]);
+    }
+    static void set_slot1_guard(cluster& cl, uint64_t hash) {
+        set_other_hash(cl.entries[0], hash);
+    }
+    static void set_cascade_guard(cluster& cl, uint64_t hash) {
+        set_other_hash(cl.entries[1], hash);
+    }
+    static void clear_slot1_guard(cluster& cl) {
+        set_other_hash(cl.entries[0], 0);
     }
 };
 

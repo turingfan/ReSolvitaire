@@ -243,7 +243,13 @@ struct MultiplicityPolicy {
 ```
 
 `MultiplicityClusterPolicy`: 64-byte payload entries (matching `predecessor_state` size),
-`matches()` via `memcmp` over the 52-byte slot range, depth-preferred TwoBig1 replacement.
+`matches()` via `memcmp` over the 52-byte slot range, depth-preferred TwoBig1 replacement
+with hash-guard optimisation. The hash guard occupies bytes 56–63 of each entry (8-byte
+aligned), overlaying the reserved region of the payload. Before fetching slot 1's payload
+(cache line 1), the guard hash is compared against the probe hash; if they differ, the
+second cache-line fetch is skipped entirely. This is the same mechanism used by
+`PredecessorClusterPolicy` — the `generic_flat_cache` template handles all guard
+maintenance via tag dispatch on `insert_predecessor_tag`.
 
 ### 1.4 — Dispatch Wiring
 
