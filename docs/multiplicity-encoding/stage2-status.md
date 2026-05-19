@@ -7,10 +7,10 @@
 
 ## Summary
 
-Stage 2 is **partially complete**. The suit-symmetry canonicalisation (Stage 2A) and
-pile-indexed locatives for TABLEAU_PILES games (Stage 2B) are both implemented and
-all test gates pass. The outstanding work is Stage 2C: unit tests directly validating
-the suit-symmetry canonicalisation algorithm.
+Stage 2 is **partially complete**. The suit-symmetry canonicalisation (Stage 2A),
+pile-indexed locatives for TABLEAU_PILES games (Stage 2B), and the face-down locative
+bug fix are all implemented and all test gates pass. The outstanding work is Stage 2C:
+unit tests directly validating the suit-symmetry canonicalisation algorithm.
 
 ---
 
@@ -89,6 +89,41 @@ Full results in `stage2b-in-space-k-evaluation.md`.
 
 ---
 
+## Bug Fix — Face-Down Locative Descriptors (COMPLETE)
+
+**Discovered 2026-05-18** via independent evaluation of Stage 2B.
+
+### Root cause
+
+Locative descriptors (`make_locative(kind)`) did not carry a face-down flag. When a
+face-down card is at the bottom of a tableau pile (common in TABLEAU_PILES games after
+stock deals), it received `in_space(k)` — identical to a face-up card at the same
+position. This created false-positive cache hits (different states → same payload+hash).
+
+### Discovery
+
+Trace comparison on spiderette seed 2: multiplicity timed out at 41M states while LRU
+solved in 1.4M. Traces diverge at operation 138 (depth 19): multiplicity reports HIT
+where LRU reports MISS. `--trace-find-hash` identified the earlier INSERT (op 43) with
+matching hash — board states identical except 9S is face-down in one and face-up in the
+other, both at the bottom of pile 1.
+
+### Fix
+
+- `multiplicity_descriptor.h`: `make_locative(kind, fd=false)` — face_down flag on all locatives
+- `multiplicity_descriptor_engine.h`:
+  - `recompute_all()`: pile bottoms pass `c.is_face_down()` to `make_locative`
+  - `raw_slot()`: face-down locatives use reflected encoding `255 - (52 + kind)`
+  - `zob_for_card()`: NOT trick applies to any face-down descriptor (not just predecessors)
+- Spec updated to v5.1 (`multiplicity_encoding_v5.tex`)
+
+### Validation
+
+All 3 test gates pass. All 3 TABLEAU_PILES games × 3 seeds now match LRU exactly
+(including spiderette seed 2 and east-haven seed 2, both previously affected).
+
+---
+
 ## Stage 2C — Unit Tests (TODO)
 
 Direct validation of the suit-symmetry canonicalisation algorithm is not yet
@@ -107,11 +142,11 @@ implemented. See `stage2c-testing-plan.md` for the agreed test design.
 | File | Status |
 |---|---|
 | `src/main/game/multiplicity_static_class.h` | New — Stage 2A |
-| `src/main/game/multiplicity_descriptor_engine.h` | Modified — Stage 2A + 2B |
+| `src/main/game/multiplicity_descriptor_engine.h` | Modified — Stage 2A + 2B + face-down fix |
 | `src/main/game/flat_descriptor_engine.h` | Modified — Stage 2A (suit_sym in ctx) |
 | `src/main/game/search-state/game_state.cpp` | Modified — Stage 2A + 2B (comment fix) |
 | `src/main/game/cache_interface.h` | Modified — Stage 2A + 2B |
-| `src/main/game/multiplicity_descriptor.h` | Modified — Stage 2B (comment update) |
+| `src/main/game/multiplicity_descriptor.h` | Modified — Stage 2B + face-down fix |
 | `src/main/main.cpp` | Dispatch additions reverted (Stage 2B) |
 | `src/main/evaluation/solvability_calc.cpp` | Dispatch additions reverted (Stage 2B) |
 | `src/main/evaluation/benchmark.cpp` | Dispatch additions reverted (Stage 2B) |

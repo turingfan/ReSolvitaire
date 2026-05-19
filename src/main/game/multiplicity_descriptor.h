@@ -43,15 +43,16 @@ static constexpr uint8_t MLD_COUNT = 7;   // number of locative base kinds (not 
 struct multiplicity_descriptor {
     bool    is_predecessor;       // true  → predecessor encoding (MPD)
     uint8_t predecessor_card_id;  // card ID (0..51) — valid if is_predecessor
-    bool    face_down;            // whether THIS card is face-down — valid if is_predecessor
+    bool    face_down;            // whether THIS card is face-down — valid for BOTH types
     uint8_t locative_kind;        // MLD_* enum — valid if !is_predecessor
 
     // ── Factory functions ────────────────────────────────────────────────────
 
-    static multiplicity_descriptor make_locative(uint8_t kind) {
+    static multiplicity_descriptor make_locative(uint8_t kind, bool fd = false) {
         multiplicity_descriptor d{};
         d.is_predecessor = false;
         d.locative_kind  = kind;
+        d.face_down      = fd;
         return d;
     }
 

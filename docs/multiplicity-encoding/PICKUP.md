@@ -1,10 +1,10 @@
 # PICKUP — multiplicity-encoding branch
 
-**Last updated:** 2026-05-17
+**Last updated:** 2026-05-18
 
 ## What This Branch Is
 
-Implementing the multiplicity encoding v4 cache system, a new cache policy that enables
+Implementing the multiplicity encoding cache system, a new cache policy that enables
 suit-symmetry canonicalisation in the flat cache (currently only possible via the slower
 LRU cache). The work follows a staged plan with architecture prep first, then from-scratch
 implementation, then incremental optimisation.
@@ -13,81 +13,87 @@ implementation, then incremental optimisation.
 
 `docs/multiplicity-encoding/implementation-plan.md` (this directory)
 
-Stages 0-6, from architecture prep through benchmarking. Stage 0 is complete.
-The canonical copy lives here; the Knowledge Base copy is a snapshot from when it was written.
+Stages 0-6, from architecture prep through benchmarking. Stages 0 and 1 are complete.
+Stage 2 is partially complete (2A and 2B done, 2C testing outstanding).
 
 ## What's Done
 
+**Stage 2A — Suit-Symmetry Canonicalisation** (committed: `3e5554e`)
+- `symmetry_mode` enum: `NONE` (52×1), `COLOUR` (26×2), `SUIT_IRRELEVANT` (13×4)
+- `determine_symmetry_mode(rules, suit_sym)` in `multiplicity_static_class.h`
+- `static_class_structure` with `init(mode)` — class_of[52], class_start, class_members, class_size, n_classes
+- 5-phase fixpoint canonicalisation in `recompute_from_descriptors()`:
+  - Fast path: NONE mode (n_classes==52) skips fixpoint, preserves Stage 1 behaviour
+  - Phase 0-2: fixpoint sort → assign canonical positions → recompute slots
+  - Phase 3: Scheme A predecessor collapsing (dynamic class → lowest position)
+  - Phase 4: write payload
+  - Phase 5: additive Zobrist hash (SUM within class, XOR across classes)
+- `descriptor_context` carries `suit_sym` flag
+
+**Stage 2B — `in_space(k)` Pile-Indexed Locatives** (committed: `3e5554e`)
+- TABLEAU_PILES games (east-haven, spiderette, will-o-the-wisp) now use
+  `MLD_IN_SPACE + pile_idx` for pile bottoms instead of bare `MLD_IN_SPACE`
+- `use_multiplicity_cache()` no longer excludes TABLEAU_PILES
+- Premature auto-dispatch additions reverted (multiplicity remains opt-in)
+- See `stage2b-in-space-k-evaluation.md`
+
+**Bug fix: Face-down locative descriptors** (not yet committed)
+- Stage 2B exposed a pre-existing design gap: locative descriptors did not encode
+  face-down status. Pile bottoms that are face-down (common in TABLEAU_PILES games
+  after stock deals) produced identical payloads/hashes to face-up pile bottoms.
+- Diagnosed via trace comparison on spiderette seed 2 (false-positive HIT at op 138).
+- Fix: `make_locative(kind, fd)` now carries a face-down flag; `raw_slot()` uses
+  reflected encoding `255 - (52 + kind)` for face-down locatives; `zob_for_card()`
+  applies NOT trick uniformly to both predecessors and locatives.
+- Spec updated to v5.1 (`multiplicity_encoding_v5.tex`).
+- All 3 test gates pass; all 3 TABLEAU_PILES games × 3 seeds match LRU exactly.
+
 **Stage 1 — From-scratch multiplicity hash, no symmetry** (committed)
-- `MultiplicityPolicy` added to `cache_policy.h` alongside existing policies
-- `multiplicity_descriptor.h`, `multiplicity_descriptor_store.h`, `multiplicity_descriptor_engine.h`, `multiplicity_zobrist.h/cpp` — new files
-- `MultiplicityClusterPolicy` in `generic_flat_cache_policies.h` — 128-byte cluster, two 64-byte `multiplicity_descriptor_store` entries
-- `recompute_all()` called after every `make_move`/`undo_move` (from-scratch strategy)
+- `MultiplicityPolicy` in `cache_policy.h`; `multiplicity_descriptor.h`,
+  `multiplicity_descriptor_store.h`, `multiplicity_descriptor_engine.h`,
+  `multiplicity_zobrist.h/cpp` — new files
+- `recompute_all()` called after every make_move/undo_move
 - CLI opt-in via `--cache-type multiplicity`
-- Wired through `main.cpp`, `benchmark.cpp`, `solvability_calc.cpp`, `deal_parser.cpp`, `state_printer.cpp`, all `.legal_moves`, `.dominance_moves`, `.pile_order`, `solver.cpp` explicit instantiation blocks
-- Waste-deal symmetry: when `stock_redeal && waste.size() % stock_deal_count == 0`,
-  all stock+waste cards get `MLD_IN_STOCK` (collapsing the distinction), matching the
-  flat cache's `waste_ptr = 0` / `STARTING` equivalence. Without this, the multiplicity
-  cache produces false negatives on redeal games.
-- All 3 build gates pass (release + debug + trace); 20-seed Klondike spot-check:
-  exact pre-eviction match on `states_searched` with `--cache-type auto`
+- Waste-deal symmetry: stock+waste cards share MLD_IN_STOCK when redeal symmetry holds
+- All 3 test gates pass; exact pre-eviction match on states_searched with flat cache
 
-**Stage 0.1 — Descriptor interface audit** (committed)
-- `docs/multiplicity-encoding/stage0-descriptor-audit.md`
-- Catalogued all 24 `if constexpr (Policy::computes_hash)` blocks in game_state.cpp
-- Identified 9 operation types and recommended extracting into an engine class
-
-**Stage 0.2 — Extract descriptor engine** (committed: `00a076a`)
-- Created `src/main/game/flat_descriptor_engine.h`:
-  - `descriptor_context` struct (lightweight read-only view of game state)
-  - `flat_descriptor_engine<DescStore>` template (holds hash, store, face-up table)
-  - `null_descriptor_engine` (no-op stub for LRUPolicy)
-- Modified `cache_policy.h`: added `descriptor_engine` typedef to all 4 policies
-- Modified `game_state.h`: replaced 3 separate members with single `desc_engine`;
-  removed 5 method declarations; added `make_desc_ctx()`
-- Modified `game_state.cpp`: delegated all descriptor operations to engine;
-  removed 5 old method implementations; added proper `if constexpr` guards
-- All three test gates pass (release + debug + trace unit tests, level 1 regression
-  across all 4 variant binaries)
-
-**Stage 0.3 — Validate PredecessorPolicy compatibility** (complete, no code changes)
-- PredecessorPolicy has two parallel systems after Stage 0.2:
-  - **System 1 (flat desc_engine):** runs because `computes_hash = true`, but
-    `PredecessorClusterPolicy::hash_of()` / `payload_of()` return the
-    predecessor-specific hash/payload, so System 1's output is never used for cache ops.
-  - **System 2 (predecessor-specific):** `predecessor_array`, `predecessor_zobrist_hash`,
-    `pred_payload` — maintained in `make_accordion_move()` / `undo_accordion_move()`.
-    This is what the cache actually reads.
-- Decision: no `PredecessorDescriptorEngine` needed. PredecessorPolicy is slated for
-  replacement by MultiplicityPolicy once it can encode accordion-style predecessor
-  relationships. Extracting a new engine for it would be work that gets discarded.
-  The dual-system redundancy is an accepted temporary state.
-- All existing tests continue to pass.
+**Stage 0 — Architecture Prep** (committed)
+- Stage 0.1: Descriptor interface audit (`stage0-descriptor-audit.md`)
+- Stage 0.2: Extracted descriptor logic into `flat_descriptor_engine.h`
+- Stage 0.3: Validated PredecessorPolicy compatibility (no changes needed)
 
 ## What's Next
 
-**Stage 2** — Suit-symmetry canonicalisation.
+**Stage 2C — Unit Tests** (TODO, see `stage2c-testing-plan.md`)
+- Direct validation of suit-symmetry canonicalisation:
+  - Construct game state + suit-permuted copy; assert equal hash and payload under suit_sym=true
+  - Confirm NONE mode fast path preserves Stage 1 behaviour
+  - Confirm non-equivalent states don't collide
+- Solvability cross-check: seeds 1-20 for symmetric games, multiplicity vs LRU
+- Asymmetric criterion validation on 0-eviction seeds
 
-Do not proceed to Stage 2 without Ian's approval.
-
-Key tasks (see `implementation-plan.md` Stage 2 for detail):
-- Map suits to canonical permutation before computing descriptors
-- Validate: solvability still matches; states_searched should drop on suit-symmetric games
+**Then Stage 3** — Incremental computation specification document (before implementing
+incremental updates). Do not proceed without Ian's approval.
 
 ## Key Files
 
 | File | Purpose |
 |---|---|
-| `src/main/game/flat_descriptor_engine.h` | Flat descriptor engine (FlatPolicy, HashOnlyPolicy, PredecessorPolicy) |
+| `src/main/game/multiplicity_descriptor.h` | Per-card descriptor: locative(kind, fd) or predecessor(q, fd) |
+| `src/main/game/multiplicity_descriptor_store.h` | 64-byte payload store |
+| `src/main/game/multiplicity_descriptor_engine.h` | Core: recompute_all(), 5-phase canonicalisation |
+| `src/main/game/multiplicity_zobrist.h/cpp` | Zobrist table Z[class][column] |
+| `src/main/game/multiplicity_static_class.h` | Static class structure for symmetry modes |
+| `src/main/game/flat_descriptor_engine.h` | Flat descriptor engine + descriptor_context |
 | `src/main/game/cache_policy.h` | Policy structs with engine typedefs |
-| `src/main/game/search-state/game_state.h` | State class using `desc_engine` member |
-| `src/main/game/search-state/game_state.cpp` | Move logic delegating to engine |
-| `docs/multiplicity-encoding/stage0-descriptor-audit.md` | Stage 0.1 audit |
+| `src/main/game/cache_interface.h` | use_multiplicity_cache() eligibility |
+| `src/main/game/search-state/game_state.h/cpp` | State class, move logic |
 
 ## Design References
 
 | Document | Location |
 |---|---|
-| v4 specification | `01-Knowledge-Base/Design-Documents/multiplicity_encoding_v4.tex` |
+| v5.1 specification | `01-Knowledge-Base/Design-Documents/multiplicity_encoding_v5.tex` |
 | Detailed plan | `docs/multiplicity-encoding/implementation-plan.md` |
-| Symmetry payload plan | `01-Knowledge-Base/Implementation-Plans/SymmetryPayloadPlan 20260512155752.md` |
+| Stage 2 status | `docs/multiplicity-encoding/stage2-status.md` |
+| Stage 2C testing plan | `docs/multiplicity-encoding/stage2c-testing-plan.md` |

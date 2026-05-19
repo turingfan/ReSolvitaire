@@ -184,7 +184,7 @@ public:
 
                 if (i + 1 == p.size()) {
                     // Bottom of pile: sits on empty space
-                    descriptors[cid] = multiplicity_descriptor::make_locative(space_kind);
+                    descriptors[cid] = multiplicity_descriptor::make_locative(space_kind, c.is_face_down());
                 } else {
                     // Sits on p[i+1] (deeper card)
                     card parent = p[i + 1];
@@ -351,7 +351,8 @@ private:
             uint8_t pos = canonical_pos[d.predecessor_card_id];
             return d.face_down ? static_cast<uint8_t>(255 - pos) : pos;
         } else {
-            return static_cast<uint8_t>(52 + d.locative_kind);
+            uint8_t base = static_cast<uint8_t>(52 + d.locative_kind);
+            return d.face_down ? static_cast<uint8_t>(255 - base) : base;
         }
     }
 
@@ -368,7 +369,7 @@ private:
             col = static_cast<uint8_t>(52 + d.locative_kind);
         }
         uint64_t z = multiplicity_zobrist::Z[class_id][col];
-        return (d.is_predecessor && d.face_down) ? ~z : z;
+        return d.face_down ? ~z : z;
     }
 
     // ── sort_class: insertion sort of up to 4 elements ───────────────────────
