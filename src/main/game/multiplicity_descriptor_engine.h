@@ -220,8 +220,9 @@ private:
             for (uint8_t c = 0; c < 52; c++) {
                 canonical_pos[c] = c;
                 uint8_t s = raw_slot(c);
+                slot[c] = s;
                 store.set_slot(c, s);
-                hash_value ^= zob_for_card(c, descriptors[c]);
+                hash_value ^= zob_for_card(c, c);
             }
             return;
         }
@@ -239,13 +240,18 @@ private:
             slot[c] = raw_slot(c);
         }
 
-        // ── Phase 2: fixpoint ─────────────────────────────────────────────────
-        // Sort each class by (slot, card_id), assign canonical_pos, recompute
-        // predecessor slot bytes.  Repeat until stable (max 12 iterations).
-        // Downward-only propagation guarantees convergence (v4 §4.2).
-        // Loop bound used directly so `iter` is read even in release builds.
+        // ── Phase 2: fixpoint with integrated Scheme A collapsing ─────────────
+        // Each iteration: sort classes by slot byte, assign canonical_pos,
+        // then recompute predecessor slot bytes using the COLLAPSED position
+        // of the predecessor's indistinguishable group (not the raw
+        // canonical_pos).  This merges the old "recompute" and "Scheme A"
+        // steps so they don't fight each other.
+        //
+        // Terminates because each iteration can only reduce the number of
+        // distinct slot values (bounded by 52).
         int iter;
-        for (iter = 0; iter < 12; iter++) {
+        for (iter = 0; iter < 20; iter++) {
+            // Sort each class and assign canonical_pos
             for (uint8_t cls = 0; cls < classes.n_classes; cls++) {
                 const uint8_t base = classes.class_start[cls];
                 sort_class(classes.class_members + base, classes.class_size);
@@ -254,65 +260,23 @@ private:
                 }
             }
 
+            // Recompute predecessor slot bytes using collapsed positions.
+            // For each predecessor card, find the indistinguishable group
+            // containing its predecessor target and use the group's lowest
+            // canonical_pos instead of the target's individual canonical_pos.
             bool changed = false;
             for (uint8_t c = 0; c < 52; c++) {
                 if (!descriptors[c].is_predecessor) continue;
-                uint8_t new_s = raw_slot(c);
+                uint8_t q = descriptors[c].predecessor_card_id;
+                uint8_t pos = collapsed_pos(q);
+                uint8_t new_s = descriptors[c].face_down
+                    ? static_cast<uint8_t>(255 - pos) : pos;
                 if (new_s != slot[c]) { slot[c] = new_s; changed = true; }
             }
 
             if (!changed) break;
         }
-        assert(iter < 12);  // should have converged; fires in debug if not
-
-        // ── Phase 3: Scheme A predecessor collapsing ─────────────────────────
-        // Within each static class, members with equal slot bytes form a dynamic
-        // class.  All cards whose predecessor is ANY member of that dynamic class
-        // receive the lowest canonical position in that class.
-        //
-        // A single pass is sufficient: the sorted multiset of slot bytes within
-        // each class is the invariant that makes symmetric states compare equal,
-        // and that invariant holds after one collapse pass + one re-sort.
-        for (uint8_t cls = 0; cls < classes.n_classes; cls++) {
-            const uint8_t base = classes.class_start[cls];
-            const uint8_t n    = classes.class_size;
-            // class_members[base..base+n-1] are in slot-sorted order from Phase 2
-            for (uint8_t i = 0; i < n; ) {
-                // Find the extent of this dynamic class (equal slot bytes)
-                uint8_t j = i + 1;
-                while (j < n && slot[classes.class_members[base + j]]
-                              == slot[classes.class_members[base + i]]) {
-                    j++;
-                }
-                if (j > i + 1) {
-                    // Multi-member dynamic class: collapse all predecessor refs
-                    uint8_t lowest_pos = base + i;  // canonical_pos of first member
-                    for (uint8_t c = 0; c < 52; c++) {
-                        if (!descriptors[c].is_predecessor) continue;
-                        uint8_t q = descriptors[c].predecessor_card_id;
-                        // Is q one of this dynamic class's members?
-                        for (uint8_t k = i; k < j; k++) {
-                            if (classes.class_members[base + k] == q) {
-                                slot[c] = descriptors[c].face_down
-                                    ? static_cast<uint8_t>(255 - lowest_pos)
-                                    : lowest_pos;
-                                break;
-                            }
-                        }
-                    }
-                }
-                i = j;
-            }
-        }
-
-        // Final sort+assign (one pass, after Phase 3 slot modifications)
-        for (uint8_t cls = 0; cls < classes.n_classes; cls++) {
-            const uint8_t base = classes.class_start[cls];
-            sort_class(classes.class_members + base, classes.class_size);
-            for (uint8_t i = 0; i < classes.class_size; i++) {
-                canonical_pos[classes.class_members[base + i]] = base + i;
-            }
-        }
+        assert(iter < 20);  // must converge; fires in debug if not
 
         // ── Phase 4: write payload ────────────────────────────────────────────
         store.clear();
@@ -333,7 +297,7 @@ private:
             const uint8_t base = classes.class_start[cls];
             uint64_t class_sum = 0;
             for (uint8_t i = 0; i < classes.class_size; i++) {
-                class_sum += zob_for_card(cls, descriptors[classes.class_members[base + i]]);
+                class_sum += zob_for_card(cls, classes.class_members[base + i]);
             }
             hash_value ^= class_sum;
         }
@@ -344,6 +308,7 @@ private:
     //   face-up predecessor to canonical position p:   slot = p        (0..51)
     //   locative kind k:                               slot = 52 + k   (52..78)
     //   face-down predecessor to canonical position p: slot = 255 - p  (203..255)
+    // Used only in the NONE fast path and Phase 1 (initial slot computation).
 
     uint8_t raw_slot(uint8_t c) const {
         const auto& d = descriptors[c];
@@ -356,18 +321,38 @@ private:
         }
     }
 
+    // ── collapsed_pos: canonical position for card q, collapsed if q is in
+    //    an indistinguishable group (Scheme A).
+    // Finds the group of members in q's static class that share the same
+    // slot byte as q.  Returns the lowest canonical_pos in that group.
+    // If q is the only member with its slot byte, returns canonical_pos[q].
+
+    uint8_t collapsed_pos(uint8_t q) const {
+        uint8_t q_cls  = classes.class_of[q];
+        uint8_t q_base = classes.class_start[q_cls];
+        uint8_t q_slot = slot[q];
+        // class_members are in sorted order; find the first member with
+        // the same slot byte — its canonical_pos is the lowest in the group.
+        for (uint8_t i = 0; i < classes.class_size; i++) {
+            if (slot[classes.class_members[q_base + i]] == q_slot)
+                return static_cast<uint8_t>(q_base + i);
+        }
+        return canonical_pos[q];  // unreachable: q is in its own class
+    }
+
     // ── zob_for_card: Zobrist contribution for one card ───────────────────────
     // class_id: the static class ID for this card (= card_id in NONE mode,
     //           classes.class_of[card_id] in COLOUR/SUIT_IRRELEVANT mode).
-    // Column index uses canonical_pos of the predecessor card, not the card itself.
+    // Column is derived from slot[] (which includes Scheme A collapsing)
+    // rather than recomputing from canonical_pos, so that indistinguishable
+    // predecessor targets produce the same Zobrist lookup.
 
-    uint64_t zob_for_card(uint8_t class_id, const multiplicity_descriptor& d) const {
-        uint8_t col;
-        if (d.is_predecessor) {
-            col = canonical_pos[d.predecessor_card_id];
-        } else {
-            col = static_cast<uint8_t>(52 + d.locative_kind);
-        }
+    uint64_t zob_for_card(uint8_t class_id, uint8_t card_idx) const {
+        const auto& d = descriptors[card_idx];
+        // Undo face-down reflection to recover the base column from slot[]
+        uint8_t col = d.face_down
+            ? static_cast<uint8_t>(255 - slot[card_idx])
+            : slot[card_idx];
         uint64_t z = multiplicity_zobrist::Z[class_id][col];
         return d.face_down ? ~z : z;
     }
