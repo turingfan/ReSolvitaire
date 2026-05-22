@@ -181,6 +181,41 @@ separately copy into a `compact_state` for the actual cache key.
 Magnitude TBD — benchmark before acting. Only worth doing if profiling shows nibble
 operations are a measurable fraction of total solve time.
 
+### 21. Waste Descriptor Causes O(stock) Updates Per Stock Move
+
+**Affected games:** All games with stock/waste (klondike, etc.) using multiplicity cache
+**Status:** Open; deferred until after incremental updates are working
+**Impact:** Performance — stock moves change descriptors of all stock/waste cards unnecessarily
+
+The multiplicity encoding uses separate `MLD_IN_STOCK` and `MLD_IN_WASTE` locative
+descriptors for stock and waste cards. When a `stock_k_plus` move deals k cards from
+stock to waste, all k cards change descriptor from `MLD_IN_STOCK` to `MLD_IN_WASTE`.
+This defeats the purpose of incremental updates — the whole point is O(1) per move,
+but stock moves become O(stock_size).
+
+**Fix (deferred):** Collapse `MLD_IN_WASTE` into `MLD_IN_STOCK` for all waste cards
+except the top of waste. Introduce a new `MLD_TOP_OF_WASTE` locative for the single
+card at the waste top (the only waste card that matters for move generation). When
+the waste pointer is 0 (empty waste), no card needs `MLD_TOP_OF_WASTE`.
+
+This mirrors the original flat encoding which used `STARTING` for all stock/waste
+cards. The key insight: only the top-of-waste card is distinguishable from stock
+cards in terms of game state; all other waste cards are unreachable until they
+become the new waste top.
+
+With this fix, a `stock_k_plus` move changes at most 2 descriptors: the old
+top-of-waste (becomes `MLD_IN_STOCK`) and the new top-of-waste (becomes
+`MLD_TOP_OF_WASTE`). The k cards dealt between stock and waste all keep
+`MLD_IN_STOCK` throughout.
+
+**Note:** The existing waste-deal symmetry logic (`waste_deal_sym` in
+`recompute_all()`) already collapses stock and waste to `MLD_IN_STOCK` under
+certain conditions. This fix generalises that approach.
+
+**When to address:** After Stage 5 (incremental with symmetry) is working and
+validated. The fix is a descriptor-level change that is independent of the
+cascade machinery.
+
 ### 20. Reduced Metamorphic Testing: Flat vs LRU Agreement No Longer Tested
 
 **Status:** Open — test removed; gap acknowledged
