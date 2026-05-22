@@ -42,21 +42,31 @@ change yet — `recompute_all()` still runs on every move.
 **Add these data members** (after the existing `slot[52]` array):
 
 ```cpp
+// ── Constants ───────────────────────────────────────────────────────────
+// N = deck size. Currently 52 (single-deck); will be 104 for two-deck.
+// Use a constant so two-deck generalisation is a single change.
+static constexpr uint8_t N = 52;  // TODO: derive from rules.two_decks
+
 // ── Auxiliary data for incremental updates ──────────────────────────────
-int8_t   children[52];       // children[q] = card sitting on q, or -1
+int8_t   children[104];      // children[q] = card sitting on q, or -1
+                             // Sized for two-deck (104); only [0..N-1] used
 uint64_t class_sum[52];      // per-static-class Zobrist sum (indexed by class_id)
                              // only [0..n_classes-1] used
 
 // ── Scratch arrays (only meaningful during incremental_update) ──────────
-uint8_t  old_slot_save[52];  // saved pre-update slot bytes for changed cards
-uint64_t changed_mask;       // bitmask of cards whose slot bytes changed
-                             // (bits 0-51; 64-bit is sufficient)
+uint8_t  old_slot_save[104]; // saved pre-update slot bytes for changed cards
+uint64_t changed_mask_lo;    // bitmask of cards 0-63 whose slot bytes changed
+uint64_t changed_mask_hi;    // bitmask of cards 64-103 (two-deck only)
 ```
+
+**Sizing note:** Arrays are sized at 104 (two-deck max) even for single-deck.
+The extra 52 bytes per array are negligible. `changed_mask` uses two uint64_t
+to support 104 cards; for single-deck only `changed_mask_lo` is used.
 
 **Initialise in the constructor:**
 
 ```cpp
-multiplicity_descriptor_engine() : hash_value(0), changed_mask(0) {
+multiplicity_descriptor_engine() : hash_value(0), changed_mask_lo(0), changed_mask_hi(0) {
     // ... existing init ...
     std::memset(children, -1, sizeof(children));
     std::memset(class_sum, 0, sizeof(class_sum));
@@ -70,7 +80,7 @@ multiplicity_descriptor_engine() : hash_value(0), changed_mask(0) {
 void rebuild_auxiliary() {
     // Rebuild children[] from descriptors[]
     std::memset(children, -1, sizeof(children));
-    for (uint8_t c = 0; c < 52; c++) {
+    for (uint8_t c = 0; c < N; c++) {
         if (descriptors[c].is_predecessor) {
             children[descriptors[c].predecessor_card_id] = static_cast<int8_t>(c);
         }
@@ -78,9 +88,9 @@ void rebuild_auxiliary() {
 
     // Rebuild class_sum[] from the just-computed hash
     // (reuses the Phase 5 loop structure but stores per-class)
-    if (classes.n_classes == 52) {
+    if (classes.n_classes == N) {
         // NONE mode: class_sum[c] = zob_for_card(c, c)
-        for (uint8_t c = 0; c < 52; c++) {
+        for (uint8_t c = 0; c < N; c++) {
             class_sum[c] = zob_for_card(c, c);
         }
     } else {
@@ -213,7 +223,7 @@ void incremental_update_none(
     const std::pair<uint8_t, multiplicity_descriptor>* changes,
     uint8_t n_changes)
 {
-    assert(classes.n_classes == 52);  // NONE mode only
+    assert(classes.n_classes == N);  // NONE mode only
 
     for (uint8_t i = 0; i < n_changes; i++) {
         uint8_t c = changes[i].first;
@@ -461,17 +471,17 @@ void verify_against_scratch(const descriptor_context& ctx) {
     // Save incremental state
     uint64_t saved_hash = hash_value;
     multiplicity_descriptor_store saved_store = store;
-    uint8_t saved_slot[52], saved_canonical[52];
-    int8_t saved_children[52];
+    uint8_t saved_slot[104], saved_canonical[104];
+    int8_t saved_children[104];
     uint64_t saved_class_sum[52];
-    uint8_t saved_class_members[52];
-    std::memcpy(saved_slot, slot, 52);
-    std::memcpy(saved_canonical, canonical_pos, 52);
-    std::memcpy(saved_children, children, 52);
+    uint8_t saved_class_members[104];
+    std::memcpy(saved_slot, slot, N);
+    std::memcpy(saved_canonical, canonical_pos, N);
+    std::memcpy(saved_children, children, N);
     std::memcpy(saved_class_sum, class_sum, sizeof(class_sum));
-    std::memcpy(saved_class_members, classes.class_members, 52);
-    multiplicity_descriptor saved_descriptors[52];
-    std::memcpy(saved_descriptors, descriptors, sizeof(descriptors));
+    std::memcpy(saved_class_members, classes.class_members, N);
+    multiplicity_descriptor saved_descriptors[104];
+    std::memcpy(saved_descriptors, descriptors, N * sizeof(multiplicity_descriptor));
 
     // Recompute from scratch
     recompute_all(ctx);
@@ -483,12 +493,12 @@ void verify_against_scratch(const descriptor_context& ctx) {
     // Restore ALL state
     hash_value = saved_hash;
     store = saved_store;
-    std::memcpy(slot, saved_slot, 52);
-    std::memcpy(canonical_pos, saved_canonical, 52);
-    std::memcpy(children, saved_children, 52);
+    std::memcpy(slot, saved_slot, N);
+    std::memcpy(canonical_pos, saved_canonical, N);
+    std::memcpy(children, saved_children, N);
     std::memcpy(class_sum, saved_class_sum, sizeof(class_sum));
-    std::memcpy(classes.class_members, saved_class_members, 52);
-    std::memcpy(descriptors, saved_descriptors, sizeof(descriptors));
+    std::memcpy(classes.class_members, saved_class_members, N);
+    std::memcpy(descriptors, saved_descriptors, N * sizeof(multiplicity_descriptor));
 }
 #endif
 ```
@@ -595,9 +605,10 @@ void incremental_update(
     // ── Step 0: Descriptor update ────────────────────────────────────────
 
     // dirty_classes: bitmask of static class IDs that need re-sorting.
-    // Max 26 classes for COLOUR, 13 for SI, so uint32_t suffices.
-    uint32_t dirty_classes = 0;
-    changed_mask = 0;
+    // Max 52 classes (two-deck no-symmetry), so uint64_t.
+    uint64_t dirty_classes = 0;
+    changed_mask_lo = 0;
+    changed_mask_hi = 0;
 
     for (uint8_t i = 0; i < n_changes; i++) {
         uint8_t c = changes[i].first;
@@ -620,8 +631,8 @@ void incremental_update(
         uint8_t new_s = raw_slot(c);
         if (new_s != slot[c]) {
             slot[c] = new_s;
-            dirty_classes |= (1u << classes.class_of[c]);
-            changed_mask |= (1ULL << c);
+            dirty_classes |= (1ULL << classes.class_of[c]);
+            set_changed(c);  // helper: sets bit in changed_mask_lo or _hi
         }
     }
 
@@ -630,11 +641,11 @@ void incremental_update(
     int cascade_iter = 0;
     while (dirty_classes != 0) {
         assert(cascade_iter < 20 && "cascade did not converge");
-        uint32_t next_dirty = 0;
+        uint64_t next_dirty = 0;
 
         // Process each dirty class
         for (uint8_t cls = 0; cls < classes.n_classes; cls++) {
-            if (!(dirty_classes & (1u << cls))) continue;
+            if (!(dirty_classes & (1ULL << cls))) continue;
 
             const uint8_t base = classes.class_start[cls];
 
@@ -659,12 +670,12 @@ void incremental_update(
                     ? static_cast<uint8_t>(255 - pos) : pos;
 
                 if (new_s != slot[uc]) {
-                    if (!(changed_mask & (1ULL << uc))) {
+                    if (!is_changed(uc)) {
                         old_slot_save[uc] = slot[uc];  // first change
                     }
                     slot[uc] = new_s;
-                    changed_mask |= (1ULL << uc);
-                    next_dirty |= (1u << classes.class_of[uc]);
+                    set_changed(uc);
+                    next_dirty |= (1ULL << classes.class_of[uc]);
                 }
             }
         }
@@ -675,18 +686,16 @@ void incremental_update(
 
     // ── Step 2: Post-cascade update ─────────────────────────────────────
 
-    // Collect affected classes from changed_mask
-    uint32_t affected_classes = 0;
-    uint64_t mask = changed_mask;
-    while (mask) {
-        uint8_t c = __builtin_ctzll(mask);  // find lowest set bit
-        affected_classes |= (1u << classes.class_of[c]);
-        mask &= mask - 1;  // clear lowest set bit
+    // Collect affected classes from changed cards
+    uint64_t affected_classes = 0;
+    for (uint8_t c = 0; c < N; c++) {
+        if (is_changed(c))
+            affected_classes |= (1ULL << classes.class_of[c]);
     }
 
     // Rebuild payload and hash for affected classes
     for (uint8_t cls = 0; cls < classes.n_classes; cls++) {
-        if (!(affected_classes & (1u << cls))) continue;
+        if (!(affected_classes & (1ULL << cls))) continue;
 
         const uint8_t base = classes.class_start[cls];
 
@@ -708,12 +717,22 @@ void incremental_update(
 }
 ```
 
-**Portability note:** `__builtin_ctzll` is GCC/Clang. For MSVC, use
-`_BitScanForward64`. Or replace the bit-scan loop with a simple iteration
-over all 52 cards checking `changed_mask & (1ULL << c)`.
+**Bitmask helpers** (add as private methods):
 
-**Bitmask sizing:** `dirty_classes` uses `uint32_t` (max 26 classes for
-COLOUR). `changed_mask` uses `uint64_t` (52 cards fit in 52 bits).
+```cpp
+void set_changed(uint8_t c) {
+    if (c < 64) changed_mask_lo |= (1ULL << c);
+    else        changed_mask_hi |= (1ULL << (c - 64));
+}
+bool is_changed(uint8_t c) const {
+    if (c < 64) return (changed_mask_lo & (1ULL << c)) != 0;
+    else        return (changed_mask_hi & (1ULL << (c - 64))) != 0;
+}
+```
+
+**Bitmask sizing:** `dirty_classes` uses `uint64_t` (max 52 classes for
+two-deck no-symmetry). `changed_mask` uses two `uint64_t` to support
+up to 104 cards.
 
 **Validation:** Compile-only at this point. Wired in and tested in 5.1.
 
@@ -848,8 +867,19 @@ for game in east-haven spiderette will-o-the-wisp; do
 done
 ```
 
-Compare verdicts against the Stage 2C Level 2 results. Zero mismatches
-required.
+Also include two-deck games (once `use_multiplicity_cache` is extended to
+support `two_decks`):
+
+```bash
+# Two-deck spider-type games (if eligible), seeds 1-10
+# Specific game types TBD based on eligibility check
+```
+
+Two-deck provides valuable test coverage: larger static classes (up to 8
+members for SI mode), 104-card arrays, and the two-uint64_t changed_mask.
+
+Compare verdicts against the Stage 2C Level 2 results and LRU baselines.
+Zero mismatches required.
 
 Also run the no-symmetry regression (seeds 1-20 klondike, multiplicity vs
 auto) to verify the NONE mode incremental path doesn't regress.
@@ -916,7 +946,7 @@ Record results in `docs/multiplicity-encoding/stage5-benchmark-results.md`.
 | Cascade non-convergence | `assert(cascade_iter < 20)` — same guard as from-scratch fixpoint |
 | Performance regression | Benchmark at 4.5 and 5.4; if incremental is slower, investigate before proceeding |
 | Complex move types (stock_k_plus) | Fall back to `recompute_all()` — no correctness risk, only performance |
-| Bitmask overflow | `dirty_classes` in `uint32_t` supports up to 32 classes (max is 26 for COLOUR); `changed_mask` in `uint64_t` supports 52 cards |
+| Bitmask overflow | `dirty_classes` in `uint64_t` supports up to 52 classes (two-deck max); `changed_mask` split into two `uint64_t` for 104 cards |
 
 ---
 
@@ -972,5 +1002,9 @@ All stages are sequential. Each depends on the previous.
 6. **Read the Stage 3 proposal** (`stage3-incremental-update-proposal.md`)
    for the full algorithm rationale, worked examples, and termination argument.
 
-7. **If you get stuck or the approach seems wrong, ask Ian.** Do not guess
+7. **Two-deck support is a requirement.** All arrays are sized for 104 cards.
+   Use the `N` constant (deck size) throughout, not hardcoded 52. Two-deck
+   games are an excellent test case for the cascade (larger class sizes).
+
+8. **If you get stuck or the approach seems wrong, ask Ian.** Do not guess
    at game semantics or descriptor meanings.

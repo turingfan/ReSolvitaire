@@ -464,8 +464,14 @@ i.e., toward pile tops). The predecessor graph is a forest — each card has
 at most one predecessor, and cycles are impossible (the "sits on" relation
 is acyclic within any pile).
 
-**Simple bound:** maximum predecessor chain depth in single-deck is 12
-(a 13-card pile has 12 predecessor edges). So at most 12 BFS levels.
+**Simple bound:** maximum predecessor chain depth is 12 for single-deck
+(a 13-card pile has 12 predecessor edges), or 24 for two-deck (a 25-card
+pile). So at most 12 (or 24) BFS levels.
+
+**Accordion note:** Accordion games can create longer piles via absorption,
+but absorbed cards get descriptor PERMANENT and leave the predecessor chain.
+Only the local chain structure changes per move, so the depth bound holds.
+(Accordion games currently use PredecessorPolicy, not MultiplicityPolicy.)
 
 **Cross-class interaction.** When members of a class appear in different
 predecessor chains, the cascade can alternate between classes at successive
@@ -534,22 +540,32 @@ d = number of dirty classes encountered across all cascade levels (typically 1).
 
 Maximum cascade: all 12 levels fire, each dirtying one class. Total dirty
 classes = 12. Per class: O(class_size) sort + O(class_size) children checks +
-O(class_size) payload writes. With class_size = 4: O(4 x 12) = O(48).
+O(class_size) payload writes.
 
-The v5.1 spec's bound of O(chain_depth x class_multiplicity) <= 48 for
-single-deck Scheme A is consistent with this analysis.
+| Deck | Mode | class_size | Worst case |
+|---|---|---|---|
+| Single | COLOUR | 2 | O(2 x 12) = O(24) |
+| Single | SUIT_IRRELEVANT | 4 | O(4 x 12) = O(48) |
+| Two-deck | No symmetry | 2 | O(2 x 12) = O(24) |
+| Two-deck | COLOUR | 4 | O(4 x 12) = O(48) |
+| Two-deck | SUIT_IRRELEVANT | 8 | O(8 x 12) = O(96) |
+
+The v5.1 spec's bound of O(chain_depth x class_multiplicity) is consistent
+with this analysis.
 
 ### 9.4 Comparison with from-scratch
 
-From-scratch `recompute_all()` costs:
-- Descriptor walk: O(52) to iterate all piles
-- Fixpoint: O(52 x iterations) where iterations <= 20
-- Payload write: O(52)
-- Hash: O(52)
-- **Total: O(52 x iterations)**, typically O(100-200)
+From-scratch `recompute_all()` costs (N = deck size):
+- Descriptor walk: O(N) to iterate all piles
+- Fixpoint: O(N x iterations) where iterations <= 20
+- Payload write: O(N)
+- Hash: O(N)
+- **Total: O(N x iterations)**, typically O(100-200) for single-deck,
+  O(200-400) for two-deck
 
-The incremental algorithm is O(1) in the common case vs O(100+) for
-from-scratch — roughly two orders of magnitude improvement on the DFS hot path.
+The incremental algorithm is O(1) in the common case vs O(N x iterations)
+for from-scratch — roughly two orders of magnitude improvement on the DFS
+hot path. The advantage is even larger for two-deck.
 
 ---
 
@@ -606,23 +622,25 @@ a pile. Both are included in `changed_cards`.
 
 ## 11. Data Structure Sizing
 
-| Structure | Type | Size | Notes |
-|---|---|---|---|
-| `children[52]` | `int8_t[52]` | 52 B | -1 = no child; at most 1 child per card |
-| `class_sum[52]` | `uint64_t[52]` | 416 B max | Indexed by class_id; 52 for NONE, 26 for COLOUR, 13 for SI |
-| `old_slot[52]` | `uint8_t[52]` | 52 B | Scratch; only meaningful during update |
-| `slot[52]` | `uint8_t[52]` | 52 B | Already exists |
-| `canonical_pos[52]` | `uint8_t[52]` | 52 B | Already exists |
-| `class_members[52]` | `uint8_t[52]` | 52 B | Already exists |
+Let N = deck size (52 for single-deck, 104 for two-deck).
 
-Total new memory: 520 bytes. All cache-friendly (fits in L1).
+| Structure | Type | Size (single) | Size (two-deck) | Notes |
+|---|---|---|---|---|
+| `children[N]` | `int8_t[N]` | 52 B | 104 B | -1 = no child; at most 1 child per card |
+| `class_sum[52]` | `uint64_t[52]` | 416 B max | 416 B max | Indexed by class_id; max 52 classes |
+| `old_slot[N]` | `uint8_t[N]` | 52 B | 104 B | Scratch; only meaningful during update |
+| `slot[N]` | `uint8_t[N]` | 52 B | 104 B | Already exists |
+| `canonical_pos[N]` | `uint8_t[N]` | 52 B | 104 B | Already exists |
+| `class_members[N]` | `uint8_t[N]` | 52 B | 104 B | Already exists |
+
+Total new memory: 520 B (single-deck), 624 B (two-deck). All cache-friendly.
 
 For the BFS cascade, `dirty_classes` and `next_dirty` can be implemented as
-small fixed-size arrays with a count (max 26 classes for COLOUR, 13 for SI)
-or as a 52-bit bitmask. No heap allocation needed.
+a `uint64_t` bitmask (max 52 classes in two-deck no-symmetry). No heap
+allocation needed.
 
-`changed_set` can be a 64-bit bitmask (bits 0-51 for each card). O(1) insert
-and membership test.
+`changed_set` needs N bits. For single-deck (N=52) a single `uint64_t`
+suffices. For two-deck (N=104) use two `uint64_t` or a small bitmask struct.
 
 ---
 
@@ -694,18 +712,30 @@ the cascade, building on a tested foundation.
 
 ---
 
-## 14. Open Questions for Review
+## 14. Resolved Questions
 
-1. **Accordion predecessor chains.** Accordion games can produce longer piles
-   (via absorption). Does the cascade depth bound of 12 still hold? If not,
-   what is the correct bound for accordion?
+1. **Accordion predecessor chains.** *Resolved:* The depth bound still holds.
+   When an accordion pile absorbs another, the absorbed card gets descriptor
+   PERMANENT and leaves the predecessor chain. So the chain only changes
+   locally — no single move can create a cascade of depth greater than the
+   existing pile depth. While the initial chain can be length 52 (all cards
+   in one pile), no individual move produces cascading changes of that length.
 
-2. **Two-deck extension.** This proposal assumes single-deck (52 cards).
-   Two-deck doubles the card count and may have larger static classes (up to
-   8 members for two-deck suit-irrelevant). The algorithm generalises
-   directly, but the cost bounds scale accordingly.
+2. **Two-deck extension.** *Resolved:* Two-deck is a requirement and must be
+   included in the implementation. Two-deck is also a valuable test case
+   (larger classes, more cascade interactions). The algorithm generalises
+   directly with N=104:
+   - Arrays: `children[N]`, `slot[N]`, `canonical_pos[N]`, `class_members[N]`,
+     `old_slot[N]` — all indexed by card_id 0..N-1
+   - `class_sum[52]` — max 52 classes (two-deck no-symmetry)
+   - `changed_mask` — needs 104 bits; use two `uint64_t` or a small bitmask
+     struct instead of a single `uint64_t`
+   - Static class sizes: up to 2 (no symmetry), 4 (colour), 8 (suit-irrelevant)
+   - `dirty_classes` bitmask: `uint64_t` suffices (max 52 classes)
+   - Payload: 128 bytes (bytes 3-106 for slot data); hash guard moves accordingly
+   - Worst-case cascade: O(chain_depth x class_size) = O(12 x 8) = O(96)
 
-3. **Scheme B interaction.** If Scheme B is implemented later (distinct
-   labelling within dynamic classes), the cascade triggers change. Sort
-   reordering under Scheme B causes different label assignments but may reduce
-   cascade propagation. The BFS structure remains the same.
+3. **Scheme B interaction.** *Resolved:* Scheme B is not planned for the
+   current implementation. The BFS cascade structure would remain the same
+   under Scheme B; only the labelling rule within dynamic classes changes.
+   No action needed.
