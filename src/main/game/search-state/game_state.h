@@ -226,6 +226,10 @@ private:
     bool is_foundation_pile(pile::ref pr) const;
     uint8_t get_foundation_suit(pile::ref pr) const;
 
+    // Multiplicity descriptor for a card at a specific pile position.
+    // Used by incremental update logic in make_move/undo_move.
+    multiplicity_descriptor mult_desc_at(pile::ref pr, pile::size_type pos) const;
+
     /* Predecessor-based Zobrist hash and payload (accordion games) */
     static uint64_t Z_pred[52][110];   // card_id x predecessor_value
     static bool Z_pred_initialised;

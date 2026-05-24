@@ -139,6 +139,7 @@ set(sources_test_unit
         src/test/unit_tests/search_trace_test.cpp
         src/test/unit_tests/search_trace_agreement_test.cpp
         src/test/unit_tests/multiplicity_canonicalisation_test.cpp
+        src/test/unit_tests/multiplicity_incremental_test.cpp
 )
 
 set(sources_test_helper

@@ -319,6 +319,14 @@ game_state_impl<Policy>::game_state_impl(const sol_rules& s_rules, int seed,
         init_initially_face_up();
     }
 
+    // Re-run multiplicity recompute after face-up turning.
+    // init_payload_and_hash() ran before turn_face_up, so multiplicity
+    // descriptors have stale face_down flags. With incremental updates,
+    // only changed cards are re-read, so the stale flags would persist.
+    if constexpr (Policy::computes_multiplicity_descriptor) {
+        desc_engine.recompute_all(make_desc_ctx());
+    }
+
     // The size of all piles must equal the deck size
     int piles_sz = 0;
     for (auto& p : piles) piles_sz += p.size();
@@ -427,7 +435,78 @@ void game_state_impl<Policy>::make_move(const move m) {
     }
 
     if constexpr (Policy::computes_multiplicity_descriptor) {
-        desc_engine.recompute_all(make_desc_ctx());
+        // Incremental multiplicity descriptor update.
+        // Pile operations are complete; determine descriptor changes by move type.
+        std::pair<uint8_t, multiplicity_descriptor> mult_changes[4];
+        uint8_t mult_n = 0;
+        bool mult_fallback = false;
+
+        switch (m.type) {
+            case move::mtype::regular: {
+                // Moved card: now at top of m.to
+                uint8_t cid = zobrist_hash::card_id(
+                    piles[m.to].top_card().get_suit(),
+                    piles[m.to].top_card().get_rank());
+                mult_changes[mult_n++] = {cid, mult_desc_at(m.to, 0)};
+
+                // If moved to hole, old hole top becomes PERMANENT
+                if (m.to == hole && piles[hole].size() > 1) {
+                    card old_top = piles[hole][1];
+                    uint8_t old_cid = zobrist_hash::card_id(
+                        old_top.get_suit(), old_top.get_rank());
+                    mult_changes[mult_n++] = {old_cid,
+                        multiplicity_descriptor::make_locative(MLD_PERMANENT)};
+                }
+
+                // Revealed card: now face-up at top of m.from
+                if (m.reveal_move) {
+                    uint8_t rev_cid = zobrist_hash::card_id(
+                        piles[m.from][0].get_suit(),
+                        piles[m.from][0].get_rank());
+                    mult_changes[mult_n++] = {rev_cid, mult_desc_at(m.from, 0)};
+                }
+                break;
+            }
+            case move::mtype::built_group: {
+                // Bottom of group: at piles[m.to][m.count - 1]
+                card bottom = piles[m.to][m.count - 1];
+                uint8_t bottom_cid = zobrist_hash::card_id(
+                    bottom.get_suit(), bottom.get_rank());
+                mult_changes[mult_n++] = {bottom_cid,
+                    mult_desc_at(m.to, m.count - 1)};
+
+                // Revealed card
+                if (m.reveal_move) {
+                    uint8_t rev_cid = zobrist_hash::card_id(
+                        piles[m.from][0].get_suit(),
+                        piles[m.from][0].get_rank());
+                    mult_changes[mult_n++] = {rev_cid, mult_desc_at(m.from, 0)};
+                }
+                break;
+            }
+            case move::mtype::stock_k_plus:
+            case move::mtype::stock_to_all_tableau:
+                // Complex moves: fall back to from-scratch
+                mult_fallback = true;
+                break;
+            default:
+                // sequence and accordion never use MultiplicityPolicy
+                break;
+        }
+
+        if (mult_fallback) {
+            desc_engine.recompute_all(make_desc_ctx());
+        } else if (mult_n > 0) {
+            if (desc_engine.is_none_mode()) {
+                desc_engine.incremental_update_none(mult_changes, mult_n);
+            } else {
+                desc_engine.incremental_update(mult_changes, mult_n);
+            }
+        }
+
+#ifndef NDEBUG
+        desc_engine.verify_against_scratch(make_desc_ctx());
+#endif
     }
 
 #ifndef NDEBUG
@@ -462,7 +541,77 @@ void game_state_impl<Policy>::undo_move(const move m) {
     }
 
     if constexpr (Policy::computes_multiplicity_descriptor) {
-        desc_engine.recompute_all(make_desc_ctx());
+        // Incremental multiplicity descriptor update (undo direction).
+        // Pile operations are restored; determine descriptor changes by move type.
+        std::pair<uint8_t, multiplicity_descriptor> mult_changes[4];
+        uint8_t mult_n = 0;
+        bool mult_fallback = false;
+
+        switch (m.type) {
+            case move::mtype::regular: {
+                // Returned card: now at top of m.from
+                uint8_t cid = zobrist_hash::card_id(
+                    piles[m.from].top_card().get_suit(),
+                    piles[m.from].top_card().get_rank());
+                mult_changes[mult_n++] = {cid, mult_desc_at(m.from, 0)};
+
+                // If moved from hole, the new hole top was PERMANENT, now HOLE_TOP
+                if (m.to == hole && !piles[hole].empty()) {
+                    card new_top = piles[hole][0];
+                    uint8_t top_cid = zobrist_hash::card_id(
+                        new_top.get_suit(), new_top.get_rank());
+                    mult_changes[mult_n++] = {top_cid, mult_desc_at(hole, 0)};
+                }
+
+                // Revealed card undone: card below returned card is now face-down.
+                // After undo, it is at piles[m.from][1] (face-down).
+                if (m.reveal_move) {
+                    uint8_t rev_cid = zobrist_hash::card_id(
+                        piles[m.from][1].get_suit(),
+                        piles[m.from][1].get_rank());
+                    mult_changes[mult_n++] = {rev_cid, mult_desc_at(m.from, 1)};
+                }
+                break;
+            }
+            case move::mtype::built_group: {
+                // Bottom of group returned: at piles[m.from][m.count - 1]
+                card bottom = piles[m.from][m.count - 1];
+                uint8_t bottom_cid = zobrist_hash::card_id(
+                    bottom.get_suit(), bottom.get_rank());
+                mult_changes[mult_n++] = {bottom_cid,
+                    mult_desc_at(m.from, m.count - 1)};
+
+                // Revealed card undone: at piles[m.from][m.count] (face-down)
+                if (m.reveal_move) {
+                    uint8_t rev_cid = zobrist_hash::card_id(
+                        piles[m.from][m.count].get_suit(),
+                        piles[m.from][m.count].get_rank());
+                    mult_changes[mult_n++] = {rev_cid,
+                        mult_desc_at(m.from, m.count)};
+                }
+                break;
+            }
+            case move::mtype::stock_k_plus:
+            case move::mtype::stock_to_all_tableau:
+                mult_fallback = true;
+                break;
+            default:
+                break;
+        }
+
+        if (mult_fallback) {
+            desc_engine.recompute_all(make_desc_ctx());
+        } else if (mult_n > 0) {
+            if (desc_engine.is_none_mode()) {
+                desc_engine.incremental_update_none(mult_changes, mult_n);
+            } else {
+                desc_engine.incremental_update(mult_changes, mult_n);
+            }
+        }
+
+#ifndef NDEBUG
+        desc_engine.verify_against_scratch(make_desc_ctx());
+#endif
     }
 
 #ifndef NDEBUG
@@ -1175,6 +1324,75 @@ bool game_state_impl<Policy>::is_foundation_pile(pile::ref pr) const {
 template <typename Policy>
 uint8_t game_state_impl<Policy>::get_foundation_suit(pile::ref pr) const {
     return pr - foundations.front();
+}
+
+// ── Multiplicity descriptor for a card at pile position ──────────────────────
+// Determines the correct multiplicity_descriptor based on the pile type and
+// the card's position within that pile. Called 1-2 times per move for
+// incremental update change identification.
+
+template <typename Policy>
+multiplicity_descriptor game_state_impl<Policy>::mult_desc_at(
+    pile::ref pr, pile::size_type pos) const
+{
+    bool fd = piles[pr][pos].is_face_down();
+
+    // Foundation → PERMANENT
+    if (is_foundation_pile(pr))
+        return multiplicity_descriptor::make_locative(MLD_PERMANENT);
+
+    // Hole → top is HOLE_TOP, rest PERMANENT
+    if (pr == hole)
+        return multiplicity_descriptor::make_locative(
+            pos == 0 ? MLD_HOLE_TOP : MLD_PERMANENT, fd);
+
+    // Cell → IN_CELL
+    for (pile::ref cr : original_cells) {
+        if (pr == cr)
+            return multiplicity_descriptor::make_locative(MLD_IN_CELL, fd);
+    }
+
+    // Stock → IN_STOCK
+    if (pr == stock)
+        return multiplicity_descriptor::make_locative(MLD_IN_STOCK, fd);
+
+    // Waste → IN_WASTE (or IN_STOCK under waste-deal symmetry)
+    if (pr == waste) {
+        bool waste_deal_sym = rules.stock_redeal
+            && piles[waste].size() % rules.stock_deal_count == 0;
+        return multiplicity_descriptor::make_locative(
+            waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE, fd);
+    }
+
+    // Reserve → IN_RESERVE
+    for (pile::ref rr : original_reserve) {
+        if (pr == rr)
+            return multiplicity_descriptor::make_locative(MLD_IN_RESERVE, fd);
+    }
+
+    // Tableau — determine space_kind and predecessor
+    pile::size_type pile_size = piles[pr].size();
+    if (pos + 1 == pile_size) {
+        // Bottom of pile → locative with space_kind
+        bool pile_sym = (rules.stock_size == 0
+            || rules.stock_deal_t != sol_rules::stock_deal_type::TABLEAU_PILES);
+        uint8_t space_kind = MLD_IN_SPACE;
+        if (!pile_sym) {
+            // Find pile index
+            for (pile::size_type idx = 0; idx < original_tableau_piles.size(); idx++) {
+                if (original_tableau_piles[idx] == pr) {
+                    space_kind = static_cast<uint8_t>(MLD_IN_SPACE + idx);
+                    break;
+                }
+            }
+        }
+        return multiplicity_descriptor::make_locative(space_kind, fd);
+    } else {
+        // Not bottom → predecessor of card below
+        card parent = piles[pr][pos + 1];
+        uint8_t parent_cid = zobrist_hash::card_id(parent.get_suit(), parent.get_rank());
+        return multiplicity_descriptor::make_predecessor(parent_cid, fd);
+    }
 }
 
 template <typename Policy>

@@ -37,8 +37,13 @@
 
 class multiplicity_descriptor_engine {
 public:
+    // ── Constants ───────────────────────────────────────────────────────────
+    // N = deck size. Currently 52 (single-deck); will be 104 for two-deck.
+    // Use a constant so two-deck generalisation is a single change.
+    static constexpr uint8_t N = 52;  // TODO: derive from rules.two_decks
+
     // ── Per-card internal descriptors (rebuilt from scratch each move) ────────
-    multiplicity_descriptor descriptors[52];
+    multiplicity_descriptor descriptors[104];  // sized for two-deck max
 
     // ── Static class structure (set once in init(), unchanged thereafter) ─────
     static_class_structure classes;
@@ -48,15 +53,29 @@ public:
     multiplicity_descriptor_store store;
 
     // ── Working arrays (scratch space during recompute_from_descriptors) ──────
-    uint8_t canonical_pos[52];  // card → canonical payload position
-    uint8_t slot[52];           // card → current slot byte
+    uint8_t canonical_pos[104];  // card → canonical payload position
+    uint8_t slot[104];           // card → current slot byte
 
-    multiplicity_descriptor_engine() : hash_value(0) {
+    // ── Auxiliary data for incremental updates ──────────────────────────────
+    int8_t   children[104];      // children[q] = card sitting on q, or -1
+                                 // Sized for two-deck (104); only [0..N-1] used
+    uint64_t class_sum[52];      // per-static-class Zobrist sum (indexed by class_id)
+                                 // only [0..n_classes-1] used
+
+    // ── Scratch arrays (only meaningful during incremental_update) ──────────
+    uint8_t  old_slot_save[104]; // saved pre-update slot bytes for changed cards
+    uint64_t changed_mask_lo;    // bitmask of cards 0-63 whose slot bytes changed
+    uint64_t changed_mask_hi;    // bitmask of cards 64-103 (two-deck only)
+
+    multiplicity_descriptor_engine() : hash_value(0), changed_mask_lo(0), changed_mask_hi(0) {
         multiplicity_zobrist::init();
-        for (auto& d : descriptors) d = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+        for (uint8_t i = 0; i < N; i++)
+            descriptors[i] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
         store.clear();
         classes.init(symmetry_mode::NONE);  // default until init() is called
-        for (uint8_t i = 0; i < 52; i++) canonical_pos[i] = i;
+        for (uint8_t i = 0; i < N; i++) canonical_pos[i] = i;
+        std::memset(children, -1, sizeof(children));
+        std::memset(class_sum, 0, sizeof(class_sum));
     }
 
     // ── Accessors ────────────────────────────────────────────────────────────
@@ -77,6 +96,10 @@ public:
 
     void init_face_up_table(const descriptor_context& /*ctx*/) {}
 
+    // ── Mode queries ──────────────────────────────────────────────────────────
+
+    bool is_none_mode() const { return classes.n_classes == N; }
+
     // ── Stub incremental methods ─────────────────────────────────────────────
     // Called from if constexpr (Policy::computes_hash) blocks shared with flat
     // policies.  These are no-ops; recompute_all() handles all state updates.
@@ -88,11 +111,211 @@ public:
     uint8_t determine_destination_descriptor(pile::ref, card,
                                               const descriptor_context&) const { return 0; }
 
+    // ── Incremental update: NONE mode O(k) fast path ──────────────────────────
+    // Updates descriptors, children[], slot bytes, class_sum[], hash, and payload
+    // for the given changed cards. No cascade needed in NONE mode (canonical_pos
+    // is identity-mapped and never changes).
+
+    void incremental_update_none(
+        const std::pair<uint8_t, multiplicity_descriptor>* changes,
+        uint8_t n_changes)
+    {
+        assert(classes.n_classes == N);  // NONE mode only
+
+        for (uint8_t i = 0; i < n_changes; i++) {
+            uint8_t c = changes[i].first;
+            const auto& new_d = changes[i].second;
+            const auto& old_d = descriptors[c];
+
+            // Update children[]
+            if (old_d.is_predecessor)
+                children[old_d.predecessor_card_id] = -1;
+            if (new_d.is_predecessor)
+                children[new_d.predecessor_card_id] = static_cast<int8_t>(c);
+
+            // Update descriptor
+            descriptors[c] = new_d;
+
+            // Compute new slot byte (NONE: canonical_pos[c] = c always)
+            uint8_t new_s = raw_slot(c);
+
+            // Update hash via class_sum delta
+            // In NONE mode: class_id = card_id, so class_sum[c] = zob_for_card(c, c)
+            hash_value ^= class_sum[c];          // XOR out old
+            slot[c] = new_s;
+            class_sum[c] = zob_for_card(c, c);   // recompute with new slot
+            hash_value ^= class_sum[c];          // XOR in new
+
+            // Update payload (NONE: canonical_pos = card_id, so store position = c)
+            store.set_slot(c, new_s);
+        }
+    }
+
+    // ── Incremental update: full cascade (COLOUR / SUIT_IRRELEVANT modes) ────
+    // Also works for NONE mode (cascade never fires), but with slightly more
+    // overhead than incremental_update_none().
+
+    void incremental_update(
+        const std::pair<uint8_t, multiplicity_descriptor>* changes,
+        uint8_t n_changes)
+    {
+        // ── Step 0: Descriptor update ──────────────────────────────────────────
+        uint64_t dirty_classes = 0;
+        changed_mask_lo = 0;
+        changed_mask_hi = 0;
+
+        for (uint8_t i = 0; i < n_changes; i++) {
+            uint8_t c = changes[i].first;
+            const auto& new_d = changes[i].second;
+            const auto& old_d = descriptors[c];
+
+            // Update children[]
+            if (old_d.is_predecessor)
+                children[old_d.predecessor_card_id] = -1;
+            if (new_d.is_predecessor)
+                children[new_d.predecessor_card_id] = static_cast<int8_t>(c);
+
+            // Save old slot byte
+            old_slot_save[c] = slot[c];
+
+            // Update descriptor
+            descriptors[c] = new_d;
+
+            // Compute new slot byte using current canonical_pos
+            uint8_t new_s = raw_slot(c);
+            if (new_s != slot[c]) {
+                slot[c] = new_s;
+                dirty_classes |= (1ULL << classes.class_of[c]);
+                set_changed(c);
+            }
+        }
+
+        // ── Step 1: BFS cascade ────────────────────────────────────────────────
+        for (int cascade_iter = 0; dirty_classes != 0; cascade_iter++) {
+            assert(cascade_iter < 20 && "cascade did not converge");
+            (void)cascade_iter;
+            uint64_t next_dirty = 0;
+
+            // Process each dirty class
+            uint64_t tmp = dirty_classes;
+            while (tmp != 0) {
+                uint8_t cls = static_cast<uint8_t>(__builtin_ctzll(tmp));
+                tmp &= tmp - 1;  // clear lowest set bit
+
+                const uint8_t base = classes.class_start[cls];
+
+                // Re-sort class members by (slot[member], member)
+                sort_class(classes.class_members + base, classes.class_size);
+
+                // Reassign canonical_pos
+                for (uint8_t j = 0; j < classes.class_size; j++) {
+                    canonical_pos[classes.class_members[base + j]] = base + j;
+                }
+
+                // Check children of ALL members
+                for (uint8_t j = 0; j < classes.class_size; j++) {
+                    uint8_t m = classes.class_members[base + j];
+                    int8_t child = children[m];
+                    if (child < 0) continue;
+                    uint8_t uc = static_cast<uint8_t>(child);
+                    if (!descriptors[uc].is_predecessor) continue;
+
+                    uint8_t pos = collapsed_pos(m);
+                    uint8_t new_s = descriptors[uc].face_down
+                        ? static_cast<uint8_t>(255 - pos) : pos;
+
+                    if (new_s != slot[uc]) {
+                        if (!is_changed(uc)) {
+                            old_slot_save[uc] = slot[uc];  // first change for this card
+                        }
+                        slot[uc] = new_s;
+                        set_changed(uc);
+                        next_dirty |= (1ULL << classes.class_of[uc]);
+                    }
+                }
+            }
+
+            dirty_classes = next_dirty;
+        }
+
+        // ── Step 2: Post-cascade update ────────────────────────────────────────
+        // Collect affected classes from changed cards
+        uint64_t affected_classes = 0;
+        for (uint8_t c = 0; c < N; c++) {
+            if (is_changed(c))
+                affected_classes |= (1ULL << classes.class_of[c]);
+        }
+
+        // Rebuild payload and hash for affected classes
+        uint64_t ac = affected_classes;
+        while (ac != 0) {
+            uint8_t cls = static_cast<uint8_t>(__builtin_ctzll(ac));
+            ac &= ac - 1;
+
+            const uint8_t base = classes.class_start[cls];
+
+            // XOR out old class sum
+            hash_value ^= class_sum[cls];
+
+            // Recompute class sum and payload entries
+            uint64_t sum = 0;
+            for (uint8_t j = 0; j < classes.class_size; j++) {
+                uint8_t m = classes.class_members[base + j];
+                store.set_slot(base + j, slot[m]);
+                sum += zob_for_card(cls, m);
+            }
+            class_sum[cls] = sum;
+
+            // XOR in new class sum
+            hash_value ^= class_sum[cls];
+        }
+    }
+
+    // ── verify_against_scratch: debug-mode oracle ────────────────────────────
+    // After every incremental update, recompute from scratch and assert match.
+    // Saves and restores all engine state so the incremental result is preserved.
+
+#ifndef NDEBUG
+    void verify_against_scratch(const descriptor_context& ctx) {
+        // Save incremental state
+        uint64_t saved_hash = hash_value;
+        multiplicity_descriptor_store saved_store = store;
+        uint8_t saved_slot[104], saved_canonical[104];
+        int8_t saved_children[104];
+        uint64_t saved_class_sum[52];
+        uint8_t saved_class_members[104];
+        multiplicity_descriptor saved_descriptors[104];
+        std::memcpy(saved_slot, slot, N);
+        std::memcpy(saved_canonical, canonical_pos, N);
+        std::memcpy(saved_children, children, N);
+        std::memcpy(saved_class_sum, class_sum, sizeof(uint64_t) * classes.n_classes);
+        std::memcpy(saved_class_members, classes.class_members, N);
+        std::memcpy(saved_descriptors, descriptors, N * sizeof(multiplicity_descriptor));
+
+        // Recompute from scratch
+        recompute_all(ctx);
+
+        // Compare core outputs
+        assert(hash_value == saved_hash && "incremental hash mismatch");
+        assert(store.matches(saved_store) && "incremental payload mismatch");
+
+        // Restore ALL state
+        hash_value = saved_hash;
+        store = saved_store;
+        std::memcpy(slot, saved_slot, N);
+        std::memcpy(canonical_pos, saved_canonical, N);
+        std::memcpy(children, saved_children, N);
+        std::memcpy(class_sum, saved_class_sum, sizeof(uint64_t) * classes.n_classes);
+        std::memcpy(classes.class_members, saved_class_members, N);
+        std::memcpy(descriptors, saved_descriptors, N * sizeof(multiplicity_descriptor));
+    }
+#endif
+
     // ── recompute_all: full from-scratch update from live board state ─────────
 
     void recompute_all(const descriptor_context& ctx) {
         // Clear: all cards start as PERMANENT (overwritten below)
-        for (uint8_t c = 0; c < 52; c++) {
+        for (uint8_t c = 0; c < N; c++) {
             descriptors[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
         }
 
@@ -214,16 +437,17 @@ private:
     void recompute_from_descriptors() {
 
         // ── Fast path: NONE mode (Stage 1 behaviour, no symmetry) ─────────────
-        if (classes.n_classes == 52) {
+        if (classes.n_classes == N) {
             store.clear();
             hash_value = 0;
-            for (uint8_t c = 0; c < 52; c++) {
+            for (uint8_t c = 0; c < N; c++) {
                 canonical_pos[c] = c;
                 uint8_t s = raw_slot(c);
                 slot[c] = s;
                 store.set_slot(c, s);
                 hash_value ^= zob_for_card(c, c);
             }
+            rebuild_auxiliary();
             return;
         }
 
@@ -236,7 +460,7 @@ private:
         }
 
         // ── Phase 1: initial slot bytes ───────────────────────────────────────
-        for (uint8_t c = 0; c < 52; c++) {
+        for (uint8_t c = 0; c < N; c++) {
             slot[c] = raw_slot(c);
         }
 
@@ -248,7 +472,7 @@ private:
         // steps so they don't fight each other.
         //
         // Terminates because each iteration can only reduce the number of
-        // distinct slot values (bounded by 52).
+        // distinct slot values (bounded by N).
         int iter;
         for (iter = 0; iter < 20; iter++) {
             // Sort each class and assign canonical_pos
@@ -265,7 +489,7 @@ private:
             // containing its predecessor target and use the group's lowest
             // canonical_pos instead of the target's individual canonical_pos.
             bool changed = false;
-            for (uint8_t c = 0; c < 52; c++) {
+            for (uint8_t c = 0; c < N; c++) {
                 if (!descriptors[c].is_predecessor) continue;
                 uint8_t q = descriptors[c].predecessor_card_id;
                 uint8_t pos = collapsed_pos(q);
@@ -295,12 +519,15 @@ private:
         hash_value = 0;
         for (uint8_t cls = 0; cls < classes.n_classes; cls++) {
             const uint8_t base = classes.class_start[cls];
-            uint64_t class_sum = 0;
+            uint64_t sum = 0;
             for (uint8_t i = 0; i < classes.class_size; i++) {
-                class_sum += zob_for_card(cls, classes.class_members[base + i]);
+                sum += zob_for_card(cls, classes.class_members[base + i]);
             }
-            hash_value ^= class_sum;
+            class_sum[cls] = sum;
+            hash_value ^= sum;
         }
+
+        rebuild_auxiliary();
     }
 
     // ── raw_slot: slot byte for card c using current canonical_pos ────────────
@@ -316,7 +543,7 @@ private:
             uint8_t pos = canonical_pos[d.predecessor_card_id];
             return d.face_down ? static_cast<uint8_t>(255 - pos) : pos;
         } else {
-            uint8_t base = static_cast<uint8_t>(52 + d.locative_kind);
+            uint8_t base = static_cast<uint8_t>(N + d.locative_kind);
             return d.face_down ? static_cast<uint8_t>(255 - base) : base;
         }
     }
@@ -372,6 +599,41 @@ private:
             }
             arr[j + 1] = key;
         }
+    }
+
+    // ── rebuild_auxiliary: rebuild children[] and class_sum[] from current state ─
+    // Called at end of recompute_from_descriptors() to keep auxiliary data
+    // consistent with the from-scratch computation.
+
+    void rebuild_auxiliary() {
+        // Rebuild children[] from descriptors[]
+        std::memset(children, -1, sizeof(children));
+        for (uint8_t c = 0; c < N; c++) {
+            if (descriptors[c].is_predecessor) {
+                children[descriptors[c].predecessor_card_id] = static_cast<int8_t>(c);
+            }
+        }
+
+        // Rebuild class_sum[] from the just-computed hash
+        if (classes.n_classes == N) {
+            // NONE mode: class_sum[c] = zob_for_card(c, c)
+            for (uint8_t c = 0; c < N; c++) {
+                class_sum[c] = zob_for_card(c, c);
+            }
+        }
+        // For symmetry modes, class_sum[] is already computed in Phase 5
+        // (we store it during the hash computation loop above).
+    }
+
+    // ── Bitmask helpers for changed_mask ─────────────────────────────────────
+
+    void set_changed(uint8_t c) {
+        if (c < 64) changed_mask_lo |= (1ULL << c);
+        else        changed_mask_hi |= (1ULL << (c - 64));
+    }
+    bool is_changed(uint8_t c) const {
+        if (c < 64) return (changed_mask_lo & (1ULL << c)) != 0;
+        else        return (changed_mask_hi & (1ULL << (c - 64))) != 0;
     }
 
     // ── card_cid: card → static card ID (suit*13 + rank-1) ───────────────────

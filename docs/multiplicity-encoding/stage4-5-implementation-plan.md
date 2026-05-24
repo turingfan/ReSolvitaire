@@ -1,4 +1,4 @@
-# Stage 4-5 Implementation Plan: Incremental Multiplicity Updates
+x# Stage 4-5 Implementation Plan: Incremental Multiplicity Updates
 
 **Date:** 2026-05-20
 **Status:** Draft — pending review of `stage3-incremental-update-proposal.md`
