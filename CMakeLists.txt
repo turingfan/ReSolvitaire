@@ -359,6 +359,115 @@ if(SOLVITAIRE_TRACE)
     set_tests_properties(trace_until_timeout PROPERTIES TIMEOUT 120)
 
     ###########################################################################
+    ## Multiplicity vs flat trace agreement                                  ##
+    ##                                                                       ##
+    ## On flat-eligible games (no suit-symmetry, no TABLEAU_PILES), the      ##
+    ## multiplicity cache and flat cache use the same Zobrist hash and both   ##
+    ## skip pile ordering, so traces must be identical until the first EVICT  ##
+    ## in either trace (different cluster sizes cause different eviction).    ##
+    ##                                                                       ##
+    ## binary-a = solvitaire-flat-trace (ignores --cache-type)               ##
+    ## binary-b = solvitaire-trace     (dispatches to multiplicity)          ##
+    ## Comparison stops at first EVICT in either trace.                      ##
+    ###########################################################################
+
+    # Klondike: stock/waste moves, reveals, built groups
+    add_test(NAME trace_mult_vs_flat_klondike
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
+            "--" "--type" "klondike-deal-1" "--random" "1"
+                 "--cache-type" "multiplicity" "--timeout" "30000"
+    )
+    set_tests_properties(trace_mult_vs_flat_klondike PROPERTIES TIMEOUT 120)
+
+    # Free-cell: cells, no stock, no reveals
+    add_test(NAME trace_mult_vs_flat_free_cell
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
+            "--" "--type" "free-cell" "--random" "1"
+                 "--cache-type" "multiplicity" "--timeout" "30000"
+    )
+    set_tests_properties(trace_mult_vs_flat_free_cell PROPERTIES TIMEOUT 120)
+
+    # Black-hole: hole pile, SUIT_IRRELEVANT-eligible (but no streamliner here)
+    add_test(NAME trace_mult_vs_flat_black_hole
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
+            "--" "--type" "black-hole" "--random" "1"
+                 "--cache-type" "multiplicity" "--timeout" "30000"
+    )
+    set_tests_properties(trace_mult_vs_flat_black_hole PROPERTIES TIMEOUT 120)
+
+    # Canfield: reserve pile, stock/waste
+    add_test(NAME trace_mult_vs_flat_canfield
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
+            "--" "--type" "canfield" "--random" "1"
+                 "--cache-type" "multiplicity" "--timeout" "30000"
+    )
+    set_tests_properties(trace_mult_vs_flat_canfield PROPERTIES TIMEOUT 120)
+
+    # Spanish-patience: same-suit build, no stock
+    add_test(NAME trace_mult_vs_flat_spanish_patience
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
+            "--" "--type" "spanish-patience" "--random" "1"
+                 "--cache-type" "multiplicity" "--timeout" "30000"
+    )
+    set_tests_properties(trace_mult_vs_flat_spanish_patience PROPERTIES TIMEOUT 120)
+
+    # Bakers-game: like free-cell but same-suit build
+    add_test(NAME trace_mult_vs_flat_bakers_game
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
+            "--" "--type" "bakers-game" "--random" "1"
+                 "--cache-type" "multiplicity" "--timeout" "30000"
+    )
+    set_tests_properties(trace_mult_vs_flat_bakers_game PROPERTIES TIMEOUT 120)
+
+    # Flower-garden: fan layout, no face-down cards
+    add_test(NAME trace_mult_vs_flat_flower_garden
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
+            "--" "--type" "flower-garden" "--random" "1"
+                 "--cache-type" "multiplicity" "--timeout" "30000"
+    )
+    set_tests_properties(trace_mult_vs_flat_flower_garden PROPERTIES TIMEOUT 120)
+
+    # Somerset: no stock, 10 tableau piles
+    add_test(NAME trace_mult_vs_flat_somerset
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
+            "--until-evict"
+            "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
+            "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
+            "--" "--type" "somerset" "--random" "1"
+                 "--cache-type" "multiplicity" "--timeout" "30000"
+    )
+    set_tests_properties(trace_mult_vs_flat_somerset PROPERTIES TIMEOUT 120)
+
+    ###########################################################################
     ## Trace regression: old-vs-new binary comparison                        ##
     ##                                                                        ##
     ## trace_regression_level1  — all 150 Level 1 instances (no timeout;     ##

@@ -13,73 +13,51 @@ implementation, then incremental optimisation.
 
 `docs/multiplicity-encoding/implementation-plan.md` (this directory)
 
-Stages 0-6, from architecture prep through benchmarking. Stages 0-2 complete.
-Stage 3 (incremental computation spec) complete. Stage 4-5 (incremental implementation)
-complete. Ready for Stage 5.3 solvability cross-check.
+Stages 0-5 complete (including solvability cross-check and trace agreement tests).
+Stage 5.4 (performance benchmark) and Stage 6 (auto-dispatch) remain.
 
 ## What's Done
 
-**Stage 4 — Incremental Updates, NONE Mode** (committed: this session)
-- Auxiliary data structures: `children[104]`, `class_sum[52]`, `old_slot_save[104]`,
-  `changed_mask_lo/hi` added to `multiplicity_descriptor_engine`
-- `mult_desc_at()` helper on `game_state_impl` — computes multiplicity descriptor
-  for a card at a specific pile position (used by incremental move handlers)
-- `incremental_update_none()` — O(k) fast path for NONE mode (no cascade):
-  updates children[], descriptors[], slot bytes, class_sum[], hash, and payload
-- `rebuild_auxiliary()` — rebuilds children[] and class_sum[] from current state;
-  called at end of `recompute_from_descriptors()`
-- Wired into `make_move`/`undo_move` with per-move-type change identification:
-  - regular: moved card + optional hole top + optional reveal
-  - built_group: bottom card of group + optional reveal
-  - stock_k_plus / stock_to_all_tableau: fallback to `recompute_all()`
-- `verify_against_scratch()` — debug-mode oracle that saves all engine state,
-  runs from-scratch recompute, asserts hash+payload match, restores state.
-  Fires on every make_move/undo_move in debug builds.
-- Bug fix: face-down init timing in seed constructor — `recompute_all()` now runs
-  after face-up turning for `computes_multiplicity_descriptor` policies
-- 10 unit tests in `multiplicity_incremental_test.cpp`
+**Stage 5.3 — Solvability Cross-Check** (this session)
+- 110 comparisons, 0 mismatches across all game types and symmetry modes
+- Results documented in `docs/multiplicity-encoding/stage5-solvability-results.md`
+- Tested: klondike COLOUR (20), free-cell SI (20), black-hole SI (20),
+  east-haven/spiderette/will-o-the-wisp TABLEAU_PILES (30), klondike NONE regression (20)
 
-**Stage 5 — Incremental Updates, With Cascade** (committed: this session)
-- `incremental_update()` — full BFS cascade for COLOUR/SUIT_IRRELEVANT modes:
-  Step 0 (descriptor update + children[]) → Step 1 (BFS cascade with dirty_classes
-  bitmask, class re-sort, canonical_pos reassignment, child propagation) →
-  Step 2 (post-cascade payload + Zobrist hash rebuild for affected classes)
-- Uses `__builtin_ctzll` for efficient bitmask iteration
-- Wired into make_move/undo_move: `incremental_update_none()` for NONE mode,
-  `incremental_update()` for symmetry modes
-- 8 cascade unit tests: sort reorder, dynamic class merge/split, multi-level cascade,
-  face-down reveal, 4-way SUIT_IRRELEVANT, sequence of moves, symmetric permutation
-- All 18 incremental tests pass; all 3 test gates pass
+**Multiplicity vs Flat Trace Agreement Tests** (this session)
+- 8 CTest targets (`trace_mult_vs_flat_*`) comparing `solvitaire-flat-trace` vs
+  `solvitaire-trace --cache-type multiplicity` using `compare_traces.py --until-evict`
+- Games: klondike, free-cell, black-hole, canfield, spanish-patience, bakers-game,
+  flower-garden, somerset
+- All 8 pass
 
-**Stage 2C — Testing** (committed: `efdeb42`)
-- Level 1: 13 metamorphic + structural unit tests in `multiplicity_canonicalisation_test.cpp`
-- Level 2: Solvability cross-check — zero correctness mismatches across all game types
-- Level 3: Trace spot-check — suit-symmetry reduces unique states by 57-93%
+**STRACE_EVICT Bug Fix** (this session)
+- `generic_flat_cache.h` was missing `STRACE_EVICT()` in its `do_replacement` overloads
+- Evictions were counted but not traced, making `--until-evict` unreliable for flat-cache
+  comparisons
+- Fixed by adding `STRACE_EVICT()` after every `++eviction_count` (5 paths across 3
+  replacement strategies)
+- Known issue #22: trace regression reference binaries need rebuild after this fix
 
-**Stage 2A — Suit-Symmetry Canonicalisation** (committed: `3e5554e`)
-- Fixpoint canonicalisation with integrated Scheme A collapsing
+**Stage 4 — Incremental Updates, NONE Mode** (committed: `05f45a8`)
+- O(k) fast path via `incremental_update_none()`
+- Auxiliary data: `children[104]`, `class_sum[52]`, `old_slot_save[104]`, changed_mask
+- `verify_against_scratch()` debug oracle, 10 unit tests
 
-**Stage 2B — `in_space(k)` Pile-Indexed Locatives** (committed: `3e5554e`)
+**Stage 5 — Incremental Updates, With Cascade** (committed: `05f45a8`)
+- `incremental_update()` — full BFS cascade for COLOUR/SUIT_IRRELEVANT modes
+- 8 cascade unit tests, all 3 test gates pass
 
-**Stage 1 — From-scratch multiplicity hash, no symmetry** (committed)
-
-**Stage 0 — Architecture Prep** (committed)
-
-**Bug fixes:** Face-down locatives (v5.1), Scheme A hash collapsing, hash-guard optimisation
+**Stages 0-2C** — Architecture prep, from-scratch hash, suit-symmetry canonicalisation,
+testing (all committed on earlier commits)
 
 ## What's Next
-
-**Stage 5.3** — Solvability cross-check for incremental updates (extremely important).
-Verify that incremental multiplicity cache produces same verdicts as from-scratch and LRU:
-- klondike (COLOUR) seeds 1-20 with suit-symmetry
-- free-cell (SI) seeds 1-20 with suit-symmetry
-- black-hole (SI) seeds 1-20
-- east-haven, spiderette, will-o-the-wisp (TABLEAU_PILES) seeds 1-10
-- No-symmetry regression: klondike seeds 1-20 multiplicity vs auto
 
 **Stage 5.4** — Performance benchmark (incremental vs from-scratch vs LRU)
 
 **Stage 6** — Auto-dispatch (multiplicity cache becomes default for eligible games)
+
+**Reference binaries** — Need rebuild after STRACE_EVICT fix is on dev (known issue #22)
 
 ## Key Files
 
@@ -91,12 +69,14 @@ Verify that incremental multiplicity cache produces same verdicts as from-scratc
 | `src/main/game/multiplicity_zobrist.h/cpp` | Zobrist table Z[class][column] |
 | `src/main/game/multiplicity_static_class.h` | Static class structure for symmetry modes |
 | `src/main/game/flat_descriptor_engine.h` | Flat descriptor engine + descriptor_context |
+| `src/main/game/generic_flat_cache.h` | Generic flat cache (includes STRACE_EVICT fix) |
 | `src/main/game/generic_flat_cache_policies.h` | Cluster policies |
 | `src/main/game/cache_policy.h` | Policy structs with engine typedefs |
 | `src/main/game/cache_interface.h` | use_multiplicity_cache() eligibility |
 | `src/main/game/search-state/game_state.h/cpp` | State class, move logic, mult_desc_at() |
 | `src/test/unit_tests/multiplicity_canonicalisation_test.cpp` | Stage 2C tests (13) |
 | `src/test/unit_tests/multiplicity_incremental_test.cpp` | Stage 4+5 tests (18) |
+| `docs/multiplicity-encoding/stage5-solvability-results.md` | Solvability cross-check results |
 
 ## Design References
 

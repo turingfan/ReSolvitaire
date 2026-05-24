@@ -216,6 +216,29 @@ certain conditions. This fix generalises that approach.
 validated. The fix is a descriptor-level change that is independent of the
 cascade machinery.
 
+### 22. Trace Regression Reference Binaries Need Rebuild (STRACE_EVICT fix)
+
+**Status:** Open; blocking trace regression tests on `multiplicity-encoding` branch
+**Impact:** `trace_regression_level1` and `trace_regression_level2` fail because reference
+binaries were built before the STRACE_EVICT fix
+
+**Root cause:** `generic_flat_cache.h` was missing `STRACE_EVICT()` calls in its
+`do_replacement` overloads. Evictions were counted (`eviction_count++`) but not traced.
+This was fixed on `multiplicity-encoding` (adding STRACE_EVICT to all 5 eviction paths
+across 3 replacement strategies: `insert_simple_tag`, `insert_depth_tag`,
+`insert_predecessor_tag`).
+
+The reference binaries in `05-Executables/reference/` were built from a pre-fix commit
+and emit MISS where the current binaries now correctly emit EVICT. The trace regression
+comparison (`compare_traces.py` in regression mode) sees this as a divergence.
+
+**Fix:** Rebuild reference binaries from a commit that includes the STRACE_EVICT fix.
+This requires the fix to be merged to `dev` first, since reference binaries should be
+built from the stable branch.
+
+**Affected tests:** `trace_regression_level1`, `trace_regression_level2` (6 failures
+out of 160 instances at level 2)
+
 ### 20. Reduced Metamorphic Testing: Flat vs LRU Agreement No Longer Tested
 
 **Status:** Open — test removed; gap acknowledged

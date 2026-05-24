@@ -27,6 +27,7 @@
 #include "cache_interface.h"
 #include "platform_memory.h"
 #include "generic_flat_cache_policies.h"
+#include "../solver/search_trace.h"
 
 #include <vector>
 #include <cstdint>
@@ -193,6 +194,7 @@ private:
             // Both slots full — always evict slot 1
             Policy::write_slot(cl, 1, payload);
             ++eviction_count;
+            STRACE_EVICT();
         }
     }
 
@@ -219,10 +221,12 @@ private:
             Policy::copy_slot(cl, 1, 0);
             Policy::write_slot(cl, 0, payload);
             ++eviction_count;
+            STRACE_EVICT();
         } else {
             // Both full; new entry loses to slot 0 — evict slot 1
             Policy::write_slot(cl, 1, payload);
             ++eviction_count;
+            STRACE_EVICT();
         }
     }
 
@@ -258,11 +262,13 @@ private:
             Policy::set_cascade_guard(cl, hash);      // lines[1].other_hash = hash
             Policy::write_slot(cl, 0, ps);
             ++eviction_count;
+            STRACE_EVICT();
         } else {
             // Both full; new entry overwrites slot 1
             Policy::write_slot(cl, 1, ps);
             Policy::set_slot1_guard(cl, hash);        // lines[0].other_hash = hash
             ++eviction_count;
+            STRACE_EVICT();
         }
     }
 
