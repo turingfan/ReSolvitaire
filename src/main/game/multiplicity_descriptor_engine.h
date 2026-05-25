@@ -399,7 +399,7 @@ public:
         for (pile::ref tab_ref : ctx.original_tableau_piles) {
             const pile& p = ctx.piles[tab_ref];
             uint8_t space_kind = pile_sym
-                ? MLD_IN_SPACE
+                ? static_cast<uint8_t>(MLD_IN_SPACE)
                 : static_cast<uint8_t>(MLD_IN_SPACE + pile_idx);
             for (pile::size_type i = 0; i < p.size(); i++) {
                 card c = p[i];

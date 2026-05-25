@@ -135,7 +135,7 @@ static void generate_descriptors(
             if (piles[p].empty()) continue;
             uint8_t space_kind = pile_indexed
                 ? static_cast<uint8_t>(MLD_IN_SPACE + p)
-                : MLD_IN_SPACE;
+                : static_cast<uint8_t>(MLD_IN_SPACE);
 
             // Bottom card: locative (IN_SPACE), occasionally face-down
             bool fd_bottom = std::bernoulli_distribution(0.2)(rng);

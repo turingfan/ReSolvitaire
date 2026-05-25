@@ -233,7 +233,7 @@ else()
 endif()
 
 add_compile_options(${ALL_WARNING_FLAGS})
-add_compile_definitions(BOOST_LOG_DYN_LINK)
+add_compile_definitions(BOOST_LOG_DYN_LINK BOOST_BIND_GLOBAL_PLACEHOLDERS)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 
