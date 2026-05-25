@@ -1,6 +1,6 @@
 # PICKUP — multiplicity-encoding branch
 
-**Last updated:** 2026-05-24
+**Last updated:** 2026-05-25
 
 ## What This Branch Is
 
@@ -13,47 +13,50 @@ implementation, then incremental optimisation.
 
 `docs/multiplicity-encoding/implementation-plan.md` (this directory)
 
-Stages 0-5 complete (including solvability cross-check and trace agreement tests).
-Stage 5.4 (performance benchmark) and Stage 6 (auto-dispatch) remain.
+Stages 0-5.3 complete (including solvability cross-check and trace agreement tests).
+Stage 5.4 infrastructure ready. Stage 5.4 execution and Stage 6 (auto-dispatch) remain.
 
 ## What's Done
 
-**Stage 5.3 — Solvability Cross-Check** (this session)
+**Stage 5.4 Benchmark Infrastructure** (2026-05-25)
+- `scripts/experiments/bench_multiplicity.sh` — experiment orchestrator for 4 comparisons
+  (A–D), using `run_benchmark.py` + `xargs -P` for parallel execution with seed chunking
+- `solvitaire-mult-scratch` CMake target — compile-time `MULTIPLICITY_NO_INCREMENTAL` flag
+  forces `recompute_all()` on every move (Comparison A: incremental vs from-scratch)
+- Verified: incremental and from-scratch produce identical `states_searched`
+- Benchmark plan: `docs/multiplicity-encoding/stage5-4-benchmark-plan.md`
+
+**Linux Container Build Fix** (2026-05-25)
+- GCC `-Wextra` flags enum/non-enum ternary in `MLD_IN_SPACE` expressions — added
+  `static_cast<uint8_t>` in `multiplicity_descriptor_engine.h` and test file
+- Added `BOOST_BIND_GLOBAL_PLACEHOLDERS` to suppress Boost 1.74 pragma noise
+- Documented `container builder delete --force` workaround for BuildKit stale context
+  (container CLI v0.9 bug)
+
+**Stage 5.3 — Solvability Cross-Check** (2026-05-24)
 - 110 comparisons, 0 mismatches across all game types and symmetry modes
 - Results documented in `docs/multiplicity-encoding/stage5-solvability-results.md`
-- Tested: klondike COLOUR (20), free-cell SI (20), black-hole SI (20),
-  east-haven/spiderette/will-o-the-wisp TABLEAU_PILES (30), klondike NONE regression (20)
 
-**Multiplicity vs Flat Trace Agreement Tests** (this session)
-- 8 CTest targets (`trace_mult_vs_flat_*`) comparing `solvitaire-flat-trace` vs
-  `solvitaire-trace --cache-type multiplicity` using `compare_traces.py --until-evict`
-- Games: klondike, free-cell, black-hole, canfield, spanish-patience, bakers-game,
-  flower-garden, somerset
-- All 8 pass
+**Multiplicity vs Flat Trace Agreement Tests** (2026-05-24)
+- 8 CTest targets (`trace_mult_vs_flat_*`), all pass with `--until-evict`
 
-**STRACE_EVICT Bug Fix** (this session)
-- `generic_flat_cache.h` was missing `STRACE_EVICT()` in its `do_replacement` overloads
-- Evictions were counted but not traced, making `--until-evict` unreliable for flat-cache
-  comparisons
-- Fixed by adding `STRACE_EVICT()` after every `++eviction_count` (5 paths across 3
-  replacement strategies)
-- Known issue #22: trace regression reference binaries need rebuild after this fix
+**STRACE_EVICT Bug Fix** (2026-05-24)
+- `generic_flat_cache.h` was missing `STRACE_EVICT()` in `do_replacement` overloads
+- Fixed by adding trace events to all 5 eviction paths
+- Known issue #22: trace regression reference binaries need rebuild
 
 **Stage 4 — Incremental Updates, NONE Mode** (committed: `05f45a8`)
-- O(k) fast path via `incremental_update_none()`
-- Auxiliary data: `children[104]`, `class_sum[52]`, `old_slot_save[104]`, changed_mask
-- `verify_against_scratch()` debug oracle, 10 unit tests
+- O(k) fast path via `incremental_update_none()`, 10 unit tests
 
 **Stage 5 — Incremental Updates, With Cascade** (committed: `05f45a8`)
-- `incremental_update()` — full BFS cascade for COLOUR/SUIT_IRRELEVANT modes
-- 8 cascade unit tests, all 3 test gates pass
+- `incremental_update()` — full BFS cascade for COLOUR/SUIT_IRRELEVANT, 8 tests
 
 **Stages 0-2C** — Architecture prep, from-scratch hash, suit-symmetry canonicalisation,
 testing (all committed on earlier commits)
 
 ## What's Next
 
-**Stage 5.4** — Performance benchmark (incremental vs from-scratch vs LRU)
+**Stage 5.4** — Run benchmarks on remote machine (infrastructure ready)
 
 **Stage 6** — Auto-dispatch (multiplicity cache becomes default for eligible games)
 
@@ -76,7 +79,9 @@ testing (all committed on earlier commits)
 | `src/main/game/search-state/game_state.h/cpp` | State class, move logic, mult_desc_at() |
 | `src/test/unit_tests/multiplicity_canonicalisation_test.cpp` | Stage 2C tests (13) |
 | `src/test/unit_tests/multiplicity_incremental_test.cpp` | Stage 4+5 tests (18) |
+| `scripts/experiments/bench_multiplicity.sh` | Benchmark orchestrator (4 comparisons) |
 | `docs/multiplicity-encoding/stage5-solvability-results.md` | Solvability cross-check results |
+| `docs/multiplicity-encoding/stage5-4-benchmark-plan.md` | Benchmark plan |
 
 ## Design References
 
@@ -88,3 +93,4 @@ testing (all committed on earlier commits)
 | Stage 4-5 implementation plan | `docs/multiplicity-encoding/stage4-5-implementation-plan.md` |
 | Stage 2C testing plan | `docs/multiplicity-encoding/stage2c-testing-plan.md` |
 | Scheme A bug report | `docs/multiplicity-encoding/bug-scheme-a-hash-collapsing.md` |
+| Development roadmap | `01-Knowledge-Base/Implementation-Plans/development-roadmap-2026-05-25.md` |
