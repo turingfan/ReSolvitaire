@@ -6,98 +6,91 @@
 # WHAT THIS DOES
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-# Runs four comparisons to measure the multiplicity cache's performance:
+# Runs up to four comparisons to measure the multiplicity cache's performance:
 #
-#   A. Incremental vs from-scratch multiplicity (same search tree, different
-#      descriptor update strategy). Validates that incremental updates are faster.
+#   A. Incremental vs from-scratch multiplicity (validates incremental speedup).
 #      Requires a from-scratch binary — see PREREQUISITES below.
 #
-#   B. Flat vs multiplicity (no symmetry). On games where both work, flat has
-#      smaller clusters (32B vs 64B entries) so should be faster. This quantifies
-#      the overhead of the multiplicity payload.
+#   B. Flat vs multiplicity (no symmetry). Quantifies the overhead of the
+#      multiplicity payload (64B vs 32B entries). Flat should win slightly.
 #
-#   C. LRU vs multiplicity (no symmetry). Multiplicity should beat LRU easily
-#      thanks to flat-cache O(1) lookup vs LRU's pile-ordering + Boost overhead.
+#   C. LRU vs multiplicity (no symmetry). Multiplicity should beat LRU easily.
 #
-#   D. LRU vs multiplicity WITH SUIT-SYMMETRY. This is the critical test — the
-#      entire point of the multiplicity encoding is to enable suit-symmetry
-#      canonicalisation in the flat cache. If mult+symmetry beats LRU+symmetry,
-#      the project delivers its core value.
+#   D. LRU vs multiplicity WITH SUIT-SYMMETRY. THE CRITICAL TEST — the entire
+#      point of the multiplicity encoding project.
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# USAGE
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# With no arguments, prints this help and exits.
+#
+# To run something:
+#
+#   # Dry run — shows what would be executed, runs nothing:
+#   ./scripts/experiments/bench_multiplicity.sh --dry-run --phase D --seeds 1-10
+#
+#   # Minimal smoke test (5 seeds, 1 game, phase D only, ~30 seconds):
+#   ./scripts/experiments/bench_multiplicity.sh --phase D --seeds 1-5 --games klondike
+#
+#   # Quick validation (50 seeds, all phases, ~30 min on 1 core):
+#   ./scripts/experiments/bench_multiplicity.sh --phase ABCD --seeds 1-50
+#
+#   # Full run (500 seeds, all phases, many hours — use on big machine):
+#   ./scripts/experiments/bench_multiplicity.sh --phase ABCD --seeds 1-500 \
+#       --timeout 300000
+#
+# Via bench (recommended for archiving results in DataLad):
+#
+#   bench --detached --bundle-format tar \
+#       -m "Multiplicity benchmark" mult-bench-v1 \
+#       -- scripts/experiments/bench_multiplicity.sh --phase D --seeds 1-500
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# OPTIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#   --phase XY        Which comparisons to run (default: none — must specify)
+#   --seeds N-M       Seed range (default: none — must specify)
+#   --games g1,g2     Comma-separated game list (default: all games for phase)
+#   --timeout MS      Timeout per instance in ms (default: 120000)
+#   --outdir DIR      Output directory (default: $BENCH_RUN_DIR/data or
+#                     benchmarks/mult_<timestamp>/)
+#   --dry-run         Print commands without executing
+#   --help, -h        Print this help
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 # PREREQUISITES
 # ═══════════════════════════════════════════════════════════════════════════════
 #
 # 1. Build release binaries:
-#        ./build.sh --release --unit-tests
+#        ./build.sh --release
 #
-# 2. (Comparison A only) Build a from-scratch multiplicity binary. This is a
-#    copy of solvitaire that always calls recompute_all() instead of incremental
-#    updates. To create it:
+# 2. (Comparison A only) Build a from-scratch multiplicity binary:
 #
 #        # In game_state.cpp, replace the two blocks that call
 #        # incremental_update_none() / incremental_update() with:
 #        #     desc_engine.recompute_all(make_desc_ctx());
-#        # Then:
 #        cmake --build cmake-build-release --target solvitaire
 #        cp cmake-build-release/bin/solvitaire cmake-build-release/bin/solvitaire-mult-scratch
-#        # Revert game_state.cpp and rebuild the normal binary:
 #        git checkout src/main/game/search-state/game_state.cpp
 #        cmake --build cmake-build-release --target solvitaire
 #
-#    If the from-scratch binary is absent, Comparison A is skipped.
-#
-# ═══════════════════════════════════════════════════════════════════════════════
-# USAGE
-# ═══════════════════════════════════════════════════════════════════════════════
-#
-# Standalone (results in a local directory):
-#
-#     ./scripts/experiments/bench_multiplicity.sh [--quick] [--phase ABCD] [RESULTS_DIR]
-#
-# Via bench (recommended for archiving results in DataLad):
-#
-#     bench --detached --bundle-format tar \
-#         -m "Multiplicity benchmark, full run" mult-bench-v1 \
-#         -- scripts/experiments/bench_multiplicity.sh
-#
-# Options:
-#   --quick       Use 50 seeds instead of 500, shorter timeouts (for validation)
-#   --phase XY    Run only the listed comparisons, e.g. --phase AD
-#   RESULTS_DIR   Override output directory (default: $BENCH_RUN_DIR/data or
-#                 benchmarks/mult_<timestamp>/)
-#
-# Environment overrides:
-#   SEEDS_SHORT=1-50      Seed range for Comparisons A (default: 1-150 / 1-50 quick)
-#   SEEDS_LONG=1-500      Seed range for Comparisons B/C/D (default: 1-500 / 1-50 quick)
-#   TIMEOUT_SHORT=120000  Timeout for A/B/C in ms (default: 120000 / 30000 quick)
-#   TIMEOUT_LONG=300000   Timeout for D in ms (default: 300000 / 60000 quick)
-#   BIN_DIR=path          Binary directory (default: cmake-build-release/bin)
-#   SOLVER=path           Override default solvitaire binary
-#   SOLVER_SCRATCH=path   From-scratch binary for Comparison A
+#    If absent, Comparison A is skipped with a warning.
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 # OUTPUT
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-# Per-comparison CSV files in RESULTS_DIR:
-#   A_incr_<game>.csv, A_scratch_<game>.csv
-#   B_flat_<game>.csv, B_mult_<game>.csv
-#   C_lru_<game>.csv, C_mult_<game>.csv
-#   D_lru_<game>.csv, D_mult_<game>.csv
-#
-# Plus combined_<comparison>.csv merging all games for that comparison.
+# Per-run CSV files: <phase>_<variant>_<game>.csv
+# Combined per-phase: combined_<phase>_<variant>.csv
 #
 # Analyse with:
-#   Rscript analysis/benchmark.R --baseline D_lru_klondike.csv \
-#       --current D_mult_klondike.csv --output report.html
+#   Rscript analysis/summary.R <outdir>/D_mult_klondike.csv
+#   Rscript analysis/benchmark.R --baseline <outdir>/D_lru_klondike.csv \
+#       --current <outdir>/D_mult_klondike.csv --output report.html
 #
-# ═══════════════════════════════════════════════════════════════════════════════
-# FULL PLAN
-# ═══════════════════════════════════════════════════════════════════════════════
-#
-# See docs/multiplicity-encoding/stage5-4-benchmark-plan.md for rationale,
-# success criteria, and analysis instructions.
+# Full plan: docs/multiplicity-encoding/stage5-4-benchmark-plan.md
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -107,21 +100,51 @@ set -euo pipefail
 # Parse arguments
 # ---------------------------------------------------------------------------
 
-QUICK=false
-PHASES="ABCD"
+PHASES=""
+SEEDS=""
+GAMES_OVERRIDE=""
+TIMEOUT=""
 RESULTS_DIR=""
+DRY_RUN=false
+
+show_help() {
+    awk '/^set -euo pipefail/{exit} NR>1{sub(/^# ?/,""); print}' "$0"
+}
+
+if [[ $# -eq 0 ]]; then
+    show_help
+    exit 0
+fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --quick)  QUICK=true; shift ;;
-        --phase)  PHASES="$2"; shift 2 ;;
-        --help|-h)
-            awk '/^set -euo pipefail/{exit} NR>1{sub(/^# ?/,""); print}' "$0"
-            exit 0
+        --phase)    PHASES="$2"; shift 2 ;;
+        --seeds)    SEEDS="$2"; shift 2 ;;
+        --games)    GAMES_OVERRIDE="$2"; shift 2 ;;
+        --timeout)  TIMEOUT="$2"; shift 2 ;;
+        --outdir)   RESULTS_DIR="$2"; shift 2 ;;
+        --dry-run)  DRY_RUN=true; shift ;;
+        --help|-h)  show_help; exit 0 ;;
+        *)
+            echo "Unknown option: $1" >&2
+            echo "Try --help" >&2
+            exit 1
             ;;
-        *)        RESULTS_DIR="$1"; shift ;;
     esac
 done
+
+# Validate required arguments
+if [[ -z "$PHASES" ]]; then
+    echo "Error: --phase is required (e.g. --phase D or --phase ABCD)" >&2
+    echo "Try --help" >&2
+    exit 1
+fi
+
+if [[ -z "$SEEDS" ]]; then
+    echo "Error: --seeds is required (e.g. --seeds 1-50)" >&2
+    echo "Try --help" >&2
+    exit 1
+fi
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -136,17 +159,7 @@ SOLVER_LRU="${SOLVER_LRU:-$BIN_DIR/solvitaire-lru}"
 SOLVER_FLAT="${SOLVER_FLAT:-$BIN_DIR/solvitaire-flat}"
 SOLVER_SCRATCH="${SOLVER_SCRATCH:-$BIN_DIR/solvitaire-mult-scratch}"
 
-if $QUICK; then
-    SEEDS_SHORT="${SEEDS_SHORT:-1-50}"
-    SEEDS_LONG="${SEEDS_LONG:-1-50}"
-    TIMEOUT_SHORT="${TIMEOUT_SHORT:-30000}"
-    TIMEOUT_LONG="${TIMEOUT_LONG:-60000}"
-else
-    SEEDS_SHORT="${SEEDS_SHORT:-1-150}"
-    SEEDS_LONG="${SEEDS_LONG:-1-500}"
-    TIMEOUT_SHORT="${TIMEOUT_SHORT:-120000}"
-    TIMEOUT_LONG="${TIMEOUT_LONG:-300000}"
-fi
+TIMEOUT="${TIMEOUT:-120000}"
 
 if [[ -z "$RESULTS_DIR" ]]; then
     if [[ -n "${BENCH_RUN_DIR:-}" ]]; then
@@ -156,35 +169,71 @@ if [[ -z "$RESULTS_DIR" ]]; then
     fi
 fi
 
-mkdir -p "$RESULTS_DIR"
-
 RUN_BENCH="$REPO_ROOT/scripts/run_benchmark.py"
+
+# ---------------------------------------------------------------------------
+# Game lists per phase
+# ---------------------------------------------------------------------------
+# Format: "game:streamliner" pairs.
+
+# A: symmetric games (incremental vs from-scratch)
+GAMES_A_DEFAULT="klondike:suit-symmetry free-cell:suit-symmetry black-hole:auto-foundations"
+
+# B and C: flat-eligible games (no symmetry)
+GAMES_BC_DEFAULT="klondike-deal-1:none free-cell:none bakers-game:none canfield:none somerset:none black-hole:auto-foundations"
+
+# D: symmetric games (the critical LRU vs multiplicity test)
+GAMES_D_DEFAULT="klondike:suit-symmetry klondike-deal-1:suit-symmetry free-cell:suit-symmetry black-hole:auto-foundations"
+
+# Apply --games override if provided
+apply_games_override() {
+    local defaults="$1"
+    if [[ -z "$GAMES_OVERRIDE" ]]; then
+        echo "$defaults"
+        return
+    fi
+    # Keep only entries whose game name is in the override list
+    local result=""
+    for entry in $defaults; do
+        local game="${entry%%:*}"
+        if echo ",$GAMES_OVERRIDE," | grep -q ",$game,"; then
+            result="$result $entry"
+        fi
+    done
+    if [[ -z "$result" ]]; then
+        echo "Warning: --games filter matched nothing for this phase" >&2
+    fi
+    echo "$result"
+}
 
 # ---------------------------------------------------------------------------
 # Preflight checks
 # ---------------------------------------------------------------------------
 
-MISSING=""
-[[ ! -x "$SOLVER" ]]     && MISSING="$MISSING  $SOLVER (default solvitaire)\n"
-[[ ! -x "$SOLVER_LRU" ]] && MISSING="$MISSING  $SOLVER_LRU (LRU variant)\n"
-[[ ! -x "$SOLVER_FLAT" ]] && MISSING="$MISSING  $SOLVER_FLAT (flat variant)\n"
+if ! $DRY_RUN; then
+    MISSING=""
+    [[ ! -x "$SOLVER" ]]     && MISSING="${MISSING}  $SOLVER (default solvitaire)\n"
+    [[ ! -x "$SOLVER_LRU" ]] && [[ "$PHASES" == *[CD]* ]] && MISSING="${MISSING}  $SOLVER_LRU (LRU variant)\n"
+    [[ ! -x "$SOLVER_FLAT" ]] && [[ "$PHASES" == *B* ]] && MISSING="${MISSING}  $SOLVER_FLAT (flat variant)\n"
 
-if [[ -n "$MISSING" ]]; then
-    echo "FATAL: missing binaries:" >&2
-    echo -e "$MISSING" >&2
-    echo "Run: ./build.sh --release --unit-tests" >&2
-    exit 1
+    if [[ -n "$MISSING" ]]; then
+        echo "FATAL: missing binaries:" >&2
+        echo -e "$MISSING" >&2
+        echo "Run: ./build.sh --release" >&2
+        exit 1
+    fi
+
+    if [[ ! -f "$RUN_BENCH" ]]; then
+        echo "FATAL: run_benchmark.py not found at $RUN_BENCH" >&2
+        exit 1
+    fi
+
+    mkdir -p "$RESULTS_DIR"
 fi
 
 HAS_SCRATCH=true
 if [[ ! -x "$SOLVER_SCRATCH" ]]; then
     HAS_SCRATCH=false
-    if [[ "$PHASES" == *A* ]]; then
-        echo "WARNING: from-scratch binary not found at $SOLVER_SCRATCH"
-        echo "         Comparison A will be skipped."
-        echo "         See script header for build instructions."
-        echo ""
-    fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -193,66 +242,67 @@ fi
 
 echo "═══════════════════════════════════════════════════════════════"
 echo " Multiplicity Cache Benchmark"
+if $DRY_RUN; then
+    echo " (DRY RUN — commands printed, nothing executed)"
+fi
 echo "═══════════════════════════════════════════════════════════════"
 echo ""
-echo "  Mode:          $(if $QUICK; then echo QUICK; else echo FULL; fi)"
-echo "  Phases:        $PHASES"
-echo "  Seeds (short): $SEEDS_SHORT"
-echo "  Seeds (long):  $SEEDS_LONG"
-echo "  Timeout (A-C): ${TIMEOUT_SHORT}ms"
-echo "  Timeout (D):   ${TIMEOUT_LONG}ms"
-echo "  Output:        $RESULTS_DIR"
-echo "  Scratch binary:$(if $HAS_SCRATCH; then echo " $SOLVER_SCRATCH"; else echo " (not found, A skipped)"; fi)"
+echo "  Phases:   $PHASES"
+echo "  Seeds:    $SEEDS"
+echo "  Timeout:  ${TIMEOUT}ms"
+echo "  Output:   $RESULTS_DIR"
+if [[ -n "$GAMES_OVERRIDE" ]]; then
+    echo "  Games:    $GAMES_OVERRIDE"
+fi
+if [[ "$PHASES" == *A* ]]; then
+    if $HAS_SCRATCH; then
+        echo "  Scratch:  $SOLVER_SCRATCH"
+    else
+        echo "  Scratch:  (not found — phase A will be skipped)"
+    fi
+fi
 echo ""
 
 # ---------------------------------------------------------------------------
-# Helper: run a single benchmark
+# Helper: run a single benchmark (sequential, Ctrl-C kills it)
 # ---------------------------------------------------------------------------
 
 run_bench() {
     local label="$1"
     local solver="$2"
     local game="$3"
-    local seeds="$4"
-    local timeout="$5"
-    local outfile="$6"
-    shift 6
+    local streamliner="$4"
+    local outfile="$5"
+    shift 5
     # remaining args passed to solver via --
 
     local cmd=(
         python3 "$RUN_BENCH"
         --solver "$solver"
         --type "$game"
-        --seeds "$seeds"
-        --timeout "$timeout"
+        --seeds "$SEEDS"
+        --timeout "$TIMEOUT"
         --output "$outfile"
         --label "$label"
         --no-summary
     )
 
-    # Add streamliner if specified
-    local streamliner=""
-    local solver_args=()
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --streamliner) streamliner="$2"; shift 2 ;;
-            *)             solver_args+=("$1"); shift ;;
-        esac
-    done
-
-    if [[ -n "$streamliner" ]]; then
+    if [[ "$streamliner" != "none" ]]; then
         cmd+=(--streamliner "$streamliner")
     fi
 
-    if [[ ${#solver_args[@]} -gt 0 ]]; then
-        cmd+=(-- "${solver_args[@]}")
+    if [[ $# -gt 0 ]]; then
+        cmd+=(-- "$@")
     fi
 
-    echo "  [$(date +%H:%M:%S)] $label / $game / seeds $seeds"
-    "${cmd[@]}" || {
-        echo "  WARNING: $label/$game failed (exit $?)" >&2
-        return 0  # don't abort the whole script
-    }
+    if $DRY_RUN; then
+        echo "  ${cmd[*]}"
+    else
+        echo "  [$(date +%H:%M:%S)] $label / $game (seeds $SEEDS, ${TIMEOUT}ms timeout)"
+        "${cmd[@]}" || {
+            echo "  WARNING: $label/$game failed (exit $?)" >&2
+        }
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -284,169 +334,162 @@ merge_csvs() {
 # ---------------------------------------------------------------------------
 # Comparison A: Incremental vs from-scratch multiplicity
 # ---------------------------------------------------------------------------
-# Same search tree (same hash, same cache decisions). The only difference is
-# whether descriptors are updated incrementally (O(k) per move) or recomputed
-# from scratch (O(52) per move). states_searched MUST be identical.
-#
-# Games: symmetric games where the cascade matters most.
+# Same search tree, different descriptor update strategy.
+# states_searched MUST be identical between the two.
 # ---------------------------------------------------------------------------
 
-if [[ "$PHASES" == *A* ]] && $HAS_SCRATCH; then
-    echo ""
-    echo "═══ Comparison A: Incremental vs From-Scratch Multiplicity ════"
-    echo ""
+if [[ "$PHASES" == *A* ]]; then
+    if ! $HAS_SCRATCH && ! $DRY_RUN; then
+        echo "═══ Comparison A: SKIPPED (no from-scratch binary) ═══════════"
+        echo "  See --help for build instructions."
+        echo ""
+    else
+        echo "═══ Comparison A: Incremental vs From-Scratch Multiplicity ════"
+        echo ""
 
-    for GAME in klondike free-cell black-hole; do
-        STREAMLINER="suit-symmetry"
-        [[ "$GAME" == "black-hole" ]] && STREAMLINER="auto-foundations"
+        GAMES_A=$(apply_games_override "$GAMES_A_DEFAULT")
+        for entry in $GAMES_A; do
+            GAME="${entry%%:*}"
+            STR="${entry##*:}"
 
-        run_bench "A_incr"    "$SOLVER"         "$GAME" "$SEEDS_SHORT" "$TIMEOUT_SHORT" \
-            "$RESULTS_DIR/A_incr_${GAME}.csv" \
-            --streamliner "$STREAMLINER" --cache-type multiplicity &
+            run_bench "A_incr" "$SOLVER" "$GAME" "$STR" \
+                "$RESULTS_DIR/A_incr_${GAME}.csv" \
+                --cache-type multiplicity
 
-        run_bench "A_scratch" "$SOLVER_SCRATCH"  "$GAME" "$SEEDS_SHORT" "$TIMEOUT_SHORT" \
-            "$RESULTS_DIR/A_scratch_${GAME}.csv" \
-            --streamliner "$STREAMLINER" --cache-type multiplicity &
-    done
-    wait
+            run_bench "A_scratch" "$SOLVER_SCRATCH" "$GAME" "$STR" \
+                "$RESULTS_DIR/A_scratch_${GAME}.csv" \
+                --cache-type multiplicity
+        done
 
-    merge_csvs "A_incr"
-    merge_csvs "A_scratch"
-
-    echo ""
-    echo "  VALIDATION: states_searched must match between incr and scratch."
-    echo "  Check with: diff <(cut -d, -f1,6 combined_A_incr.csv) <(cut -d, -f1,6 combined_A_scratch.csv)"
+        if ! $DRY_RUN; then
+            merge_csvs "A_incr"
+            merge_csvs "A_scratch"
+        fi
+        echo ""
+    fi
 fi
 
 # ---------------------------------------------------------------------------
 # Comparison B: Flat vs Multiplicity (no symmetry)
 # ---------------------------------------------------------------------------
-# Both use flat-cache architecture. Flat has 32B entries (compact_state),
-# multiplicity has 64B entries (multiplicity_descriptor_store). Flat should be
-# slightly faster due to smaller cache footprint. This quantifies the overhead.
+# Flat has smaller clusters (32B vs 64B). Quantifies multiplicity overhead.
 # ---------------------------------------------------------------------------
 
 if [[ "$PHASES" == *B* ]]; then
-    echo ""
     echo "═══ Comparison B: Flat vs Multiplicity (No Symmetry) ══════════"
     echo ""
 
-    GAMES_B=(klondike-deal-1 free-cell bakers-game canfield somerset black-hole)
-    STREAMLINERS_B=(none none none none none auto-foundations)
+    GAMES_B=$(apply_games_override "$GAMES_BC_DEFAULT")
+    for entry in $GAMES_B; do
+        GAME="${entry%%:*}"
+        STR="${entry##*:}"
 
-    for i in "${!GAMES_B[@]}"; do
-        GAME="${GAMES_B[$i]}"
-        STR="${STREAMLINERS_B[$i]}"
+        run_bench "B_flat" "$SOLVER_FLAT" "$GAME" "$STR" \
+            "$RESULTS_DIR/B_flat_${GAME}.csv"
 
-        run_bench "B_flat" "$SOLVER_FLAT" "$GAME" "$SEEDS_LONG" "$TIMEOUT_SHORT" \
-            "$RESULTS_DIR/B_flat_${GAME}.csv" \
-            --streamliner "$STR" &
-
-        run_bench "B_mult" "$SOLVER" "$GAME" "$SEEDS_LONG" "$TIMEOUT_SHORT" \
+        run_bench "B_mult" "$SOLVER" "$GAME" "$STR" \
             "$RESULTS_DIR/B_mult_${GAME}.csv" \
-            --streamliner "$STR" --cache-type multiplicity &
+            --cache-type multiplicity
     done
-    wait
 
-    merge_csvs "B_flat"
-    merge_csvs "B_mult"
+    if ! $DRY_RUN; then
+        merge_csvs "B_flat"
+        merge_csvs "B_mult"
+    fi
+    echo ""
 fi
 
 # ---------------------------------------------------------------------------
 # Comparison C: LRU vs Multiplicity (no symmetry)
 # ---------------------------------------------------------------------------
-# LRU has pile-ordering overhead + Boost MultiIndex vs multiplicity's flat
-# O(1) lookup. Multiplicity should win comfortably.
+# Multiplicity's flat O(1) lookup vs LRU's pile-ordering + Boost overhead.
 # ---------------------------------------------------------------------------
 
 if [[ "$PHASES" == *C* ]]; then
-    echo ""
     echo "═══ Comparison C: LRU vs Multiplicity (No Symmetry) ═══════════"
     echo ""
 
-    GAMES_C=(klondike-deal-1 free-cell bakers-game canfield somerset black-hole)
-    STREAMLINERS_C=(none none none none none auto-foundations)
+    GAMES_C=$(apply_games_override "$GAMES_BC_DEFAULT")
+    for entry in $GAMES_C; do
+        GAME="${entry%%:*}"
+        STR="${entry##*:}"
 
-    for i in "${!GAMES_C[@]}"; do
-        GAME="${GAMES_C[$i]}"
-        STR="${STREAMLINERS_C[$i]}"
+        run_bench "C_lru" "$SOLVER_LRU" "$GAME" "$STR" \
+            "$RESULTS_DIR/C_lru_${GAME}.csv"
 
-        run_bench "C_lru" "$SOLVER_LRU" "$GAME" "$SEEDS_LONG" "$TIMEOUT_SHORT" \
-            "$RESULTS_DIR/C_lru_${GAME}.csv" \
-            --streamliner "$STR" &
-
-        run_bench "C_mult" "$SOLVER" "$GAME" "$SEEDS_LONG" "$TIMEOUT_SHORT" \
+        run_bench "C_mult" "$SOLVER" "$GAME" "$STR" \
             "$RESULTS_DIR/C_mult_${GAME}.csv" \
-            --streamliner "$STR" --cache-type multiplicity &
+            --cache-type multiplicity
     done
-    wait
 
-    merge_csvs "C_lru"
-    merge_csvs "C_mult"
+    if ! $DRY_RUN; then
+        merge_csvs "C_lru"
+        merge_csvs "C_mult"
+    fi
+    echo ""
 fi
 
 # ---------------------------------------------------------------------------
 # Comparison D: LRU vs Multiplicity WITH SUIT-SYMMETRY (the critical test)
 # ---------------------------------------------------------------------------
-# The whole point of the multiplicity encoding: enable suit-symmetry
-# canonicalisation in the flat cache. LRU currently handles this via
-# pile-order canonicalisation. If multiplicity + symmetry is faster than
-# LRU + symmetry, the project delivers its core value.
-#
+# The whole point of the multiplicity encoding: suit-symmetry in flat cache.
 # COLOUR mode (26 classes of 2): klondike, klondike-deal-1
 # SUIT_IRRELEVANT mode (13 classes of 4): free-cell, black-hole
 # ---------------------------------------------------------------------------
 
 if [[ "$PHASES" == *D* ]]; then
-    echo ""
     echo "═══ Comparison D: LRU vs Multiplicity + Suit-Symmetry ═════════"
     echo "═══ (THE CRITICAL TEST)                                ═════════"
     echo ""
 
-    GAMES_D=(klondike klondike-deal-1 free-cell black-hole)
-    # black-hole has inherent suit-irrelevance; the others need the streamliner
-    STREAMLINERS_D=(suit-symmetry suit-symmetry suit-symmetry auto-foundations)
+    GAMES_D=$(apply_games_override "$GAMES_D_DEFAULT")
+    for entry in $GAMES_D; do
+        GAME="${entry%%:*}"
+        STR="${entry##*:}"
 
-    for i in "${!GAMES_D[@]}"; do
-        GAME="${GAMES_D[$i]}"
-        STR="${STREAMLINERS_D[$i]}"
+        run_bench "D_lru" "$SOLVER_LRU" "$GAME" "$STR" \
+            "$RESULTS_DIR/D_lru_${GAME}.csv"
 
-        run_bench "D_lru" "$SOLVER_LRU" "$GAME" "$SEEDS_LONG" "$TIMEOUT_LONG" \
-            "$RESULTS_DIR/D_lru_${GAME}.csv" \
-            --streamliner "$STR" &
-
-        run_bench "D_mult" "$SOLVER" "$GAME" "$SEEDS_LONG" "$TIMEOUT_LONG" \
+        run_bench "D_mult" "$SOLVER" "$GAME" "$STR" \
             "$RESULTS_DIR/D_mult_${GAME}.csv" \
-            --streamliner "$STR" --cache-type multiplicity &
+            --cache-type multiplicity
     done
-    wait
 
-    merge_csvs "D_lru"
-    merge_csvs "D_mult"
+    if ! $DRY_RUN; then
+        merge_csvs "D_lru"
+        merge_csvs "D_mult"
+    fi
+    echo ""
 fi
 
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
-echo ""
 echo "═══════════════════════════════════════════════════════════════"
-echo " Done. Results in $RESULTS_DIR/"
-echo "═══════════════════════════════════════════════════════════════"
-echo ""
-echo "Files:"
-ls -1 "$RESULTS_DIR"/combined_*.csv 2>/dev/null || echo "  (no combined files)"
+if $DRY_RUN; then
+    echo " Dry run complete. No benchmarks were executed."
+else
+    echo " Done. Results in $RESULTS_DIR/"
+    echo ""
+    echo "Files:"
+    ls -1 "$RESULTS_DIR"/combined_*.csv 2>/dev/null || echo "  (no combined files)"
+fi
 echo ""
 echo "Next steps:"
-echo "  # Quick summary of one file:"
-echo "  Rscript analysis/summary.R $RESULTS_DIR/combined_D_mult.csv"
+echo "  # Quick summary:"
+echo "  Rscript analysis/summary.R $RESULTS_DIR/D_mult_klondike.csv"
 echo ""
-echo "  # Full comparison report (e.g. for Comparison D on klondike):"
+echo "  # Comparison report:"
 echo "  Rscript analysis/benchmark.R \\"
 echo "      --baseline $RESULTS_DIR/D_lru_klondike.csv \\"
 echo "      --current  $RESULTS_DIR/D_mult_klondike.csv \\"
 echo "      --output   $RESULTS_DIR/report_D_klondike.html"
+if [[ "$PHASES" == *A* ]]; then
+    echo ""
+    echo "  # Validate Comparison A (states_searched must match):"
+    echo "  diff <(cut -d, -f1,6 $RESULTS_DIR/combined_A_incr.csv) \\"
+    echo "       <(cut -d, -f1,6 $RESULTS_DIR/combined_A_scratch.csv)"
+fi
 echo ""
-echo "  # Validate Comparison A (states_searched must match):"
-echo "  diff <(cut -d, -f1,6 $RESULTS_DIR/combined_A_incr.csv) \\"
-echo "       <(cut -d, -f1,6 $RESULTS_DIR/combined_A_scratch.csv)"
+echo "═══════════════════════════════════════════════════════════════"
