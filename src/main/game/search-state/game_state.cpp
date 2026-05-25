@@ -494,7 +494,11 @@ void game_state_impl<Policy>::make_move(const move m) {
                 break;
         }
 
-        if (mult_fallback) {
+        if (mult_fallback
+#ifdef MULTIPLICITY_NO_INCREMENTAL
+            || true  // Force from-scratch recompute for benchmarking
+#endif
+        ) {
             desc_engine.recompute_all(make_desc_ctx());
         } else if (mult_n > 0) {
             if (desc_engine.is_none_mode()) {
@@ -599,7 +603,11 @@ void game_state_impl<Policy>::undo_move(const move m) {
                 break;
         }
 
-        if (mult_fallback) {
+        if (mult_fallback
+#ifdef MULTIPLICITY_NO_INCREMENTAL
+            || true  // Force from-scratch recompute for benchmarking
+#endif
+        ) {
             desc_engine.recompute_all(make_desc_ctx());
         } else if (mult_n > 0) {
             if (desc_engine.is_none_mode()) {

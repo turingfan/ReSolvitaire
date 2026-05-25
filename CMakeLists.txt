@@ -271,6 +271,14 @@ target_compile_definitions(solvitaire-lru PRIVATE SOLVITAIRE_LRU_ONLY)
 set_property(TARGET solvitaire-lru PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_link_libraries(solvitaire-lru PRIVATE ${Boost_LIBRARIES})
 
+# Benchmark-only variant: multiplicity cache with incremental updates disabled
+# (forces recompute_all on every move). Used by Comparison A in bench_multiplicity.sh
+# to measure the speedup from incremental updates.
+add_executable(solvitaire-mult-scratch ${main} ${sources})
+target_compile_definitions(solvitaire-mult-scratch PRIVATE MULTIPLICITY_NO_INCREMENTAL)
+set_property(TARGET solvitaire-mult-scratch PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+target_link_libraries(solvitaire-mult-scratch PRIVATE ${Boost_LIBRARIES})
+
 ###############################################################################
 ## Search trace — always-defined trace-variant binaries + optional CTest gate ##
 ##                                                                            ##

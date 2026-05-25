@@ -277,12 +277,13 @@ Key metrics to report:
 
 ## Implementation Needed Before Running
 
-1. **From-scratch binary for Comparison A:** Add compile-time flag
-   `MULTIPLICITY_NO_INCREMENTAL` that replaces incremental update calls with
-   `recompute_all()`. Build as `solvitaire-mult-scratch` or similar.
+1. **From-scratch binary for Comparison A:** ~~Add compile-time flag~~ **DONE.**
+   `MULTIPLICITY_NO_INCREMENTAL` compile flag forces `recompute_all()` on every move.
+   CMake target: `solvitaire-mult-scratch`. Build with:
+   `cmake --build cmake-build-release --target solvitaire-mult-scratch`
 
-2. **Experiment script:** Write `scripts/experiments/bench_multiplicity.sh` that
-   orchestrates all four comparisons with appropriate parallelism.
+2. **Experiment script:** ~~Write `scripts/experiments/bench_multiplicity.sh`~~ **DONE.**
+   Orchestrates all four comparisons with `run_benchmark.py` + `xargs -P`.
 
 3. **Ensure `--cache-type multiplicity` works with `solvitaire-lru` binary:**
    Currently the LRU-only binary ignores `--cache-type`. For Comparison D, the

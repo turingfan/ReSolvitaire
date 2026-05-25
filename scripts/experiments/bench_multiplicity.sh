@@ -89,10 +89,10 @@
 #
 # 1. Build release binaries:  ./build.sh --release
 #
-# 2. (Comparison A only) Build a from-scratch multiplicity binary:
-#    In game_state.cpp, replace incremental_update_none()/incremental_update()
-#    calls with recompute_all(), build, copy to solvitaire-mult-scratch, revert.
-#    See docs/multiplicity-encoding/stage5-4-benchmark-plan.md for details.
+# 2. (Comparison A only) Build the from-scratch multiplicity binary:
+#    cmake --build cmake-build-release --target solvitaire-mult-scratch
+#    This binary uses MULTIPLICITY_NO_INCREMENTAL to force recompute_all()
+#    on every move instead of incremental updates. Phase A is skipped if absent.
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 # OUTPUT & ANALYSIS
@@ -244,8 +244,9 @@ echo ""
 # Format: one complete shell command per line.
 # ---------------------------------------------------------------------------
 
-CMDFILE=$(mktemp)
-trap 'rm -f "$CMDFILE"' EXIT
+CMDDIR=$(mktemp -d)
+trap 'rm -rf "$CMDDIR"' EXIT
+CMD_COUNT=0
 
 # emit_chunks LABEL SOLVER GAME STREAMLINER [EXTRA_SOLVER_ARGS...]
 #
@@ -276,7 +277,8 @@ emit_chunks() {
             done
         fi
 
-        echo "$cmd" >> "$CMDFILE"
+        printf '%s\n' "$cmd" > "$CMDDIR/$CMD_COUNT.sh"
+        CMD_COUNT=$((CMD_COUNT + 1))
         lo=$((hi + 1))
     done
 }
@@ -363,28 +365,27 @@ fi
 # Execute or display
 # ---------------------------------------------------------------------------
 
-TOTAL=$(wc -l < "$CMDFILE" | tr -d ' ')
-
-if [[ "$TOTAL" -eq 0 ]]; then
+if [[ "$CMD_COUNT" -eq 0 ]]; then
     echo ""
     echo "No commands generated (check --phase, --games, and prerequisites)."
     exit 0
 fi
 
 echo ""
-echo "$TOTAL chunks to run ($WORKERS workers)"
+echo "$CMD_COUNT chunks to run ($WORKERS workers)"
 echo ""
 
 if $DRY_RUN; then
-    cat "$CMDFILE"
+    for f in "$CMDDIR"/*.sh; do cat "$f"; done
     echo ""
     echo "(dry run — nothing executed)"
     exit 0
 fi
 
 # Run with xargs -P for parallelism.
-# The process group ensures Ctrl-C kills all workers.
-xargs -P "$WORKERS" -I '{}' bash -c '{}' < "$CMDFILE"
+# Each command is in its own script file, avoiding xargs -I replacement
+# length limits. The process group ensures Ctrl-C kills all workers.
+find "$CMDDIR" -name '*.sh' -print0 | sort -z | xargs -0 -P "$WORKERS" -n1 bash
 
 # ---------------------------------------------------------------------------
 # Merge chunk CSVs into per-label combined files
@@ -395,7 +396,7 @@ echo "Merging results..."
 
 # Collect unique labels from filenames
 LABELS=$(ls "$RESULTS_DIR"/*.csv 2>/dev/null \
-    | xargs -I{} basename {} \
+    | xargs -n1 basename \
     | sed 's/_[^_]*_[0-9]*_[0-9]*.csv$//' \
     | sort -u)
 
