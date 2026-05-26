@@ -379,11 +379,14 @@ public:
 
         if (ctx.waste != pile::ref(255)) {
             const pile& wp = ctx.piles[ctx.waste];
-            uint8_t waste_loc = waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE;
             for (pile::size_type i = 0; i < wp.size(); i++) {
                 card c = wp[i];
+                // Only the top card (index 0) gets MLD_IN_WASTE; all others use
+                // MLD_IN_STOCK. Non-top waste cards are unreachable until promoted
+                // to top, so they are indistinguishable from stock cards.
+                uint8_t loc = (!waste_deal_sym && i == 0) ? MLD_IN_WASTE : MLD_IN_STOCK;
                 descriptors[card_cid(c)] =
-                    multiplicity_descriptor::make_locative(waste_loc);
+                    multiplicity_descriptor::make_locative(loc);
             }
         }
 

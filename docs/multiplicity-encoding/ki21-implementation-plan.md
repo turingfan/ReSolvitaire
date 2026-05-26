@@ -1,362 +1,109 @@
-# KI-21 Implementation Plan — Waste Descriptor O(stock) Fix
+# KI-21 Implementation Plan: Waste Descriptor O(stock) → O(1)
 
-**Date:** 2026-05-25
-**Branch:** Create `fix/ki21-waste-descriptor` from `multiplicity-encoding`
-**Author:** Ian Gent with Claude (planning)
-**Implementer:** Claude Code on the Web (Sonnet)
+## Problem (from known-issues.md #21)
 
----
+`MLD_IN_WASTE` was assigned to ALL waste cards. A `stock_k_plus` move with
+`count=k` changes k waste cards' descriptors, making the incremental update O(k)
+— defeating the purpose of incremental updates.
 
-## Problem
+## Fix
 
-The multiplicity encoding uses separate `MLD_IN_STOCK` and `MLD_IN_WASTE` locative
-descriptors for stock and waste cards. When a `stock_k_plus` move deals k cards from
-stock to waste, all k cards change descriptor from `MLD_IN_STOCK` to `MLD_IN_WASTE`.
-This forces a full `recompute_all()` fallback (O(n_cards)) instead of an incremental
-update (O(1)).
+Collapse `MLD_IN_WASTE` to the single top-of-waste card only. All other waste
+cards use `MLD_IN_STOCK` (same as stock cards — they are unreachable until
+promoted to top). This is the same insight as `waste_deal_sym` already applied:
+the encoding cannot distinguish them from stock.
 
-## Solution
+A `stock_k_plus` move now changes at most 3 descriptors:
+- Played card → descriptor at `m.to`
+- Old waste top → `MLD_IN_STOCK` (if it moved away from pos 0)
+- New waste top → `MLD_IN_WASTE` (if it differs from old top)
 
-Only the **top of waste** gets `MLD_IN_WASTE`. All other waste cards get `MLD_IN_STOCK`
-(same as stock cards). This is correct because non-top waste cards are unreachable —
-only the waste top can be played.
+## Files Changed
 
-With this fix, a `stock_k_plus` move changes at most **3** multiplicity descriptors:
-1. The played card (waste top after dealing → destination pile)
-2. The old waste top before dealing (was `MLD_IN_WASTE` → now `MLD_IN_STOCK`)
-3. The new waste top after playing (was `MLD_IN_STOCK` → now `MLD_IN_WASTE`)
+1. `src/main/game/multiplicity_descriptor_engine.h` — `recompute_all()` waste block
+2. `src/main/game/search-state/game_state.cpp` — `mult_desc_at()`, `make_move()`, `undo_move()`
+3. `src/test/unit_tests/multiplicity_incremental_test.cpp` — new stock_k_plus tests
 
-Plus 1 optional change if `m.to == hole` (old hole top → `MLD_PERMANENT`).
-Maximum 4 changes total, which fits the existing `mult_changes[4]` array.
+## Part 1: Descriptor Semantics Change
 
-## Two-Part Implementation
+### recompute_all() (~line 371-378)
 
-### Part 1: Descriptor Semantics Change
+Before: all waste cards → `waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE`
+After:  waste[0] → `MLD_IN_WASTE` (if !waste_deal_sym); waste[i>0] → `MLD_IN_STOCK`
 
-Change `MLD_IN_WASTE` to mean "top of waste only". Three locations:
+### mult_desc_at() (~line 1368-1373)
 
-#### 1a. `multiplicity_descriptor_engine.h` `recompute_all()` (~line 371-378)
+Before: all waste cards → `waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE`
+After:  pos==0 → `MLD_IN_WASTE` (if !waste_deal_sym); pos>0 → `MLD_IN_STOCK`
 
-Current waste section:
-```cpp
-if (ctx.waste != pile::ref(255)) {
-    const pile& wp = ctx.piles[ctx.waste];
-    uint8_t waste_loc = waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE;
-    for (pile::size_type i = 0; i < wp.size(); i++) {
-        card c = wp[i];
-        descriptors[card_cid(c)] =
-            multiplicity_descriptor::make_locative(waste_loc);
-    }
-}
-```
+Part 1 alone passes all tests: `stock_k_plus` still uses `recompute_all()` fallback,
+and `verify_against_scratch()` checks `mult_desc_at()` agrees with `recompute_all()`.
 
-Change to: only top card (`wp[0]`, which is `pile::top_card()`) gets `waste_loc`.
-All other waste cards get `MLD_IN_STOCK`:
-```cpp
-if (ctx.waste != pile::ref(255)) {
-    const pile& wp = ctx.piles[ctx.waste];
-    for (pile::size_type i = 0; i < wp.size(); i++) {
-        card c = wp[i];
-        uint8_t loc = (i == 0 && !waste_deal_sym) ? MLD_IN_WASTE : MLD_IN_STOCK;
-        descriptors[card_cid(c)] =
-            multiplicity_descriptor::make_locative(loc);
-    }
-}
-```
+## Part 2: Incremental stock_k_plus
 
-#### 1b. `game_state.cpp` `mult_desc_at()` (~line 1368-1373)
+### Pre-move capture in make_move (before outer switch)
 
-Current waste case:
-```cpp
-if (pr == waste) {
-    bool waste_deal_sym = rules.stock_redeal
-        && piles[waste].size() % rules.stock_deal_count == 0;
-    return multiplicity_descriptor::make_locative(
-        waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE, fd);
-}
-```
+Capture waste top card ID before pile operations.
 
-Change to: only position 0 (top) gets `MLD_IN_WASTE`:
-```cpp
-if (pr == waste) {
-    if (pos == 0) {
-        bool waste_deal_sym = rules.stock_redeal
-            && piles[waste].size() % rules.stock_deal_count == 0;
-        return multiplicity_descriptor::make_locative(
-            waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE, fd);
-    }
-    return multiplicity_descriptor::make_locative(MLD_IN_STOCK, fd);
-}
-```
+### make_move multiplicity switch
 
-#### 1c. Verify `recompute_all` and `mult_desc_at` agree
+Replace `stock_k_plus` fallback with O(1) incremental:
+1. `played_cid` → `mult_desc_at(m.to, 0)`
+2. If old waste top moved (≠ new waste top): old_top_cid → `MLD_IN_STOCK`
+3. If new waste top changed (≠ old waste top): new_top_cid → `mult_desc_at(waste, 0)`
 
-The debug assertion `verify_against_scratch()` at `game_state.cpp:512` checks that
-the incremental result matches `recompute_all()`. Both functions must use the same
-descriptor semantics. After changing both 1a and 1b, this assertion validates consistency.
+### Pre-undo capture in undo_move (before outer switch)
 
-### Part 2: Incremental Updates for `stock_k_plus`
+Capture played card (at `m.to`) and waste top before pile operations.
 
-Replace `mult_fallback = true` with O(1) incremental change computation.
+### undo_move multiplicity switch
 
-#### Pre-move state capture
+Replace `stock_k_plus` fallback with O(1) incremental:
+1. `pre_undo_played_cid` → `MLD_IN_STOCK` (card returns to stock/waste interior)
+2. Post-undo waste top → `mult_desc_at(waste, 0)` (new top of waste)
+3. If pre-undo waste top changed (≠ post-undo top): pre_undo_top_cid → `MLD_IN_STOCK`
 
-Before the pile operations (before `make_stock_k_plus_move(m)` is called), capture
-the old waste top. Add this **before** the switch statement at `game_state.cpp:413`:
+### stock_to_all_tableau
 
-```cpp
-// Capture pre-move waste top for multiplicity incremental (stock_k_plus)
-uint8_t old_waste_top_cid = 255;  // sentinel: no waste top
-if constexpr (Policy::computes_multiplicity_descriptor) {
-    if (m.type == move::mtype::stock_k_plus
-        && waste != pile::ref(255) && !piles[waste].empty()) {
-        card owt = piles[waste].top_card();
-        old_waste_top_cid = zobrist_hash::card_id(owt.get_suit(), owt.get_rank());
-    }
-}
-```
-
-Similarly, add the same capture before `undo_move`'s switch at `game_state.cpp:522`.
-For undo, the "old waste top" is the waste top in the forward-move state (before undoing).
-
-#### Forward incremental (`make_move`, ~line 487-491)
-
-Replace:
-```cpp
-case move::mtype::stock_k_plus:
-case move::mtype::stock_to_all_tableau:
-    // Complex moves: fall back to from-scratch
-    mult_fallback = true;
-    break;
-```
-
-With:
-```cpp
-case move::mtype::stock_k_plus: {
-    // Played card: now at top of m.to
-    uint8_t played_cid = zobrist_hash::card_id(
-        piles[m.to].top_card().get_suit(),
-        piles[m.to].top_card().get_rank());
-    mult_changes[mult_n++] = {played_cid, mult_desc_at(m.to, 0)};
-
-    // Old waste top: had MLD_IN_WASTE, now buried or in stock → MLD_IN_STOCK
-    // (unless it's still the waste top, which happens when count <= 0
-    //  and no flip — old waste top stays at waste top after undo-dealing)
-    if (old_waste_top_cid != 255 && old_waste_top_cid != played_cid) {
-        bool still_waste_top = !piles[waste].empty()
-            && old_waste_top_cid == zobrist_hash::card_id(
-                piles[waste].top_card().get_suit(),
-                piles[waste].top_card().get_rank());
-        if (still_waste_top) {
-            // Descriptor may change due to waste_deal_sym condition changing
-            mult_changes[mult_n++] = {old_waste_top_cid, mult_desc_at(waste, 0)};
-        } else {
-            mult_changes[mult_n++] = {old_waste_top_cid,
-                multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
-        }
-    }
-
-    // New waste top (different from old waste top): was MLD_IN_STOCK → MLD_IN_WASTE
-    if (!piles[waste].empty()) {
-        uint8_t nwt_cid = zobrist_hash::card_id(
-            piles[waste].top_card().get_suit(),
-            piles[waste].top_card().get_rank());
-        // Only emit if not already handled above
-        if (nwt_cid != played_cid && nwt_cid != old_waste_top_cid) {
-            mult_changes[mult_n++] = {nwt_cid, mult_desc_at(waste, 0)};
-        }
-    }
-
-    // If moved to hole, old hole top becomes PERMANENT
-    if (m.to == hole && piles[hole].size() > 1) {
-        card old_top = piles[hole][1];
-        uint8_t old_cid = zobrist_hash::card_id(
-            old_top.get_suit(), old_top.get_rank());
-        mult_changes[mult_n++] = {old_cid,
-            multiplicity_descriptor::make_locative(MLD_PERMANENT)};
-    }
-    break;
-}
-case move::mtype::stock_to_all_tableau:
-    // Deals to multiple piles — keep fallback
-    mult_fallback = true;
-    break;
-```
-
-#### Undo incremental (`undo_move`, ~line 598-601)
-
-Same structure. After `undo_stock_k_plus_move()` completes, piles are back to
-pre-forward-move state. The changes mirror the forward direction:
-
-```cpp
-case move::mtype::stock_k_plus: {
-    // The card that was at m.to (played card) is now back in stock or waste
-    // Find it: after undo, it's wherever it was before the forward move
-    // We need its card ID — it was at m.to before undo
-    // But undo already moved it. We captured old_waste_top_cid before undo.
-    // Actually, for undo we need the pre-undo state of the played card.
-    
-    // APPROACH: After undo, piles are in original state. Just identify
-    // which cards might have changed descriptors and provide current descriptors.
-    
-    // The waste top (restored): might need MLD_IN_WASTE
-    if (!piles[waste].empty()) {
-        card wt = piles[waste].top_card();
-        uint8_t wt_cid = zobrist_hash::card_id(wt.get_suit(), wt.get_rank());
-        mult_changes[mult_n++] = {wt_cid, mult_desc_at(waste, 0)};
-    }
-
-    // Old waste top before undo (= post-forward-move waste top)
-    // This was MLD_IN_WASTE during the forward state; after undo it's somewhere
-    // with possibly MLD_IN_STOCK
-    if (old_waste_top_cid != 255) {
-        bool is_current_waste_top = !piles[waste].empty()
-            && old_waste_top_cid == zobrist_hash::card_id(
-                piles[waste].top_card().get_suit(),
-                piles[waste].top_card().get_rank());
-        if (!is_current_waste_top) {
-            mult_changes[mult_n++] = {old_waste_top_cid,
-                multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
-        }
-        // If it IS the current waste top, we already handled it above
-    }
-
-    // The played card: was at m.to with some descriptor, now in stock/waste
-    // Find it at its restored position
-    // ISSUE: We don't easily know the played card's ID after undo.
-    // SOLUTION: Capture it before undo, just like old_waste_top_cid.
-    // Add a pre-undo capture of the played card:
-    //   uint8_t played_cid = card_id(piles[m.to].top_card());
-    // Then after undo, it's in stock or waste with MLD_IN_STOCK
-    // (or it might be the restored waste top — already handled above)
-    if (played_cid != 255) {
-        bool is_current_waste_top = !piles[waste].empty()
-            && played_cid == zobrist_hash::card_id(
-                piles[waste].top_card().get_suit(),
-                piles[waste].top_card().get_rank());
-        if (is_current_waste_top) {
-            // Already handled above (or will be — ensure no duplicate)
-        } else {
-            mult_changes[mult_n++] = {played_cid,
-                multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
-        }
-    }
-
-    // If m.to was hole, the hole top changes
-    if (m.to == hole && !piles[hole].empty()) {
-        card new_top = piles[hole][0];
-        uint8_t top_cid = zobrist_hash::card_id(
-            new_top.get_suit(), new_top.get_rank());
-        mult_changes[mult_n++] = {top_cid, mult_desc_at(hole, 0)};
-    }
-    break;
-}
-case move::mtype::stock_to_all_tableau:
-    mult_fallback = true;
-    break;
-```
-
-**IMPORTANT:** The undo direction also needs pre-undo captures:
-- `old_waste_top_cid`: waste top in the forward-move state (before undoing)
-- `played_cid`: card at m.to (the played card, before it's moved back)
-
-Add before the undo switch:
-```cpp
-uint8_t old_waste_top_cid = 255;
-uint8_t undo_played_cid = 255;
-if constexpr (Policy::computes_multiplicity_descriptor) {
-    if (m.type == move::mtype::stock_k_plus) {
-        if (waste != pile::ref(255) && !piles[waste].empty()) {
-            card owt = piles[waste].top_card();
-            old_waste_top_cid = zobrist_hash::card_id(owt.get_suit(), owt.get_rank());
-        }
-        card played = piles[m.to].top_card();
-        undo_played_cid = zobrist_hash::card_id(played.get_suit(), played.get_rank());
-    }
-}
-```
-
-## Correctness Verification
-
-### Debug assertion
-
-`verify_against_scratch()` (line 512 of `game_state.cpp`) runs in debug builds after
-every incremental update and compares against `recompute_all()`. This catches any
-disagreement between the incremental logic and the from-scratch computation.
-
-### Unit tests
-
-Add tests to `multiplicity_incremental_test.cpp`:
-
-1. **StockKPlusDeal1_IncrementalMatchesScratch**: klondike-deal-1, stock_k_plus with
-   count=1. Verify incremental update produces same hash as recompute_all.
-
-2. **StockKPlusDeal3_IncrementalMatchesScratch**: klondike with deal_count=3. Three
-   cards dealt, played card to tableau. Verify hash agreement.
-
-3. **StockKPlusToFoundation_IncrementalMatchesScratch**: Play from waste to foundation.
-   Verify foundation descriptor update + waste descriptor changes.
-
-4. **WasteDealSymmetry_StockKPlus**: klondike with redeal, waste size divisible by
-   deal_count. Verify waste_deal_sym path produces correct descriptors.
-
-5. **StockKPlusEmptyWaste**: Start with empty waste, deal from stock. Verify new waste
-   top gets MLD_IN_WASTE.
-
-### Existing test gates
-
-All 3 test gates must pass:
-```bash
-python3 scripts/run_tests.py
-```
-
-The debug gate is particularly important — it runs `verify_against_scratch()` on
-every move, which will catch incremental/from-scratch disagreement.
-
-### Solvability cross-check
-
-After tests pass, run solvability verification on stock/waste games:
-```bash
-# klondike seeds 1-20, multiplicity vs auto
-for s in $(seq 1 20); do
-    echo "Seed $s:"
-    diff <(./cmake-build-release/bin/solvitaire --type klondike --random $s \
-           --cache-type multiplicity --json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['solution_type'])") \
-         <(./cmake-build-release/bin/solvitaire --type klondike --random $s \
-           --json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['solution_type'])")
-done
-```
-
-## Files Changed (Summary)
-
-| File | What changes |
-|---|---|
-| `src/main/game/multiplicity_descriptor_engine.h` | `recompute_all()` waste section: top-only MLD_IN_WASTE |
-| `src/main/game/search-state/game_state.cpp` | `mult_desc_at()`: pos==0 check for waste; `make_move()`/`undo_move()`: pre-move captures + stock_k_plus incremental logic |
-| `src/test/unit_tests/multiplicity_incremental_test.cpp` | New unit tests for stock_k_plus incremental |
-
-## What NOT to Change
-
-- `MLD_IN_WASTE` enum value stays the same (value 3) — no new enum needed
-- `stock_to_all_tableau` stays as `mult_fallback = true`
-- The flat descriptor engine (`flat_descriptor_engine.h`) is unrelated — do not touch
-- The existing `waste_deal_sym` logic in `recompute_all()` is correct and stays
-- `effective_waste_ptr()` is unrelated — do not touch
-
-## Risk Assessment
-
-**Low risk.** The descriptor change is local to the multiplicity engine. The debug
-assertion `verify_against_scratch()` provides a comprehensive safety net — any
-incremental/from-scratch disagreement is caught immediately in debug builds.
-
-The main subtlety is correctly identifying which cards' descriptors change during a
-`stock_k_plus` move, especially with `flip_waste` (redeal) and negative `count`
-(un-dealing). The implementation plan above handles all cases, but the implementer
-should pay careful attention to the undo direction.
+Kept as `mult_fallback = true` — not in scope.
 
 ## Domain Questions Log
 
-If the implementer encounters domain questions that cannot be resolved from code or
-documentation, log them in this section rather than guessing:
+### Bug: count=0 overwrite in make_move (found in PR #4 review)
 
-*(To be filled by implementer)*
+`generate_k_plus_moves_to_check()` inserts count=0 when waste is non-empty. When
+count=0, `played_cid == pre_move_waste_top_cid` (waste top IS the played card). The
+original implementation emitted `{pre_move_waste_top_cid, MLD_IN_STOCK}` which
+overwrote the played card's correct descriptor set in changes[0].
+
+Fix: add `&& pre_move_waste_top_cid != played_cid` guard to the old-waste-top
+condition in make_move. Same guard added implicitly to undo_move by restructuring.
+
+### Bug: undo_move count=0 fragile ordering
+
+When count=0, after undo the played card returns to waste top, so its descriptor
+should be `mult_desc_at(waste, 0)`, not `MLD_IN_STOCK`. Original code relied on
+overwrite order (post-undo waste top entry would overwrite the MLD_IN_STOCK entry
+for the same card). Fragile and incorrect for the cascade version.
+
+Fix: compute post_undo_waste_top_cid first, then check whether played == post-undo
+waste top and emit `mult_desc_at(waste,0)` or `MLD_IN_STOCK` accordingly.
+
+### Bug: missing hole-top handling for stock_k_plus (found in PR #4 review)
+
+`stock_k_plus` can target the hole (`add_stock_to_hole_foundation_moves`). The
+`regular` case had `m.to == hole` logic for MLD_PERMANENT / mult_desc_at(hole,0);
+the `stock_k_plus` case was missing both make and undo directions.
+
+Fix: added hole-top blocks to both make_move and undo_move stock_k_plus cases,
+mirroring the pattern from the regular case.
+
+### Trace test status (after bug fixes)
+
+After applying the bug fixes, `trace_mult_vs_flat_klondike` and
+`trace_mult_vs_flat_canfield` were restored to mult-vs-flat comparisons and
+both PASS. The pre-fix divergence (operation ~75 in klondike) was caused by the
+count=0 bug producing an incorrect descriptor for the played card, not by a
+fundamental incompatibility between multiplicity and flat hashing. With correct
+descriptors, both caches agree on every HIT/MISS/INSERT before the first
+eviction for the tested seeds.

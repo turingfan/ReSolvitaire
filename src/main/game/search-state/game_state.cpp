@@ -410,6 +410,17 @@ void game_state_impl<Policy>::shuffle(RandomIt first, RandomIt last, URBG&& g) {
 
 template <typename Policy>
 void game_state_impl<Policy>::make_move(const move m) {
+    // Pre-capture waste top before pile ops (stock_k_plus incremental update).
+    [[maybe_unused]] uint8_t pre_move_waste_top_cid = UINT8_MAX;
+    if constexpr (Policy::computes_multiplicity_descriptor) {
+        if (m.type == move::mtype::stock_k_plus
+                && waste != pile::ref(255) && !piles[waste].empty()) {
+            card w_top = piles[waste].top_card();
+            pre_move_waste_top_cid = zobrist_hash::card_id(
+                w_top.get_suit(), w_top.get_rank());
+        }
+    }
+
     switch (m.type) {
         case move::mtype::regular:
 	    make_regular_move(m);
@@ -484,9 +495,45 @@ void game_state_impl<Policy>::make_move(const move m) {
                 }
                 break;
             }
-            case move::mtype::stock_k_plus:
+            case move::mtype::stock_k_plus: {
+                // O(1) incremental: only top-of-waste changes descriptor.
+                card played = piles[m.to].top_card();
+                uint8_t played_cid = zobrist_hash::card_id(
+                    played.get_suit(), played.get_rank());
+                mult_changes[mult_n++] = {played_cid, mult_desc_at(m.to, 0)};
+
+                uint8_t post_waste_top_cid = UINT8_MAX;
+                if (!piles[waste].empty()) {
+                    card nt = piles[waste].top_card();
+                    post_waste_top_cid = zobrist_hash::card_id(
+                        nt.get_suit(), nt.get_rank());
+                }
+                // Guard: skip if pre_move_waste_top == played (count=0 case,
+                // where waste top IS the played card — change[0] already handles it).
+                if (pre_move_waste_top_cid != UINT8_MAX
+                        && pre_move_waste_top_cid != played_cid
+                        && pre_move_waste_top_cid != post_waste_top_cid) {
+                    // Old waste top moved to stock or down — now MLD_IN_STOCK
+                    mult_changes[mult_n++] = {pre_move_waste_top_cid,
+                        multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+                }
+                if (post_waste_top_cid != UINT8_MAX
+                        && post_waste_top_cid != pre_move_waste_top_cid) {
+                    // New waste top needs correct descriptor
+                    mult_changes[mult_n++] = {post_waste_top_cid,
+                        mult_desc_at(waste, 0)};
+                }
+                // If moved to hole, old hole top becomes PERMANENT
+                if (m.to == hole && piles[hole].size() > 1) {
+                    card old_top = piles[hole][1];
+                    uint8_t old_cid = zobrist_hash::card_id(
+                        old_top.get_suit(), old_top.get_rank());
+                    mult_changes[mult_n++] = {old_cid,
+                        multiplicity_descriptor::make_locative(MLD_PERMANENT)};
+                }
+                break;
+            }
             case move::mtype::stock_to_all_tableau:
-                // Complex moves: fall back to from-scratch
                 mult_fallback = true;
                 break;
             default:
@@ -520,6 +567,22 @@ void game_state_impl<Policy>::make_move(const move m) {
 
 template <typename Policy>
 void game_state_impl<Policy>::undo_move(const move m) {
+    // Pre-capture played card and waste top before pile ops (stock_k_plus incremental).
+    [[maybe_unused]] uint8_t pre_undo_played_cid    = UINT8_MAX;
+    [[maybe_unused]] uint8_t pre_undo_waste_top_cid = UINT8_MAX;
+    if constexpr (Policy::computes_multiplicity_descriptor) {
+        if (m.type == move::mtype::stock_k_plus) {
+            card played = piles[m.to].top_card();
+            pre_undo_played_cid = zobrist_hash::card_id(
+                played.get_suit(), played.get_rank());
+            if (waste != pile::ref(255) && !piles[waste].empty()) {
+                card w_top = piles[waste].top_card();
+                pre_undo_waste_top_cid = zobrist_hash::card_id(
+                    w_top.get_suit(), w_top.get_rank());
+            }
+        }
+    }
+
     switch (m.type) {
         case move::mtype::regular:
 	    undo_regular_move(m);
@@ -595,7 +658,50 @@ void game_state_impl<Policy>::undo_move(const move m) {
                 }
                 break;
             }
-            case move::mtype::stock_k_plus:
+            case move::mtype::stock_k_plus: {
+                // O(1) incremental undo: reverse the waste-top descriptor changes.
+                uint8_t post_undo_waste_top_cid = UINT8_MAX;
+                if (!piles[waste].empty()) {
+                    card nt = piles[waste].top_card();
+                    post_undo_waste_top_cid = zobrist_hash::card_id(
+                        nt.get_suit(), nt.get_rank());
+                }
+
+                // Played card: if it IS the post-undo waste top (count=0, card
+                // returns to waste top), give it the waste-top descriptor; otherwise
+                // it returned to stock/waste interior → MLD_IN_STOCK.
+                if (pre_undo_played_cid == post_undo_waste_top_cid) {
+                    mult_changes[mult_n++] = {pre_undo_played_cid,
+                        mult_desc_at(waste, 0)};
+                } else {
+                    mult_changes[mult_n++] = {pre_undo_played_cid,
+                        multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+                }
+
+                // Post-undo waste top (if different from played card)
+                if (post_undo_waste_top_cid != UINT8_MAX
+                        && post_undo_waste_top_cid != pre_undo_played_cid) {
+                    mult_changes[mult_n++] = {post_undo_waste_top_cid,
+                        mult_desc_at(waste, 0)};
+                }
+
+                // Pre-undo waste top (post-make top) no longer at pos 0
+                if (pre_undo_waste_top_cid != UINT8_MAX
+                        && pre_undo_waste_top_cid != post_undo_waste_top_cid
+                        && pre_undo_waste_top_cid != pre_undo_played_cid) {
+                    mult_changes[mult_n++] = {pre_undo_waste_top_cid,
+                        multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+                }
+
+                // If m.to was hole, hole top changes back
+                if (m.to == hole && !piles[hole].empty()) {
+                    card new_top = piles[hole][0];
+                    uint8_t top_cid = zobrist_hash::card_id(
+                        new_top.get_suit(), new_top.get_rank());
+                    mult_changes[mult_n++] = {top_cid, mult_desc_at(hole, 0)};
+                }
+                break;
+            }
             case move::mtype::stock_to_all_tableau:
                 mult_fallback = true;
                 break;
@@ -1364,12 +1470,13 @@ multiplicity_descriptor game_state_impl<Policy>::mult_desc_at(
     if (pr == stock)
         return multiplicity_descriptor::make_locative(MLD_IN_STOCK, fd);
 
-    // Waste → IN_WASTE (or IN_STOCK under waste-deal symmetry)
+    // Waste → IN_WASTE for top card only (pos == 0); all others use IN_STOCK.
+    // Non-top waste cards are indistinguishable from stock for hashing purposes.
     if (pr == waste) {
         bool waste_deal_sym = rules.stock_redeal
             && piles[waste].size() % rules.stock_deal_count == 0;
         return multiplicity_descriptor::make_locative(
-            waste_deal_sym ? MLD_IN_STOCK : MLD_IN_WASTE, fd);
+            (!waste_deal_sym && pos == 0) ? MLD_IN_WASTE : MLD_IN_STOCK, fd);
     }
 
     // Reserve → IN_RESERVE

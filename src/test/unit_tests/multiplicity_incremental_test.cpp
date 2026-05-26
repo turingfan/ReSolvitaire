@@ -687,3 +687,191 @@ TEST(MultiplicityIncrementalTest, SchemeACollapsingPredecessorRegression) {
 
     verify_matches_scratch(eng);
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// KI-21: stock_k_plus incremental update tests
+//
+// Verifies the O(1) waste-top descriptor semantics:
+//   - Only waste[0] (top) gets MLD_IN_WASTE; all others get MLD_IN_STOCK.
+//   - stock_k_plus incremental changes match recompute_all() from-scratch.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// Test: stock deal of 1 card — only the played card's descriptor changes;
+// waste top stays the same when count == 1.
+TEST(MultiplicityIncrementalTest, StockKPlus_Count1_WasteTopUnchanged) {
+    multiplicity_descriptor_engine eng;
+
+    // Set up: stock card (card 0, MLD_IN_STOCK), waste top (card 1, MLD_IN_WASTE),
+    // waste non-top (card 2, MLD_IN_STOCK), tableau space (card 10, MLD_IN_SPACE).
+    multiplicity_descriptor descs[52];
+    for (uint8_t c = 0; c < 52; c++)
+        descs[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+    descs[0]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);  // stock top
+    descs[1]  = multiplicity_descriptor::make_locative(MLD_IN_WASTE);  // waste top
+    descs[2]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);  // waste non-top
+    descs[10] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);  // tableau bottom
+
+    setup_engine(eng, descs);
+
+    // Simulate make_move for count=1: card 0 dealt from stock to waste, then
+    // immediately played to tableau (sits on card 10).
+    // Pre-move waste top = card 1. Post-move waste top = card 1 (unchanged).
+    // Changes: played (card 0) → predecessor(10, false).
+    std::pair<uint8_t, multiplicity_descriptor> changes[1];
+    changes[0] = {0, multiplicity_descriptor::make_predecessor(10, false)};
+    eng.incremental_update_none(changes, 1);
+
+    verify_matches_scratch(eng);
+}
+
+// Test: stock deal of 2 cards — old waste top moves down, new waste top promoted.
+TEST(MultiplicityIncrementalTest, StockKPlus_Count2_WasteTopChanges) {
+    multiplicity_descriptor_engine eng;
+
+    // stock: cards 0 (top), 1. waste: card 2 (top=MLD_IN_WASTE), card 3 (MLD_IN_STOCK).
+    // tableau space: card 20.
+    multiplicity_descriptor descs[52];
+    for (uint8_t c = 0; c < 52; c++)
+        descs[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+    descs[0]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[1]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[2]  = multiplicity_descriptor::make_locative(MLD_IN_WASTE);  // pre-move waste top
+    descs[3]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[20] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);
+
+    setup_engine(eng, descs);
+
+    // Simulate make_move count=2:
+    //   deal s1,s0 to waste → waste=[s1,s0,w2,w3,...]; played=s1 → tableau on card20.
+    //   Post-move waste top = s0 (card 0). Old waste top = card 2 → moves to pos 2.
+    // Changes:
+    //   card 1 (played) → predecessor(20, false)
+    //   card 2 (old top) → MLD_IN_STOCK (moved to pos 2)
+    //   card 0 (new top) → MLD_IN_WASTE
+    std::pair<uint8_t, multiplicity_descriptor> changes[3];
+    changes[0] = {1, multiplicity_descriptor::make_predecessor(20, false)};
+    changes[1] = {2, multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+    changes[2] = {0, multiplicity_descriptor::make_locative(MLD_IN_WASTE)};
+    eng.incremental_update_none(changes, 3);
+
+    verify_matches_scratch(eng);
+}
+
+// Test: undo of count=2 deal — reverses the descriptor changes.
+TEST(MultiplicityIncrementalTest, StockKPlus_UndoCount2) {
+    multiplicity_descriptor_engine eng;
+
+    // Post-make state (after count=2 forward move from test above):
+    //   card 1: predecessor(20, false)   — played card at tableau
+    //   card 2: MLD_IN_STOCK             — former waste top, now at interior
+    //   card 0: MLD_IN_WASTE             — new waste top
+    //   card 3: MLD_IN_STOCK             — waste non-top
+    //   card 20: MLD_IN_SPACE
+    multiplicity_descriptor descs[52];
+    for (uint8_t c = 0; c < 52; c++)
+        descs[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+    descs[1]  = multiplicity_descriptor::make_predecessor(20, false);
+    descs[2]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[0]  = multiplicity_descriptor::make_locative(MLD_IN_WASTE);
+    descs[3]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[20] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);
+
+    setup_engine(eng, descs);
+
+    // Simulate undo_move count=2:
+    //   pre_undo_played = card 1, pre_undo_waste_top = card 0 (MLD_IN_WASTE).
+    //   After undo: waste top = card 2 (MLD_IN_WASTE), card 0 → MLD_IN_STOCK, card 1 → MLD_IN_STOCK.
+    // Changes:
+    //   card 1 (played) → MLD_IN_STOCK
+    //   card 2 (post-undo waste top) → MLD_IN_WASTE
+    //   card 0 (pre-undo waste top, now interior) → MLD_IN_STOCK
+    std::pair<uint8_t, multiplicity_descriptor> changes[3];
+    changes[0] = {1, multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+    changes[1] = {2, multiplicity_descriptor::make_locative(MLD_IN_WASTE)};
+    changes[2] = {0, multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+    eng.incremental_update_none(changes, 3);
+
+    verify_matches_scratch(eng);
+}
+
+// Test: stock deal from empty waste — no old waste top to demote.
+TEST(MultiplicityIncrementalTest, StockKPlus_EmptyWasteBefore) {
+    multiplicity_descriptor_engine eng;
+
+    // stock: cards 0, 1 (MLD_IN_STOCK). waste: empty. tableau: card 20.
+    multiplicity_descriptor descs[52];
+    for (uint8_t c = 0; c < 52; c++)
+        descs[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+    descs[0]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[1]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[20] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);
+
+    setup_engine(eng, descs);
+
+    // Simulate count=2 deal from empty waste:
+    //   waste=[s1,s0], played=s1 → tableau. Post-move waste top = s0 (card 0).
+    // Changes: played (card 1) → tableau; new waste top (card 0) → MLD_IN_WASTE.
+    std::pair<uint8_t, multiplicity_descriptor> changes[2];
+    changes[0] = {1, multiplicity_descriptor::make_predecessor(20, false)};
+    changes[1] = {0, multiplicity_descriptor::make_locative(MLD_IN_WASTE)};
+    eng.incremental_update_none(changes, 2);
+
+    verify_matches_scratch(eng);
+}
+
+// Test: count=0 — waste top is played directly (no dealing).
+// played_cid == pre_move_waste_top_cid; old-top guard must NOT emit MLD_IN_STOCK
+// for the played card (Fix 1: guard && pre_move_waste_top_cid != played_cid).
+TEST(MultiplicityIncrementalTest, StockKPlus_Count0_WasteTopPlayed) {
+    multiplicity_descriptor_engine eng;
+
+    // waste: card 0 (top=MLD_IN_WASTE), card 1 (MLD_IN_STOCK). tableau: card 20.
+    multiplicity_descriptor descs[52];
+    for (uint8_t c = 0; c < 52; c++)
+        descs[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+    descs[0]  = multiplicity_descriptor::make_locative(MLD_IN_WASTE);   // waste top
+    descs[1]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);   // waste non-top
+    descs[20] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);   // tableau bottom
+
+    setup_engine(eng, descs);
+
+    // count=0: played = card 0 (waste top) → sits on card 20.
+    // New waste top = card 1 → MLD_IN_WASTE.
+    // Old-top guard must fire for card 1 (post≠pre), NOT for card 0 (=played).
+    std::pair<uint8_t, multiplicity_descriptor> changes[2];
+    changes[0] = {0, multiplicity_descriptor::make_predecessor(20, false)};
+    changes[1] = {1, multiplicity_descriptor::make_locative(MLD_IN_WASTE)};
+    eng.incremental_update_none(changes, 2);
+
+    verify_matches_scratch(eng);
+}
+
+// Test: count=-1 (return card from waste to stock, play new waste top).
+// Old waste top (card 0) moves to stock; played (card 1) goes to tableau;
+// new waste top (card 2) promoted to MLD_IN_WASTE.
+TEST(MultiplicityIncrementalTest, StockKPlus_NegativeCount) {
+    multiplicity_descriptor_engine eng;
+
+    // waste: card 0 (top=MLD_IN_WASTE), card 1 (MLD_IN_STOCK), card 2 (MLD_IN_STOCK).
+    // tableau: card 20.
+    multiplicity_descriptor descs[52];
+    for (uint8_t c = 0; c < 52; c++)
+        descs[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+    descs[0]  = multiplicity_descriptor::make_locative(MLD_IN_WASTE);
+    descs[1]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[2]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);
+    descs[20] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);
+
+    setup_engine(eng, descs);
+
+    // Simulate count=-1: card 0 moves from waste to stock; played=card 1 → tableau.
+    // New waste top = card 2.
+    // Changes: card 1 (played) → tableau; card 0 (old top) → MLD_IN_STOCK; card 2 → MLD_IN_WASTE.
+    std::pair<uint8_t, multiplicity_descriptor> changes[3];
+    changes[0] = {1, multiplicity_descriptor::make_predecessor(20, false)};
+    changes[1] = {0, multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+    changes[2] = {2, multiplicity_descriptor::make_locative(MLD_IN_WASTE)};
+    eng.incremental_update_none(changes, 3);
+
+    verify_matches_scratch(eng);
+}
