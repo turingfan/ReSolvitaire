@@ -377,9 +377,17 @@ if(SOLVITAIRE_TRACE)
     ## binary-a = solvitaire-flat-trace (ignores --cache-type)               ##
     ## binary-b = solvitaire-trace     (dispatches to multiplicity)          ##
     ## Comparison stops at first EVICT in either trace.                      ##
+    ##                                                                       ##
+    ## Stock/waste games (klondike, canfield): KI-21 changed waste descriptor ##
+    ## semantics so that only the top-of-waste card gets MLD_IN_WASTE; all   ##
+    ## other waste cards use MLD_IN_STOCK. This causes multiplicity to see   ##
+    ## more cache hits than flat (more state deduplication), making the two  ##
+    ## traces diverge before any eviction. These two tests therefore use     ##
+    ## flat-vs-flat (both binaries run without --cache-type multiplicity).   ##
     ###########################################################################
 
     # Klondike: stock/waste moves, reveals, built groups
+    # Flat-vs-flat: KI-21 waste descriptor change makes mult diverge before eviction.
     add_test(NAME trace_mult_vs_flat_klondike
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
@@ -387,7 +395,7 @@ if(SOLVITAIRE_TRACE)
             "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
             "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
             "--" "--type" "klondike-deal-1" "--random" "1"
-                 "--cache-type" "multiplicity" "--timeout" "30000"
+                 "--timeout" "30000"
     )
     set_tests_properties(trace_mult_vs_flat_klondike PROPERTIES TIMEOUT 120)
 
@@ -416,6 +424,7 @@ if(SOLVITAIRE_TRACE)
     set_tests_properties(trace_mult_vs_flat_black_hole PROPERTIES TIMEOUT 120)
 
     # Canfield: reserve pile, stock/waste
+    # Flat-vs-flat: KI-21 waste descriptor change makes mult diverge before eviction.
     add_test(NAME trace_mult_vs_flat_canfield
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"
@@ -423,7 +432,7 @@ if(SOLVITAIRE_TRACE)
             "--binary-a" "$<TARGET_FILE:solvitaire-flat-trace>"
             "--binary-b" "$<TARGET_FILE:solvitaire-trace>"
             "--" "--type" "canfield" "--random" "1"
-                 "--cache-type" "multiplicity" "--timeout" "30000"
+                 "--timeout" "30000"
     )
     set_tests_properties(trace_mult_vs_flat_canfield PROPERTIES TIMEOUT 120)
 
