@@ -649,3 +649,41 @@ TEST(MultiplicityIncrementalTest, ColourSymmetricPermutation) {
     EXPECT_TRUE(eng.store.matches(store_a)) << "incremental to symmetric state should match payload";
     verify_matches_scratch(eng);
 }
+
+// Regression test for Scheme A collapsing bug in incremental_update Step 0.
+// When a card becomes a predecessor of a class member that is in an
+// indistinguishable group (same slot as another class member), the slot must
+// use collapsed_pos (lowest position in the group), not raw canonical_pos.
+TEST(MultiplicityIncrementalTest, SchemeACollapsingPredecessorRegression) {
+    multiplicity_descriptor_engine eng;
+
+    // SUIT_IRRELEVANT mode: class 0 = {AC(0), AH(13), AS(26), AD(39)}.
+    // Give AS(26) and AD(39) the SAME locative so they form an
+    // indistinguishable group.  AC(0) and AH(13) get different locatives.
+    multiplicity_descriptor descs[52];
+    for (uint8_t c = 0; c < 52; c++)
+        descs[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+
+    descs[0]  = multiplicity_descriptor::make_locative(MLD_IN_CELL);      // AC: unique
+    descs[13] = multiplicity_descriptor::make_locative(MLD_IN_RESERVE);   // AH: unique
+    descs[26] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);     // AS: same as AD
+    descs[39] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);     // AD: same as AS
+
+    // 2C(1) starts at IN_CELL
+    descs[1] = multiplicity_descriptor::make_locative(MLD_IN_CELL);
+
+    setup_engine(eng, descs, symmetry_mode::SUIT_IRRELEVANT);
+
+    // After sorting, AS and AD have the same slot and form a collapsed group.
+    // One of them gets canonical_pos = base+X, the other base+Y, with X < Y.
+    // collapsed_pos for both returns base+X.
+    //
+    // Now change 2C(1) to become a predecessor of AD(39).
+    // raw_slot would use canonical_pos[39] = base+Y (wrong).
+    // collapsed_pos(39) returns base+X (correct, matches from-scratch).
+    std::pair<uint8_t, multiplicity_descriptor> changes[1];
+    changes[0] = {1, multiplicity_descriptor::make_predecessor(39, false)};
+    eng.incremental_update(changes, 1);
+
+    verify_matches_scratch(eng);
+}

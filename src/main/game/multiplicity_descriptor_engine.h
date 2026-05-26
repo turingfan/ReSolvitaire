@@ -181,8 +181,17 @@ public:
             // Update descriptor
             descriptors[c] = new_d;
 
-            // Compute new slot byte using current canonical_pos
-            uint8_t new_s = raw_slot(c);
+            // Compute new slot byte.  For predecessor cards, use
+            // collapsed_pos (Scheme A) instead of raw canonical_pos so
+            // the slot matches what recompute_from_descriptors() produces.
+            uint8_t new_s;
+            if (new_d.is_predecessor) {
+                uint8_t pos = collapsed_pos(new_d.predecessor_card_id);
+                new_s = new_d.face_down
+                    ? static_cast<uint8_t>(255 - pos) : pos;
+            } else {
+                new_s = raw_slot(c);
+            }
             if (new_s != slot[c]) {
                 slot[c] = new_s;
                 dirty_classes |= (1ULL << classes.class_of[c]);
