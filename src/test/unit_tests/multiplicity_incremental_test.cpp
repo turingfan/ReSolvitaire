@@ -781,6 +781,33 @@ TEST(MultiplicityIncrementalTest, StockKPlus_EmptyWasteBefore) {
     verify_matches_scratch(eng);
 }
 
+// Test: count=0 — waste top is played directly (no dealing).
+// played_cid == pre_move_waste_top_cid; old-top guard must NOT emit MLD_IN_STOCK
+// for the played card (Fix 1: guard && pre_move_waste_top_cid != played_cid).
+TEST(MultiplicityIncrementalTest, StockKPlus_Count0_WasteTopPlayed) {
+    multiplicity_descriptor_engine eng;
+
+    // waste: card 0 (top=MLD_IN_WASTE), card 1 (MLD_IN_STOCK). tableau: card 20.
+    multiplicity_descriptor descs[52];
+    for (uint8_t c = 0; c < 52; c++)
+        descs[c] = multiplicity_descriptor::make_locative(MLD_PERMANENT);
+    descs[0]  = multiplicity_descriptor::make_locative(MLD_IN_WASTE);   // waste top
+    descs[1]  = multiplicity_descriptor::make_locative(MLD_IN_STOCK);   // waste non-top
+    descs[20] = multiplicity_descriptor::make_locative(MLD_IN_SPACE);   // tableau bottom
+
+    setup_engine(eng, descs);
+
+    // count=0: played = card 0 (waste top) → sits on card 20.
+    // New waste top = card 1 → MLD_IN_WASTE.
+    // Old-top guard must fire for card 1 (post≠pre), NOT for card 0 (=played).
+    std::pair<uint8_t, multiplicity_descriptor> changes[2];
+    changes[0] = {0, multiplicity_descriptor::make_predecessor(20, false)};
+    changes[1] = {1, multiplicity_descriptor::make_locative(MLD_IN_WASTE)};
+    eng.incremental_update_none(changes, 2);
+
+    verify_matches_scratch(eng);
+}
+
 // Test: count=-1 (return card from waste to stock, play new waste top).
 // Old waste top (card 0) moves to stock; played (card 1) goes to tableau;
 // new waste top (card 2) promoted to MLD_IN_WASTE.

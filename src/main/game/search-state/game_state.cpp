@@ -508,7 +508,10 @@ void game_state_impl<Policy>::make_move(const move m) {
                     post_waste_top_cid = zobrist_hash::card_id(
                         nt.get_suit(), nt.get_rank());
                 }
+                // Guard: skip if pre_move_waste_top == played (count=0 case,
+                // where waste top IS the played card — change[0] already handles it).
                 if (pre_move_waste_top_cid != UINT8_MAX
+                        && pre_move_waste_top_cid != played_cid
                         && pre_move_waste_top_cid != post_waste_top_cid) {
                     // Old waste top moved to stock or down — now MLD_IN_STOCK
                     mult_changes[mult_n++] = {pre_move_waste_top_cid,
@@ -519,6 +522,14 @@ void game_state_impl<Policy>::make_move(const move m) {
                     // New waste top needs correct descriptor
                     mult_changes[mult_n++] = {post_waste_top_cid,
                         mult_desc_at(waste, 0)};
+                }
+                // If moved to hole, old hole top becomes PERMANENT
+                if (m.to == hole && piles[hole].size() > 1) {
+                    card old_top = piles[hole][1];
+                    uint8_t old_cid = zobrist_hash::card_id(
+                        old_top.get_suit(), old_top.get_rank());
+                    mult_changes[mult_n++] = {old_cid,
+                        multiplicity_descriptor::make_locative(MLD_PERMANENT)};
                 }
                 break;
             }
@@ -649,22 +660,45 @@ void game_state_impl<Policy>::undo_move(const move m) {
             }
             case move::mtype::stock_k_plus: {
                 // O(1) incremental undo: reverse the waste-top descriptor changes.
-                mult_changes[mult_n++] = {pre_undo_played_cid,
-                    multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
-
                 uint8_t post_undo_waste_top_cid = UINT8_MAX;
                 if (!piles[waste].empty()) {
                     card nt = piles[waste].top_card();
                     post_undo_waste_top_cid = zobrist_hash::card_id(
                         nt.get_suit(), nt.get_rank());
+                }
+
+                // Played card: if it IS the post-undo waste top (count=0, card
+                // returns to waste top), give it the waste-top descriptor; otherwise
+                // it returned to stock/waste interior → MLD_IN_STOCK.
+                if (pre_undo_played_cid == post_undo_waste_top_cid) {
+                    mult_changes[mult_n++] = {pre_undo_played_cid,
+                        mult_desc_at(waste, 0)};
+                } else {
+                    mult_changes[mult_n++] = {pre_undo_played_cid,
+                        multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+                }
+
+                // Post-undo waste top (if different from played card)
+                if (post_undo_waste_top_cid != UINT8_MAX
+                        && post_undo_waste_top_cid != pre_undo_played_cid) {
                     mult_changes[mult_n++] = {post_undo_waste_top_cid,
                         mult_desc_at(waste, 0)};
                 }
+
+                // Pre-undo waste top (post-make top) no longer at pos 0
                 if (pre_undo_waste_top_cid != UINT8_MAX
-                        && pre_undo_waste_top_cid != post_undo_waste_top_cid) {
-                    // Pre-undo waste top (post-make top) no longer at pos 0
+                        && pre_undo_waste_top_cid != post_undo_waste_top_cid
+                        && pre_undo_waste_top_cid != pre_undo_played_cid) {
                     mult_changes[mult_n++] = {pre_undo_waste_top_cid,
                         multiplicity_descriptor::make_locative(MLD_IN_STOCK)};
+                }
+
+                // If m.to was hole, hole top changes back
+                if (m.to == hole && !piles[hole].empty()) {
+                    card new_top = piles[hole][0];
+                    uint8_t top_cid = zobrist_hash::card_id(
+                        new_top.get_suit(), new_top.get_rank());
+                    mult_changes[mult_n++] = {top_cid, mult_desc_at(hole, 0)};
                 }
                 break;
             }

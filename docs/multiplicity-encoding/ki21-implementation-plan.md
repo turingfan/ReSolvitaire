@@ -69,4 +69,41 @@ Kept as `mult_fallback = true` — not in scope.
 
 ## Domain Questions Log
 
-(Empty — no unresolved questions during implementation.)
+### Bug: count=0 overwrite in make_move (found in PR #4 review)
+
+`generate_k_plus_moves_to_check()` inserts count=0 when waste is non-empty. When
+count=0, `played_cid == pre_move_waste_top_cid` (waste top IS the played card). The
+original implementation emitted `{pre_move_waste_top_cid, MLD_IN_STOCK}` which
+overwrote the played card's correct descriptor set in changes[0].
+
+Fix: add `&& pre_move_waste_top_cid != played_cid` guard to the old-waste-top
+condition in make_move. Same guard added implicitly to undo_move by restructuring.
+
+### Bug: undo_move count=0 fragile ordering
+
+When count=0, after undo the played card returns to waste top, so its descriptor
+should be `mult_desc_at(waste, 0)`, not `MLD_IN_STOCK`. Original code relied on
+overwrite order (post-undo waste top entry would overwrite the MLD_IN_STOCK entry
+for the same card). Fragile and incorrect for the cascade version.
+
+Fix: compute post_undo_waste_top_cid first, then check whether played == post-undo
+waste top and emit `mult_desc_at(waste,0)` or `MLD_IN_STOCK` accordingly.
+
+### Bug: missing hole-top handling for stock_k_plus (found in PR #4 review)
+
+`stock_k_plus` can target the hole (`add_stock_to_hole_foundation_moves`). The
+`regular` case had `m.to == hole` logic for MLD_PERMANENT / mult_desc_at(hole,0);
+the `stock_k_plus` case was missing both make and undo directions.
+
+Fix: added hole-top blocks to both make_move and undo_move stock_k_plus cases,
+mirroring the pattern from the regular case.
+
+### Trace test status (after bug fixes)
+
+After applying the bug fixes, `trace_mult_vs_flat_klondike` and
+`trace_mult_vs_flat_canfield` were restored to mult-vs-flat comparisons and
+both PASS. The pre-fix divergence (operation ~75 in klondike) was caused by the
+count=0 bug producing an incorrect descriptor for the played card, not by a
+fundamental incompatibility between multiplicity and flat hashing. With correct
+descriptors, both caches agree on every HIT/MISS/INSERT before the first
+eviction for the tested seeds.
