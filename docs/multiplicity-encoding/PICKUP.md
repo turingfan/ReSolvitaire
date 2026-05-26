@@ -1,6 +1,6 @@
 # PICKUP — multiplicity-encoding branch
 
-**Last updated:** 2026-05-25
+**Last updated:** 2026-05-26
 
 ## What This Branch Is
 
@@ -17,6 +17,19 @@ Stages 0-5.3 complete (including solvability cross-check and trace agreement tes
 Stage 5.4 infrastructure ready. Stage 5.4 execution and Stage 6 (auto-dispatch) remain.
 
 ## What's Done
+
+**Scheme A Collapsing Bug Fix** (2026-05-26)
+- `incremental_update` Step 0 was using `raw canonical_pos` for predecessor slot computation,
+  but `recompute_from_descriptors()` uses `collapsed_pos` (Scheme A). This caused
+  incremental/scratch divergence when predecessor targets were in indistinguishable groups.
+- Fix: predecessor cards now use `collapsed_pos` in `multiplicity_descriptor_engine.h`
+- Regression test: `SchemeACollapsingPredecessorRegression` in `multiplicity_incremental_test.cpp`
+- All 3 gates pass on macOS and Linux (verified 2026-05-26).
+
+**KI-21 Investigation** (2026-05-26)
+- KI-21 (waste O(stock) descriptor updates) investigated on Claude web
+- Implementation plan and prompts committed: `docs/multiplicity-encoding/ki21-*.md`
+- This is independent work from the Scheme A fix above
 
 **Stage 5.4 Benchmark Infrastructure** (2026-05-25)
 - `scripts/experiments/bench_multiplicity.sh` — experiment orchestrator for 4 comparisons
