@@ -181,27 +181,13 @@ separately copy into a `compact_state` for the actual cache key.
 Magnitude TBD — benchmark before acting. Only worth doing if profiling shows nibble
 operations are a measurable fraction of total solve time.
 
-### 21. Waste Descriptor Causes O(stock) Updates Per Stock Move
+### 21. ~~Waste Descriptor Causes O(stock) Updates Per Stock Move~~ RESOLVED
 
-**Affected games:** All games with stock/waste (klondike, etc.) using multiplicity cache
-**Status:** Open; deferred until after incremental updates are working
-**Impact:** Performance — stock moves change descriptors of all stock/waste cards unnecessarily
+**Resolved:** 2026-05-27 (PR #4, merged to `multiplicity-encoding`)
 
-The multiplicity encoding uses separate `MLD_IN_STOCK` and `MLD_IN_WASTE` locative
-descriptors for stock and waste cards. When a `stock_k_plus` move deals k cards from
-stock to waste, all k cards change descriptor from `MLD_IN_STOCK` to `MLD_IN_WASTE`.
-This defeats the purpose of incremental updates — the whole point is O(1) per move,
-but stock moves become O(stock_size).
-
-**Fix (deferred):** Collapse `MLD_IN_WASTE` into `MLD_IN_STOCK` for all waste cards
-except the top of waste. Introduce a new `MLD_TOP_OF_WASTE` locative for the single
-card at the waste top (the only waste card that matters for move generation). When
-the waste pointer is 0 (empty waste), no card needs `MLD_TOP_OF_WASTE`.
-
-This mirrors the original flat encoding which used `STARTING` for all stock/waste
-cards. The key insight: only the top-of-waste card is distinguishable from stock
-cards in terms of game state; all other waste cards are unreachable until they
-become the new waste top.
+Collapsed `MLD_IN_WASTE` to top-of-waste only; non-top waste cards use `MLD_IN_STOCK`.
+`stock_k_plus` incremental update is now O(1) (max 4 descriptor changes). 
+`stock_to_all_tableau` remains as fallback — not in scope for this fix.
 
 With this fix, a `stock_k_plus` move changes at most 2 descriptors: the old
 top-of-waste (becomes `MLD_IN_STOCK`) and the new top-of-waste (becomes

@@ -1,6 +1,6 @@
 # PICKUP — multiplicity-encoding branch
 
-**Last updated:** 2026-05-26
+**Last updated:** 2026-05-27
 
 ## What This Branch Is
 
@@ -26,10 +26,14 @@ Stage 5.4 infrastructure ready. Stage 5.4 execution and Stage 6 (auto-dispatch) 
 - Regression test: `SchemeACollapsingPredecessorRegression` in `multiplicity_incremental_test.cpp`
 - All 3 gates pass on macOS and Linux (verified 2026-05-26).
 
-**KI-21 Investigation** (2026-05-26)
-- KI-21 (waste O(stock) descriptor updates) investigated on Claude web
-- Implementation plan and prompts committed: `docs/multiplicity-encoding/ki21-*.md`
-- This is independent work from the Scheme A fix above
+**KI-21 Waste Descriptor Fix** (2026-05-27, merged from PR #4)
+- `MLD_IN_WASTE` collapsed to top-of-waste only; all other waste cards use `MLD_IN_STOCK`
+- `stock_k_plus` incremental update: O(1) instead of O(stock_size) — max 4 descriptor changes
+- Bugs found in review and fixed: count=0 overwrite, missing hole-top handling
+- `trace_mult_vs_flat_klondike` and `trace_mult_vs_flat_canfield` confirmed passing as mult-vs-flat
+- 6 new unit tests, all 3 gates pass on macOS (merged result with Scheme A fix)
+- `stock_to_all_tableau` remains as `mult_fallback = true` (out of scope)
+- Resolves known issue #21
 
 **Stage 5.4 Benchmark Infrastructure** (2026-05-25)
 - `scripts/experiments/bench_multiplicity.sh` — experiment orchestrator for 4 comparisons
@@ -91,7 +95,7 @@ testing (all committed on earlier commits)
 | `src/main/game/cache_interface.h` | use_multiplicity_cache() eligibility |
 | `src/main/game/search-state/game_state.h/cpp` | State class, move logic, mult_desc_at() |
 | `src/test/unit_tests/multiplicity_canonicalisation_test.cpp` | Stage 2C tests (13) |
-| `src/test/unit_tests/multiplicity_incremental_test.cpp` | Stage 4+5 tests (18) |
+| `src/test/unit_tests/multiplicity_incremental_test.cpp` | Stage 4+5 tests (18) + KI-21 tests (6) + Scheme A regression (1) |
 | `scripts/experiments/bench_multiplicity.sh` | Benchmark orchestrator (4 comparisons) |
 | `docs/multiplicity-encoding/stage5-solvability-results.md` | Solvability cross-check results |
 | `docs/multiplicity-encoding/stage5-4-benchmark-plan.md` | Benchmark plan |
