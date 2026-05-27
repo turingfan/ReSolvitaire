@@ -428,4 +428,5 @@ template class solver_impl<FlatPolicy>;
 template class solver_impl<HashOnlyPolicy>;
 template class solver_impl<PredecessorPolicy>;
 template class solver_impl<LRUPolicy>;
+template class solver_impl<MultiplicityPolicy>;
 #endif

@@ -730,6 +730,19 @@ container run --rm -it solvitaire-dev bash
 
 Memory limit for test runs is `-m 7g` due to `flat_cache` mmap virtual address reservation.
 
+**Stale build context (container CLI v0.9):** The `container` CLI's BuildKit builder
+maintains its own context cache that persists across builds. If a build uses stale
+source files despite `--no-cache`, the fix is:
+
+```bash
+container builder delete --force
+# Then rebuild normally:
+./scripts/container-build.sh --test
+```
+
+This destroys and recreates the BuildKit container, clearing all cached contexts.
+The next build will be slower (full `apt install`) but will see current source files.
+
 ---
 
 ## 12. Script Reference

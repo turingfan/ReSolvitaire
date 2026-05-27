@@ -198,6 +198,35 @@ were deleted in Commit 5 of `feature/templated-dispatch`.
 
 ---
 
+## KI-22. Face-Down Pile Bottoms Not Encoded in Multiplicity Locative Descriptors
+
+**Affected game types:** TABLEAU_PILES games (spiderette, east-haven, will-o-the-wisp) with `--cache-type multiplicity`
+**Status:** RESOLVED — fix on `multiplicity-encoding` branch, not yet committed
+**Impact:** Was: false-positive cache hits causing incorrect search behaviour (timeout on solvable instances)
+**Branch:** `multiplicity-encoding` (Stage 2B)
+**Discovered:** 2026-05-18 via trace comparison on spiderette seed 2
+
+**Root cause:** The `multiplicity_descriptor` locative variant (`make_locative(kind)`) did not carry a
+face-down flag. When a face-down card was at the bottom of a tableau pile, it received `in_space(k)`
+identical to a face-up card at the same position. The payload slot byte and Zobrist contribution were
+identical, creating false-positive collisions.
+
+**Discovery method:** Trace comparison (spiderette seed 2, multiplicity vs LRU). Divergence at
+operation 138: multiplicity HIT where LRU MISS. `--trace-find-hash 0x5610b481f1064937` found the
+earlier INSERT at op 43. Board states differ only in 9S face-down status at bottom of pile 1.
+
+**Fix:**
+- `multiplicity_descriptor.h`: `make_locative(kind, fd=false)` — face_down flag on all locatives
+- `multiplicity_descriptor_engine.h`:
+  - `recompute_all()`: pile bottoms pass `c.is_face_down()`
+  - `raw_slot()`: face-down locatives use reflected encoding `255 - (52 + kind)`
+  - `zob_for_card()`: NOT trick applies uniformly to both predecessors and locatives
+- Spec: `multiplicity_encoding_v5.tex` updated to v5.1. Constraint: L ≤ 128 - N (max 18 two-deck piles).
+
+**Validation:** All 3 test gates pass. All 3 TABLEAU_PILES games × 3 seeds match LRU exactly.
+
+---
+
 ## Earlier Resolved Bugs (pre-KI numbering)
 
 The following bugs were fixed before the KI numbering scheme was introduced.

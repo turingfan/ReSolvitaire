@@ -24,6 +24,16 @@ LINUX_REF_BIN_CONTAINER="/05-Executables/reference/solvitaire-trace-reference-li
 # invalidate the COPY layer when source files change, so cached builds
 # silently use stale sources. Use --use-cache to opt in to caching
 # (saves ~30s on apt install, useful on slow networks).
+#
+# IMPORTANT: --no-cache alone is NOT sufficient. The BuildKit builder
+# maintains its own context cache that persists across builds. If the
+# build uses stale source files despite --no-cache, run:
+#
+#   container builder delete --force
+#
+# This destroys and recreates the BuildKit container, clearing all
+# cached build contexts. The next build will be slower (full apt
+# install) but will see the current source files.
 NO_CACHE_FLAG="--no-cache"
 # Memory limit for test runs: 7g required due to mmap virtual address reservation
 # (default flat_cache = 100M entries × 64 bytes = 6.4 GB virtual).
@@ -99,7 +109,8 @@ echo "Using container runtime: $CONTAINER_CMD"
 # Build the image.
 # CACHEBUST=$(date +%s) ensures the COPY layer and everything after it
 # is never reused from cache, so source changes are always picked up.
-# This works even on container CLI v0.9 which ignores --no-cache.
+# Note: if BuildKit still serves stale files, run:
+#   container builder delete --force
 echo "Building image '$IMAGE_NAME'..."
 $CONTAINER_CMD build $NO_CACHE_FLAG --build-arg CACHEBUST="$(date +%s)" -t "$IMAGE_NAME" .
 

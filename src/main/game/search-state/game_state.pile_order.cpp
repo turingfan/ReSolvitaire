@@ -113,9 +113,10 @@ template class game_state_impl<PredecessorPolicy>;
 #elif defined(SOLVITAIRE_HASH_ONLY)
 template class game_state_impl<HashOnlyPolicy>;
 
-#else   // default binary — all four policies
+#else   // default binary — all policies
 template class game_state_impl<FlatPolicy>;
 template class game_state_impl<HashOnlyPolicy>;
 template class game_state_impl<PredecessorPolicy>;
 template class game_state_impl<LRUPolicy>;
+template class game_state_impl<MultiplicityPolicy>;
 #endif

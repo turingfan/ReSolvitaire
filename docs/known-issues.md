@@ -181,6 +181,50 @@ separately copy into a `compact_state` for the actual cache key.
 Magnitude TBD — benchmark before acting. Only worth doing if profiling shows nibble
 operations are a measurable fraction of total solve time.
 
+### 21. ~~Waste Descriptor Causes O(stock) Updates Per Stock Move~~ RESOLVED
+
+**Resolved:** 2026-05-27 (PR #4, merged to `multiplicity-encoding`)
+
+Collapsed `MLD_IN_WASTE` to top-of-waste only; non-top waste cards use `MLD_IN_STOCK`.
+`stock_k_plus` incremental update is now O(1) (max 4 descriptor changes). 
+`stock_to_all_tableau` remains as fallback — not in scope for this fix.
+
+With this fix, a `stock_k_plus` move changes at most 2 descriptors: the old
+top-of-waste (becomes `MLD_IN_STOCK`) and the new top-of-waste (becomes
+`MLD_TOP_OF_WASTE`). The k cards dealt between stock and waste all keep
+`MLD_IN_STOCK` throughout.
+
+**Note:** The existing waste-deal symmetry logic (`waste_deal_sym` in
+`recompute_all()`) already collapses stock and waste to `MLD_IN_STOCK` under
+certain conditions. This fix generalises that approach.
+
+**When to address:** After Stage 5 (incremental with symmetry) is working and
+validated. The fix is a descriptor-level change that is independent of the
+cascade machinery.
+
+### 22. Trace Regression Reference Binaries Need Rebuild (STRACE_EVICT fix)
+
+**Status:** Open; blocking trace regression tests on `multiplicity-encoding` branch
+**Impact:** `trace_regression_level1` and `trace_regression_level2` fail because reference
+binaries were built before the STRACE_EVICT fix
+
+**Root cause:** `generic_flat_cache.h` was missing `STRACE_EVICT()` calls in its
+`do_replacement` overloads. Evictions were counted (`eviction_count++`) but not traced.
+This was fixed on `multiplicity-encoding` (adding STRACE_EVICT to all 5 eviction paths
+across 3 replacement strategies: `insert_simple_tag`, `insert_depth_tag`,
+`insert_predecessor_tag`).
+
+The reference binaries in `05-Executables/reference/` were built from a pre-fix commit
+and emit MISS where the current binaries now correctly emit EVICT. The trace regression
+comparison (`compare_traces.py` in regression mode) sees this as a divergence.
+
+**Fix:** Rebuild reference binaries from a commit that includes the STRACE_EVICT fix.
+This requires the fix to be merged to `dev` first, since reference binaries should be
+built from the stable branch.
+
+**Affected tests:** `trace_regression_level1`, `trace_regression_level2` (6 failures
+out of 160 instances at level 2)
+
 ### 20. Reduced Metamorphic Testing: Flat vs LRU Agreement No Longer Tested
 
 **Status:** Open — test removed; gap acknowledged
@@ -206,4 +250,40 @@ but not at the search-event level.
 
 **Possible future fix:** A test that runs both policies and compares outcomes (not traces)
 on a shared set of instances, or a mode that forces pile ordering on the flat path.
+
+### 23. Suit-Symmetry Detection for Hole Games Not Centralised
+
+**Affected games:** `black-hole` and any future hole-based game types
+**Status:** Open
+**Impact:** Hole games miss suit-symmetry canonicalization unless user explicitly passes
+`--streamliners suit-symmetry` or the game is routed to LRU cache for other reasons
+
+**Root cause:** The LRU cache hasher (`global_cache.h:61-65`, `global_cache.cpp:114-117`)
+auto-detects `rules.hole` and applies suit-symmetry canonicalization regardless of
+streamliner settings. But the dispatch layer (`main.cpp:dispatch_solve()`) computes
+`suit_sym` purely from `streamliner_options` — it does not check `rules.hole`. So when
+streamliners default to `NONE`, `suit_sym = false`, and dispatch routes hole games to
+the flat cache (which cannot canonicalize) or the multiplicity cache (which can
+canonicalize but receives `suit_sym = false` via `descriptor_context`).
+
+The logic is scattered across three layers:
+- **Dispatch** (`main.cpp`, `benchmark.cpp`, `solvability_calc.cpp`): `suit_sym` from
+  streamliner options only — no `rules.hole` check
+- **LRU cache** (`global_cache.h/cpp`): auto-detects `rules.hole` — only cache that does
+- **Multiplicity** (`multiplicity_static_class.h:determine_symmetry_mode()`): correctly
+  maps `rules.hole` → `SUIT_IRRELEVANT`, but only when `suit_sym = true` is passed in
+
+The result is that `rules.hole` as a suit-symmetry trigger is encoded in two places (LRU
+hasher and multiplicity class structure) but not at the dispatch level where it would
+affect cache routing and descriptor context setup.
+
+**Consequence:** Black-hole runs without suit-symmetry deduplication on the default flat
+cache path. Correctness is unaffected — the solver explores more states than necessary.
+With the multiplicity cache (`--cache-type multiplicity`), the same gap applies: the
+engine is told `suit_sym = false` so it uses `symmetry_mode::NONE` (52 classes) instead
+of `SUIT_IRRELEVANT` (13 classes).
+
+**Fix:** Centralise the "is this game inherently suit-symmetric" decision so it is
+computed once and propagated to all layers. See proposal in
+`01-Knowledge-Base/Design-Documents/suit-symmetry-centralisation-proposal.md`.
 

@@ -162,12 +162,16 @@ static solver::result dispatch_run_seed(const sol_rules& rules, int seed,
 #else
     if (force_lru) {
         return run_seed_impl<LRUPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    } else if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
+        return run_seed_impl<MultiplicityPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
     } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
         return run_seed_impl<HashOnlyPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
     } else if (use_predecessor_cache(rules)) {
         return run_seed_impl<PredecessorPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
     } else if (use_new_cache(rules, suit_sym)) {
         return run_seed_impl<FlatPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    } else if (use_multiplicity_cache(rules, suit_sym)) {
+        return run_seed_impl<MultiplicityPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
     } else {
         return run_seed_impl<LRUPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
     }
@@ -194,12 +198,16 @@ static solver::result dispatch_run_deal(const sol_rules& rules,
     (void)cache_type; (void)suit_sym;
     return run_deal_impl<HashOnlyPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
 #else
-    if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
+    if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
+        return run_deal_impl<MultiplicityPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+    } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
         return run_deal_impl<HashOnlyPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
     } else if (use_predecessor_cache(rules)) {
         return run_deal_impl<PredecessorPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
     } else if (use_new_cache(rules, suit_sym)) {
         return run_deal_impl<FlatPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+    } else if (use_multiplicity_cache(rules, suit_sym)) {
+        return run_deal_impl<MultiplicityPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
     } else {
         return run_deal_impl<LRUPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
     }

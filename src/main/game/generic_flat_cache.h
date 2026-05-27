@@ -11,7 +11,7 @@
 //   Policy::cluster         — the struct stored per two-slot bucket (with alignas)
 //   Policy::payload_type    — what game_state provides for identity comparisons
 //   Policy::insert_strategy — tag selecting the replacement-policy overload
-//   Policy::HAS_HASH_GUARD  — bool; true only for PredecessorClusterPolicy
+//   Policy::HAS_HASH_GUARD  — bool; true for Predecessor and Multiplicity
 //
 // Plus static methods:
 //   hash_of(gs), payload_of(gs)            — extract hash and payload
@@ -27,6 +27,7 @@
 #include "cache_interface.h"
 #include "platform_memory.h"
 #include "generic_flat_cache_policies.h"
+#include "../solver/search_trace.h"
 
 #include <vector>
 #include <cstdint>
@@ -193,6 +194,7 @@ private:
             // Both slots full — always evict slot 1
             Policy::write_slot(cl, 1, payload);
             ++eviction_count;
+            STRACE_EVICT();
         }
     }
 
@@ -219,10 +221,12 @@ private:
             Policy::copy_slot(cl, 1, 0);
             Policy::write_slot(cl, 0, payload);
             ++eviction_count;
+            STRACE_EVICT();
         } else {
             // Both full; new entry loses to slot 0 — evict slot 1
             Policy::write_slot(cl, 1, payload);
             ++eviction_count;
+            STRACE_EVICT();
         }
     }
 
@@ -258,11 +262,13 @@ private:
             Policy::set_cascade_guard(cl, hash);      // lines[1].other_hash = hash
             Policy::write_slot(cl, 0, ps);
             ++eviction_count;
+            STRACE_EVICT();
         } else {
             // Both full; new entry overwrites slot 1
             Policy::write_slot(cl, 1, ps);
             Policy::set_slot1_guard(cl, hash);        // lines[0].other_hash = hash
             ++eviction_count;
+            STRACE_EVICT();
         }
     }
 
@@ -291,6 +297,7 @@ private:
 //   CompactStatePolicy: 2 × compact_state (32 B)  = 64 B, aligned 64 B
 //   HashOnlyClusterPolicy:     2 × uint64_t (8 B)         = 16 B
 //   PredecessorClusterPolicy:  2 × cache_line (64 B)      = 128 B, aligned 128 B
+//   MultiplicityClusterPolicy: 2 × descriptor_store (64 B) = 128 B, aligned 128 B
 
 #ifndef SOLVITAIRE_HASH_ONLY
 static_assert(sizeof(generic_flat_cache<CompactStatePolicy>::cluster) == 64,
@@ -306,6 +313,11 @@ static_assert(sizeof(generic_flat_cache<PredecessorClusterPolicy>::cluster) == 1
     "generic_flat_cache<PredecessorClusterPolicy>::cluster must be exactly 128 bytes");
 static_assert(alignof(generic_flat_cache<PredecessorClusterPolicy>::cluster) == 128,
     "generic_flat_cache<PredecessorClusterPolicy>::cluster must be aligned to 128 bytes");
+
+static_assert(sizeof(generic_flat_cache<MultiplicityClusterPolicy>::cluster) == 128,
+    "generic_flat_cache<MultiplicityClusterPolicy>::cluster must be exactly 128 bytes");
+static_assert(alignof(generic_flat_cache<MultiplicityClusterPolicy>::cluster) == 128,
+    "generic_flat_cache<MultiplicityClusterPolicy>::cluster must be aligned to 128 bytes");
 
 
 #endif // SOLVITAIRE_GENERIC_FLAT_CACHE_H

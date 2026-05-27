@@ -26,6 +26,10 @@
 // members are accessed (i.e., in game_state_impl, not here).
 struct compact_state;
 struct hash_descriptor_store;
+template <typename DescStore> class flat_descriptor_engine;
+struct null_descriptor_engine;
+struct multiplicity_descriptor_store;
+class multiplicity_descriptor_engine;
 
 // Forward declarations for cache_type typedefs — full types are defined in
 // generic_flat_cache.h and global_cache.h respectively.
@@ -33,6 +37,7 @@ template <typename P> class generic_flat_cache;
 struct CompactStatePolicy;
 struct HashOnlyClusterPolicy;
 struct PredecessorClusterPolicy;
+struct MultiplicityClusterPolicy;
 class lru_cache;
 
 // ─── FlatPolicy ──────────────────────────────────────────────────────────────
@@ -40,10 +45,12 @@ class lru_cache;
 // hash and the full compact_state payload descriptor.
 
 struct FlatPolicy {
-    static constexpr bool computes_hash        = true;
-    static constexpr bool computes_payload     = true;
-    static constexpr bool skip_pile_ordering   = true;
+    static constexpr bool computes_hash                  = true;
+    static constexpr bool computes_payload               = true;
+    static constexpr bool skip_pile_ordering             = true;
+    static constexpr bool computes_multiplicity_descriptor = false;
     typedef compact_state descriptor_store_type;
+    typedef flat_descriptor_engine<compact_state> descriptor_engine;
     typedef generic_flat_cache<CompactStatePolicy> cache_type;
 };
 
@@ -53,10 +60,12 @@ struct FlatPolicy {
 // instead as a lightweight old-value store for incremental XOR deltas.
 
 struct HashOnlyPolicy {
-    static constexpr bool computes_hash        = true;
-    static constexpr bool computes_payload     = false;
-    static constexpr bool skip_pile_ordering   = true;
+    static constexpr bool computes_hash                  = true;
+    static constexpr bool computes_payload               = false;
+    static constexpr bool skip_pile_ordering             = true;
+    static constexpr bool computes_multiplicity_descriptor = false;
     typedef hash_descriptor_store descriptor_store_type;
+    typedef flat_descriptor_engine<hash_descriptor_store> descriptor_engine;
     typedef generic_flat_cache<HashOnlyClusterPolicy> cache_type;
 };
 
@@ -65,10 +74,12 @@ struct HashOnlyPolicy {
 // Maintains a predecessor-based Zobrist hash and compact_state descriptor.
 
 struct PredecessorPolicy {
-    static constexpr bool computes_hash        = true;
-    static constexpr bool computes_payload     = true;
-    static constexpr bool skip_pile_ordering   = false;
+    static constexpr bool computes_hash                  = true;
+    static constexpr bool computes_payload               = true;
+    static constexpr bool skip_pile_ordering             = false;
+    static constexpr bool computes_multiplicity_descriptor = false;
     typedef compact_state descriptor_store_type;
+    typedef flat_descriptor_engine<compact_state> descriptor_engine;
     typedef generic_flat_cache<PredecessorClusterPolicy> cache_type;
 };
 
@@ -77,12 +88,30 @@ struct PredecessorPolicy {
 // canonicalises pile order internally and does not use Zobrist hashing.
 
 struct LRUPolicy {
-    static constexpr bool computes_hash        = false;
-    static constexpr bool computes_payload     = false;
-    static constexpr bool skip_pile_ordering   = false;
+    static constexpr bool computes_hash                  = false;
+    static constexpr bool computes_payload               = false;
+    static constexpr bool skip_pile_ordering             = false;
+    static constexpr bool computes_multiplicity_descriptor = false;
     struct empty_descriptor_store {};
     typedef empty_descriptor_store descriptor_store_type;
+    typedef null_descriptor_engine descriptor_engine;
     typedef lru_cache cache_type;
+};
+
+// ─── MultiplicityPolicy ──────────────────────────────────────────────────────
+// Multiplicity encoding v4 (from-scratch, no symmetry — Stage 1).
+// Used by generic_flat_cache<MultiplicityClusterPolicy>.
+// Opt-in via --cache-type multiplicity; eligible for single-deck no-symmetry
+// games (same eligibility as FlatPolicy).
+
+struct MultiplicityPolicy {
+    static constexpr bool computes_hash                  = true;
+    static constexpr bool computes_payload               = true;
+    static constexpr bool skip_pile_ordering             = true;
+    static constexpr bool computes_multiplicity_descriptor = true;
+    typedef multiplicity_descriptor_store descriptor_store_type;
+    typedef multiplicity_descriptor_engine descriptor_engine;
+    typedef generic_flat_cache<MultiplicityClusterPolicy> cache_type;
 };
 
 #endif // SOLVITAIRE_CACHE_POLICY_H
