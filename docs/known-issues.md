@@ -2,6 +2,9 @@
 
 This file tracks open issues. Resolved issues are documented in `docs/resolved-bugs/resolved-issues.md`.
 
+**Numbering:** Before assigning a new KI number, check `resolved-issues.md` for the
+highest number already used. Numbers must be unique across both files.
+
 ---
 
 ## Open Issues
