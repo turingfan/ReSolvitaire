@@ -251,3 +251,39 @@ but not at the search-event level.
 **Possible future fix:** A test that runs both policies and compares outcomes (not traces)
 on a shared set of instances, or a mode that forces pile ordering on the flat path.
 
+### 23. Suit-Symmetry Detection for Hole Games Not Centralised
+
+**Affected games:** `black-hole` and any future hole-based game types
+**Status:** Open
+**Impact:** Hole games miss suit-symmetry canonicalization unless user explicitly passes
+`--streamliners suit-symmetry` or the game is routed to LRU cache for other reasons
+
+**Root cause:** The LRU cache hasher (`global_cache.h:61-65`, `global_cache.cpp:114-117`)
+auto-detects `rules.hole` and applies suit-symmetry canonicalization regardless of
+streamliner settings. But the dispatch layer (`main.cpp:dispatch_solve()`) computes
+`suit_sym` purely from `streamliner_options` — it does not check `rules.hole`. So when
+streamliners default to `NONE`, `suit_sym = false`, and dispatch routes hole games to
+the flat cache (which cannot canonicalize) or the multiplicity cache (which can
+canonicalize but receives `suit_sym = false` via `descriptor_context`).
+
+The logic is scattered across three layers:
+- **Dispatch** (`main.cpp`, `benchmark.cpp`, `solvability_calc.cpp`): `suit_sym` from
+  streamliner options only — no `rules.hole` check
+- **LRU cache** (`global_cache.h/cpp`): auto-detects `rules.hole` — only cache that does
+- **Multiplicity** (`multiplicity_static_class.h:determine_symmetry_mode()`): correctly
+  maps `rules.hole` → `SUIT_IRRELEVANT`, but only when `suit_sym = true` is passed in
+
+The result is that `rules.hole` as a suit-symmetry trigger is encoded in two places (LRU
+hasher and multiplicity class structure) but not at the dispatch level where it would
+affect cache routing and descriptor context setup.
+
+**Consequence:** Black-hole runs without suit-symmetry deduplication on the default flat
+cache path. Correctness is unaffected — the solver explores more states than necessary.
+With the multiplicity cache (`--cache-type multiplicity`), the same gap applies: the
+engine is told `suit_sym = false` so it uses `symmetry_mode::NONE` (52 classes) instead
+of `SUIT_IRRELEVANT` (13 classes).
+
+**Fix:** Centralise the "is this game inherently suit-symmetric" decision so it is
+computed once and propagated to all layers. See proposal in
+`01-Knowledge-Base/Design-Documents/suit-symmetry-centralisation-proposal.md`.
+
