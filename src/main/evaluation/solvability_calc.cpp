@@ -205,6 +205,8 @@ solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec ti
         return solve_seed_impl_with_opts<PredecessorPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
     } else if (use_new_cache(rules, suit_sym)) {
         return solve_seed_impl_with_opts<FlatPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+    } else if (use_multiplicity_cache(rules, suit_sym)) {
+        return solve_seed_impl_with_opts<MultiplicityPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
     } else {
         return solve_seed_impl_with_opts<LRUPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
     }

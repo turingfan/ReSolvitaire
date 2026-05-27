@@ -153,6 +153,8 @@ static solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uin
         return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
     } else if (use_new_cache(rules, suit_sym)) {
         return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    } else if (use_multiplicity_cache(rules, suit_sym)) {
+        return solve_game_impl<MultiplicityPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
     } else {
         return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
     }

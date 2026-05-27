@@ -71,11 +71,37 @@ Stage 5.4 infrastructure ready. Stage 5.4 execution and Stage 6 (auto-dispatch) 
 **Stages 0-2C** — Architecture prep, from-scratch hash, suit-symmetry canonicalisation,
 testing (all committed on earlier commits)
 
+## Stage 5.4 — Preliminary Benchmark Results (2026-05-27)
+
+Benchmarks run on remote Linux server (`benchmarks/mult_20260527_102837/`). Key findings:
+
+**Correctness:**
+- **A (incr vs scratch):** All outcomes agree where both completed. Incremental is correct.
+- **B (flat vs mult):** All outcomes agree.
+- **C (lru vs mult):** C_lru completely broken (100% KILLED, 0 results). No valid comparison.
+- **D (lru vs mult, suit-sym):** One disagreement: `klondike-deal-1_527` — mult SOLVED (correct),
+  LRU UNWINNABLE. Confirmed pre-existing LRU suit-symmetry false negative (deal is trivially
+  solvable in 103 nodes without streamliners). Not a mult bug.
+
+**Performance:**
+- **A:** Incremental 2.3x faster than scratch (84.9K vs 37.6K NPS). As expected.
+- **B:** Mult 3.1x slower than flat (58.3K vs 183.3K NPS). Expected overhead.
+- **C:** Invalid — C_lru produced no results.
+- **D (fair comparison, >1s instances where both completed):** 149 instances, mult 486K NPS
+  vs LRU 495K NPS — essentially identical per-node throughput (ratio 0.98). Mult's time
+  advantage comes from exploring fewer nodes (better suit-symmetry deduplication), not
+  faster per-node processing.
+
+**Methodology problems — benchmarking deferred:**
+- High KILLED rates distort aggregate NPS (D_lru: 25% KILLED, D_mult: <1%)
+- Survivorship bias: KILLED instances are the hardest, dropping them inflates LRU's apparent NPS
+- C_lru completely failed (likely OOM or misconfiguration)
+- Proper benchmarking needs redesigned experiment with higher resource limits or PAR2-style metrics
+
 ## What's Next
 
-**Stage 5.4** — Run benchmarks on remote machine (infrastructure ready)
-
-**Stage 6** — Auto-dispatch (multiplicity cache becomes default for eligible games)
+**Stage 6** — Auto-dispatch: Flat where possible, Multiplicity where Flat isn't eligible
+(including suit-symmetry games), LRU as final fallback. `--force-lru` still works.
 
 **Reference binaries** — Need rebuild after STRACE_EVICT fix is on dev (known issue #22)
 
