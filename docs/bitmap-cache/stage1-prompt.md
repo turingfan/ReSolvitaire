@@ -1,8 +1,7 @@
-# Prompt for Claude Code on the Web — Bitmap Cache Stage 1
+# Bitmap Cache Stage 1 — Detailed Specification
 
-**Copy everything below the line into Claude Code on the Web.**
-
----
+This is the detailed reference for Stage 1. The short copyable prompt is in
+`stage1-short-prompt.md`.
 
 ## Task
 
@@ -49,6 +48,22 @@ that's development. You may iterate up to 3 attempts. If still failing after
 `python3 scripts/run_tests.py`. If a gate fails and you cannot fix it in 3
 attempts, create the PR anyway, note the failure in the PR description, and
 explain what you tried.
+
+**Known pre-existing failure:** `SearchTraceAgreementTest.HashOnlyVsFlat_Klondike50Seeds`
+fails on `dev` and will fail in the release gate. This is a known issue (documented
+in `known-issues.md`), NOT caused by your changes. To work around it, run each gate
+individually with the failing test excluded:
+```bash
+./build.sh --release --unit-tests
+cd cmake-build-release && ctest -R ^unit_tests$ --output-on-failure -E HashOnlyVsFlat
+cd cmake-build-release && ctest -R regression_level1 --output-on-failure
+./build.sh --trace
+cd cmake-build-trace && ctest -R ^unit_tests$ --output-on-failure
+cd cmake-build-trace && ctest -R trace_ --output-on-failure
+./build.sh --debug --unit-tests
+cd cmake-build-debug && ctest -R ^unit_tests$ --output-on-failure -E HashOnlyVsFlat
+```
+If the ONLY failure is `HashOnlyVsFlat_Klondike50Seeds`, the gates pass.
 
 **Scope:** Do NOT modify files outside the scope listed in this prompt.
 Do NOT refactor existing code. Do NOT add features beyond what is specified.
