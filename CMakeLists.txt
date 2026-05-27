@@ -497,7 +497,7 @@ if(SOLVITAIRE_TRACE)
     if(NOT DEFINED CACHE{TRACE_REF_BIN} OR TRACE_REF_BIN STREQUAL "")
         if(APPLE)
             set(_default_ref_bin
-                "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-mac-arm64")
+                "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-mac-arm64-20260527-b302620")
         else()
             set(_default_ref_bin
                 "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-linux-amd64")
