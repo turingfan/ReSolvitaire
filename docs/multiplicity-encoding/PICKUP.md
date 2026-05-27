@@ -33,7 +33,7 @@ Stage 5.4 infrastructure ready. Stage 5.4 execution and Stage 6 (auto-dispatch) 
 - `trace_mult_vs_flat_klondike` and `trace_mult_vs_flat_canfield` confirmed passing as mult-vs-flat
 - 6 new unit tests, all 3 gates pass on macOS (merged result with Scheme A fix)
 - `stock_to_all_tableau` remains as `mult_fallback = true` (out of scope)
-- Resolves known issue #21
+- Resolves known issue #24
 
 **Stage 5.4 Benchmark Infrastructure** (2026-05-25)
 - `scripts/experiments/bench_multiplicity.sh` — experiment orchestrator for 4 comparisons
@@ -60,7 +60,7 @@ Stage 5.4 infrastructure ready. Stage 5.4 execution and Stage 6 (auto-dispatch) 
 **STRACE_EVICT Bug Fix** (2026-05-24)
 - `generic_flat_cache.h` was missing `STRACE_EVICT()` in `do_replacement` overloads
 - Fixed by adding trace events to all 5 eviction paths
-- Known issue #22: trace regression reference binaries need rebuild
+- Known issue #25: trace regression reference binaries — now resolved (2026-05-27)
 
 **Stage 4 — Incremental Updates, NONE Mode** (committed: `05f45a8`)
 - O(k) fast path via `incremental_update_none()`, 10 unit tests
@@ -103,7 +103,7 @@ Benchmarks run on remote Linux server (`benchmarks/mult_20260527_102837/`). Key 
 **Stage 6** — Auto-dispatch: Flat where possible, Multiplicity where Flat isn't eligible
 (including suit-symmetry games), LRU as final fallback. `--force-lru` still works.
 
-**Reference binaries** — Need rebuild after STRACE_EVICT fix is on dev (known issue #22)
+**Reference binaries** — Rebuilt on macOS and Linux (known issue #25, resolved 2026-05-27)
 
 ## Key Files
 

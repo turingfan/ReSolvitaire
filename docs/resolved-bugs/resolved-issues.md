@@ -227,6 +227,45 @@ earlier INSERT at op 43. Board states differ only in 9S face-down status at bott
 
 ---
 
+## KI-24. Waste Descriptor Causes O(stock) Updates Per Stock Move
+
+**Status:** RESOLVED — PR #4 merged to `multiplicity-encoding`, 2026-05-27; landed on `dev` via merge
+**Impact:** Was: O(stock_size) descriptor updates per `stock_k_plus` move in multiplicity engine
+
+**Root cause:** Every card in the waste pile received `MLD_IN_WASTE`, so a `stock_k_plus`
+move that dealt k cards to the waste required updating all waste card descriptors.
+
+**Fix:** Collapsed `MLD_IN_WASTE` to top-of-waste only. Non-top waste cards use
+`MLD_IN_STOCK`. `stock_k_plus` incremental update is now O(1) — max 4 descriptor changes
+(old top becomes `MLD_IN_STOCK`, new top becomes `MLD_IN_WASTE`, plus the dealt cards
+which already had `MLD_IN_STOCK`). `stock_to_all_tableau` remains as fallback
+(`mult_fallback = true`).
+
+**Bugs found in review:** count=0 overwrite (played_cid == pre_move_waste_top_cid guard
+missing), missing hole-top `MLD_PERMANENT` handling. Both fixed before merge.
+
+---
+
+## KI-25. Trace Regression Reference Binaries Need Rebuild (STRACE_EVICT fix)
+
+**Status:** RESOLVED — dev commits `5f4a907`, `a1c4c9f`, 2026-05-27
+**Impact:** Was: `trace_regression_level1` and `trace_regression_level2` failing due to
+reference binaries built before STRACE_EVICT fix
+
+**Root cause:** `generic_flat_cache.h` was missing `STRACE_EVICT()` calls in its
+`do_replacement` overloads. Reference binaries emitted MISS where current binaries
+correctly emit EVICT.
+
+**Fix:** Rebuilt reference binaries from `dev` after multiplicity-encoding merge:
+- macOS: `solvitaire-trace-reference-mac-arm64-20260527-b302620`
+- Linux: `solvitaire-trace-reference-linux-arm64-20260527-5f4a907`
+
+Old binaries preserved in `05-Executables/reference/`. CMakeLists.txt and
+container-build.sh updated to point to new binaries. Both trace regression levels
+pass on macOS and Linux.
+
+---
+
 ## Earlier Resolved Bugs (pre-KI numbering)
 
 The following bugs were fixed before the KI numbering scheme was introduced.
