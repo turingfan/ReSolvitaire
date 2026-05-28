@@ -63,6 +63,18 @@ public:
         return is_set;
     }
 
+    // Template insert/contains — called directly by solver_impl<BitmapPolicy>
+    // (zero virtual dispatch in the DFS hot path).
+    template <typename GS>
+    bool insert_t(const GS& gs) {
+        return !probe_and_insert(gs.get_zobrist_hash());
+    }
+
+    template <typename GS>
+    bool contains_t(const GS& gs) const {
+        return probe(gs.get_zobrist_hash());
+    }
+
     // cache_interface overrides
     // Returns true if newly inserted (cache_interface convention: true = newly inserted)
     bool insert(const game_state& gs) override {
