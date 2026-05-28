@@ -272,6 +272,11 @@ target_compile_definitions(solvitaire-lru PRIVATE SOLVITAIRE_LRU_ONLY)
 set_property(TARGET solvitaire-lru PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_link_libraries(solvitaire-lru PRIVATE ${Boost_LIBRARIES})
 
+add_executable(solvitaire-bitmap    ${main} ${sources})
+target_compile_definitions(solvitaire-bitmap PRIVATE SOLVITAIRE_BITMAP_ONLY)
+set_property(TARGET solvitaire-bitmap PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+target_link_libraries(solvitaire-bitmap PRIVATE ${Boost_LIBRARIES})
+
 # Benchmark-only variant: multiplicity cache with incremental updates disabled
 # (forces recompute_all on every move). Used by Comparison A in bench_multiplicity.sh
 # to measure the speedup from incremental updates.
@@ -706,6 +711,16 @@ add_test(NAME regression_level1_lru
         "--force-lru" "--skip-ineligible" "--enforce-node-counts"
 )
 set_tests_properties(regression_level1_lru PROPERTIES TIMEOUT 900)
+
+add_test(NAME regression_level1_bitmap
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/regression_runner.py"
+        "--exe" "$<TARGET_FILE:solvitaire-bitmap>"
+        "--instances" "${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/level1"
+        "--oracle" "${CMAKE_CURRENT_SOURCE_DIR}/tests/oracles/level1_bitmap.json"
+        "--skip-ineligible" "--enforce-node-counts"
+)
+set_tests_properties(regression_level1_bitmap PROPERTIES TIMEOUT 900)
 
 # Levels 2-5 — seed-based; no --instances
 add_test(NAME regression_level2_flat
