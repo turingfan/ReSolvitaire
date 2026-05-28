@@ -125,9 +125,9 @@ struct BitmapPolicy {
     static constexpr bool computes_payload                 = true;
     static constexpr bool skip_pile_ordering               = true;
     static constexpr bool computes_multiplicity_descriptor = false;
-    typedef compact_state                          descriptor_store_type;
-    typedef flat_descriptor_engine<compact_state>  descriptor_engine;
-    typedef bitmap_cache                           cache_type;
+    using descriptor_store_type = compact_state;
+    using descriptor_engine    = flat_descriptor_engine<compact_state>;
+    using cache_type           = bitmap_cache;
 };
 
 #endif // SOLVITAIRE_CACHE_POLICY_H
