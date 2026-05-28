@@ -143,6 +143,11 @@ static solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uin
     if (!use_new_cache(rules, suit_sym))
         throw std::runtime_error("hash-only binary: game requires LRU cache");
     return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+#elif defined(SOLVITAIRE_BITMAP_ONLY)
+    (void)force_lru; (void)cache_type; (void)suit_sym;
+    if (!use_bitmap_cache(rules))
+        throw std::runtime_error("bitmap-only binary: game not eligible for bitmap cache");
+    return solve_game_impl<BitmapPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
 #else
     if (force_lru) {
         return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
