@@ -197,6 +197,11 @@ solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec ti
 #elif defined(SOLVITAIRE_HASH_ONLY)
     (void)cache_type; (void)suit_sym;
     return solve_seed_impl_with_opts<HashOnlyPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
+#elif defined(SOLVITAIRE_BITMAP_ONLY)
+    (void)cache_type; (void)suit_sym;
+    if (!use_bitmap_cache(rules))
+        throw std::runtime_error("bitmap-only binary: game not eligible for bitmap cache");
+    return solve_seed_impl_with_opts<BitmapPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
 #else
     if (cache_type == "bitmap" && use_bitmap_cache(rules)) {
         return solve_seed_impl_with_opts<BitmapPolicy>(seed, timeout, rules, cache_capacity, stream_opt);
