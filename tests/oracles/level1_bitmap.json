@@ -142,9 +142,9 @@
     "black-hole_seed_7663082.json": {
         "instance_name": "level1/instances/black-hole_seed_7663082.json",
         "solution_type": "solved",
-        "states_searched": 64469,
-        "unique_states": 45287,
-        "backtracks": 64418,
+        "states_searched": 64385,
+        "unique_states": 45232,
+        "backtracks": 64334,
         "max_depth": 51,
         "game_type": "black-hole",
         "streamliner": "both"
@@ -412,9 +412,9 @@
     "eight-off_seed_101.json": {
         "instance_name": "level1/instances/eight-off_seed_101.json",
         "solution_type": "unsolvable",
-        "states_searched": 52628,
-        "unique_states": 22846,
-        "backtracks": 52627,
+        "states_searched": 52610,
+        "unique_states": 22836,
+        "backtracks": 52609,
         "max_depth": 471,
         "game_type": "eight-off",
         "streamliner": "none"
@@ -442,10 +442,10 @@
     "eight-off_seed_2272.json": {
         "instance_name": "level1/instances/eight-off_seed_2272.json",
         "solution_type": "unsolvable",
-        "states_searched": 219171,
-        "unique_states": 65201,
-        "backtracks": 219170,
-        "max_depth": 1529,
+        "states_searched": 219031,
+        "unique_states": 65167,
+        "backtracks": 219030,
+        "max_depth": 1521,
         "game_type": "eight-off",
         "streamliner": "none"
     },
@@ -462,9 +462,9 @@
     "eight-off_seed_2708.json": {
         "instance_name": "level1/instances/eight-off_seed_2708.json",
         "solution_type": "unsolvable",
-        "states_searched": 47481,
-        "unique_states": 17733,
-        "backtracks": 47480,
+        "states_searched": 47417,
+        "unique_states": 17711,
+        "backtracks": 47416,
         "max_depth": 111,
         "game_type": "eight-off",
         "streamliner": "none"
@@ -712,9 +712,9 @@
     "free-cell_seed_206991.json": {
         "instance_name": "level1/instances/free-cell_seed_206991.json",
         "solution_type": "unsolvable",
-        "states_searched": 474957,
-        "unique_states": 154407,
-        "backtracks": 474956,
+        "states_searched": 474446,
+        "unique_states": 154213,
+        "backtracks": 474445,
         "max_depth": 919,
         "game_type": "free-cell",
         "streamliner": "none"
@@ -722,9 +722,9 @@
     "free-cell_seed_275993.json": {
         "instance_name": "level1/instances/free-cell_seed_275993.json",
         "solution_type": "unsolvable",
-        "states_searched": 160023,
-        "unique_states": 62901,
-        "backtracks": 160022,
+        "states_searched": 159926,
+        "unique_states": 62873,
+        "backtracks": 159925,
         "max_depth": 1612,
         "game_type": "free-cell",
         "streamliner": "none"
@@ -752,10 +752,10 @@
     "free-cell_seed_36.json": {
         "instance_name": "level1/instances/free-cell_seed_36.json",
         "solution_type": "solved",
-        "states_searched": 153404,
-        "unique_states": 68576,
-        "backtracks": 143434,
-        "max_depth": 9970,
+        "states_searched": 151984,
+        "unique_states": 67921,
+        "backtracks": 142769,
+        "max_depth": 9215,
         "game_type": "free-cell",
         "streamliner": "both"
     },
@@ -802,9 +802,9 @@
     "golf_seed_1000002.json": {
         "instance_name": "level1/instances/golf_seed_1000002.json",
         "solution_type": "solved",
-        "states_searched": 510884,
-        "unique_states": 323033,
-        "backtracks": 510833,
+        "states_searched": 495072,
+        "unique_states": 313527,
+        "backtracks": 495021,
         "max_depth": 51,
         "game_type": "golf",
         "streamliner": "none"
@@ -822,9 +822,9 @@
     "golf_seed_1000006.json": {
         "instance_name": "level1/instances/golf_seed_1000006.json",
         "solution_type": "unsolvable",
-        "states_searched": 204751,
-        "unique_states": 147645,
-        "backtracks": 204750,
+        "states_searched": 203259,
+        "unique_states": 146469,
+        "backtracks": 203258,
         "max_depth": 48,
         "game_type": "golf",
         "streamliner": "none"
@@ -842,9 +842,9 @@
     "golf_seed_1000014.json": {
         "instance_name": "level1/instances/golf_seed_1000014.json",
         "solution_type": "unsolvable",
-        "states_searched": 127997,
-        "unique_states": 76230,
-        "backtracks": 127996,
+        "states_searched": 127731,
+        "unique_states": 76061,
+        "backtracks": 127730,
         "max_depth": 44,
         "game_type": "golf",
         "streamliner": "none"
@@ -862,9 +862,9 @@
     "golf_seed_1000021.json": {
         "instance_name": "level1/instances/golf_seed_1000021.json",
         "solution_type": "unsolvable",
-        "states_searched": 76547,
-        "unique_states": 52928,
-        "backtracks": 76546,
+        "states_searched": 76507,
+        "unique_states": 52893,
+        "backtracks": 76506,
         "max_depth": 36,
         "game_type": "golf",
         "streamliner": "none"
@@ -872,20 +872,20 @@
     "golf_seed_1000024.json": {
         "instance_name": "level1/instances/golf_seed_1000024.json",
         "solution_type": "unsolvable",
-        "states_searched": 168202,
-        "unique_states": 110731,
-        "backtracks": 168201,
+        "states_searched": 168006,
+        "unique_states": 110534,
+        "backtracks": 168005,
         "max_depth": 50,
         "game_type": "golf",
         "streamliner": "none"
     },
     "golf_seed_1000029.json": {
         "instance_name": "level1/instances/golf_seed_1000029.json",
-        "solution_type": "solved",
-        "states_searched": 124172,
-        "unique_states": 79060,
-        "backtracks": 124121,
-        "max_depth": 51,
+        "solution_type": "unsolvable",
+        "states_searched": 1766970,
+        "unique_states": 1079949,
+        "backtracks": 1766969,
+        "max_depth": 50,
         "game_type": "golf",
         "streamliner": "none"
     },
@@ -952,9 +952,9 @@
     "klondike-deal-1_seed_750264.json": {
         "instance_name": "level1/instances/klondike-deal-1_seed_750264.json",
         "solution_type": "solved",
-        "states_searched": 798075,
-        "unique_states": 309395,
-        "backtracks": 797983,
+        "states_searched": 796969,
+        "unique_states": 309014,
+        "backtracks": 796877,
         "max_depth": 92,
         "game_type": "klondike-deal-1",
         "streamliner": "both"
@@ -1122,20 +1122,20 @@
     "spanish-patience_seed_24.json": {
         "instance_name": "level1/instances/spanish-patience_seed_24.json",
         "solution_type": "solved",
-        "states_searched": 1011399,
-        "unique_states": 372252,
-        "backtracks": 639148,
-        "max_depth": 372251,
+        "states_searched": 19040168,
+        "unique_states": 6646298,
+        "backtracks": 12393872,
+        "max_depth": 6646296,
         "game_type": "spanish-patience",
         "streamliner": "both"
     },
     "spanish-patience_seed_45.json": {
         "instance_name": "level1/instances/spanish-patience_seed_45.json",
         "solution_type": "solved",
-        "states_searched": 981013,
-        "unique_states": 297754,
-        "backtracks": 683259,
-        "max_depth": 297754,
+        "states_searched": 751067,
+        "unique_states": 229743,
+        "backtracks": 521324,
+        "max_depth": 229743,
         "game_type": "spanish-patience",
         "streamliner": "both"
     },
@@ -1171,11 +1171,11 @@
     },
     "spanish-patience_seed_6.json": {
         "instance_name": "level1/instances/spanish-patience_seed_6.json",
-        "solution_type": "timeout",
-        "states_searched": 91425715,
-        "unique_states": 19663733,
-        "backtracks": 71777483,
-        "max_depth": 19648232,
+        "solution_type": "solved",
+        "states_searched": 72776225,
+        "unique_states": 14953753,
+        "backtracks": 57845087,
+        "max_depth": 14931138,
         "game_type": "spanish-patience",
         "streamliner": "both"
     },
@@ -1191,11 +1191,11 @@
     },
     "spanish-patience_seed_8.json": {
         "instance_name": "level1/instances/spanish-patience_seed_8.json",
-        "solution_type": "timeout",
-        "states_searched": 120623562,
-        "unique_states": 25025680,
-        "backtracks": 95600454,
-        "max_depth": 25023108,
+        "solution_type": "solved",
+        "states_searched": 139546095,
+        "unique_states": 27830308,
+        "backtracks": 111731342,
+        "max_depth": 27814753,
         "game_type": "spanish-patience",
         "streamliner": "both"
     },

@@ -15,18 +15,18 @@ class bitmap_cache : public cache_interface {
     mutable uint64_t hit_count    = 0;
     uint64_t         insert_count = 0;
 
-    // Compute the largest power-of-2 bit count that fits in capacity_bytes.
-    static uint64_t compute_num_bits(uint64_t capacity_bytes) {
-        uint64_t total_bits = capacity_bytes <= (UINT64_MAX / 8) ? capacity_bytes * 8 : UINT64_MAX;
-        if (total_bits == 0) return 0;
-        return 1ULL << (63 - __builtin_clzll(total_bits));
+    // Compute the largest power-of-2 bit count that fits in max_entries.
+    // The argument is a number of entries (bits), NOT bytes.
+    static uint64_t compute_num_bits(uint64_t max_entries) {
+        if (max_entries == 0) return 0;
+        return 1ULL << (63 - __builtin_clzll(max_entries));
     }
 
 public:
-    explicit bitmap_cache(uint64_t capacity_bytes)
-        : buffer(compute_num_bits(capacity_bytes) == 0 ? 1 : compute_num_bits(capacity_bytes) / 8),
-          num_bits(compute_num_bits(capacity_bytes)),
-          mask(num_bits == 0 ? 0 : compute_num_bits(capacity_bytes) - 1)
+    explicit bitmap_cache(uint64_t max_entries)
+        : buffer(compute_num_bits(max_entries) == 0 ? 1 : compute_num_bits(max_entries) / 8),
+          num_bits(compute_num_bits(max_entries)),
+          mask(num_bits == 0 ? 0 : compute_num_bits(max_entries) - 1)
     {
     }
 

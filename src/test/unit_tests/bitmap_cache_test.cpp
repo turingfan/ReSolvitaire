@@ -14,14 +14,15 @@ protected:
 };
 
 TEST_F(BitmapCacheTest, Construction_PowerOf2Rounding) {
-    // 1000 bytes = 8000 bits → largest power-of-2 ≤ 8000 is 4096
-    EXPECT_EQ(bitmap_cache(1000).get_num_bits(), uint64_t(4096));
-    // 1024 bytes = 8192 bits = 2^13 → exactly 8192
-    EXPECT_EQ(bitmap_cache(1024).get_num_bits(), uint64_t(8192));
-    // 128 bytes = 1024 bits = 2^10 → exactly 1024
-    EXPECT_EQ(bitmap_cache(128).get_num_bits(),  uint64_t(1024));
-    // 256 bytes = 2048 bits = 2^11 → exactly 2048
-    EXPECT_EQ(bitmap_cache(256).get_num_bits(),  uint64_t(2048));
+    // Argument is max_entries (= number of bits). Rounded down to power of 2.
+    // 1000 entries → largest power-of-2 ≤ 1000 is 512
+    EXPECT_EQ(bitmap_cache(1000).get_num_bits(), uint64_t(512));
+    // 1024 entries = 2^10 → exactly 1024
+    EXPECT_EQ(bitmap_cache(1024).get_num_bits(), uint64_t(1024));
+    // 5000 entries → largest power-of-2 ≤ 5000 is 4096
+    EXPECT_EQ(bitmap_cache(5000).get_num_bits(), uint64_t(4096));
+    // 256 entries = 2^8 → exactly 256
+    EXPECT_EQ(bitmap_cache(256).get_num_bits(),  uint64_t(256));
 }
 
 TEST_F(BitmapCacheTest, Construction_ZeroCapacity) {
@@ -38,7 +39,7 @@ TEST_F(BitmapCacheTest, ProbeAndInsert_NewHash_ReturnsFalse) {
 }
 
 TEST_F(BitmapCacheTest, ProbeAndInsert_DifferentHashes) {
-    bitmap_cache cache(1024);  // 8192 bits; mask = 8191
+    bitmap_cache cache(1024);  // 1024 bits; mask = 1023
     // hash 0 → bit 0, hash 1 → bit 1: guaranteed distinct slots
     EXPECT_FALSE(cache.probe_and_insert(uint64_t(0)));
     EXPECT_FALSE(cache.probe_and_insert(uint64_t(1)));
@@ -88,7 +89,7 @@ TEST_F(BitmapCacheTest, Clear_ResetsState) {
 }
 
 TEST_F(BitmapCacheTest, CacheInterface_Insert) {
-    bitmap_cache cache(1 << 20);  // 1 MB = 8M bits
+    bitmap_cache cache(1 << 20);  // 1M entries (bits)
     sol_rules rules = rules_parser::from_preset("free-cell");
     game_state gs(rules, 1, game_state::streamliner_options::NONE);
 
