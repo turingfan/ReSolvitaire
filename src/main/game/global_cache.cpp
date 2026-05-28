@@ -114,7 +114,7 @@ void cached_game_state::add_card(card c, const GS& gs) {
     bool is_suit_symmetry = (gs.rules.foundations_present
             && (gs.stream_opts == GS::streamliner_options::SUIT_SYMMETRY
                 || gs.stream_opts == GS::streamliner_options::BOTH))
-            || gs.rules.hole;
+            || gs.rules.inherent_suit_symmetry();
 
     if (is_suit_symmetry) {
         switch (gs.rules.build_pol) {

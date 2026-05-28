@@ -1414,7 +1414,8 @@ descriptor_context game_state_impl<Policy>::make_desc_ctx() const {
                                stock, waste,
                                original_reserve.empty() ? nullptr : &original_reserve };
     ctx.suit_sym = (stream_opts == streamliner_options::SUIT_SYMMETRY
-                    || stream_opts == streamliner_options::BOTH);
+                    || stream_opts == streamliner_options::BOTH
+                    || rules.inherent_suit_symmetry());
     return ctx;
 }
 

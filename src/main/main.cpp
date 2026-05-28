@@ -125,7 +125,8 @@ static solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uin
                              bool force_lru,
                              const std::string& cache_type) {
     bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
-                 || str_opts == game_state::streamliner_options::BOTH;
+                 || str_opts == game_state::streamliner_options::BOTH
+                 || rules.inherent_suit_symmetry();
 
 #if defined(SOLVITAIRE_LRU_ONLY)
     (void)cache_type; (void)force_lru; (void)suit_sym;
