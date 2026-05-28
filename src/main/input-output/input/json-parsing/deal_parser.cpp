@@ -442,4 +442,15 @@ template void deal_parser::parse_sequences<MultiplicityPolicy>(game_state_impl<M
 template void deal_parser::parse_accordion<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
 template bool deal_parser::parse_foundations<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&, const rapidjson::Document&);
 template void deal_parser::fill_foundations<MultiplicityPolicy>(game_state_impl<MultiplicityPolicy>&);
+template void deal_parser::parse<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_tableau_piles<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_hole<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_cells<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_stock<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_waste<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_reserve<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_sequences<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::parse_accordion<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template bool deal_parser::parse_foundations<BitmapPolicy>(game_state_impl<BitmapPolicy>&, const rapidjson::Document&);
+template void deal_parser::fill_foundations<BitmapPolicy>(game_state_impl<BitmapPolicy>&);
 #endif

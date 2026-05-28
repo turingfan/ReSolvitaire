@@ -34,6 +34,7 @@
 #include "input-output/output/log_helper.h"
 #include "game/cache_interface.h"
 #include "game/cache_policy.h"
+#include "game/bitmap_cache.h"
 #include "game/zobrist.h"
 #include "solver/solver.h"
 #include "solver/search_trace.h"
@@ -145,6 +146,8 @@ static solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uin
 #else
     if (force_lru) {
         return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    } else if (cache_type == "bitmap" && use_bitmap_cache(rules)) {
+        return solve_game_impl<BitmapPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
     } else if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
         return solve_game_impl<MultiplicityPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
     } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {

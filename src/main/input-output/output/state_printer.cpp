@@ -294,4 +294,10 @@ template void state_printer::print_sequences<MultiplicityPolicy>(ostream&, const
 template void state_printer::print_top_of_piles<MultiplicityPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<MultiplicityPolicy>&);
 template void state_printer::print_top_of_pile<MultiplicityPolicy>(ostream&, pile::ref, const game_state_impl<MultiplicityPolicy>&);
 template void state_printer::print_accordion<MultiplicityPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<MultiplicityPolicy>&);
+template ostream& state_printer::print<BitmapPolicy>(ostream&, const game_state_impl<BitmapPolicy>&);
+template void state_printer::print_piles<BitmapPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<BitmapPolicy>&);
+template void state_printer::print_sequences<BitmapPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<BitmapPolicy>&);
+template void state_printer::print_top_of_piles<BitmapPolicy>(ostream&, const vector<pile::ref>&, const game_state_impl<BitmapPolicy>&);
+template void state_printer::print_top_of_pile<BitmapPolicy>(ostream&, pile::ref, const game_state_impl<BitmapPolicy>&);
+template void state_printer::print_accordion<BitmapPolicy>(ostream&, const list<pile::ref>&, const game_state_impl<BitmapPolicy>&);
 #endif
