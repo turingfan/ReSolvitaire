@@ -21,7 +21,7 @@ public:
           num_bits(0),
           mask(0)
     {
-        uint64_t total_bits = capacity_bytes * 8;
+        uint64_t total_bits = capacity_bytes <= (UINT64_MAX / 8) ? capacity_bytes * 8 : UINT64_MAX;
         if (total_bits == 0) return;
         // Round down to largest power of 2 <= total_bits
         num_bits = 1ULL << (63 - __builtin_clzll(total_bits));
