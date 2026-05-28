@@ -183,7 +183,8 @@ solvability_calc::seed_result solvability_calc::solve_seed(int seed, millisec ti
                                                           game_state::streamliner_options stream_opt,
                                                           const std::string& cache_type) {
     bool suit_sym = stream_opt == game_state::streamliner_options::SUIT_SYMMETRY
-                 || stream_opt == game_state::streamliner_options::BOTH;
+                 || stream_opt == game_state::streamliner_options::BOTH
+                 || rules.inherent_suit_symmetry();
 
 #if defined(SOLVITAIRE_LRU_ONLY)
     (void)cache_type; (void)suit_sym;

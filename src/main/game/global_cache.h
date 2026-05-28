@@ -62,7 +62,7 @@ struct hasher {
               (gs.rules.foundations_present
                   && (gs.stream_opts == GS::streamliner_options::SUIT_SYMMETRY
                       || gs.stream_opts == GS::streamliner_options::BOTH))
-              || gs.rules.hole) {}
+              || gs.rules.inherent_suit_symmetry()) {}
 
     std::size_t operator() (const cached_game_state&) const;
 

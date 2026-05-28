@@ -112,9 +112,9 @@
     "black-hole_seed_6848018.json": {
         "instance_name": "level1/instances/black-hole_seed_6848018.json",
         "solution_type": "unsolvable",
-        "states_searched": 29,
-        "unique_states": 22,
-        "backtracks": 28,
+        "states_searched": 22,
+        "unique_states": 18,
+        "backtracks": 21,
         "max_depth": 4,
         "game_type": "black-hole",
         "streamliner": "none"
@@ -122,9 +122,9 @@
     "black-hole_seed_6859056.json": {
         "instance_name": "level1/instances/black-hole_seed_6859056.json",
         "solution_type": "unsolvable",
-        "states_searched": 43,
-        "unique_states": 38,
-        "backtracks": 42,
+        "states_searched": 38,
+        "unique_states": 33,
+        "backtracks": 37,
         "max_depth": 6,
         "game_type": "black-hole",
         "streamliner": "none"
@@ -132,9 +132,9 @@
     "black-hole_seed_7113129.json": {
         "instance_name": "level1/instances/black-hole_seed_7113129.json",
         "solution_type": "unsolvable",
-        "states_searched": 41,
-        "unique_states": 39,
-        "backtracks": 40,
+        "states_searched": 39,
+        "unique_states": 34,
+        "backtracks": 38,
         "max_depth": 5,
         "game_type": "black-hole",
         "streamliner": "none"
@@ -182,9 +182,9 @@
     "black-hole_seed_8391072.json": {
         "instance_name": "level1/instances/black-hole_seed_8391072.json",
         "solution_type": "unsolvable",
-        "states_searched": 1702,
-        "unique_states": 1014,
-        "backtracks": 1701,
+        "states_searched": 1068,
+        "unique_states": 642,
+        "backtracks": 1067,
         "max_depth": 14,
         "game_type": "black-hole",
         "streamliner": "none"
@@ -902,9 +902,9 @@
     "golf_seed_1000002.json": {
         "instance_name": "level1/instances/golf_seed_1000002.json",
         "solution_type": "solved",
-        "states_searched": 511157,
-        "unique_states": 323229,
-        "backtracks": 511106,
+        "states_searched": 448901,
+        "unique_states": 285878,
+        "backtracks": 448850,
         "max_depth": 51,
         "game_type": "golf",
         "streamliner": "none"
@@ -912,9 +912,9 @@
     "golf_seed_1000003.json": {
         "instance_name": "level1/instances/golf_seed_1000003.json",
         "solution_type": "solved",
-        "states_searched": 16405,
-        "unique_states": 11190,
-        "backtracks": 16354,
+        "states_searched": 14196,
+        "unique_states": 9946,
+        "backtracks": 14145,
         "max_depth": 51,
         "game_type": "golf",
         "streamliner": "none"
@@ -922,9 +922,9 @@
     "golf_seed_1000006.json": {
         "instance_name": "level1/instances/golf_seed_1000006.json",
         "solution_type": "unsolvable",
-        "states_searched": 204789,
-        "unique_states": 147680,
-        "backtracks": 204788,
+        "states_searched": 187007,
+        "unique_states": 131532,
+        "backtracks": 187006,
         "max_depth": 48,
         "game_type": "golf",
         "streamliner": "none"
@@ -932,9 +932,9 @@
     "golf_seed_1000008.json": {
         "instance_name": "level1/instances/golf_seed_1000008.json",
         "solution_type": "solved",
-        "states_searched": 16066,
-        "unique_states": 11921,
-        "backtracks": 16015,
+        "states_searched": 15078,
+        "unique_states": 10964,
+        "backtracks": 15027,
         "max_depth": 51,
         "game_type": "golf",
         "streamliner": "none"
@@ -942,9 +942,9 @@
     "golf_seed_1000014.json": {
         "instance_name": "level1/instances/golf_seed_1000014.json",
         "solution_type": "unsolvable",
-        "states_searched": 127997,
-        "unique_states": 76230,
-        "backtracks": 127996,
+        "states_searched": 107574,
+        "unique_states": 64217,
+        "backtracks": 107573,
         "max_depth": 44,
         "game_type": "golf",
         "streamliner": "none"
@@ -952,9 +952,9 @@
     "golf_seed_1000020.json": {
         "instance_name": "level1/instances/golf_seed_1000020.json",
         "solution_type": "solved",
-        "states_searched": 1887,
-        "unique_states": 1325,
-        "backtracks": 1836,
+        "states_searched": 1486,
+        "unique_states": 1030,
+        "backtracks": 1435,
         "max_depth": 51,
         "game_type": "golf",
         "streamliner": "none"
@@ -962,9 +962,9 @@
     "golf_seed_1000021.json": {
         "instance_name": "level1/instances/golf_seed_1000021.json",
         "solution_type": "unsolvable",
-        "states_searched": 76547,
-        "unique_states": 52928,
-        "backtracks": 76546,
+        "states_searched": 63486,
+        "unique_states": 44829,
+        "backtracks": 63485,
         "max_depth": 36,
         "game_type": "golf",
         "streamliner": "none"
@@ -972,9 +972,9 @@
     "golf_seed_1000024.json": {
         "instance_name": "level1/instances/golf_seed_1000024.json",
         "solution_type": "unsolvable",
-        "states_searched": 168264,
-        "unique_states": 110760,
-        "backtracks": 168263,
+        "states_searched": 140283,
+        "unique_states": 94652,
+        "backtracks": 140282,
         "max_depth": 50,
         "game_type": "golf",
         "streamliner": "none"
@@ -982,9 +982,9 @@
     "golf_seed_1000029.json": {
         "instance_name": "level1/instances/golf_seed_1000029.json",
         "solution_type": "solved",
-        "states_searched": 124172,
-        "unique_states": 79060,
-        "backtracks": 124121,
+        "states_searched": 84787,
+        "unique_states": 54466,
+        "backtracks": 84736,
         "max_depth": 51,
         "game_type": "golf",
         "streamliner": "none"
@@ -992,9 +992,9 @@
     "golf_seed_1000041.json": {
         "instance_name": "level1/instances/golf_seed_1000041.json",
         "solution_type": "unsolvable",
-        "states_searched": 32556,
-        "unique_states": 25391,
-        "backtracks": 32555,
+        "states_searched": 28331,
+        "unique_states": 21304,
+        "backtracks": 28330,
         "max_depth": 45,
         "game_type": "golf",
         "streamliner": "none"

@@ -114,6 +114,10 @@ struct sol_rules {
     uint8_t accordion_size;
     std::vector<std::pair<direction, uint8_t>> accordion_moves;
     std::vector<accordion_policy> accordion_pol;
+
+    /// True if this game's rules make all suits interchangeable regardless
+    /// of user-specified streamliners (e.g. hole-based games).
+    bool inherent_suit_symmetry() const { return hole; }
 };
 
 #endif //SOLVITAIRE_SOL_RULES_H
