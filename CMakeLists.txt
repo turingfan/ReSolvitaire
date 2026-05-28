@@ -136,6 +136,7 @@ set(sources_test_unit
         src/test/unit_tests/predecessor_cache_test.cpp
         src/test/unit_tests/generic_flat_cache_compile_test.cpp
         src/test/unit_tests/generic_flat_cache_test.cpp
+        src/test/unit_tests/bitmap_cache_test.cpp
         src/test/unit_tests/search_trace_test.cpp
         src/test/unit_tests/search_trace_agreement_test.cpp
         src/test/unit_tests/multiplicity_canonicalisation_test.cpp
