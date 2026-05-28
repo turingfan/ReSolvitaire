@@ -33,6 +33,7 @@
 
 #include "solver.h"
 #include "search_trace.h"
+#include "../game/bitmap_cache.h"
 #include "../game/move.h"
 #include "../input-output/output/log_helper.h"
 #include "../input-output/output/state_printer.h"
@@ -429,4 +430,5 @@ template class solver_impl<HashOnlyPolicy>;
 template class solver_impl<PredecessorPolicy>;
 template class solver_impl<LRUPolicy>;
 template class solver_impl<MultiplicityPolicy>;
+template class solver_impl<BitmapPolicy>;
 #endif
