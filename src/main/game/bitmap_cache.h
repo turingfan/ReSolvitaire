@@ -15,17 +15,19 @@ class bitmap_cache : public cache_interface {
     mutable uint64_t hit_count    = 0;
     uint64_t         insert_count = 0;
 
+    // Compute the largest power-of-2 bit count that fits in capacity_bytes.
+    static uint64_t compute_num_bits(uint64_t capacity_bytes) {
+        uint64_t total_bits = capacity_bytes <= (UINT64_MAX / 8) ? capacity_bytes * 8 : UINT64_MAX;
+        if (total_bits == 0) return 0;
+        return 1ULL << (63 - __builtin_clzll(total_bits));
+    }
+
 public:
     explicit bitmap_cache(uint64_t capacity_bytes)
-        : buffer(capacity_bytes == 0 ? 1 : capacity_bytes),
-          num_bits(0),
-          mask(0)
+        : buffer(compute_num_bits(capacity_bytes) == 0 ? 1 : compute_num_bits(capacity_bytes) / 8),
+          num_bits(compute_num_bits(capacity_bytes)),
+          mask(num_bits == 0 ? 0 : compute_num_bits(capacity_bytes) - 1)
     {
-        uint64_t total_bits = capacity_bytes <= (UINT64_MAX / 8) ? capacity_bytes * 8 : UINT64_MAX;
-        if (total_bits == 0) return;
-        // Round down to largest power of 2 <= total_bits
-        num_bits = 1ULL << (63 - __builtin_clzll(total_bits));
-        mask = num_bits - 1;
     }
 
     // Test-and-set. Returns true if bit was ALREADY set (hit), false if newly set (miss).
