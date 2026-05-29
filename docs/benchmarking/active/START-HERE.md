@@ -8,25 +8,26 @@ For the full rationalisation plan, see
 
 ---
 
-> **Known rough edges (being fixed in Stage 2)**
+> **Stage 2 updates (2026-05-29)**
 >
-> - **Worker-count safety:** `benchmark_orchestrator.py` defaults workers to
->   `multiprocessing.cpu_count()`. On many-core machines that can spawn hundreds
->   of processes (each worker forks Python → `/usr/bin/time` → solver). Do NOT
->   set `--workers` to a large value without budgeting RAM: each concurrent solver
->   holds a flat-cache mmap (~several GB). This has crashed machines. Use a
->   conservative value (e.g. `--workers 4`) until Stage 2 adds memory-aware
->   concurrency.
-> - **SIGTERM / kill caveat:** `run_benchmark.py`'s safety-valve SIGTERM is sent
->   to the immediate child process only (the `/usr/bin/time` wrapper), not the
->   whole process group. The solver grandchild can be orphaned. Runs that hit the
->   safety valve appear as `TERMINATED` or `KILLED` in the CSV, not as clean
->   `TIMEOUT`. The goal is that every hard instance ends as `TIMEOUT`. Stage 2
->   will fix the process-group signalling.
-> - **`compare_benchmarks.py` vs R analysis layer:** the role and continued use of
->   `scripts/compare_benchmarks.py` relative to `analysis/benchmark.R` is under
->   evaluation in Stage 2. Until that is resolved, use the R layer (documented
->   below) as the canonical analysis path.
+> - **Worker-count safety (T2/T3, now fixed):** `benchmark_orchestrator.py`
+>   defaults workers to a **memory-aware cap** (floor(total_RAM × 80% / 3 GB))
+>   and drives jobs via **GNU parallel** (`--jobs N --memfree 3G`).  The old
+>   `multiprocessing.cpu_count()` default is gone.  Print the computed cap and
+>   the limiting factor before any run starts.  A warning is printed if
+>   `--workers` exceeds the safe ceiling (but the run is not refused).
+> - **Chunk timeout (T2, now fixed):** each `run_benchmark.py` chunk has a
+>   Python-side hard ceiling.  A wedged chunk is SIGTERM'd → SIGKILL'd and
+>   recorded as failed; the pool continues.
+> - **Full-matrix guard rail (T5):** the 14-game × 500-seed GAME_CONFIGS_FULL
+>   matrix requires `--full` to opt in.  The default scope is GAME_CONFIGS_QUICK
+>   (5 games, 50 seeds, 30 s).
+> - **SIGTERM / kill (T1, already fixed):** process-group kill is the standard
+>   path — solver + `/usr/bin/time` share a session; `os.killpg` reaches both.
+>   Partial stdout is always captured and classified.
+> - **`compare_benchmarks.py` vs R analysis layer:** `compare_benchmarks.py`
+>   was removed (deprecated).  Use the R layer (`analysis/summary.R`,
+>   `analysis/benchmark.R`, `analysis/compare_labels.R`) as the canonical path.
 
 ---
 
@@ -62,33 +63,53 @@ rules, oracle-driven runs, legacy comparison).
 
 ## 2. Parallel multi-game / multi-binary run
 
-Fan out across multiple game types and solver binaries in parallel; produce
-`combined.csv` for the `ReSolvitaire-bench` hook.
+**Prerequisites:** [GNU parallel](https://www.gnu.org/software/parallel/) must
+be on `PATH`.  Install it with `brew install parallel` (macOS),
+`apt-get install parallel` (Debian/Ubuntu), or `yum install parallel`
+(RHEL/CentOS).  `--dry-run` works without `parallel` installed.
+
+Fan out across multiple game types and solver binaries in parallel (via GNU
+parallel), producing `combined.csv` for the `ReSolvitaire-bench` hook.
 
 ```bash
+# Default scope: GAME_CONFIGS_QUICK (5 games, 50 seeds, 30 s)
+# Workers: automatically memory-bounded (see output for computed cap)
 python3 scripts/benchmark_orchestrator.py \
     --solver-dir cmake-build-release/bin \
-    --workers 4 \
     --output-dir results/$(date +%Y%m%d)
 ```
 
-This discovers `solvitaire`, `solvitaire-flat`, `solvitaire-hash-only`,
-`solvitaire-lru` in `--solver-dir` and runs all game configurations in
-`GAME_CONFIGS_FULL` (14 games, 500 seeds, 20-minute timeout per instance).
-The final merged file is `<output-dir>/combined.csv`.
+The script prints the computed worker count and limiting factor before running.
+Workers default to `min(cpu_count//2, floor(total_RAM × 80% / 3 GB))`.
+Use `--workers N` to override (a warning is printed if N exceeds the safe cap,
+but the run is not refused).
 
-**Warning — see the "Known rough edges" box above before setting `--workers`.**
-The full `GAME_CONFIGS_FULL` matrix is very long; use `--games` and `--seeds` to
-scope down for a quick test:
+**Opt-in to full matrix (`--full`):** the full `GAME_CONFIGS_FULL` matrix
+(14 games × 500 seeds × 20-min timeout) requires `--full`:
 
 ```bash
-# Quick smoke test: 2 games, 10 seeds, 2 workers
+python3 scripts/benchmark_orchestrator.py \
+    --solver-dir cmake-build-release/bin --full \
+    --output-dir results/$(date +%Y%m%d)
+```
+
+**Dry run** (no binaries or `parallel` needed):
+
+```bash
+python3 scripts/benchmark_orchestrator.py --dry-run \
+    --solver-dir cmake-build-release/bin \
+    --games free-cell klondike --seeds 1-10
+```
+
+Quick scope override:
+
+```bash
+# Quick smoke test: 2 games, 10 seeds, auto workers
 python3 scripts/benchmark_orchestrator.py \
     --solver-dir cmake-build-release/bin \
     --games free-cell klondike \
     --seeds 1-10 \
     --timeout 30000 \
-    --workers 2 \
     --output-dir /tmp/smoke
 ```
 

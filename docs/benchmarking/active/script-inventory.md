@@ -1,6 +1,6 @@
 # Surviving Benchmark Script Inventory
 
-**As of:** 2026-05-29 (Stage 1 complete; Stage 2 in progress — T1/T8/T9/T10 landed)
+**As of:** 2026-05-29 (Stage 1 complete; Stage 2 in progress — T1/T2/T3/T8/T9/T10 landed)
 **See also:** [START-HERE.md](START-HERE.md) for usage examples, [csv_schema.md](csv_schema.md) for the CSV contract.
 
 Status key:
@@ -17,7 +17,7 @@ Status key:
 | Script | One-line job | Inputs | Outputs | Status |
 |---|---|---|---|---|
 | `scripts/run_benchmark.py` | Runs the solver on a seed range or set of JSON instance files, times each run with `perf_counter`, measures peak RSS via `/usr/bin/time`, and writes the 21-column CSV. | `--solver` binary, `--type`/`--instances`, `--seeds`, `--timeout`; optional `--streamliner`, `--cache-capacity`, `--label`, `--warmup`, `--iterations` | One CSV row per timed run; optional JSON sidecar via `--output-json` | `core` |
-| `scripts/benchmark_orchestrator.py` | Parallel fan-out over `run_benchmark.py` across multiple game types and solver variant binaries; merges per-chunk CSVs into a single `combined.csv` for the bench hook. | `--solver-dir` (variant binaries) or `--solver`; `--workers`, `--output-dir`; optional `--games`, `--seeds`, `--timeout` | `<output-dir>/combined.csv` + per-chunk CSVs | `core` |
+| `scripts/benchmark_orchestrator.py` | Parallel fan-out over `run_benchmark.py` across multiple game types and solver variant binaries; merges per-chunk CSVs into a single `combined.csv` for the bench hook. Worker engine: **GNU parallel** (`--jobs N --memfree 3G`); workers default to memory-aware cap (`floor(total_RAM × 80% / 3 GB)`). Full 14-game matrix requires `--full` (guard rail T5). Per-chunk hard timeout via `bench_lib.process` kill discipline (T2). `--dry-run` shows plan without executing. | `--solver-dir` (variant binaries) or `--solver`; `--workers`, `--output-dir`; optional `--games`, `--seeds`, `--timeout`, `--full`, `--dry-run`, `--chunk-timeout` | `<output-dir>/combined.csv` + per-chunk CSVs | `core` |
 | `scripts/oracle_to_benchmark_cmds.py` | Reads a regression oracle JSON and emits one `run_benchmark.py` shell command per matching entry (first with header, rest with `--no-header --append`), for piping to `bash`. | `--oracle` JSON file, `--solution-type` filter, `--solver`, `--timeout`, `--warmup`, `--iterations`, `--output`; optional solver flags after `--` | Shell commands printed to stdout | `core` |
 | `scripts/bench_lib/process.py` | Shared library (not a CLI): `run_with_deadline()` — process-group kill discipline used by `run_benchmark.py`. Solver `--timeout` authoritative; 1.5× Python deadline; SIGTERM→grace→SIGKILL to the group; always captures partial output. Unit tests in `bench_lib/test_process.py`. | (imported by runners) | `RunResult` | `core` (lib) |
 
@@ -27,7 +27,7 @@ Status key:
 
 | Script | One-line job | Inputs | Outputs | Status |
 |---|---|---|---|---|
-| `scripts/experiments/bench_multiplicity.sh` | Runs four phases (A–D) comparing multiplicity cache against flat and LRU variants, chunking seeds and parallelising via `xargs -P`; shells out to `run_benchmark.py` per chunk. | `--phase`, `--seeds`, `--games`, `--workers`, `--timeout`, `--dry-run`; reads binaries from `cmake-build-release/bin/` | Per-phase CSV files in `$BENCH_RUN_DIR` | `experiment` |
+| `scripts/experiments/bench_multiplicity.sh` | Runs four phases (A–D) comparing multiplicity cache against flat and LRU variants, chunking seeds and parallelising via **GNU parallel** (replaced `xargs -P`). Workers default to memory-aware safe cap; a warning is printed if `--workers` exceeds the cap. Requires `parallel` on PATH; `--dry-run` works without it. | `--phase`, `--seeds`, `--games`, `--workers`, `--timeout`, `--dry-run`; reads binaries from `cmake-build-release/bin/` | Per-phase CSV files in `$BENCH_RUN_DIR` | `experiment` |
 | `scripts/experiments/tuesday-night-redux.sh` | Runs 35 flat-cache-eligible game types (50 seeds, warmup 1, median of 3, 60 s timeout) via `run_benchmark.py` and merges into `combined.csv`; intended to be run through `bench`. | `$SOLVER`, `$SEEDS`, `$TIMEOUT`, `$WARMUP`, `$ITERATIONS`, `$BENCH_RUN_DIR` (set by bench) | `$BENCH_RUN_DIR/combined.csv` | `experiment` |
 | `scripts/experiments/bench_level5_unwinnable.sh` | Benchmarks all flat-eligible unwinnable Level 5 instances across four solver variants (default, flat, lru, legacy) using `oracle_to_benchmark_cmds.py`. | `$RESULTS_DIR` (positional, optional); reads `tests/oracles/level5.json`; expects binaries in `cmake-build-release/bin/` and legacy binary at `$LEGACY_BIN` | Per-variant CSV files in `$RESULTS_DIR` | `experiment` |
 

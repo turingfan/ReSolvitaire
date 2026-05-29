@@ -2,37 +2,81 @@
 """
 benchmark_orchestrator.py — Parallel multi-game, multi-solver benchmark orchestrator.
 
-Wraps the core `run_benchmark.py` script. It partitions the benchmark configurations
-and seed ranges into chunks, invoking `run_benchmark.py` across multiple parallel
-workers to maximize throughput on many-core machines.
+Wraps the core `run_benchmark.py` script.  It partitions benchmark
+configurations and seed ranges into chunks, then drives them via GNU
+``parallel`` across memory-bounded workers.
 
 Usage — variant binaries (recommended):
-    python3 scripts/benchmark_orchestrator.py \
-        --solver-dir cmake-build-release/bin \
-        --workers 32 \
+    python3 scripts/benchmark_orchestrator.py \\
+        --solver-dir cmake-build-release/bin \\
+        --output-dir results/$(date +%Y%m%d)
+
+    # Default scope is GAME_CONFIGS_QUICK.  For the full 14-game matrix:
+    python3 scripts/benchmark_orchestrator.py \\
+        --solver-dir cmake-build-release/bin --full \\
         --output-dir results/$(date +%Y%m%d)
 
 Usage — single binary with cache-type flags (legacy):
-    python3 scripts/benchmark_orchestrator.py \
-        --solver cmake-build-release/bin/solvitaire \
-        --workers 32 \
+    python3 scripts/benchmark_orchestrator.py \\
+        --solver cmake-build-release/bin/solvitaire \\
         --output-dir results/$(date +%Y%m%d)
 
-In --solver-dir mode, each variant binary (solvitaire, solvitaire-flat,
-solvitaire-hash-only, solvitaire-lru) is run directly as its own configuration.
-Ineligible game/solver combinations are skipped gracefully.
-Use --solvers to restrict to a subset of the discovered binaries.
+Concurrency
+-----------
+Workers are bounded by a memory-aware cap (D2/D3):
+
+    max_safe = floor(total_RAM × 0.80 / 3 GB)
+    jobs     = min(requested_or_default, 64, max_safe)
+
+Each chunk also has a hard ceiling (T2) to prevent a wedged run_benchmark.py
+from hanging a worker forever:
+
+    chunk_ceiling = ceil(seeds_in_chunk × solver_timeout_s × 1.5 × CHUNK_MARGIN)
+
+where CHUNK_MARGIN = 1.5 (outer scheduling slack on top of the per-seed
+1.5× grace already built into bench_lib.process).  This is conservative: the
+per-seed 1.5× is enforced *inside* run_benchmark.py so the chunk ceiling is
+really just a last-resort backstop.
+
+On overrun the whole run_benchmark.py process group is SIGTERM'd then
+SIGKILL'd via bench_lib.process.run_with_deadline; the chunk is recorded as
+failed; the pool continues.
+
+Guard rails (T5)
+----------------
+- The full GAME_CONFIGS_FULL matrix (14 × 4 solvers × 500 seeds × 20-min
+  timeout) is EXPLICIT OPT-IN via ``--full``.  The default scope is
+  GAME_CONFIGS_QUICK (5 games, 50 seeds, 30 s).
+- ``--dry-run`` prints the planned job count, memory budget, and command list
+  without executing anything (does not require built binaries or ``parallel``).
 """
 
 import argparse
 import csv
 import json
-import multiprocessing
+import math
 import os
+import platform
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime
+
+# ---------------------------------------------------------------------------
+# Add scripts/ to sys.path so bench_lib is importable when run from project root
+# ---------------------------------------------------------------------------
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from bench_lib.process import run_with_deadline
+from bench_lib.concurrency import (
+    JobsResult,
+    compute_jobs,
+    get_total_ram_bytes,
+    BYTES_PER_WORKER,
+    RAM_FRACTION,
+    HARD_CAP,
+)
 
 # ---------------------------------------------------------------------------
 # Game configurations
@@ -87,49 +131,105 @@ LEGACY_CACHE_CONFIGS = [
     ("force-lru",  ["--force-lru"],               False),
 ]
 
+# ---------------------------------------------------------------------------
+# Chunk timeout formula (T2)
+# ---------------------------------------------------------------------------
+# Per-seed allowance = solver_timeout_s × 1.5 (the bench_lib.process deadline
+# already applies this, so run_benchmark.py will exit after 1.5× per seed at
+# most in normal operation).  We add a further CHUNK_MARGIN outer factor to
+# cover process startup/teardown overhead per chunk.
+#
+# chunk_ceiling_s = ceil(seeds_in_chunk × solver_timeout_s × 1.5 × CHUNK_MARGIN)
+#
+# This is conservative: a chunk of 10 seeds at 1200 s timeout each →
+#   10 × 1200 × 1.5 × 1.5 = 27,000 s (~7.5 hours) ceiling.
+# That sounds long but is correct for the full matrix.  A wedged chunk will
+# be killed at most one chunk_ceiling after it started.
+CHUNK_MARGIN: float = 1.5
 
-def run_chunk(args):
-    """Worker function: calls run_benchmark.py for a chunk of seeds."""
-    run_bench_script, solver, game_type, seed_start, seed_end, timeout_ms, streamliner, label, solver_args, skip_ineligible, kwargs = args
+# Minimum chunk ceiling in seconds (prevent absurdly short timeouts for quick games)
+MIN_CHUNK_CEILING_S: float = 120.0
 
-    chunk_base = os.path.join(kwargs["output_dir"], f"chunk_{game_type}_{label}_{seed_start}_{seed_end}")
-    chunk_csv = f"{chunk_base}.csv"
-    chunk_json = f"{chunk_base}.json"
 
-    cmd = [
-        sys.executable, run_bench_script,
-        "--solver", solver,
-        "--type", game_type,
-        "--seeds", f"{seed_start}-{seed_end}",
-        "--output", chunk_csv,
-        "--output-json", chunk_json,
-        "--no-summary", # "--iterations", 3 , "--warmup", 1,
-        "--label", label,
-    ]
-    if streamliner and streamliner != "none":
-        cmd.extend(["--streamliner", streamliner])
-    if timeout_ms:
-        cmd.extend(["--timeout", str(timeout_ms)])
-    if kwargs.get("cache_capacity"):
-        cmd.extend(["--cache-capacity", str(kwargs["cache_capacity"])])
-    if skip_ineligible:
-        cmd.append("--skip-ineligible")
-    if solver_args:
-        cmd.append("--")
-        cmd.extend(solver_args)
+def chunk_ceiling_s(seeds_in_chunk: int, timeout_ms: int) -> float:
+    """Compute the per-chunk hard ceiling in seconds.
 
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True)
-        if proc.returncode != 0:
-            print(f"[Error] Chunk failed ({game_type} seeds {seed_start}-{seed_end} {label}):", file=sys.stderr)
-            print(proc.stderr, file=sys.stderr)
-            return {"success": False, "csv": chunk_csv, "json": chunk_json}
-    except Exception as e:
-        print(f"[Exception] Chunk failed ({game_type}): {e}", file=sys.stderr)
+    Formula:
+        ceiling = max(MIN_CHUNK_CEILING_S,
+                      ceil(seeds × (timeout_ms / 1000) × 1.5 × CHUNK_MARGIN))
+
+    The inner 1.5× factor accounts for the per-seed deadline already applied by
+    bench_lib.process.run_with_deadline (so run_benchmark.py completes each
+    seed within 1.5× its timeout in normal operation).  CHUNK_MARGIN is an
+    additional outer scheduling buffer.
+    """
+    per_seed_wall_s = (timeout_ms / 1000.0) * 1.5
+    ceiling = math.ceil(seeds_in_chunk * per_seed_wall_s * CHUNK_MARGIN)
+    return max(MIN_CHUNK_CEILING_S, float(ceiling))
+
+
+# ---------------------------------------------------------------------------
+# Per-chunk runner (T2)
+# ---------------------------------------------------------------------------
+
+def run_chunk(cmd, chunk_csv, chunk_json, label, timeout_s):
+    """Run one run_benchmark.py chunk with a hard wall-clock ceiling.
+
+    Uses bench_lib.process.run_with_deadline so the entire process group
+    (run_benchmark.py + /usr/bin/time + solver) is killed together on overrun.
+
+    Parameters
+    ----------
+    cmd:
+        Full command list for run_benchmark.py.
+    chunk_csv:
+        Expected output CSV path (used to detect whether partial output exists).
+    chunk_json:
+        Expected output JSON path.
+    label:
+        Human-readable chunk label for log messages.
+    timeout_s:
+        Hard ceiling in seconds for this chunk.
+
+    Returns
+    -------
+    dict with keys: success (bool), csv (str), json (str).
+    """
+    result = run_with_deadline(
+        cmd,
+        solver_timeout_s=timeout_s,  # ceiling in seconds; 1.5× is already inside
+        sigterm_grace_s=30.0,
+    )
+
+    if result.disposition in ("KILLED_AFTER_SIGTERM", "KILLED_HARD"):
+        print(
+            f"[KILLED] Chunk {label} overran {timeout_s:.0f}s ceiling "
+            f"(disposition={result.disposition}) — recording as failed.",
+            file=sys.stderr,
+        )
+        if result.stdout.strip():
+            print(
+                f"  Partial stdout ({len(result.stdout)} chars) discarded "
+                f"(chunk CSV may be incomplete).",
+                file=sys.stderr,
+            )
+        return {"success": False, "csv": chunk_csv, "json": chunk_json}
+
+    if result.returncode != 0:
+        print(
+            f"[Error] Chunk failed ({label}): exit {result.returncode}",
+            file=sys.stderr,
+        )
+        if result.stderr.strip():
+            print(result.stderr, file=sys.stderr)
         return {"success": False, "csv": chunk_csv, "json": chunk_json}
 
     return {"success": True, "csv": chunk_csv, "json": chunk_json}
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def chunk_range(start, end, max_chunk_size=10):
     """Yield successive chunk ranges."""
@@ -155,8 +255,60 @@ def merge_csvs(dest_file, csv_files):
             os.remove(fname)
 
 
+def require_parallel(dry_run: bool) -> str:
+    """Return the path to GNU parallel, or exit with an actionable error.
+
+    In --dry-run mode this check is skipped (parallel is not needed to show
+    the plan).
+    """
+    if dry_run:
+        return "parallel"  # placeholder — not actually invoked
+    path = shutil.which("parallel")
+    if path is None:
+        print(
+            "ERROR: GNU parallel is not on PATH.\n"
+            "Install it with:\n"
+            "  macOS:  brew install parallel\n"
+            "  Debian/Ubuntu: apt-get install parallel\n"
+            "  RHEL/CentOS:   yum install parallel  (or dnf install parallel)\n"
+            "Then re-run.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return path
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main():
-    parser = argparse.ArgumentParser(description="Parallel multi-game orchestrator for run_benchmark.py")
+    parser = argparse.ArgumentParser(
+        description="Parallel multi-game orchestrator for run_benchmark.py",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Concurrency:
+  Workers default to min(cpu_count//2, memory_safe_cap).  Pass --workers N to
+  override; a warning is printed if N exceeds the memory-safe ceiling, but the
+  run proceeds at the safe number.
+
+  Memory-safe cap: floor(total_RAM × 0.80 / 3 GB) — based on ~3 GB resident
+  per worker (solver + Python + /usr/bin/time).
+
+Guard rails:
+  --full         Opt-in to the full GAME_CONFIGS_FULL matrix (14 games, 500 seeds,
+                 20-min timeout).  Default scope is GAME_CONFIGS_QUICK.
+  --dry-run      Print the planned job count, memory budget, and command list;
+                 do not execute anything.  Does not require built binaries or
+                 GNU parallel to be installed.
+
+Chunk timeout (T2):
+  Each chunk has a hard ceiling:
+    ceiling = max(120 s, ceil(seeds × timeout_ms/1000 × 1.5 × 1.5))
+  On overrun the entire process group is SIGTERM'd → SIGKILL'd; the chunk is
+  recorded as failed; the pool continues.  Pass --chunk-timeout to override.
+""",
+    )
 
     # Primary: multi-binary mode
     parser.add_argument("--solver-dir", default=None,
@@ -178,37 +330,135 @@ def main():
                         default=["auto", "hash-only", "force-lru"],
                         help="Cache configurations for legacy --solver mode.")
 
-    parser.add_argument("--workers", type=int, default=multiprocessing.cpu_count(),
-                        help="Number of chunks to run concurrently (default: all CPUs)")
+    # Scope
+    parser.add_argument("--full", action="store_true",
+                        help="OPT-IN to the full GAME_CONFIGS_FULL matrix "
+                             "(14 games × 500 seeds × 20-min timeout). "
+                             "Default scope is GAME_CONFIGS_QUICK (5 games, 50 seeds, 30 s).")
+    parser.add_argument("--games", nargs="+",
+                        help="Run only these game types")
+    parser.add_argument("--seeds", default=None,
+                        help="Override seed range as N-M (e.g. 1-100)")
+    parser.add_argument("--timeout", type=int, default=None,
+                        help="Override timeout per instance in ms")
+
+    # Concurrency
+    parser.add_argument("--workers", type=int, default=None,
+                        help="Number of parallel workers (default: memory-aware safe value). "
+                             "A warning is printed if this exceeds the memory-safe ceiling.")
+    parser.add_argument("--chunk-timeout", type=int, default=None,
+                        help="Hard ceiling per chunk in seconds (default: computed from seeds × timeout).")
+
+    # Output
     parser.add_argument("--output-dir", default="results/remote",
                         help="Directory for output CSVs")
     parser.add_argument("--cache-capacity", type=int, default=None,
                         help="Cache capacity in bytes (default: solver default)")
-    parser.add_argument("--quick", action="store_true",
-                        help="Quick mode: subset of games, fewer seeds")
-    parser.add_argument("--games", nargs="+",
-                        help="Run only these game types")
+
+    # Dry run
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Print the planned job count, memory budget, and command list "
+                             "without executing anything.")
+
     args = parser.parse_args()
 
-    if not args.solver_dir and not args.solver:
+    dry_run = args.dry_run
+
+    if not dry_run and not args.solver_dir and not args.solver:
         print("Error: either --solver-dir or --solver is required", file=sys.stderr)
         sys.exit(1)
 
-    os.makedirs(args.output_dir, exist_ok=True)
-    bench_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_benchmark.py")
-    if not os.path.exists(bench_script):
-        print(f"Error: {bench_script} not found.", file=sys.stderr)
-        sys.exit(1)
+    # ---------------------------------------------------------------------------
+    # Check GNU parallel is available (skip in dry-run)
+    # ---------------------------------------------------------------------------
+    parallel_bin = require_parallel(dry_run)
 
-    game_configs = GAME_CONFIGS_QUICK if args.quick else GAME_CONFIGS_FULL
+    # ---------------------------------------------------------------------------
+    # Memory-aware job count (D2/D3)
+    # ---------------------------------------------------------------------------
+    total_ram = get_total_ram_bytes()
+    if total_ram == 0:
+        # Could not determine RAM; fall back to conservative default
+        import multiprocessing
+        default_workers = max(1, multiprocessing.cpu_count() // 2)
+        print(
+            f"WARNING: Could not determine total RAM; defaulting to {default_workers} workers. "
+            f"Use --workers to override.",
+            file=sys.stderr,
+        )
+        effective_requested = args.workers if args.workers is not None else default_workers
+        jobs_result = JobsResult(
+            jobs=effective_requested,
+            max_safe=effective_requested,
+            limiting_factor="unknown RAM (conservative default)",
+            warnings=[],
+        )
+    else:
+        import multiprocessing
+        default_workers = max(1, min(
+            multiprocessing.cpu_count() // 2,
+            # Also respect memory ceiling for the default
+            max(1, int(total_ram * RAM_FRACTION / BYTES_PER_WORKER)),
+        ))
+        effective_requested = args.workers if args.workers is not None else default_workers
+        jobs_result = compute_jobs(
+            requested=effective_requested,
+            total_ram_bytes=total_ram,
+            cache_capacity_bytes=args.cache_capacity or 0,
+        )
+
+    for w in jobs_result.warnings:
+        print(w, file=sys.stderr)
+
+    num_workers = jobs_result.jobs
+
+    # ---------------------------------------------------------------------------
+    # Game and solver configs
+    # ---------------------------------------------------------------------------
+    if args.full:
+        game_configs = GAME_CONFIGS_FULL
+        scope_label = "FULL (14 games, 500 seeds, 20-min timeout each)"
+    else:
+        game_configs = GAME_CONFIGS_QUICK
+        scope_label = "QUICK (5 games, 50 seeds, 30 s timeout each) — use --full for full matrix"
+
+    # Apply --seeds override if given
+    seed_lo = seed_hi = None
+    if args.seeds:
+        parts = args.seeds.split("-")
+        try:
+            seed_lo, seed_hi = int(parts[0]), int(parts[1])
+        except (IndexError, ValueError):
+            print(f"Error: --seeds must be N-M (e.g. 1-100), got '{args.seeds}'", file=sys.stderr)
+            sys.exit(1)
+        game_configs = [
+            (g, (seed_lo, seed_hi), t, s, n) for (g, _, t, s, n) in game_configs
+        ]
+
+    # Apply --timeout override if given
+    if args.timeout is not None:
+        game_configs = [
+            (g, seeds, args.timeout, s, n) for (g, seeds, _, s, n) in game_configs
+        ]
+
     if args.games:
         game_configs = [g for g in game_configs if g[0] in args.games]
         if not game_configs:
-            game_configs = [(g, (1, 50), 60000, "auto-foundations", "") for g in args.games]
+            # Game not in current scope; synthesize a minimal entry.
+            # Use the --seeds override if given, else a small default.
+            fb_seeds = (seed_lo, seed_hi) if args.seeds else (1, 50)
+            fb_timeout = args.timeout if args.timeout is not None else 60000
+            game_configs = [(g, fb_seeds, fb_timeout, "auto-foundations", "") for g in args.games]
 
-    # Resolve solver configurations
+    # ---------------------------------------------------------------------------
+    # Resolve solver configurations (dry-run: skip binary checks)
+    # ---------------------------------------------------------------------------
+    bench_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_benchmark.py")
+    if not dry_run and not os.path.exists(bench_script):
+        print(f"Error: {bench_script} not found.", file=sys.stderr)
+        sys.exit(1)
+
     if args.solver_dir:
-        # Multi-binary mode: discover variant binaries in solver_dir
         solver_dir = os.path.abspath(args.solver_dir)
         active_configs = []
         wanted = set(args.solvers) if args.solvers else None
@@ -216,68 +466,223 @@ def main():
             if wanted and label not in wanted:
                 continue
             binary_path = os.path.join(solver_dir, binary_name)
-            if os.path.isfile(binary_path):
+            if dry_run or os.path.isfile(binary_path):
                 active_configs.append((label, binary_path, extra_args, skip_ineligible))
             else:
                 print(f"[warn] {binary_name} not found in {solver_dir} — skipping '{label}'",
                       file=sys.stderr)
-        if not active_configs:
+        if not dry_run and not active_configs:
             print(f"Error: no solver binaries found in {solver_dir}", file=sys.stderr)
             sys.exit(1)
+        if not active_configs:
+            # dry-run with no solver-dir specified: synthesize a placeholder
+            active_configs = [(lbl, f"<{bn}>", ea, si)
+                               for lbl, bn, ea, si in SOLVER_CONFIGS
+                               if not wanted or lbl in wanted]
         print(f"Multi-binary mode: {[label for label, *_ in active_configs]}")
-    else:
-        # Legacy single-binary mode
+    elif args.solver:
         active_configs = [
             (name, args.solver, extra_args, skip_ineligible)
             for name, extra_args, skip_ineligible in LEGACY_CACHE_CONFIGS
             if name in args.configs
         ]
         print(f"Single-binary mode: {args.solver}")
+    else:
+        # dry-run with neither --solver nor --solver-dir
+        active_configs = [("default", "<solver>", [], False)]
 
-    chunk_size = 5 if args.quick else 10
-    tasks = []
-    kwargs = {
-        "output_dir": args.output_dir,
-        "cache_capacity": args.cache_capacity,
-    }
+    chunk_size = 5 if not args.full else 10
+
+    # ---------------------------------------------------------------------------
+    # Build task list
+    # ---------------------------------------------------------------------------
+    tasks = []  # (cmd_list, chunk_csv, chunk_json, label_str, timeout_s)
+
+    output_dir = args.output_dir
 
     for game_type, (seed_lo, seed_hi), timeout_ms, streamliner, _ in game_configs:
         for label, solver_path, solver_args, skip_ineligible in active_configs:
             for c_start, c_end in chunk_range(seed_lo, seed_hi, chunk_size):
-                tasks.append((
-                    bench_script, solver_path, game_type, c_start, c_end,
-                    timeout_ms, streamliner, label, solver_args, skip_ineligible, kwargs
-                ))
+                chunk_base = os.path.join(
+                    output_dir,
+                    f"chunk_{game_type}_{label}_{c_start}_{c_end}",
+                )
+                chunk_csv = f"{chunk_base}.csv"
+                chunk_json = f"{chunk_base}.json"
+
+                cmd = [
+                    sys.executable, bench_script,
+                    "--solver", solver_path,
+                    "--type", game_type,
+                    "--seeds", f"{c_start}-{c_end}",
+                    "--output", chunk_csv,
+                    "--output-json", chunk_json,
+                    "--no-summary",
+                    "--label", label,
+                ]
+                if streamliner and streamliner != "none":
+                    cmd.extend(["--streamliner", streamliner])
+                if timeout_ms:
+                    cmd.extend(["--timeout", str(timeout_ms)])
+                if args.cache_capacity:
+                    cmd.extend(["--cache-capacity", str(args.cache_capacity)])
+                if skip_ineligible:
+                    cmd.append("--skip-ineligible")
+                if solver_args:
+                    cmd.append("--")
+                    cmd.extend(solver_args)
+
+                seeds_in_chunk = c_end - c_start + 1
+                if args.chunk_timeout is not None:
+                    ceiling_s = float(args.chunk_timeout)
+                else:
+                    ceiling_s = chunk_ceiling_s(seeds_in_chunk, timeout_ms)
+
+                chunk_label = f"{game_type} seeds {c_start}-{c_end} [{label}]"
+                tasks.append((cmd, chunk_csv, chunk_json, chunk_label, ceiling_s))
 
     total = len(tasks)
-    print(f"[{datetime.now():%H:%M:%S}] Starting {total} chunks on {args.workers} workers")
+
+    # ---------------------------------------------------------------------------
+    # Print plan (always, and exit early on --dry-run)
+    # ---------------------------------------------------------------------------
+    ram_gb = total_ram / (1024**3) if total_ram > 0 else 0
+    print(f"")
+    print(f"Scope:          {scope_label}")
+    print(f"Total chunks:   {total}")
+    print(f"Workers:        {num_workers}  (limiting factor: {jobs_result.limiting_factor})")
+    print(f"Memory budget:  {ram_gb:.1f} GB RAM × {RAM_FRACTION:.0%} / "
+          f"{BYTES_PER_WORKER // (1024**3)} GB per worker → max_safe={jobs_result.max_safe}")
+    print(f"Engine:         GNU parallel (--jobs {num_workers} --memfree 3G)")
+    print(f"Output dir:     {output_dir}")
+    if args.cache_capacity:
+        print(f"Cache capacity: {args.cache_capacity} bytes ({args.cache_capacity / (1024**3):.1f} GB)")
+    print()
+
+    if dry_run:
+        print(f"=== DRY RUN — {total} chunks planned ({num_workers} workers) ===")
+        print()
+        print("Commands that would be run (one per chunk):")
+        print()
+        for cmd, chunk_csv, chunk_json, chunk_label, ceiling_s in tasks:
+            print(f"  # {chunk_label}  [ceiling={ceiling_s:.0f}s]")
+            print(f"  {' '.join(cmd)}")
+            print()
+        print(f"(dry run — nothing executed)")
+        return
+
+    # ---------------------------------------------------------------------------
+    # Create output dir and run via GNU parallel (T3)
+    # ---------------------------------------------------------------------------
+    os.makedirs(output_dir, exist_ok=True)
+
+    print(f"[{datetime.now():%H:%M:%S}] Starting {total} chunks on {num_workers} workers "
+          f"via GNU parallel")
 
     start_time = time.time()
     csv_chunks = []
-    
-    done = 0
-    report_interval = max(1, total // 20)
+    failed = 0
 
-    with multiprocessing.Pool(args.workers) as pool:
-        for result in pool.imap_unordered(run_chunk, tasks):
-            if result["csv"]:
-                csv_chunks.append(result["csv"])
-            done += 1
-            if done % report_interval == 0 or done == total:
-                elapsed = time.time() - start_time
-                rate = done / elapsed
-                eta = (total - done) / rate if rate > 0 else 0
-                print(f"[{datetime.now():%H:%M:%S}] {done}/{total} chunks done "
-                      f"({100*done/total:.0f}%) — "
-                      f"{elapsed/60:.1f}m elapsed, ~{eta/60:.1f}m remaining")
+    # Write each chunk command to a script file, then drive them via parallel.
+    # We use --joblog for progress visibility and --memfree as the second
+    # safety net (D3: complementing the D2 software ceiling above).
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Write one script per chunk
+        script_paths = []
+        for i, (cmd, chunk_csv, chunk_json, chunk_label, ceiling_s) in enumerate(tasks):
+            script_path = os.path.join(tmpdir, f"chunk_{i:05d}.sh")
+            # Each chunk script runs run_chunk logic inline via Python so we
+            # can reuse bench_lib.process kill discipline.  We pass the
+            # ceiling as an env var to keep the invocation simple.
+            with open(script_path, "w") as f:
+                f.write("#!/bin/sh\n")
+                # Each chunk is a Python one-liner that delegates back to
+                # run_with_deadline.  We write a tiny helper script.
+                f.write(
+                    f"{sys.executable} -c \""
+                    f"import sys, os; "
+                    f"sys.path.insert(0, {repr(os.path.dirname(os.path.abspath(__file__)))}); "
+                    f"from bench_lib.process import run_with_deadline; "
+                    f"import subprocess, sys; "
+                    f"r = run_with_deadline("
+                    f"  {cmd!r}, "
+                    f"  solver_timeout_s={ceiling_s!r}, "
+                    f"  sigterm_grace_s=30.0"
+                    f"); "
+                    f"print(r.stdout, end='', file=sys.stdout); "
+                    f"print(r.stderr, end='', file=sys.stderr); "
+                    f"sys.exit(0 if r.returncode == 0 else 1)"
+                    f"\"\n"
+                )
+            os.chmod(script_path, 0o755)
+            script_paths.append((script_path, chunk_csv, chunk_json, chunk_label, ceiling_s))
 
-    print("Merging chunked results...")
-    combined_csv = os.path.join(args.output_dir, "combined.csv")
-    merge_csvs(combined_csv, csv_chunks)
+        # Build the parallel job list (one script path per line)
+        joblist_path = os.path.join(tmpdir, "joblist.txt")
+        with open(joblist_path, "w") as f:
+            for script_path, *_ in script_paths:
+                f.write(script_path + "\n")
+
+        joblog_path = os.path.join(tmpdir, "joblog.txt")
+
+        parallel_cmd = [
+            parallel_bin,
+            "--jobs", str(num_workers),
+            "--memfree", "3G",
+            "--joblog", joblog_path,
+            "--halt", "never",       # don't stop on individual failures
+            "bash", ":::",
+        ]
+        # Add all script paths
+        for sp, *_ in script_paths:
+            parallel_cmd.append(sp)
+
+        parallel_proc = subprocess.run(parallel_cmd, capture_output=False)
+
+        # Parse joblog to classify successes/failures
+        job_exit = {}
+        if os.path.exists(joblog_path):
+            with open(joblog_path) as f:
+                for line in f:
+                    if line.startswith("Seq"):
+                        continue
+                    parts = line.strip().split("\t")
+                    if len(parts) >= 7:
+                        try:
+                            seq = int(parts[0])
+                            exitval = int(parts[6])
+                            job_exit[seq] = exitval
+                        except (ValueError, IndexError):
+                            pass
+
+    # Determine which chunks succeeded based on whether their CSV exists
+    for i, (cmd, chunk_csv, chunk_json, chunk_label, ceiling_s) in enumerate(tasks):
+        seq = i + 1
+        exitval = job_exit.get(seq, -1)
+        if exitval == 0 and os.path.exists(chunk_csv):
+            csv_chunks.append(chunk_csv)
+        else:
+            failed += 1
+            if exitval != 0:
+                print(f"[FAILED] Chunk {chunk_label} (exit {exitval})", file=sys.stderr)
 
     elapsed = time.time() - start_time
+    print(f"[{datetime.now():%H:%M:%S}] All chunks done in {elapsed/60:.1f} minutes "
+          f"({total - failed}/{total} succeeded, {failed} failed)")
+
+    # ---------------------------------------------------------------------------
+    # Merge
+    # ---------------------------------------------------------------------------
+    print("Merging chunked results...")
+    combined_csv = os.path.join(output_dir, "combined.csv")
+    merge_csvs(combined_csv, csv_chunks)
+
     print(f"\n[{datetime.now():%H:%M:%S}] Done in {elapsed/60:.1f} minutes")
     print(f"Results available at: {combined_csv}")
+    if failed:
+        print(f"WARNING: {failed} chunk(s) failed — their data is NOT in combined.csv.",
+              file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()

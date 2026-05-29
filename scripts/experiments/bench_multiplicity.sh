@@ -49,7 +49,8 @@
 #
 #   --phase XY        Which comparisons to run (required; e.g. D or ABCD)
 #   --seeds N-M       Seed range (required; e.g. 1-500)
-#   --workers N       Parallel workers (default: 1 = sequential)
+#   --workers N       Parallel workers (default: memory-aware safe value;
+#                     see banner output for the computed cap)
 #   --chunk-size N    Seeds per chunk for parallelism (default: 25)
 #   --games g1,g2     Comma-separated game filter (default: all games for phase)
 #   --timeout MS      Timeout per instance in ms (default: 120000)
@@ -87,6 +88,12 @@
 # PREREQUISITES
 # ═══════════════════════════════════════════════════════════════════════════════
 #
+# 0. Install GNU parallel (used as the worker engine; xargs -P removed):
+#      macOS:         brew install parallel
+#      Debian/Ubuntu: apt-get install parallel
+#      RHEL/CentOS:   yum install parallel  (or dnf install parallel)
+#    Note: --dry-run works without parallel installed (plan display only).
+#
 # 1. Build release binaries:  ./build.sh --release
 #
 # 2. (Comparison A only) Build the from-scratch multiplicity binary:
@@ -113,12 +120,39 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
+# Memory-aware worker default (D2/D3)
+# ---------------------------------------------------------------------------
+# Compute max_safe = floor(total_RAM_GB × 0.80 / 3)
+# Falls back to 1 if sysctl/proc is unavailable.
+_compute_max_safe_workers() {
+    local total_bytes=0
+    if command -v sysctl >/dev/null 2>&1; then
+        total_bytes=$(sysctl -n hw.memsize 2>/dev/null || echo 0)
+    fi
+    if [[ "$total_bytes" -eq 0 ]] && [[ -r /proc/meminfo ]]; then
+        total_bytes=$(awk '/^MemTotal:/{print $2 * 1024; exit}' /proc/meminfo 2>/dev/null || echo 0)
+    fi
+    if [[ "$total_bytes" -le 0 ]]; then
+        echo 1
+        return
+    fi
+    # max_safe = floor(total_bytes * 0.80 / 3_221_225_472)
+    python3 -c "
+import math
+b = $total_bytes
+print(max(1, math.floor(b * 0.80 / (3 * 1024**3))))
+" 2>/dev/null || echo 1
+}
+
+_RAM_MAX_SAFE=$(_compute_max_safe_workers)
+
+# ---------------------------------------------------------------------------
 # Parse arguments
 # ---------------------------------------------------------------------------
 
 PHASES=""
 SEEDS=""
-WORKERS=1
+WORKERS=""          # empty = auto-compute below
 CHUNK_SIZE=25
 GAMES_OVERRIDE=""
 TIMEOUT=120000
@@ -166,6 +200,24 @@ SEED_HI="${SEEDS#*-}"
 if ! [[ "$SEED_LO" =~ ^[0-9]+$ ]] || ! [[ "$SEED_HI" =~ ^[0-9]+$ ]]; then
     echo "Error: --seeds must be N-M (e.g. 1-500)" >&2
     exit 1
+fi
+
+# Resolve --workers: if not specified, use memory-safe default (capped at 8
+# to be conservative; operator can override with --workers).
+WORKERS_REQUESTED="${WORKERS:-}"
+if [[ -z "$WORKERS_REQUESTED" ]]; then
+    # Default: min(4, max_safe) — conservative for unattended runs
+    WORKERS=$(( _RAM_MAX_SAFE < 4 ? _RAM_MAX_SAFE : 4 ))
+    WORKERS_SOURCE="default (min(4, max_safe=${_RAM_MAX_SAFE}))"
+else
+    WORKERS="$WORKERS_REQUESTED"
+    if [[ "$WORKERS" -gt "$_RAM_MAX_SAFE" ]]; then
+        echo "WARNING: --workers $WORKERS exceeds memory-safe ceiling $_RAM_MAX_SAFE" \
+             "(~3 GB resident per worker). Proceeding at requested value — monitor RAM." >&2
+        WORKERS_SOURCE="requested (exceeds max_safe=${_RAM_MAX_SAFE} — WARNING)"
+    else
+        WORKERS_SOURCE="requested"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -218,13 +270,31 @@ HAS_SCRATCH=true
 # Banner
 # ---------------------------------------------------------------------------
 
+_RAM_GB_DISPLAY=$(python3 -c "
+import subprocess, platform
+b = 0
+try:
+    if platform.system() == 'Darwin':
+        r = subprocess.run(['sysctl','-n','hw.memsize'], capture_output=True, text=True)
+        b = int(r.stdout.strip())
+    else:
+        with open('/proc/meminfo') as f:
+            for l in f:
+                if l.startswith('MemTotal:'):
+                    b = int(l.split()[1]) * 1024; break
+except: pass
+print(f'{b/(1024**3):.0f}' if b else '?')
+" 2>/dev/null || echo "?")
+
 echo "═══════════════════════════════════════════════════════════════"
 echo " Multiplicity Cache Benchmark"
 $DRY_RUN && echo " (DRY RUN — commands printed, nothing executed)"
 echo "═══════════════════════════════════════════════════════════════"
 echo "  Phases:     $PHASES"
 echo "  Seeds:      $SEEDS"
-echo "  Workers:    $WORKERS"
+echo "  Workers:    $WORKERS  ($WORKERS_SOURCE)"
+echo "  Memory:     ~${_RAM_GB_DISPLAY} GB RAM, max_safe=${_RAM_MAX_SAFE} workers (@3GB each)"
+echo "  Engine:     GNU parallel (--jobs $WORKERS --memfree 3G)"
 echo "  Chunk size: $CHUNK_SIZE"
 echo "  Timeout:    ${TIMEOUT}ms"
 echo "  Output:     $RESULTS_DIR"
@@ -376,16 +446,37 @@ echo "$CMD_COUNT chunks to run ($WORKERS workers)"
 echo ""
 
 if $DRY_RUN; then
-    for f in "$CMDDIR"/*.sh; do cat "$f"; done
+    echo "=== DRY RUN — $CMD_COUNT chunks planned ($WORKERS workers) ==="
     echo ""
+    echo "Commands that would be run (one per chunk):"
+    echo ""
+    for f in "$CMDDIR"/*.sh; do cat "$f"; echo ""; done
     echo "(dry run — nothing executed)"
     exit 0
 fi
 
-# Run with xargs -P for parallelism.
-# Each command is in its own script file, avoiding xargs -I replacement
-# length limits. The process group ensures Ctrl-C kills all workers.
-find "$CMDDIR" -name '*.sh' -print0 | sort -z | xargs -0 -P "$WORKERS" -n1 bash
+# Require GNU parallel (worker engine; D3).
+# Check after --dry-run exit so the plan display works without parallel.
+if ! command -v parallel >/dev/null 2>&1; then
+    echo "ERROR: GNU parallel is not on PATH." >&2
+    echo "Install it with:" >&2
+    echo "  macOS:         brew install parallel" >&2
+    echo "  Debian/Ubuntu: apt-get install parallel" >&2
+    echo "  RHEL/CentOS:   yum install parallel  (or dnf install parallel)" >&2
+    exit 1
+fi
+
+# Run with GNU parallel.
+# --jobs $WORKERS     — concurrency ceiling (memory-aware value above)
+# --memfree 3G        — second safety net: pause if less than 3 GB free
+# --halt never        — don't abort on individual chunk failure
+# Each command is in its own script file so there are no xargs length limits.
+# GNU parallel creates its own session for each job, providing clean signal
+# handling: Ctrl-C / SIGTERM reaches all workers via GNU parallel's built-in
+# group management.
+find "$CMDDIR" -name '*.sh' -print0 \
+    | sort -z \
+    | parallel --null --jobs "$WORKERS" --memfree 3G --halt never bash {}
 
 # ---------------------------------------------------------------------------
 # Merge chunk CSVs into per-label combined files
