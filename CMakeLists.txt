@@ -501,7 +501,7 @@ if(SOLVITAIRE_TRACE)
                 "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-mac-arm64-20260529-9673fd3")
         else()
             set(_default_ref_bin
-                "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-linux-arm64-20260527-5f4a907")
+                "${CMAKE_CURRENT_SOURCE_DIR}/../../05-Executables/reference/solvitaire-trace-reference-linux-arm64-20260529-ff68bde")
         endif()
         set(TRACE_REF_BIN "${_default_ref_bin}" CACHE PATH
             "Path to the reference solvitaire-trace binary for trace regression tests")

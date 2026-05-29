@@ -18,8 +18,8 @@ TRACE_REGRESSION_FLAG=""
 EXTRACT_TRACE_BINARY_FLAG=""
 # Conventional location of the Linux reference binary (relative to repo root).
 # cmake-build-trace configures its TRACE_REF_BIN to this path inside the container.
-LINUX_REF_BIN_HOST="$(cd "$(dirname "$0")/.." && pwd)/../../05-Executables/reference/solvitaire-trace-reference-linux-arm64-20260527-5f4a907"
-LINUX_REF_BIN_CONTAINER="/05-Executables/reference/solvitaire-trace-reference-linux-arm64-20260527-5f4a907"
+LINUX_REF_BIN_HOST="$(cd "$(dirname "$0")/.." && pwd)/../../05-Executables/reference/solvitaire-trace-reference-linux-arm64-20260529-ff68bde"
+LINUX_REF_BIN_CONTAINER="/05-Executables/reference/solvitaire-trace-reference-linux-arm64-20260529-ff68bde"
 # Default to --no-cache: the 'container' CLI v0.9 does not reliably
 # invalidate the COPY layer when source files change, so cached builds
 # silently use stale sources. Use --use-cache to opt in to caching
