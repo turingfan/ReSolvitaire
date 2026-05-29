@@ -157,7 +157,7 @@ included; release and trace only). Memory limit for test runs is `-m 7g` due to
 ./cmake-build-release/solvitaire --describe-game-rules klondike
 ```
 
-Key CLI options: `--type`, `--random <seed>`, `--json`, `--reveal-hidden`, `--streamliners {none|auto-foundations|suit-symmetry|both|smart}`, `--cache-capacity <bytes>`, `--timeout <ms>`, `--solvability <N>`.
+Key CLI options: `--type`, `--random <seed>`, `--json`, `--reveal-hidden`, `--streamliners {none|auto-foundations|suit-symmetry|both|smart-solvability}`, `--cache-capacity <bytes>`, `--timeout <ms>`, `--solvability <N>`.
 
 ## Architecture
 
@@ -199,7 +199,7 @@ Face-down cards are encoded with **lowercase** suit letters in JSON (`"as"` = fa
 - `auto-foundations` — auto-move cards that can only go to foundations
 - `suit-symmetry` — break suit symmetry in Klondike tableau
 - `both` — combine the above two
-- `smart` — try `both`; if unsolvable, retry with `none` (used by regression oracle for hard instances)
+- `smart-solvability` — try `both`; if unsolvable, retry with `none` (used by regression oracle for hard instances)
 
 ## Regression Testing Infrastructure
 
