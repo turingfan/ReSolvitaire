@@ -54,9 +54,10 @@ Design requirements:
 - **Own process group:** spawn with `start_new_session=True` (POSIX
   `setsid`) so the solver *and* any `/usr/bin/time` wrapper share a group.
 - **Solver `--timeout` is authoritative.** Wait for natural exit up to
-  `solver_timeout_s + grace_s`. Only if that elapses does the wrapper act.
+  **1.5× the solver timeout** (D1) — i.e. `total_wait_s = 1.5 × solver_timeout_s`,
+  no 60s floor, no cap. Only if that elapses does the wrapper act.
 - **Escalation on overrun:** `os.killpg(pgid, SIGTERM)` → wait `sigterm_grace_s`
-  → `os.killpg(pgid, SIGKILL)` → reap. Never SIGKILL before SIGTERM+grace.
+  (≈30s fixed) → `os.killpg(pgid, SIGKILL)` → reap. Never SIGKILL before SIGTERM+grace.
 - **Always capture partial stdout** and return it, regardless of how the process
   ended. No path discards already-emitted JSON.
 - **Disposition** the caller can map to the CSV vocabulary:
@@ -108,18 +109,18 @@ stalling the rest of the run.
 In `benchmark_orchestrator.py` (and apply the same ceiling logic to
 `bench_multiplicity.sh`):
 - **Stop defaulting to `cpu_count()`.** Conservative default (e.g. a small fixed
-  number or `min(cpu_count//2, mem_ceiling)`).
-- **Hard ceiling + memory awareness:** compute `max_safe = floor(available_RAM ×
-  fraction / per_solver_budget)`; final workers = `min(requested, hard_cap,
-  max_safe)`. `per_solver_budget` derives from `--cache-capacity` (see open
-  question Q2). Print the computed limit and the reason.
-- **Refuse/​warn** when the user requests more than the safe limit rather than
-  silently obeying.
-- **Account for nesting** (×~3–4 procs/worker) in any process-count reasoning.
-- **Engine decision:** evaluate GNU `parallel` (`--jobs`, `--memfree`, `--load`)
-  vs keeping `multiprocessing.Pool`/`xargs -P` with an enforced cap. Recommend one
-  and implement it; do NOT hard-require `parallel` if it harms portability. Record
-  the decision in the inventory + START-HERE.
+  number or `min(cpu_count//2, max_safe)`).
+- **Memory awareness applies always (D2)**, not only with `--cache-capacity`:
+  assume **~3 GB resident per worker**; compute `max_safe = floor(available_RAM ×
+  fraction / 3GB)`; final workers = `min(requested, hard_cap, max_safe)`. Print the
+  computed limit + reason. Be lenient — **warn**, don't hard-refuse, for ordinary
+  requests; escalate to a louder warning only when `--cache-capacity` is very large.
+- **Account for nesting** (×~3–4 procs/worker) in process-count reasoning.
+- **Engine (D3): use GNU `parallel`.** Drive workers via `parallel` with `--jobs`
+  (the computed cap), `--memfree` (≈3 GB, as a second safety net), and optionally
+  `--load`. Replace the orchestrator's `multiprocessing.Pool` and
+  `bench_multiplicity.sh`'s `xargs -P` with `parallel` invocations. Record in the
+  inventory + START-HERE; note the `parallel` dependency in START-HERE prerequisites.
 - **Guard rails (T5):** the full `GAME_CONFIGS_FULL` matrix (14×4×500×20min) must be
   explicit opt-in; default to a bounded/quick scope; keep `--dry-run`.
 
@@ -184,18 +185,21 @@ the 3 unit/regression gates, which these Python/doc changes don't touch.
 
 ---
 
-## Open questions for Ian (engineering defaults / one semantic)
+## Resolved decisions (Ian, 2026-05-29)
 
-- **Q1 (grace):** acceptable grace after the solver's own `--timeout` before the
-  wrapper SIGTERMs? Current code uses 2× the timeout; that is very generous for long
-  timeouts. Propose: `min(timeout, 60s)` grace + 30s SIGTERM grace. OK to default?
-- **Q2 (memory budget):** what per-solver resident-RAM budget should the worker
-  ceiling assume? It depends on `--cache-capacity` (flat-cache mmap reserves large
-  *virtual* space; resident grows with use). Is there a sane default cache-capacity
-  to assume per worker, or should the orchestrator require `--cache-capacity` before
-  allowing parallelism? (This touches solver memory behaviour — Ian's call.)
-- **Q3 (engine):** is GNU `parallel` acceptable as a dependency on the machines you
-  run on, or must we stay on stdlib `multiprocessing`/`xargs` with a hand-rolled cap?
+- **D1 (grace):** internal solver timing is unreliable, so leeway must scale with the
+  timeout. Total wait before the wrapper SIGTERMs = **1.5× the solver `--timeout`**
+  (down from 2×). **No 60s floor and no cap** — just 1.5× the timeout, whatever its
+  size. After SIGTERM, a modest fixed grace (≈30s) to flush, then SIGKILL the group.
+- **D2 (memory budget):** the memory-aware worker ceiling applies **always**, not only
+  when `--cache-capacity` is passed. Assume **~3 GB resident per worker** as the default
+  soft budget. Be lenient (this is a guardrail, not a straitjacket) — **warn**, don't
+  hard-refuse, for ordinary requests; only get stricter/louder when `--cache-capacity`
+  is set very large (a "ginormous" cache is when the user must be careful). Compute
+  `max_safe = floor(available_RAM × fraction / 3GB)` and surface it.
+- **D3 (engine):** GNU `parallel` is approved. Use it as the worker engine
+  (`--jobs`, `--memfree`, `--load`) for clean job control, signal handling, and
+  built-in memory throttling. (`--memfree` complements the D2 ceiling.)
 
 ---
 
