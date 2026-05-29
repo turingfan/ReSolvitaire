@@ -3,6 +3,8 @@
 # tuesday-night-redux2.sh — Multi-solver-variant version: compares lru/flat/hash-only/default across all games.
 # (See tuesday-night-redux.sh for the simpler single-solver version.)
 # NOTE: if $SOLVER is set in the environment, all four solver variables will be overridden to the same path.
+#       This quirk is KNOWN and intentionally left unfixed — this script is retained for historical
+#       interest only (Ian, 2026-05-29). Do not "fix" it without instruction.
 #
 # 35 distinct flat-cache-eligible games (alina excluded), 50 seeds, 1 warmup, median of 3, 60s timeout.
 # Uses run_benchmark.py per game type with --label per variant, then merges into combined.csv.

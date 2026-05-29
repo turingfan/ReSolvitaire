@@ -64,7 +64,8 @@ da7716b chore(bench): dedup redux/unwinnable experiment script pairs          [T
 - **T9 DONE** — `bench_level5_unwinnable2.sh` removed (scratch one-off); redux pair kept
   with distinguishing headers. **Flagged for Ian:** `tuesday-night-redux2.sh` has a
   `$SOLVER` env-override flaw — all four variant vars resolve to the same binary if
-  `SOLVER` is exported. Decide: distinct env-var names per variant?
+  `SOLVER` is exported. **RESOLVED (Ian, 2026-05-29): leave it — historical interest
+  only; do NOT fix.** A note to that effect is in the script header.
 - **T10 DONE** — CLAUDE.md `smart` → `smart-solvability`.
 
 **Remaining Stage 2:** T2 (orchestrator per-chunk timeout), T3 (bounded memory-aware
