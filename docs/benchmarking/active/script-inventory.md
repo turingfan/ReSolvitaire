@@ -1,13 +1,12 @@
 # Surviving Benchmark Script Inventory
 
-**As of:** 2026-05-29 (Stage 1 Wave A complete)
+**As of:** 2026-05-29 (Stage 1 complete; Stage 2 in progress — T1/T8/T9/T10 landed)
 **See also:** [START-HERE.md](START-HERE.md) for usage examples, [csv_schema.md](csv_schema.md) for the CSV contract.
 
 Status key:
 - `core` — spine of the pipeline; every benchmark run goes through these.
 - `experiment` — bespoke per-experiment script; shells out to core.
-- `stage2-eval` — overlapping comparison/collection helpers deferred to Stage 2 for evaluation (kept in place, no decision made yet).
-- `dedup-candidate` — one of a redux/unwinnable pair kept pending Stage 2 (see note below).
+- `stage2-eval` — overlapping comparison/collection helpers still under evaluation (kept in place; `compare_benchmarks.py` already removed as deprecated).
 - `analysis` — R analysis scripts; canonical analysis path.
 - `out-of-scope` — test/trace infrastructure, not benchmarking.
 
@@ -20,6 +19,7 @@ Status key:
 | `scripts/run_benchmark.py` | Runs the solver on a seed range or set of JSON instance files, times each run with `perf_counter`, measures peak RSS via `/usr/bin/time`, and writes the 21-column CSV. | `--solver` binary, `--type`/`--instances`, `--seeds`, `--timeout`; optional `--streamliner`, `--cache-capacity`, `--label`, `--warmup`, `--iterations` | One CSV row per timed run; optional JSON sidecar via `--output-json` | `core` |
 | `scripts/benchmark_orchestrator.py` | Parallel fan-out over `run_benchmark.py` across multiple game types and solver variant binaries; merges per-chunk CSVs into a single `combined.csv` for the bench hook. | `--solver-dir` (variant binaries) or `--solver`; `--workers`, `--output-dir`; optional `--games`, `--seeds`, `--timeout` | `<output-dir>/combined.csv` + per-chunk CSVs | `core` |
 | `scripts/oracle_to_benchmark_cmds.py` | Reads a regression oracle JSON and emits one `run_benchmark.py` shell command per matching entry (first with header, rest with `--no-header --append`), for piping to `bash`. | `--oracle` JSON file, `--solution-type` filter, `--solver`, `--timeout`, `--warmup`, `--iterations`, `--output`; optional solver flags after `--` | Shell commands printed to stdout | `core` |
+| `scripts/bench_lib/process.py` | Shared library (not a CLI): `run_with_deadline()` — process-group kill discipline used by `run_benchmark.py`. Solver `--timeout` authoritative; 1.5× Python deadline; SIGTERM→grace→SIGKILL to the group; always captures partial output. Unit tests in `bench_lib/test_process.py`. | (imported by runners) | `RunResult` | `core` (lib) |
 
 ---
 
@@ -31,7 +31,12 @@ Status key:
 | `scripts/experiments/tuesday-night-redux.sh` | Runs 35 flat-cache-eligible game types (50 seeds, warmup 1, median of 3, 60 s timeout) via `run_benchmark.py` and merges into `combined.csv`; intended to be run through `bench`. | `$SOLVER`, `$SEEDS`, `$TIMEOUT`, `$WARMUP`, `$ITERATIONS`, `$BENCH_RUN_DIR` (set by bench) | `$BENCH_RUN_DIR/combined.csv` | `experiment` |
 | `scripts/experiments/bench_level5_unwinnable.sh` | Benchmarks all flat-eligible unwinnable Level 5 instances across four solver variants (default, flat, lru, legacy) using `oracle_to_benchmark_cmds.py`. | `$RESULTS_DIR` (positional, optional); reads `tests/oracles/level5.json`; expects binaries in `cmake-build-release/bin/` and legacy binary at `$LEGACY_BIN` | Per-variant CSV files in `$RESULTS_DIR` | `experiment` |
 
-**Note on redux/unwinnable pairs:** `tuesday-night-redux2.sh` and `bench_level5_unwinnable2.sh` are dedup-candidates (see below). The scripts above are the kept copies of each pair.
+| `scripts/experiments/tuesday-night-redux2.sh` | Multi-solver-variant version of the redux run: compares lru/flat/hash-only/default across all games with per-variant `--label`. Kept alongside `tuesday-night-redux.sh` (single-solver); each now has a distinguishing header. | as redux, plus per-variant binaries | combined CSV with `label` column | `experiment` |
+
+**Note (Stage 2 T9, 2026-05-29):** `bench_level5_unwinnable2.sh` was removed — it was a
+one-off scratch run (all standard variants commented out, only `solvitaire-hash-only`
+active) adding no reusable capability. The redux pair is kept (both have distinct,
+documented purposes) with clarifying headers added to each.
 
 ---
 
@@ -43,26 +48,12 @@ here and left in place; the canonical-path decision is explicit Stage 2 work.
 
 | Script | One-line job | Inputs | Outputs | Status |
 |---|---|---|---|---|
-| `scripts/compare_benchmarks.py` | Reads two benchmark result sets (JSON report files), computes speedup / NPS metrics, and prints comparison tables; also carries a legacy benchmark runner. Marked DEPRECATED in source; relationship to R analysis layer under evaluation. | Legacy JSON report directories or benchmark run paths | Text/markdown comparison tables to stdout | `stage2-eval` |
 | `scripts/benchmark_baseline.sh` | Records flat-cache nodes/second for all flat-cache games using the solver's built-in `--benchmark` mode; prints a table and saves JSON. | `--exe`, `--seeds`, `--iterations`, `--timeout-ms`, `--out`; calls solver `--benchmark` mode directly | `results/throughput_baseline_<date>.json` | `stage2-eval` |
 | `scripts/benchmark_speedup.sh` | Compares flat cache vs `--force-lru` on a fixed game set using the solver's built-in `--benchmark` mode; prints a speedup table. | `--exe`, `--seeds`, `--iterations`, `--timeout-ms`; calls solver `--benchmark` mode directly | Speedup table to stdout | `stage2-eval` |
 | `scripts/generate_baseline.py` | Runs the solver on Level 1 JSON instance files to produce the Level 1 regression oracle JSON, optionally using ground-truth AAA-files to select the correct streamliner per instance. | `--exe`, `--instances` dir, `--output` oracle JSON, optional `--data-dir` (paper data) | `tests/oracles/level1.json` (or specified path) | `stage2-eval` |
 | `scripts/collect_results.sh` | SSHes to a remote machine, tars up a results directory, and copies the tarball to the local machine. | `--host`, `--remote-dir`, `--remote-root`, `--local-dir` | Tarball in `$LOCAL_DIR` | `stage2-eval` |
 | `scripts/compare_binaries.sh` | Validation harness: runs `solvitaire`, `solvitaire-flat`, `solvitaire-hash-only`, and `solvitaire-lru` on the same seeds and checks that `solution_type` (outcome) agrees across all four. Requires `jq`. | Hardcoded game types (`klondike free-cell`), seed range, timeout; reads from `cmake-build-release/bin/` | Pass/fail report to stdout | `stage2-eval` |
 | `scripts/extract_benchmark_results.py` | Reads legacy JSON benchmark report files (`report-*.json`) from a directory, extracts NPS metrics, computes speedup, and writes a markdown summary table. | `benchmark_dir` positional arg (default `benchmarks/TuesdayNight/`), optional `--output`, `--verbose` | Markdown table to `BENCHMARK_RESULTS.md` in the benchmark dir | `stage2-eval` |
-
----
-
-## Dedup candidates (kept pairs — Stage 2 decision)
-
-The following scripts exist as `v1` / `v2` pairs. The purpose of the pairs is no longer
-remembered. Both are kept for safety (per Ian, 2026-05-29); only the `2` variant will be
-removed after Stage 2 confirms it adds nothing the `v1` copy does not.
-
-| Script | Kept as | Notes |
-|---|---|---|
-| `scripts/experiments/tuesday-night-redux2.sh` | dedup-candidate (`v2` of `tuesday-night-redux.sh`) | `v2` runs four solver variants (lru, flat, default, hash-only) per game; `v1` runs only the default binary. Different scope — Stage 2 should decide which is canonical. |
-| `scripts/experiments/bench_level5_unwinnable2.sh` | dedup-candidate (`v2` of `bench_level5_unwinnable.sh`) | File content appears identical to `v1` (same header, same structure). Stage 2 should diff and confirm before deleting. |
 
 ---
 

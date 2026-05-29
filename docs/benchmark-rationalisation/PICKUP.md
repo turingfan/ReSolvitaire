@@ -45,6 +45,40 @@ Landed:
 - 7 overlapping comparison/collection helpers tagged `stage2-eval` (incl.
   `compare_benchmarks.py`, already marked DEPRECATED in source).
 
+## Stage 2 — IN PROGRESS (T1/T8/T9/T10 landed)
+
+Commits on top of Stage 1:
+```
+7286ad6 docs: fix CLAUDE.md streamliner token (smart -> smart-solvability)   [T10]
+da7716b chore(bench): dedup redux/unwinnable experiment script pairs          [T9]
+252c5c2 feat(bench): shared process-group kill discipline (T1)
+15da815 chore(bench): remove deprecated compare_benchmarks.py                  [T8]
+```
+- **T1 (kill discipline) DONE** — `scripts/bench_lib/process.py` `run_with_deadline()`
+  (process-group spawn, 1.5× deadline, SIGTERM→grace→SIGKILL to the group, always
+  captures partial output, 13 unit tests pass). `run_benchmark.py` rewired; `"failed"`→
+  `FAILED`; RSS fallback; `csv_schema.md` reconciled; conformance gaps #1/#3 resolved.
+- **T8 DONE** — `compare_benchmarks.py` removed (deprecated; R layer covers it). Dangling
+  doc refs to tidy later: `known-issues.md` #5/#6, `evaluation-checklist.md` line ~250,
+  `design.md` §7/§10 (informational).
+- **T9 DONE** — `bench_level5_unwinnable2.sh` removed (scratch one-off); redux pair kept
+  with distinguishing headers. **Flagged for Ian:** `tuesday-night-redux2.sh` has a
+  `$SOLVER` env-override flaw — all four variant vars resolve to the same binary if
+  `SOLVER` is exported. Decide: distinct env-var names per variant?
+- **T10 DONE** — CLAUDE.md `smart` → `smart-solvability`.
+
+**Remaining Stage 2:** T2 (orchestrator per-chunk timeout), T3 (bounded memory-aware
+concurrency via GNU `parallel`, ~3GB/worker — D2/D3), T6 (local usability), T7 (remote
+docs), T11 (acceptance run of `bench_multiplicity.sh`). T2→T3 are the sequential spine
+and should reuse `bench_lib.process`. See `stage2-plan.md`.
+
+**Process note:** the harness creates agent worktrees from a STALE base (original `dev`
+HEAD), not the branch tip — so agents' edits to files changed earlier on the branch
+(e.g. `csv_schema.md`) conflict on integration. Mitigation: for code, cherry-pick/checkout
+only the code files and let the orchestrator reconcile shared docs; or tell the agent to
+`git merge benchmark-rationalisation` into its worktree first. Also: one agent (T8) ran in
+the MAIN checkout, not a worktree — committed directly to the branch (harmless here).
+
 ## Findings carried into Stage 2 (from the contract agent + investigation)
 
 1. **Kill discipline (the core fix).** Solver `--timeout` is authoritative and emits
