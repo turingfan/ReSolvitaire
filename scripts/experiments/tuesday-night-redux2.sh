@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 #
-# tuesday-night-redux.sh — Recreate the Tuesday night benchmark run.
+# tuesday-night-redux2.sh — Multi-solver-variant version: compares lru/flat/hash-only/default across all games.
+# (See tuesday-night-redux.sh for the simpler single-solver version.)
+# NOTE: if $SOLVER is set in the environment, all four solver variables will be overridden to the same path.
 #
-# 35 distinct flat-cache-eligible games, 50 seeds, 1 warmup, median of 3, 60s timeout.
-# Uses run_benchmark.py per game type, then merges into combined.csv.
+# 35 distinct flat-cache-eligible games (alina excluded), 50 seeds, 1 warmup, median of 3, 60s timeout.
+# Uses run_benchmark.py per game type with --label per variant, then merges into combined.csv.
 #
 # Intended to be run through bench:
 #
