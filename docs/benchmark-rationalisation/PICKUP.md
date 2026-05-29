@@ -68,10 +68,21 @@ da7716b chore(bench): dedup redux/unwinnable experiment script pairs          [T
   only; do NOT fix.** A note to that effect is in the script header.
 - **T10 DONE** — CLAUDE.md `smart` → `smart-solvability`.
 
-**Remaining Stage 2:** T2 (orchestrator per-chunk timeout), T3 (bounded memory-aware
-concurrency via GNU `parallel`, ~3GB/worker — D2/D3), T6 (local usability), T7 (remote
-docs), T11 (acceptance run of `bench_multiplicity.sh`). T2→T3 are the sequential spine
-and should reuse `bench_lib.process`. See `stage2-plan.md`.
+- **T2 + T3 DONE** (commit `37f2b99`) — `scripts/bench_lib/concurrency.py`
+  (`compute_jobs()` + portable `get_total_ram_bytes()`, 19 unit tests). Orchestrator
+  and `bench_multiplicity.sh` now use **GNU `parallel`** (`--jobs N --memfree 3G`);
+  workers default to the memory-aware cap (`floor(RAM×0.80/3GB)`, HARD_CAP 64); warn-
+  don't-refuse; `--full` guard rail gates the 14-game matrix; `--dry-run` prints the
+  plan (works without binaries/parallel). T2: per-chunk hard ceiling
+  `max(120, ceil(seeds × timeout_s × 1.5 × 1.5))` with process-group kill via
+  `bench_lib.process`. Verified: 32/32 bench_lib tests pass; both dry-runs OK.
+  Minor cosmetic nit: QUICK banner says "30 s" but the `--games` fallback emits 60 s
+  (pre-existing; harmless).
+
+**Remaining Stage 2:** T6 (local usability — largely covered by T3/START-HERE; small),
+T7 (remote-run docs — reconcile setup paths; docs only), **T11 (acceptance run of
+`bench_multiplicity.sh`** with built release binaries — the real no-avoidable-kills
+test; needs `./build.sh --release`). See `stage2-plan.md`.
 
 **Process note:** the harness creates agent worktrees from a STALE base (original `dev`
 HEAD), not the branch tip — so agents' edits to files changed earlier on the branch
