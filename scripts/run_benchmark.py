@@ -37,6 +37,14 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+# bench_lib is a sibling package under scripts/.  Add scripts/ to sys.path so
+# it is importable whether run_benchmark.py is invoked directly or as a module.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from bench_lib.process import (
+    EXITED_OK,
+    run_with_deadline,
+)
+
 _CSV_LINE_RE = re.compile(r'^\d+\s*,')
 
 def get_solver_commit() -> str:
@@ -117,69 +125,44 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, 
     Returns (success, stdout, stderr, time_us, rss_bytes).
 
     Wraps the command with /usr/bin/time (platform-appropriate) to get
-    per-run peak RSS from stderr. Falls back to rss_bytes=0 if unavailable.
+    per-run peak RSS from stderr. Falls back to 0 if the time RSS line is
+    unavailable after a kill (e.g. /usr/bin/time never completed its own
+    output). Never writes a wrong RSS value.
 
-    The solver's own --timeout flag is the primary time enforcer.
-    Python's safety valve fires only for truly stuck processes:
-      1. Wait solver_timeout + solver_timeout (same again as grace) for self-exit.
-      2. Send SIGTERM to the entire process group (covers /usr/bin/time wrapper
-         AND the solver child — avoids orphaning the solver with an open pipe).
-      3. Wait up to 60 s for graceful shutdown after SIGTERM.
-      4. Send SIGKILL to the process group.
-    Whatever stdout is available is returned so the caller can write a partial row.
+    Delegates process-group kill discipline to bench_lib.process.run_with_deadline:
+    - The solver's own --timeout flag is the primary time enforcer.
+    - Python deadline = 1.5 × solver_timeout_s (D1: no floor, no cap).
+    - On overrun: SIGTERM the process group → wait sigterm_grace_s → SIGKILL.
+    - The solver AND any /usr/bin/time wrapper share the process group
+      (start_new_session=True) so a single killpg() reaches both.
+    - Whatever stdout is available is always returned regardless of how the
+      process ended.
 
-    SIGTERM is sent to the immediate child (the /usr/bin/time wrapper if active,
-    otherwise the solver itself). The solver grandchild may continue briefly
-    after time exits, but it will be reaped when it finishes or the OS cleans up.
+    The returned `success` bool is True only when disposition is EXITED_OK
+    (returncode 0 and within the deadline).  Callers use it to decide whether
+    to trust the RSS from /usr/bin/time, but disposition is the authoritative
+    classification signal for downstream CSV column assignment.
     """
-    import signal
-
     solver_timeout_s = timeout_ms / 1000.0
-    grace_s = solver_timeout_s          # same again — total wait before SIGTERM = 2× timeout
-    sigterm_grace_s = 60.0              # 60 s for graceful output flush after SIGTERM
+    sigterm_grace_s = 30.0   # fixed flush window after SIGTERM (D1)
 
     prefix = time_prefix()
     full_cmd = prefix + cmd
 
-    t0 = time.perf_counter()
-    try:
-        proc = subprocess.Popen(
-            full_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        try:
-            stdout, stderr = proc.communicate(timeout=solver_timeout_s + grace_s)
-            t1 = time.perf_counter()
-            time_us = (t1 - t0) * 1_000_000
-            rss_bytes = parse_rss_from_time_output(stderr) if prefix else 0
-            return proc.returncode == 0, stdout, stderr, time_us, rss_bytes
+    result = run_with_deadline(
+        full_cmd,
+        solver_timeout_s=solver_timeout_s,
+        sigterm_grace_s=sigterm_grace_s,
+    )
 
-        except subprocess.TimeoutExpired:
-            # Solver is stuck — send SIGTERM then wait before forcing SIGKILL
-            try:
-                proc.send_signal(signal.SIGTERM)
-            except OSError:
-                pass
-            try:
-                stdout, stderr = proc.communicate(timeout=sigterm_grace_s)
-            except subprocess.TimeoutExpired:
-                try:
-                    proc.kill()
-                except OSError:
-                    pass
-                stdout, stderr = proc.communicate()
+    # Try to parse RSS from /usr/bin/time stderr.  On kill paths the time
+    # wrapper may not have flushed its RSS line, so parse_rss_from_time_output
+    # will return 0 (never invents a number).  The caller further falls back
+    # to solver_resident_bytes from solver JSON if rss_bytes is 0.
+    rss_bytes = parse_rss_from_time_output(result.stderr) if prefix else 0
 
-            t1 = time.perf_counter()
-            time_us = (t1 - t0) * 1_000_000
-            rss_bytes = parse_rss_from_time_output(stderr) if prefix else 0
-            return False, stdout, stderr, time_us, rss_bytes
-
-    except Exception:
-        t1 = time.perf_counter()
-        time_us = (t1 - t0) * 1_000_000
-        return False, "", "", time_us, 0
+    success = result.disposition == EXITED_OK
+    return success, result.stdout, result.stderr, result.wall_us, rss_bytes
 
 def parse_legacy_classify(text: str) -> Dict:
     """
@@ -292,7 +275,10 @@ def parse_solver_json(json_str: str) -> Dict:
     }
     try:
         data = json.loads(json_str)
-        # Map solution_type values
+        # Map solution_type values from solver JSON to CSV vocabulary.
+        # Every recognised solver outcome must map to a non-UNKNOWN value so
+        # that downstream hooks (which do not count UNKNOWN rows) do not
+        # silently lose data.
         sol_type = data.get("solution_type", "UNKNOWN")
         if sol_type == "winnable":
             sol_type = "SOLVED"
@@ -300,6 +286,8 @@ def parse_solver_json(json_str: str) -> Dict:
             sol_type = "UNWINNABLE"
         elif sol_type == "timeout":
             sol_type = "TIMEOUT"
+        elif sol_type == "failed":
+            sol_type = "FAILED"
         else:
             sol_type = "UNKNOWN"
         data["solution_type"] = sol_type
@@ -443,14 +431,26 @@ def main():
                         break
 
                 parse = parse_legacy_classify if args.legacy else parse_solver_json
+
+                # Classification priority (from the plan):
+                #   1. solver self-reported "timeout" in JSON → TIMEOUT (clean, has stats)
+                #   2. wrapper had to kill but partial JSON parsed → TERMINATED
+                #   3. no output at all → KILLED
+                # Never write a bare UNKNOWN for a real outcome.
                 if success:
+                    # Clean exit: trust the solver's own solution_type field.
                     solver_data = parse(json_output)
                 elif json_output.strip():
-                    # Process was killed but emitted partial/complete output — try to parse it.
+                    # Process was killed but emitted partial/complete output — try to parse.
                     solver_data = parse(json_output)
+                    # If the parse returned a solver-reported type (SOLVED/UNWINNABLE/TIMEOUT/FAILED)
+                    # keep it — the solver finished and reported cleanly before we fired.
+                    # If the parsed type is still UNKNOWN (JSON incomplete/garbled), reclassify
+                    # as TERMINATED to indicate partial-output-kill.
                     if solver_data["solution_type"] == "UNKNOWN":
                         solver_data["solution_type"] = "TERMINATED"
                 else:
+                    # No output at all: hard kill with no data.
                     solver_data = None
 
                 if solver_data is not None:
@@ -465,6 +465,11 @@ def main():
                     max_depth = solver_data["max_depth"]
                     final_depth = solver_data["final_depth"]
                     solver_rss = solver_data["solver_resident_bytes"]
+                    # RSS fallback: if /usr/bin/time line was lost on kill path,
+                    # use solver's own self-reported RSS rather than silently
+                    # writing 0 when solver JSON has a value.
+                    if rss_bytes == 0 and solver_rss > 0:
+                        rss_bytes = solver_rss
                 else:
                     # No output at all — hard kill with no data.
                     solution_type = "KILLED"

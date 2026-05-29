@@ -36,7 +36,7 @@ That is **21 columns**. One row per run. Column headers always present by defaul
 
 | # | Column | Type | Values | Source |
 |---|---|---|---|---|
-| 4 | `solution_type` | string | `SOLVED`, `UNWINNABLE`, `TIMEOUT`, `TERMINATED`, `KILLED`, `UNKNOWN` | See §Outcome vocabulary below |
+| 4 | `solution_type` | string | `SOLVED`, `UNWINNABLE`, `TIMEOUT`, `FAILED`, `TERMINATED`, `KILLED`, `UNKNOWN` | See §Outcome vocabulary below. `run_benchmark.py` never emits a bare `UNKNOWN` for a real outcome — `UNKNOWN` means the output matched no known format (treat as a bug). |
 
 ### Timing
 
@@ -65,7 +65,7 @@ All of these come from the solver's JSON output. They are 0 when `solution_type`
 
 | # | Column | Type | Source | Notes |
 |---|---|---|---|---|
-| 15 | `resident_memory_bytes` | int | `/usr/bin/time -l` (macOS) or `/usr/bin/time -v` (Linux) | **Primary.** Per-run peak RSS of the solver subprocess in bytes. `parse_rss_from_time_output()` extracts this from `/usr/bin/time` stderr. Falls back to 0 if `/usr/bin/time` is unavailable. |
+| 15 | `resident_memory_bytes` | int | `/usr/bin/time -l` (macOS) or `/usr/bin/time -v` (Linux) | **Primary.** Per-run peak RSS of the solver subprocess in bytes. `parse_rss_from_time_output()` extracts this from `/usr/bin/time` stderr. On a kill path the `time` wrapper may not flush its RSS line; in that case this falls back to `solver_resident_bytes` (from solver JSON), and to 0 if neither is available. **Never writes a fabricated value.** |
 | 16 | `solver_resident_bytes` | int | C++ `getrusage(RUSAGE_SELF)` in solver `--json` output | **Diagnostic.** Solver's own self-reported peak RSS. 0 for legacy runs (no `--json`), 0 on kill. macOS: bytes; Linux: KB×1024 (conversion done in `main.cpp`). |
 
 ### Configuration
@@ -104,7 +104,7 @@ Note: the solver emits **lowercase** strings. The CSV vocabulary uses **uppercas
 | `"winnable"` | `SOLVED` |
 | `"unsolvable"` | `UNWINNABLE` |
 | `"timeout"` | `TIMEOUT` |
-| `"failed"` | `UNKNOWN` (falls through to the else branch) |
+| `"failed"` | `FAILED` |
 | JSON unparseable / field missing | `UNKNOWN` |
 
 ### Kill-path classification (main loop ~lines 445–473)
@@ -128,7 +128,7 @@ partial or complete JSON that parses successfully to a known outcome (`SOLVED`,
 | `"winnable"` | `SOLVED` | `solved` | Yes — full stats |
 | `"unsolvable"` | `UNWINNABLE` | `unsolvable` | Yes — full stats |
 | `"timeout"` | `TIMEOUT` | `timeout` | Yes — partial stats valid |
-| `"failed"` | `UNKNOWN` | (not counted separately; `UNKNOWN` is ignored by the hook) | Partial or zero |
+| `"failed"` | `FAILED` | (not counted by the hook — see known gap) | Partial or zero |
 | Killed, partial output → parse succeeds | `SOLVED`/`UNWINNABLE`/`TIMEOUT` | as above | Yes |
 | Killed, partial output → parse yields UNKNOWN | `TERMINATED` | `terminated` | Partial or zero |
 | Killed, no output | `KILLED` | `killed` | All zero |
@@ -141,9 +141,9 @@ partial or complete JSON that parses successfully to a known outcome (`SOLVED`,
   to the timeout. This is the expected outcome for hard instances.
 
 - **`TERMINATED`** — the Python safety valve fired: the solver did not exit within
-  2× the timeout, received SIGTERM, and emitted some output before dying. Stats may
-  be partial. Work may have been lost. This outcome indicates a solver hang or a wrapper
-  timing misconfiguration.
+  **1.5× the timeout** (D1), received SIGTERM (to the whole process group), and emitted
+  some output before dying. Stats may be partial. Work may have been lost. This outcome
+  indicates a solver hang or a wrapper timing misconfiguration.
 
 - **`KILLED`** — the solver emitted nothing. Either SIGKILL was sent (after SIGTERM
   timed out) and killed it before any output was flushed, or the process crashed
@@ -175,32 +175,25 @@ The following discrepancies were found during the investigation that produced th
 document. They are reported here for the orchestrator; they are **not** fixed by the
 documentation task.
 
-1. **`run_benchmark.py` docstring vs code — SIGTERM target.** The `run_solver()`
-   docstring (lines ~123–128) says SIGTERM is sent to "the entire process group"
-   and SIGKILL is also to "the process group". The actual code (`proc.send_signal(signal.SIGTERM)` and
-   `proc.kill()`) signals only the **immediate child** (the `/usr/bin/time` wrapper),
-   not a process group. When `/usr/bin/time` is active, the solver grandchild can be
-   orphaned and continue running after the wrapper exits. The docstring also contains
-   a self-correction note (lines ~131–133) acknowledging this. The docstring claim of
-   process-group signalling is inaccurate.
+1. **~~`run_benchmark.py` SIGTERM target~~ — RESOLVED (Stage 2 T1, 2026-05-29).**
+   `run_solver()` now delegates to `bench_lib.process.run_with_deadline`, which spawns
+   the child with `start_new_session=True` and sends SIGTERM/SIGKILL to the whole
+   **process group** via `os.killpg`. The solver and any `/usr/bin/time` wrapper share
+   the group, so the solver grandchild can no longer be orphaned.
 
-2. **`solution_type` = `UNKNOWN` is silently ignored by the bench hook.** The hook
-   (`ReSolvitaire-bench/hooks/benchmark`) counts `SOLVED`, `UNWINNABLE`, `TIMEOUT`,
-   `KILLED`, `TERMINATED` but does not count `UNKNOWN`. Rows with `solution_type =
-   UNKNOWN` are therefore invisible in the hook's summary. This is a potential
-   silent data loss if the solver emits `"failed"` or if JSON is unparseable. The
-   hook should arguably bucket `UNKNOWN` explicitly.
+2. **`solution_type` = `UNKNOWN`/`FAILED` not counted by the bench hook.** The hook
+   (`ReSolvitaire-bench/hooks/benchmark`, OUT OF SCOPE for this branch) counts only
+   `SOLVED`, `UNWINNABLE`, `TIMEOUT`, `KILLED`, `TERMINATED`. Rows with `UNKNOWN` or
+   `FAILED` are invisible in its summary. `run_benchmark.py` no longer emits a bare
+   `UNKNOWN` for a real outcome (T1), but `FAILED` (solver internal error) and a true
+   unparseable `UNKNOWN` would still be uncounted. The hook should bucket these
+   explicitly — tracked for a future bench-repo update.
 
-3. **`streamliner` vocabulary: `CLAUDE.md` says `smart` but the solver accepts
-   `smart-solvability`.** `src/main/input-output/input/command_line_helper.cpp`
-   maps CLI string `"smart-solvability"` to the internal `SMART` enum; the JSON
-   output then emits `"smart"`. So `run_benchmark.py`'s CLI choice `smart-solvability`
-   is correct and consistent with the solver. However, `CLAUDE.md`'s documentation
-   of the `--streamliners` option lists `smart` as the CLI token, which is wrong —
-   the CLI token is `smart-solvability`. The CSV `streamliner` column will contain
-   `smart-solvability` (whatever `run_benchmark.py` received), while the solver's
-   own JSON output uses `smart`. These are not compared against each other in the
-   pipeline, but it is a vocabulary inconsistency worth noting in `CLAUDE.md`.
+3. **~~`streamliner` token: `CLAUDE.md` says `smart`~~ — RESOLVED (Stage 2 T10,
+   2026-05-29).** Verified in `command_line_helper.cpp` that the accepted CLI token is
+   `smart-solvability` (maps to internal `SMART`; JSON output emits `smart`). `CLAUDE.md`
+   was corrected to use `smart-solvability`. `run_benchmark.py`'s CLI choice was already
+   correct.
 
 4. **`time_us` is integer-rounded in the CSV.** The column is documented as type
    `float` in the existing schema and named with `_us` suffix suggesting precision,
@@ -209,6 +202,6 @@ documentation task.
    it accordingly.
 
 5. **`cache_capacity` is blank when unspecified.** The CSV emits an empty string for
-   `cache_capacity` when `--cache-capacity` was not passed. Consumers (R scripts,
-   `compare_benchmarks.py`) that parse this column must handle blank/NA values.
-   This is implicit behaviour, not explicitly documented in the original schema.
+   `cache_capacity` when `--cache-capacity` was not passed. Consumers (the R scripts)
+   that parse this column must handle blank/NA values. This is implicit behaviour, not
+   explicitly documented in the original schema.
