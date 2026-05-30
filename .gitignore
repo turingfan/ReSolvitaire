@@ -70,3 +70,7 @@ venv/
 # Claude Code local files (keep out of the repo; local copies may persist)
 .claude/settings.local.json
 .claude/worktrees/
+
+# Python bytecode
+__pycache__/
+*.pyc
