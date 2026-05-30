@@ -92,10 +92,10 @@ echo "[setup] At: branch=$BRANCH  commit=$ACTUAL_COMMIT"
 if command -v apt-get &>/dev/null; then
     echo "[setup] Installing build dependencies (apt)..."
     sudo apt-get update -qq
-    sudo apt-get install -y -qq cmake libboost-program-options-dev python3 r-base
+    sudo apt-get install -y -qq build-essential cmake libboost-program-options-dev parallel python3 r-base
 elif command -v brew &>/dev/null; then
     echo "[setup] Installing build dependencies (brew)..."
-    brew install boost cmake r
+    brew install boost cmake parallel r
 fi
 
 # ── Build ─────────────────────────────────────────────────────────────────

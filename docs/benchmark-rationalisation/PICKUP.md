@@ -87,13 +87,15 @@ da7716b chore(bench): dedup redux/unwinnable experiment script pairs          [T
   proving the solver self-reports and the wrapper captures the work, not a kill. The
   original problem (lost work on kills) is resolved.
 
-**Remaining Stage 2:** T6 (local usability — largely covered) and T7 (remote-run docs).
-A remote Linux run was demonstrated/instructed on 2026-05-30 (uses `scripts/setup_remote.sh`
-or a manual build; GNU `parallel` is a new prerequisite; memory-aware worker cap protects
-the box). T7 = formalise those into a committed `active/remote-runs.md`. See `stage2-plan.md`.
+- **T7 DONE (2026-05-30).** `docs/benchmarking/active/remote-runs.md` written (build +
+  run on a remote Linux box; worker-safety + clean-timeout notes; archiving via bench).
+  `scripts/setup_remote.sh` apt/brew lists now include `parallel` (+ `build-essential`).
+  START-HERE links to remote-runs.md.
 
-Stage 2 is functionally complete (kill discipline + worker safety proven). Ready for the
-Stage 2 PR to `dev` when Ian wants it.
+**Remaining Stage 2:** T6 (local usability) is effectively covered by T3 + START-HERE.
+Stage 2 is functionally COMPLETE (kill discipline + worker safety proven by T11; remote
+path documented). Ready for the Stage 2 PR to `dev` whenever Ian wants it (no PR yet, by
+instruction).
 
 **Process note:** the harness creates agent worktrees from a STALE base (original `dev`
 HEAD), not the branch tip — so agents' edits to files changed earlier on the branch

@@ -3,6 +3,7 @@
 **Read this first.** It tells you which script to run for which job.
 For the CSV column contract and `solution_type` vocabulary, see
 [csv_schema.md](csv_schema.md).
+To build and run on a remote Linux box, see [remote-runs.md](remote-runs.md).
 For the full rationalisation plan, see
 `01-Knowledge-Base/Implementation-Plans/benchmark-rationalisation-plan-2026-05-29.md`.
 
