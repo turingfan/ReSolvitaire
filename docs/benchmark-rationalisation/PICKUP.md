@@ -79,10 +79,21 @@ da7716b chore(bench): dedup redux/unwinnable experiment script pairs          [T
   Minor cosmetic nit: QUICK banner says "30 s" but the `--games` fallback emits 60 s
   (pre-existing; harmless).
 
-**Remaining Stage 2:** T6 (local usability — largely covered by T3/START-HERE; small),
-T7 (remote-run docs — reconcile setup paths; docs only), **T11 (acceptance run of
-`bench_multiplicity.sh`** with built release binaries — the real no-avoidable-kills
-test; needs `./build.sh --release`). See `stage2-plan.md`.
+- **T11 acceptance — PASSED (2026-05-30).** Built `./build.sh --release --variants`
+  (2 min). Ran `bench_multiplicity.sh --phase D --seeds 1-5 --games klondike` at both
+  3 s and 300 ms timeouts. Across all output: **0** `KILLED`/`TERMINATED`/`FAILED`/
+  `UNKNOWN`; only `SOLVED`(14)/`TIMEOUT`(2)/`UNWINNABLE`(4). Forced timeouts (klondike_3
+  @300ms) returned clean `TIMEOUT` carrying full partial stats (~254k–302k nodes) —
+  proving the solver self-reports and the wrapper captures the work, not a kill. The
+  original problem (lost work on kills) is resolved.
+
+**Remaining Stage 2:** T6 (local usability — largely covered) and T7 (remote-run docs).
+A remote Linux run was demonstrated/instructed on 2026-05-30 (uses `scripts/setup_remote.sh`
+or a manual build; GNU `parallel` is a new prerequisite; memory-aware worker cap protects
+the box). T7 = formalise those into a committed `active/remote-runs.md`. See `stage2-plan.md`.
+
+Stage 2 is functionally complete (kill discipline + worker safety proven). Ready for the
+Stage 2 PR to `dev` when Ian wants it.
 
 **Process note:** the harness creates agent worktrees from a STALE base (original `dev`
 HEAD), not the branch tip — so agents' edits to files changed earlier on the branch
