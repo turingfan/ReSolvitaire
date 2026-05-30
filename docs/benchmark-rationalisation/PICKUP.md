@@ -97,6 +97,36 @@ Stage 2 is functionally COMPLETE (kill discipline + worker safety proven by T11;
 path documented). Ready for the Stage 2 PR to `dev` whenever Ian wants it (no PR yet, by
 instruction).
 
+## Post-T11 follow-up — remote KILLED bug FIXED (2026-05-30, commit 897a75c)
+
+Ian's remote `--phase C --timeout 1000` run gave 92 KILLED. Root-caused + fixed:
+- **Solver now handles SIGTERM gracefully** (`solver.cpp` registers SIGTERM with the
+  SIGINT handler) → flushes JSON, emits `solution_type:"terminated"` (`main.cpp`). The
+  wrapper keeps using SIGTERM (SIGINT stays the interactive ^C signal, per Ian).
+- **Wrapper grace floor** (`bench_lib/process.py`): `total_wait = timeout +
+  max(0.5×timeout, min_grace_s=10s)` — small timeouts now get an absolute window
+  (1000ms → 11s) instead of 1.5×. 30s SIGTERM→SIGKILL grace unchanged.
+- `run_benchmark.py` maps `"terminated"`→`TERMINATED`; `csv_schema.md` updated.
+- Verified: unit_tests + regression_level1 (×4) pass; direct SIGTERM → exit 0 +
+  `terminated` JSON w/ stats; phase-C smoke @1000ms → 14 SOLVED/6 TIMEOUT/**0 KILLED**.
+- **Overhead finding:** the fixed per-run overhead (~0.3–0.75s wall, ~0 CPU) is the
+  **default cache's mmap reservation** (drops to ~0.01s with a modest `--cache-capacity`);
+  balloons under parallel load → why the remote overshot far more than idle.
+
+**Build quirk noted:** `./build.sh --release --variants` did NOT rebuild the default
+`solvitaire` target on an incremental run (only the variant binaries) — had to
+`cmake --build cmake-build-release --target solvitaire` explicitly. Worth a build.sh fix.
+
+**Process note:** the implementation sub-agent was DENIED permission to run `./build.sh`,
+so it implemented + unit-tested only; the orchestrator built, ran gates, verified, committed.
+
+## OPEN PROPOSAL (Ian's call) — solver timeout on CPU time vs wall
+
+`docs/benchmark-rationalisation/timer-cpu-vs-wall-proposal.md`. Solver `--timeout` is
+wall (`high_resolution_clock`); under load that makes cutoffs load-dependent. Proposes
+CPU-time budget + solver wall safety-cap (+ optional `--max-states`). NOT implemented —
+regenerating oracles is the main cost. Open questions for Ian in §7.
+
 **Process note:** the harness creates agent worktrees from a STALE base (original `dev`
 HEAD), not the branch tip — so agents' edits to files changed earlier on the branch
 (e.g. `csv_schema.md`) conflict on integration. Mitigation: for code, cherry-pick/checkout
