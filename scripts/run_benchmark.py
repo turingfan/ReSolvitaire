@@ -286,6 +286,8 @@ def parse_solver_json(json_str: str) -> Dict:
             sol_type = "UNWINNABLE"
         elif sol_type == "timeout":
             sol_type = "TIMEOUT"
+        elif sol_type == "terminated":
+            sol_type = "TERMINATED"
         elif sol_type == "failed":
             sol_type = "FAILED"
         else:

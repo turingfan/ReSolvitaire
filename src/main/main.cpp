@@ -363,7 +363,8 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optiona
         writer.Key("solution_type");
         writer.String(s.result.sol_type == solver::result::type::SOLVED ? "winnable" :
                       s.result.sol_type == solver::result::type::UNSOLVABLE ? "unsolvable" :
-                      s.result.sol_type == solver::result::type::TIMEOUT ? "timeout" : "failed");
+                      s.result.sol_type == solver::result::type::TIMEOUT ? "timeout" :
+                      s.result.sol_type == solver::result::type::TERMINATED ? "terminated" : "failed");
         writer.Key("states_searched");
         writer.Uint64(s.result.states_searched);
         writer.Key("unique_states");

@@ -91,9 +91,14 @@ The solver writes a JSON object to stdout with `"solution_type"` set to one of:
 | `"winnable"` | DFS proved the game is solvable. |
 | `"unsolvable"` | DFS proved the game is unsolvable. |
 | `"timeout"` | DFS hit `--timeout` cleanly; stats up to that point are valid. |
+| `"terminated"` | DFS was interrupted by SIGTERM (or SIGINT); stats up to interrupt are valid. |
 | `"failed"` | Internal solver error (should not arise in normal use). |
 
 Note: the solver emits **lowercase** strings. The CSV vocabulary uses **uppercase**.
+
+The solver installs the same handler for both `SIGINT` and `SIGTERM` — either signal sets
+the interrupt flag, causing DFS to return `TERMINATED` and emit the JSON before exiting.
+This means the wrapper's SIGTERM results in a clean `"terminated"` JSON, not a silent kill.
 
 ### Mapping in `run_benchmark.py` (`parse_solver_json`, ~line 297)
 
@@ -104,22 +109,24 @@ Note: the solver emits **lowercase** strings. The CSV vocabulary uses **uppercas
 | `"winnable"` | `SOLVED` |
 | `"unsolvable"` | `UNWINNABLE` |
 | `"timeout"` | `TIMEOUT` |
+| `"terminated"` | `TERMINATED` |
 | `"failed"` | `FAILED` |
 | JSON unparseable / field missing | `UNKNOWN` |
 
 ### Kill-path classification (main loop ~lines 445–473)
 
-The Python wrapper detects three additional situations:
+The Python wrapper detects additional situations for processes that did not exit cleanly:
 
 | Situation | CSV value | Stats |
 |---|---|---|
-| Process returned non-zero exit and produced output that `parse_solver_json` returns `"UNKNOWN"` for | `TERMINATED` | Whatever stats were parsed (may be partial or zero). |
-| Process returned non-zero exit and produced **no output** | `KILLED` | All stats set to 0. |
+| Solver received SIGTERM, flushed `"terminated"` JSON, exited → parse succeeds | `TERMINATED` | Partial stats valid |
+| Process was signalled but emitted output that `parse_solver_json` returns `"UNKNOWN"` for | `TERMINATED` | Whatever stats were parsed (may be partial or zero). |
+| Process was signalled but produced **no output** | `KILLED` | All stats set to 0. |
 
 The `TERMINATED` override (line ~452): if the process was signalled but emitted
 partial or complete JSON that parses successfully to a known outcome (`SOLVED`,
-`UNWINNABLE`, `TIMEOUT`), that outcome is kept as-is. Only if parsing yields
-`UNKNOWN` is it overridden to `TERMINATED`.
+`UNWINNABLE`, `TIMEOUT`, `TERMINATED`, `FAILED`), that outcome is kept as-is.
+Only if parsing yields `UNKNOWN` is it overridden to `TERMINATED`.
 
 ### Summary table: solver string → CSV value → bench-hook bucket
 
@@ -128,8 +135,9 @@ partial or complete JSON that parses successfully to a known outcome (`SOLVED`,
 | `"winnable"` | `SOLVED` | `solved` | Yes — full stats |
 | `"unsolvable"` | `UNWINNABLE` | `unsolvable` | Yes — full stats |
 | `"timeout"` | `TIMEOUT` | `timeout` | Yes — partial stats valid |
+| `"terminated"` | `TERMINATED` | `terminated` | Yes — partial stats valid |
 | `"failed"` | `FAILED` | (not counted by the hook — see known gap) | Partial or zero |
-| Killed, partial output → parse succeeds | `SOLVED`/`UNWINNABLE`/`TIMEOUT` | as above | Yes |
+| Killed, partial output → parse succeeds | `SOLVED`/`UNWINNABLE`/`TIMEOUT`/`TERMINATED` | as above | Yes |
 | Killed, partial output → parse yields UNKNOWN | `TERMINATED` | `terminated` | Partial or zero |
 | Killed, no output | `KILLED` | `killed` | All zero |
 | JSON present but malformed/field missing | `UNKNOWN` | (not counted) | Zero |

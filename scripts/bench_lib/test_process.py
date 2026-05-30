@@ -3,7 +3,7 @@ Unit tests for bench_lib.process.run_with_deadline().
 
 Uses fake child processes (small python -c / sh -c snippets) instead of the
 real solver so the suite runs in a few seconds.  All timeouts are very short
-(solver_timeout_s=0.3, sigterm_grace_s=0.3).
+(solver_timeout_s=0.3, min_grace_s=0.3, sigterm_grace_s=0.3).
 """
 
 import os
@@ -49,6 +49,7 @@ class TestCleanExit(unittest.TestCase):
         result = run_with_deadline(
             [sys.executable, "-c", "import sys; print('hello'); sys.exit(0)"],
             solver_timeout_s=0.3,
+            min_grace_s=0.3,
             sigterm_grace_s=0.3,
         )
         self.assertEqual(result.disposition, EXITED_OK)
@@ -57,6 +58,7 @@ class TestCleanExit(unittest.TestCase):
         result = run_with_deadline(
             [sys.executable, "-c", "print('full output captured')"],
             solver_timeout_s=0.3,
+            min_grace_s=0.3,
             sigterm_grace_s=0.3,
         )
         self.assertIn("full output captured", result.stdout)
@@ -65,6 +67,7 @@ class TestCleanExit(unittest.TestCase):
         result = run_with_deadline(
             [sys.executable, "-c", "pass"],
             solver_timeout_s=0.3,
+            min_grace_s=0.3,
             sigterm_grace_s=0.3,
         )
         self.assertEqual(result.returncode, 0)
@@ -73,6 +76,7 @@ class TestCleanExit(unittest.TestCase):
         result = run_with_deadline(
             [sys.executable, "-c", "import sys; sys.exit(1)"],
             solver_timeout_s=0.3,
+            min_grace_s=0.3,
             sigterm_grace_s=0.3,
         )
         self.assertEqual(result.disposition, EXITED_ERR)
@@ -82,9 +86,33 @@ class TestCleanExit(unittest.TestCase):
         result = run_with_deadline(
             [sys.executable, "-c", "pass"],
             solver_timeout_s=0.3,
+            min_grace_s=0.3,
             sigterm_grace_s=0.3,
         )
         self.assertGreater(result.wall_us, 0)
+
+
+class TestWithinGraceFloor(unittest.TestCase):
+    """Child runs a bit longer than solver_timeout_s but within the grace floor.
+
+    With solver_timeout_s=0.3 and min_grace_s=0.3, total_wait_s = 0.6.
+    A child sleeping 0.5 s should complete before the deadline fires.
+    It must end as EXITED_OK with its full output.
+    """
+
+    def test_within_grace_not_signalled(self):
+        # Child sleeps 0.5 s — longer than solver_timeout_s (0.3) but within
+        # total_wait_s (0.3 + max(0.15, 0.3) = 0.6).
+        result = run_with_deadline(
+            [sys.executable, "-c",
+             "import sys, time; time.sleep(0.5); print('within grace')"],
+            solver_timeout_s=0.3,
+            min_grace_s=0.3,
+            sigterm_grace_s=0.3,
+        )
+        self.assertEqual(result.disposition, EXITED_OK)
+        self.assertIn("within grace", result.stdout)
+        self.assertEqual(result.returncode, 0)
 
 
 class TestSIGTERMExit(unittest.TestCase):
@@ -106,6 +134,7 @@ class TestSIGTERMExit(unittest.TestCase):
         self.result = run_with_deadline(
             [sys.executable, "-c", self._CHILD],
             solver_timeout_s=0.3,
+            min_grace_s=0.3,
             sigterm_grace_s=0.3,
         )
 
@@ -140,6 +169,7 @@ class TestSIGKILLHard(unittest.TestCase):
         self.result = run_with_deadline(
             [sys.executable, "-c", self._CHILD],
             solver_timeout_s=0.3,
+            min_grace_s=0.3,
             sigterm_grace_s=0.3,
         )
 
@@ -154,7 +184,7 @@ class TestSIGKILLHard(unittest.TestCase):
         # We can't recover the pgid after the fact, but we verify the
         # function returns at all (i.e. doesn't block), which proves
         # the reap completed.  We also check wall_us is bounded.
-        # 0.3 + 0.3 + overhead — should complete well under 5 seconds.
+        # 0.3 + 0.3 + 0.3 + overhead — should complete well under 5 seconds.
         self.assertLess(self.result.wall_us, 5_000_000)
 
     def test_wall_us_reasonable(self):
@@ -182,6 +212,7 @@ class TestProcessGroupOrphans(unittest.TestCase):
         result = run_with_deadline(
             ["sh", "-c", self._CHILD_SH],
             solver_timeout_s=0.3,
+            min_grace_s=0.3,
             sigterm_grace_s=0.3,
         )
         # Should have been killed (SIGTERM ignored → SIGKILL)

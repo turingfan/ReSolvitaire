@@ -94,8 +94,10 @@ solver_node::solver_node(const ::move m) noexcept
 
 template <typename Policy>
 solver_result solver_impl<Policy>::run(boost::optional<millisec> timeout) {
-    // Set interrupt handler
+    // Set interrupt handler (SIGTERM behaves like SIGINT: sets the flag so DFS
+    // returns TERMINATED and the solver flushes its JSON before exiting).
     signal(SIGINT, sigint_handler);
+    signal(SIGTERM, sigint_handler);
 
     // Set timings
     const clock::time_point start_time = clock::now();

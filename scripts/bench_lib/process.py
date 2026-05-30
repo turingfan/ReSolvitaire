@@ -25,8 +25,14 @@ Design notes
   /usr/bin/time wrapper) into their own process group so that a single
   os.killpg() call reaches every member.
 * The solver's own --timeout flag is authoritative.  The Python deadline is a
-  safety net: it fires only at 1.5 × solver_timeout_s (D1 resolution: no floor,
-  no cap — just 1.5×, whatever the solver timeout is).
+  safety net whose total wait is:
+      total_wait_s = solver_timeout_s + max(0.5 * solver_timeout_s, min_grace_s)
+  This gives a proportional grace that scales with the solver timeout, with an
+  absolute floor of min_grace_s (default 10.0 s) so that short-timeout runs
+  still get a meaningful window.  The solver handles SIGTERM gracefully (sets
+  the interrupt flag → DFS returns TERMINATED → JSON is emitted before exit),
+  so a SIGTERM'd-but-flushed run ends up as TERMINATED with partial stats, not
+  KILLED.
 * On overrun: SIGTERM the group → wait sigterm_grace_s → SIGKILL the group →
   reap.  We never SIGKILL before SIGTERM+grace has elapsed.
 * Partial stdout is always captured and returned, regardless of how the process
@@ -71,6 +77,7 @@ def run_with_deadline(
     cmd: List[str],
     *,
     solver_timeout_s: float,
+    min_grace_s: float = 10.0,
     sigterm_grace_s: float = 30.0,
     capture: bool = True,
 ) -> RunResult:
@@ -82,10 +89,24 @@ def run_with_deadline(
         Command and arguments to run.
     solver_timeout_s:
         The solver's own ``--timeout`` value in seconds.  The Python deadline
-        is set to **1.5 × solver_timeout_s** (D1: no floor, no cap).
+        is computed as::
+
+            total_wait_s = solver_timeout_s + max(0.5 * solver_timeout_s, min_grace_s)
+
+        This gives proportional headroom that scales with the solver timeout,
+        with an absolute floor so that very short timeouts still get a
+        meaningful window before the wrapper acts.
+    min_grace_s:
+        Absolute floor for the proportional grace component.  The wrapper
+        will not fire earlier than ``solver_timeout_s + min_grace_s``.
+        Default 10.0 s.  Pass a smaller value (e.g. 0.3) in unit tests to
+        keep the suite fast.
     sigterm_grace_s:
         Seconds to wait after SIGTERM before escalating to SIGKILL.
-        Default 30 s is appropriate for most flush windows.
+        Default 30 s is appropriate for most flush windows.  The solver
+        handles SIGTERM gracefully (sets the interrupt flag so DFS returns
+        TERMINATED and JSON is flushed), so a SIGTERM'd run normally exits
+        within this window rather than being hard-killed.
     capture:
         If True (default), capture stdout/stderr and return them.
         Set False only if you want to inherit the parent's streams; in that
@@ -96,7 +117,7 @@ def run_with_deadline(
     RunResult
         Always populated; partial stdout is preserved on kill paths.
     """
-    total_wait_s = 1.5 * solver_timeout_s
+    total_wait_s = solver_timeout_s + max(0.5 * solver_timeout_s, min_grace_s)
 
     stdout_pipe = subprocess.PIPE if capture else None
     stderr_pipe = subprocess.PIPE if capture else None
