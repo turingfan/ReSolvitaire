@@ -162,16 +162,30 @@ def _diagnose_nonclean(cmd: List[str], result, timeout_ms: int) -> None:
             why = "solver died from SIGTERM default action — NO graceful handler (stale binary)"
         else:
             why = f"exited after SIGTERM with {signame(-rc) if rc and rc < 0 else f'code {rc}'}"
-    elif rc is not None and rc < 0:
-        n = -rc
+    else:
+        # A child killed by a signal surfaces either as a negative returncode
+        # (direct child) or, when wrapped by /usr/bin/time or bash, as 128+signum.
+        n = None
+        if rc is not None and rc < 0:
+            n = -rc
+        elif rc is not None and 128 < rc < 160:
+            n = rc - 128
+        # Did the wrapper itself act yet? Its deadline is timeout + max(0.5*timeout,10s).
+        wrapper_deadline = timeout_s + max(0.5 * timeout_s, 10.0)
+        before_deadline = wall_s < wrapper_deadline
         if n == 9:
-            why = "EXTERNAL SIGKILL — OOM killer? (the wrapper did not send SIGKILL here)"
+            if before_deadline:
+                why = (f"EXTERNAL SIGKILL at {wall_s:.0f}s — BEFORE the wrapper's "
+                       f"{wrapper_deadline:.0f}s deadline, so NOT us. OOM killer (cgroup/host) "
+                       f"or `parallel --memfree` killing+requeuing the youngest job.")
+            else:
+                why = "SIGKILL after the wrapper deadline — likely the wrapper's own SIGKILL"
         elif n == 6:
             why = "SIGABRT — std::bad_alloc / assert (cache mmap could not be backed?)"
+        elif n is not None:
+            why = f"killed by {signame(n)} ({'before' if before_deadline else 'after'} wrapper deadline)"
         else:
-            why = f"killed by {signame(n)}"
-    else:
-        why = f"exited with code {rc}"
+            why = f"exited with code {rc}"
 
     stderr_tail = (result.stderr or "").strip().replace("\n", " ⏎ ")[-500:]
     # Identify the run by its --type/--random or instance arg for grep-ability.
