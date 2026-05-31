@@ -119,51 +119,75 @@ def time_prefix() -> List[str]:
         return [time_bin, "-v"]
 
 
-def _diagnose_nonclean(cmd: List[str], result) -> None:
+def _diagnose_nonclean(cmd: List[str], result, timeout_ms: int) -> None:
     """Emit a detailed [kill-diag] line to stderr for any non-clean run.
 
-    This is the 'what/why/how' for kills — especially the Linux-specific
-    failure modes that produce KILLED (no output):
-      * returncode -9  (SIGKILL) and disposition != KILLED_HARD  → an EXTERNAL
-        SIGKILL, i.e. the OOM killer (the wrapper only sends SIGTERM first).
-      * returncode -6  (SIGABRT)  → std::bad_alloc / assert (e.g. flat_cache mmap
-        failed under an address-space / overcommit limit).
-      * returncode -15 (SIGTERM)  → the solver did NOT handle SIGTERM (stale
-        binary without the graceful handler).
-      * disposition KILLED_HARD   → the wrapper itself SIGKILLed after the grace
-        window (a genuine hang).
+    Interpretation is keyed on DISPOSITION first (what the wrapper did), then on
+    the exit signal, plus an overrun ratio (wall vs the solver's own --timeout)
+    which is the tell-tale of memory pressure / swap:
+      * KILLED_HARD         → wrapper sent SIGTERM then SIGKILL after the grace
+                              window; the process did not exit in time. With a
+                              large wall/timeout overrun this means the solver
+                              ran far past its deadline — typically swapping a
+                              big cache in/out during search or teardown.
+      * KILLED_AFTER_SIGTERM, rc 0    → solver flushed JSON + exited gracefully.
+      * KILLED_AFTER_SIGTERM, rc -15  → solver died from SIGTERM's default action,
+                              i.e. NO graceful handler (genuinely stale binary).
+      * EXITED_ERR, rc -9 (we never SIGKILL on that path) → external SIGKILL = OOM.
+      * EXITED_ERR, rc -6             → SIGABRT (std::bad_alloc / assert).
+      * EXITED_ERR, rc >0            → solver exited non-zero; see stderr (e.g.
+                              "std::bad_alloc" when the cache mmap can't be backed).
     """
     import signal as _signal
     rc = result.returncode
-    if rc is not None and rc < 0:
-        signum = -rc
+    disp = result.disposition
+    wall_s = result.wall_us / 1e6
+    timeout_s = timeout_ms / 1000.0
+    overrun = f"{wall_s / timeout_s:.1f}x timeout" if timeout_s > 0 else "?"
+
+    def signame(n):
         try:
-            signame = _signal.Signals(signum).name
+            return _signal.Signals(n).name
         except (ValueError, AttributeError):
-            signame = f"signal {signum}"
-        if signum == 9 and result.disposition != "KILLED_HARD":
-            why = "EXTERNAL SIGKILL — OOM killer? (wrapper only sent SIGTERM)"
-        elif signum == 9:
-            why = "wrapper SIGKILL after SIGTERM grace (genuine hang)"
-        elif signum == 6:
-            why = "SIGABRT — std::bad_alloc / assert? (flat_cache mmap may have failed)"
-        elif signum == 15:
-            why = "unhandled SIGTERM — solver lacks graceful handler (stale binary?)"
+            return f"signal {n}"
+
+    if disp == "KILLED_HARD":
+        why = (f"wrapper escalated SIGTERM→SIGKILL after the grace window; process "
+               f"ran {overrun} and did not exit in time — slow search/teardown under "
+               f"memory pressure (swap)? (NOT a stale binary)")
+    elif disp == "KILLED_AFTER_SIGTERM":
+        if rc == 0:
+            why = "solver flushed JSON and exited gracefully on SIGTERM"
+        elif rc == -15:
+            why = "solver died from SIGTERM default action — NO graceful handler (stale binary)"
         else:
-            why = f"killed by {signame}"
-        sig_desc = f"{signame}({signum}); {why}"
+            why = f"exited after SIGTERM with {signame(-rc) if rc and rc < 0 else f'code {rc}'}"
+    elif rc is not None and rc < 0:
+        n = -rc
+        if n == 9:
+            why = "EXTERNAL SIGKILL — OOM killer? (the wrapper did not send SIGKILL here)"
+        elif n == 6:
+            why = "SIGABRT — std::bad_alloc / assert (cache mmap could not be backed?)"
+        else:
+            why = f"killed by {signame(n)}"
     else:
-        sig_desc = f"exit code {rc}"
+        why = f"exited with code {rc}"
 
     stderr_tail = (result.stderr or "").strip().replace("\n", " ⏎ ")[-500:]
     # Identify the run by its --type/--random or instance arg for grep-ability.
     label = " ".join(a for a in cmd if not a.startswith("/")) or " ".join(cmd[-3:])
     print(
-        f"[kill-diag] {label} | disposition={result.disposition} | {sig_desc} | "
-        f"wall={result.wall_us/1e6:.2f}s | stdout_bytes={len(result.stdout or '')} | "
-        f"stderr_tail={stderr_tail!r}",
+        f"[kill-diag] {label} | disposition={disp} | rc={rc} | {why} | "
+        f"wall={wall_s:.2f}s ({overrun}) | stdout_bytes={len(result.stdout or '')} | "
+        f"peak_rss_kb={_peak_rss_kb(result.stderr)} | stderr_tail={stderr_tail!r}",
         file=sys.stderr, flush=True,
     )
+
+
+def _peak_rss_kb(stderr: str) -> int:
+    """Peak RSS in KB from /usr/bin/time stderr (0 if unavailable). Diagnostic only."""
+    b = parse_rss_from_time_output(stderr or "")
+    return b // 1024 if b else 0
 
 
 def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, int]:
@@ -204,7 +228,7 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, 
     )
 
     if result.disposition != EXITED_OK:
-        _diagnose_nonclean(cmd, result)
+        _diagnose_nonclean(cmd, result, timeout_ms)
 
     # Try to parse RSS from /usr/bin/time stderr.  On kill paths the time
     # wrapper may not have flushed its RSS line, so parse_rss_from_time_output
