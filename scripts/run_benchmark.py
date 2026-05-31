@@ -119,6 +119,53 @@ def time_prefix() -> List[str]:
         return [time_bin, "-v"]
 
 
+def _diagnose_nonclean(cmd: List[str], result) -> None:
+    """Emit a detailed [kill-diag] line to stderr for any non-clean run.
+
+    This is the 'what/why/how' for kills — especially the Linux-specific
+    failure modes that produce KILLED (no output):
+      * returncode -9  (SIGKILL) and disposition != KILLED_HARD  → an EXTERNAL
+        SIGKILL, i.e. the OOM killer (the wrapper only sends SIGTERM first).
+      * returncode -6  (SIGABRT)  → std::bad_alloc / assert (e.g. flat_cache mmap
+        failed under an address-space / overcommit limit).
+      * returncode -15 (SIGTERM)  → the solver did NOT handle SIGTERM (stale
+        binary without the graceful handler).
+      * disposition KILLED_HARD   → the wrapper itself SIGKILLed after the grace
+        window (a genuine hang).
+    """
+    import signal as _signal
+    rc = result.returncode
+    if rc is not None and rc < 0:
+        signum = -rc
+        try:
+            signame = _signal.Signals(signum).name
+        except (ValueError, AttributeError):
+            signame = f"signal {signum}"
+        if signum == 9 and result.disposition != "KILLED_HARD":
+            why = "EXTERNAL SIGKILL — OOM killer? (wrapper only sent SIGTERM)"
+        elif signum == 9:
+            why = "wrapper SIGKILL after SIGTERM grace (genuine hang)"
+        elif signum == 6:
+            why = "SIGABRT — std::bad_alloc / assert? (flat_cache mmap may have failed)"
+        elif signum == 15:
+            why = "unhandled SIGTERM — solver lacks graceful handler (stale binary?)"
+        else:
+            why = f"killed by {signame}"
+        sig_desc = f"{signame}({signum}); {why}"
+    else:
+        sig_desc = f"exit code {rc}"
+
+    stderr_tail = (result.stderr or "").strip().replace("\n", " ⏎ ")[-500:]
+    # Identify the run by its --type/--random or instance arg for grep-ability.
+    label = " ".join(a for a in cmd if not a.startswith("/")) or " ".join(cmd[-3:])
+    print(
+        f"[kill-diag] {label} | disposition={result.disposition} | {sig_desc} | "
+        f"wall={result.wall_us/1e6:.2f}s | stdout_bytes={len(result.stdout or '')} | "
+        f"stderr_tail={stderr_tail!r}",
+        file=sys.stderr, flush=True,
+    )
+
+
 def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, int]:
     """
     Run solver subprocess, measure wall-clock time and peak RSS.
@@ -131,20 +178,21 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, 
 
     Delegates process-group kill discipline to bench_lib.process.run_with_deadline:
     - The solver's own --timeout flag is the primary time enforcer.
-    - Python deadline = 1.5 × solver_timeout_s (D1: no floor, no cap).
+    - Python deadline = solver_timeout_s + max(0.5 × solver_timeout_s, 10 s).
     - On overrun: SIGTERM the process group → wait sigterm_grace_s → SIGKILL.
+      The solver handles SIGTERM gracefully (flushes JSON), so this yields a
+      TERMINATED result with stats, not a silent kill.
     - The solver AND any /usr/bin/time wrapper share the process group
       (start_new_session=True) so a single killpg() reaches both.
     - Whatever stdout is available is always returned regardless of how the
       process ended.
 
-    The returned `success` bool is True only when disposition is EXITED_OK
-    (returncode 0 and within the deadline).  Callers use it to decide whether
-    to trust the RSS from /usr/bin/time, but disposition is the authoritative
-    classification signal for downstream CSV column assignment.
+    Any non-clean disposition is logged via _diagnose_nonclean() to stderr so
+    that the cause of a KILLED/TERMINATED run (OOM, bad_alloc, hang, ...) is
+    visible in logs.
     """
     solver_timeout_s = timeout_ms / 1000.0
-    sigterm_grace_s = 30.0   # fixed flush window after SIGTERM (D1)
+    sigterm_grace_s = 30.0   # fixed flush window after SIGTERM
 
     prefix = time_prefix()
     full_cmd = prefix + cmd
@@ -154,6 +202,9 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, 
         solver_timeout_s=solver_timeout_s,
         sigterm_grace_s=sigterm_grace_s,
     )
+
+    if result.disposition != EXITED_OK:
+        _diagnose_nonclean(cmd, result)
 
     # Try to parse RSS from /usr/bin/time stderr.  On kill paths the time
     # wrapper may not have flushed its RSS line, so parse_rss_from_time_output
