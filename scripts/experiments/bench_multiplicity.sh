@@ -294,7 +294,7 @@ echo "  Phases:     $PHASES"
 echo "  Seeds:      $SEEDS"
 echo "  Workers:    $WORKERS  ($WORKERS_SOURCE)"
 echo "  Memory:     ~${_RAM_GB_DISPLAY} GB RAM, max_safe=${_RAM_MAX_SAFE} workers (@3GB each)"
-echo "  Engine:     GNU parallel (--jobs $WORKERS --memfree 3G)"
+echo "  Engine:     GNU parallel (--jobs $WORKERS${BENCH_MEMFREE:+ --memfree $BENCH_MEMFREE})"
 echo "  Chunk size: $CHUNK_SIZE"
 echo "  Timeout:    ${TIMEOUT}ms"
 echo "  Output:     $RESULTS_DIR"
@@ -468,15 +468,26 @@ fi
 
 # Run with GNU parallel.
 # --jobs $WORKERS     — concurrency ceiling (memory-aware value above)
-# --memfree 3G        — second safety net: pause if less than 3 GB free
 # --halt never        — don't abort on individual chunk failure
+# --memfree SIZE      — OPTIONAL. WARNING: --memfree does NOT merely pause; when
+#                       free memory drops below 50% of SIZE, GNU parallel *kills
+#                       the youngest running job* (SIGKILL/SIGTERM) and requeues
+#                       it. That produces exit-137-mid-run and re-runs — a prime
+#                       suspect for spurious KILLs. Controlled by BENCH_MEMFREE:
+#                       set BENCH_MEMFREE=3G to keep it, or BENCH_MEMFREE= (empty)
+#                       to DISABLE it for A/B testing. Default: disabled, because
+#                       the right defence is an accurate --jobs count, not killing.
 # Each command is in its own script file so there are no xargs length limits.
-# GNU parallel creates its own session for each job, providing clean signal
-# handling: Ctrl-C / SIGTERM reaches all workers via GNU parallel's built-in
-# group management.
+MEMFREE_ARGS=()
+if [[ -n "${BENCH_MEMFREE:-}" ]]; then
+    MEMFREE_ARGS=(--memfree "$BENCH_MEMFREE")
+    echo "[run] parallel --memfree $BENCH_MEMFREE (will KILL+requeue youngest job under memory pressure)"
+else
+    echo "[run] parallel without --memfree (jobs bounded by --jobs $WORKERS only)"
+fi
 find "$CMDDIR" -name '*.sh' -print0 \
     | sort -z \
-    | parallel --null --jobs "$WORKERS" --memfree 3G --halt never bash {}
+    | parallel --null --jobs "$WORKERS" "${MEMFREE_ARGS[@]}" --halt never bash {}
 
 # ---------------------------------------------------------------------------
 # Merge chunk CSVs into per-label combined files
