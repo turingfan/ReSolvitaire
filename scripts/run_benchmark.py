@@ -396,6 +396,15 @@ def format_progress(index: int, total: int, instance: str, solution_type: str, t
     return f"[{index:3d}/{total:3d}] {instance:20s} {solution_type:12s} {time_us:12.1f} us {nodes:8d} nodes"
 
 def main():
+    # Treat SIGTERM like Ctrl-C: raise KeyboardInterrupt so the active solver's
+    # process group is torn down (run_with_deadline's BaseException handler)
+    # instead of this process dying and orphaning the detached solver. This is
+    # what makes a parent's ^C / kill actually stop the solver subprocesses.
+    import signal as _signal
+    def _interrupt(signum, _frame):
+        raise KeyboardInterrupt()
+    _signal.signal(_signal.SIGTERM, _interrupt)
+
     # When invoked via a pipeline (e.g. oracle_to_benchmark_cmds.py | bash),
     # Python inherits a broken-pipe fd 0 that can cause solver subprocesses to
     # fail at fork time.  Replace it with /dev/null once at startup.

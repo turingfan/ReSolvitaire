@@ -466,6 +466,21 @@ if ! command -v parallel >/dev/null 2>&1; then
     exit 1
 fi
 
+# On Ctrl-C / SIGTERM, tear down the whole run rather than leaking solvers.
+# SIGINT from the terminal already reaches the foreground group (parallel + the
+# run_benchmark.py workers); each worker then kills its own detached solver group
+# (see bench_lib/process.py). This trap additionally signals the process group so
+# a SIGTERM to the script (not just an interactive ^C) propagates the same way,
+# and stops parallel from launching further jobs.
+_bench_interrupted() {
+    trap - INT TERM
+    echo "" >&2
+    echo "[run] interrupted — terminating parallel workers and their solvers..." >&2
+    kill -TERM -- "-$$" 2>/dev/null || true
+    exit 130
+}
+trap _bench_interrupted INT TERM
+
 # Run with GNU parallel.
 # --jobs $WORKERS     — concurrency ceiling (memory-aware value above)
 # --halt never        — don't abort on individual chunk failure

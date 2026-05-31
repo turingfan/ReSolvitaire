@@ -132,37 +132,55 @@ def run_with_deadline(
         start_new_session=True,   # child gets its own process group (POSIX setsid)
     )
 
+    # Capture the child's process-group id up front. Because the child is in its
+    # OWN session (start_new_session), an external signal to *this* process (e.g.
+    # Ctrl-C / SIGTERM from a parent like GNU parallel) does NOT reach it — it
+    # would be orphaned and keep running. The BaseException handler below kills
+    # the whole group so an interrupted run never leaves a solver behind.
+    pgid = _pgid(proc)
+
     stdout = ""
     stderr = ""
     returncode: Optional[int] = None
     disposition: str
 
     try:
-        # --- Happy path: process finishes within the deadline ---------------
-        stdout, stderr = proc.communicate(timeout=total_wait_s)
-        returncode = proc.returncode
-        disposition = EXITED_OK if returncode == 0 else EXITED_ERR
-
-    except subprocess.TimeoutExpired:
-        # --- Deadline elapsed: escalation sequence --------------------------
-        # 1. SIGTERM the whole process group.
-        pgid = _pgid(proc)
-        _killpg_safe(pgid, signal.SIGTERM)
-
-        # 2. Wait sigterm_grace_s for voluntary exit.
         try:
-            stdout, stderr = proc.communicate(timeout=sigterm_grace_s)
+            # --- Happy path: process finishes within the deadline -----------
+            stdout, stderr = proc.communicate(timeout=total_wait_s)
             returncode = proc.returncode
-            disposition = KILLED_AFTER_SIGTERM
+            disposition = EXITED_OK if returncode == 0 else EXITED_ERR
 
         except subprocess.TimeoutExpired:
-            # 3. SIGKILL the group — no more waiting.
-            _killpg_safe(pgid, signal.SIGKILL)
+            # --- Deadline elapsed: escalation sequence ----------------------
+            # 1. SIGTERM the whole process group.
+            _killpg_safe(pgid, signal.SIGTERM)
 
-            # 4. Reap: communicate() with no timeout so we drain all pipes.
-            stdout, stderr = proc.communicate()
-            returncode = proc.returncode
-            disposition = KILLED_HARD
+            # 2. Wait sigterm_grace_s for voluntary exit.
+            try:
+                stdout, stderr = proc.communicate(timeout=sigterm_grace_s)
+                returncode = proc.returncode
+                disposition = KILLED_AFTER_SIGTERM
+
+            except subprocess.TimeoutExpired:
+                # 3. SIGKILL the group — no more waiting.
+                _killpg_safe(pgid, signal.SIGKILL)
+
+                # 4. Reap: communicate() with no timeout so we drain all pipes.
+                stdout, stderr = proc.communicate()
+                returncode = proc.returncode
+                disposition = KILLED_HARD
+
+    except BaseException:
+        # Interrupted while waiting (Ctrl-C → KeyboardInterrupt, or a SIGTERM
+        # that the caller turned into an exception). Tear down the detached
+        # solver group so it does not survive as an orphan, then propagate.
+        _killpg_safe(pgid, signal.SIGKILL)
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            pass
+        raise
 
     # Ensure empty strings when capture=False (pipes were None)
     if stdout is None:
