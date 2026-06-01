@@ -120,32 +120,10 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Memory-aware worker default (D2/D3)
-# ---------------------------------------------------------------------------
-# Compute max_safe = floor(total_RAM_GB × 0.80 / 3)
-# Falls back to 1 if sysctl/proc is unavailable.
-_compute_max_safe_workers() {
-    local total_bytes=0
-    if command -v sysctl >/dev/null 2>&1; then
-        total_bytes=$(sysctl -n hw.memsize 2>/dev/null || echo 0)
-    fi
-    if [[ "$total_bytes" -eq 0 ]] && [[ -r /proc/meminfo ]]; then
-        total_bytes=$(awk '/^MemTotal:/{print $2 * 1024; exit}' /proc/meminfo 2>/dev/null || echo 0)
-    fi
-    if [[ "$total_bytes" -le 0 ]]; then
-        echo 1
-        return
-    fi
-    # max_safe = floor(total_bytes * 0.80 / 3_221_225_472)
-    python3 -c "
-import math
-b = $total_bytes
-print(max(1, math.floor(b * 0.80 / (3 * 1024**3))))
-" 2>/dev/null || echo 1
-}
-
-_RAM_MAX_SAFE=$(_compute_max_safe_workers)
-
+# Memory-aware worker sizing is computed below (after args are parsed and the
+# cache types for the selected phases are known) via bench_lib.concurrency:
+# it reads the real memory limit (cgroup memory.max, not just host RAM) and the
+# per-worker footprint from the cache type + capacity. See _plan_workers below.
 # ---------------------------------------------------------------------------
 # Parse arguments
 # ---------------------------------------------------------------------------
@@ -202,23 +180,8 @@ if ! [[ "$SEED_LO" =~ ^[0-9]+$ ]] || ! [[ "$SEED_HI" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-# Resolve --workers: if not specified, use memory-safe default (capped at 8
-# to be conservative; operator can override with --workers).
+# --workers is resolved after cd to REPO_ROOT (needs bench_lib on the path).
 WORKERS_REQUESTED="${WORKERS:-}"
-if [[ -z "$WORKERS_REQUESTED" ]]; then
-    # Default: min(4, max_safe) — conservative for unattended runs
-    WORKERS=$(( _RAM_MAX_SAFE < 4 ? _RAM_MAX_SAFE : 4 ))
-    WORKERS_SOURCE="default (min(4, max_safe=${_RAM_MAX_SAFE}))"
-else
-    WORKERS="$WORKERS_REQUESTED"
-    if [[ "$WORKERS" -gt "$_RAM_MAX_SAFE" ]]; then
-        echo "WARNING: --workers $WORKERS exceeds memory-safe ceiling $_RAM_MAX_SAFE" \
-             "(~3 GB resident per worker). Proceeding at requested value — monitor RAM." >&2
-        WORKERS_SOURCE="requested (exceeds max_safe=${_RAM_MAX_SAFE} — WARNING)"
-    else
-        WORKERS_SOURCE="requested"
-    fi
-fi
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -234,6 +197,59 @@ SOLVER_FLAT="$BIN_DIR/solvitaire-flat"
 SOLVER_SCRATCH="${SOLVER_SCRATCH:-$BIN_DIR/solvitaire-mult-scratch}"
 
 RUN_BENCH="$REPO_ROOT/scripts/run_benchmark.py"
+
+# ---------------------------------------------------------------------------
+# Memory-aware worker plan (cgroup-aware limit + per-cache-type footprint)
+# ---------------------------------------------------------------------------
+# Cache types exercised by the selected phases (multiplicity is in every phase;
+# B adds flat; C/D add lru). planning_worker_bytes sizes by the flat-family
+# reservation (always-resident; this is what OOM-kills), not LRU's worst case.
+_CACHE_TYPES="multiplicity"
+[[ "$PHASES" == *B* ]] && _CACHE_TYPES="${_CACHE_TYPES},flat"
+[[ "$PHASES" == *[CD]* ]] && _CACHE_TYPES="${_CACHE_TYPES},lru"
+
+_PLAN=$(PYTHONPATH="$REPO_ROOT/scripts" python3 - "${WORKERS_REQUESTED:-}" "$_CACHE_TYPES" <<'PY' 2>/dev/null
+import sys
+from bench_lib import concurrency as c
+req_raw, types_csv = sys.argv[1], sys.argv[2]
+types = [t for t in types_csv.split(",") if t]
+limit, source = c.effective_memory_limit()
+pw = c.planning_worker_bytes(types)
+max_safe = c.compute_jobs(10**9, limit, pw).max_safe
+requested = int(req_raw) if req_raw else max_safe   # default: use the full safe budget
+r = c.compute_jobs(requested, limit, pw)
+GiB = 1024 ** 3
+print(f"JOBS={r.jobs}")
+print(f"LIMIT_GB={limit/GiB:.0f}")
+print(f"PERWORKER_GB={pw/GiB:.2f}")
+print(f"MAXSAFE={max_safe}")
+print(f"REQUESTED={'' if not req_raw else requested}")
+print(f"MEM_SOURCE={source}")
+for w in r.warnings:
+    print(f"WARN::{w}")
+PY
+)
+if [[ -z "$_PLAN" ]]; then
+    echo "WARNING: could not compute memory-safe worker count (bench_lib import failed?); defaulting to 1." >&2
+    WORKERS=1; _LIMIT_GB="?"; _PERWORKER_GB="?"; _MAXSAFE="?"; _MEM_SOURCE="unknown"; WORKERS_SOURCE="fallback"
+else
+    WORKERS=$(sed -n 's/^JOBS=//p' <<<"$_PLAN")
+    _LIMIT_GB=$(sed -n 's/^LIMIT_GB=//p' <<<"$_PLAN")
+    _PERWORKER_GB=$(sed -n 's/^PERWORKER_GB=//p' <<<"$_PLAN")
+    _MAXSAFE=$(sed -n 's/^MAXSAFE=//p' <<<"$_PLAN")
+    _MEM_SOURCE=$(sed -n 's/^MEM_SOURCE=//p' <<<"$_PLAN")
+    if [[ -z "$WORKERS_REQUESTED" ]]; then
+        WORKERS_SOURCE="auto (memory-safe max for ${_CACHE_TYPES})"
+    elif [[ "$WORKERS" != "$WORKERS_REQUESTED" ]]; then
+        WORKERS_SOURCE="requested ${WORKERS_REQUESTED} → CLAMPED to ${WORKERS}"
+    else
+        WORKERS_SOURCE="requested"
+    fi
+    # Surface any clamp/OOM warnings.
+    while IFS= read -r _w; do
+        [[ "$_w" == WARN::* ]] && echo "${_w#WARN::}" >&2
+    done <<<"$_PLAN"
+fi
 
 if [[ -z "$RESULTS_DIR" ]]; then
     if [[ -n "${BENCH_RUN_DIR:-}" ]]; then
@@ -293,7 +309,7 @@ echo "════════════════════════�
 echo "  Phases:     $PHASES"
 echo "  Seeds:      $SEEDS"
 echo "  Workers:    $WORKERS  ($WORKERS_SOURCE)"
-echo "  Memory:     ~${_RAM_GB_DISPLAY} GB RAM, max_safe=${_RAM_MAX_SAFE} workers (@3GB each)"
+echo "  Memory:     limit ${_LIMIT_GB} GB (${_MEM_SOURCE}); ~${_PERWORKER_GB} GB/worker (${_CACHE_TYPES}); max_safe=${_MAXSAFE}"
 echo "  Engine:     GNU parallel (--jobs $WORKERS${BENCH_MEMFREE:+ --memfree $BENCH_MEMFREE})"
 echo "  Chunk size: $CHUNK_SIZE"
 echo "  Timeout:    ${TIMEOUT}ms"

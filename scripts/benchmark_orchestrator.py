@@ -72,11 +72,20 @@ from bench_lib.process import run_with_deadline
 from bench_lib.concurrency import (
     JobsResult,
     compute_jobs,
-    get_total_ram_bytes,
-    BYTES_PER_WORKER,
-    RAM_FRACTION,
-    HARD_CAP,
+    effective_memory_limit,
+    planning_worker_bytes,
+    DEFAULT_CAPACITY_ENTRIES,
 )
+
+# Map orchestrator solver labels to a cache type for memory sizing.
+# "default" (auto-dispatch) is treated as multiplicity — the largest flat-family
+# footprint — so the estimate is conservative.
+_LABEL_CACHE_TYPE = {
+    "default": "multiplicity",
+    "flat": "flat",
+    "hash-only": "hash-only",
+    "lru": "lru",
+}
 
 # ---------------------------------------------------------------------------
 # Game configurations
@@ -376,36 +385,35 @@ Chunk timeout (T2):
     # ---------------------------------------------------------------------------
     # Memory-aware job count (D2/D3)
     # ---------------------------------------------------------------------------
-    total_ram = get_total_ram_bytes()
-    if total_ram == 0:
-        # Could not determine RAM; fall back to conservative default
+    # Cache types this run will exercise (for the per-worker memory estimate).
+    if args.solver_dir:
+        wanted = set(args.solvers) if args.solvers else {lbl for lbl, *_ in SOLVER_CONFIGS}
+        cache_types = [_LABEL_CACHE_TYPE.get(lbl, "multiplicity") for lbl in wanted]
+    else:
+        # Legacy single-binary mode: auto-dispatch could pick any flat-family cache —
+        # be conservative and assume the hungriest (multiplicity), plus lru/hash-only.
+        cache_types = ["multiplicity", "lru", "hash-only"]
+    capacity = args.cache_capacity or DEFAULT_CAPACITY_ENTRIES
+
+    limit, mem_source = effective_memory_limit()
+    worker_bytes = planning_worker_bytes(cache_types, capacity)
+
+    if limit <= 0:
         import multiprocessing
         default_workers = max(1, multiprocessing.cpu_count() // 2)
-        print(
-            f"WARNING: Could not determine total RAM; defaulting to {default_workers} workers. "
-            f"Use --workers to override.",
-            file=sys.stderr,
-        )
+        print(f"WARNING: could not determine memory limit; defaulting to {default_workers} "
+              f"workers. Use --workers to override.", file=sys.stderr)
         effective_requested = args.workers if args.workers is not None else default_workers
-        jobs_result = JobsResult(
-            jobs=effective_requested,
-            max_safe=effective_requested,
-            limiting_factor="unknown RAM (conservative default)",
-            warnings=[],
-        )
+        jobs_result = JobsResult(jobs=effective_requested, max_safe=effective_requested,
+                                 limiting_factor="unknown memory", warnings=[])
     else:
-        import multiprocessing
-        default_workers = max(1, min(
-            multiprocessing.cpu_count() // 2,
-            # Also respect memory ceiling for the default
-            max(1, int(total_ram * RAM_FRACTION / BYTES_PER_WORKER)),
-        ))
-        effective_requested = args.workers if args.workers is not None else default_workers
-        jobs_result = compute_jobs(
-            requested=effective_requested,
-            total_ram_bytes=total_ram,
-            cache_capacity_bytes=args.cache_capacity or 0,
-        )
+        max_safe = compute_jobs(10 ** 9, limit, worker_bytes).max_safe
+        effective_requested = args.workers if args.workers is not None else max_safe
+        jobs_result = compute_jobs(effective_requested, limit, worker_bytes)
+        print(f"[orchestrator] memory limit {limit / 2**30:.0f} GB ({mem_source}); "
+              f"~{worker_bytes / 2**30:.2f} GB/worker "
+              f"({','.join(sorted(set(cache_types)))}); max_safe={max_safe}; "
+              f"using {jobs_result.jobs} workers", file=sys.stderr)
 
     for w in jobs_result.warnings:
         print(w, file=sys.stderr)
@@ -546,17 +554,17 @@ Chunk timeout (T2):
     # ---------------------------------------------------------------------------
     # Print plan (always, and exit early on --dry-run)
     # ---------------------------------------------------------------------------
-    ram_gb = total_ram / (1024**3) if total_ram > 0 else 0
     print(f"")
     print(f"Scope:          {scope_label}")
     print(f"Total chunks:   {total}")
     print(f"Workers:        {num_workers}  (limiting factor: {jobs_result.limiting_factor})")
-    print(f"Memory budget:  {ram_gb:.1f} GB RAM × {RAM_FRACTION:.0%} / "
-          f"{BYTES_PER_WORKER // (1024**3)} GB per worker → max_safe={jobs_result.max_safe}")
-    print(f"Engine:         GNU parallel (--jobs {num_workers} --memfree 3G)")
+    if limit > 0:
+        print(f"Memory:         limit {limit / 2**30:.0f} GB ({mem_source}); "
+              f"~{worker_bytes / 2**30:.2f} GB/worker; max_safe={jobs_result.max_safe}")
+    print(f"Engine:         GNU parallel (--jobs {num_workers})")
     print(f"Output dir:     {output_dir}")
     if args.cache_capacity:
-        print(f"Cache capacity: {args.cache_capacity} bytes ({args.cache_capacity / (1024**3):.1f} GB)")
+        print(f"Cache capacity: {args.cache_capacity:,} entries")
     print()
 
     if dry_run:
@@ -584,8 +592,9 @@ Chunk timeout (T2):
     failed = 0
 
     # Write each chunk command to a script file, then drive them via parallel.
-    # We use --joblog for progress visibility and --memfree as the second
-    # safety net (D3: complementing the D2 software ceiling above).
+    # We use --joblog for progress visibility. We do NOT use --memfree: it would
+    # KILL+requeue the youngest job under memory pressure (causing lost-work
+    # "KILLED" runs); the accurate per-worker --jobs ceiling above is the defence.
     with tempfile.TemporaryDirectory() as tmpdir:
         # Write one script per chunk
         script_paths = []
@@ -628,7 +637,6 @@ Chunk timeout (T2):
         parallel_cmd = [
             parallel_bin,
             "--jobs", str(num_workers),
-            "--memfree", "3G",
             "--joblog", joblog_path,
             "--halt", "never",       # don't stop on individual failures
             "bash", ":::",
