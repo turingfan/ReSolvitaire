@@ -36,14 +36,27 @@
 #include "../input-output/input/command_line_helper.h"
 
 // ─── Policy-independent types ────────────────────────────────────────────────
-// Extracted from solver_impl so they are the same type across all Policy
-// instantiations and can be used freely in non-templated code.
+// solver_node carries the per-frame search state on the DFS frontier. The
+// cache_state field (the LRU live-bit iterator) is ONLY used by the LRU cache
+// path (Policy::computes_hash == false; see solver.cpp set_non_live). The
+// flat-cache family never touches it, so we carry it via an empty-base
+// specialisation that removes it entirely from flat/multiplicity frames —
+// saving 16 B per frontier node, which matters on deep searches (KI-26).
 
-struct solver_node {
-    solver_node(move) noexcept;
+// Holds the LRU live-bit iterator. The <false> specialisation is empty, so via
+// empty-base optimisation it contributes 0 bytes to the node.
+template <bool WithCacheState>
+struct cache_state_holder {
+    boost::optional<lru_cache::item_list::iterator> cache_state; // dominance moves aren't cached
+};
+template <>
+struct cache_state_holder<false> {};
+
+template <bool WithCacheState>
+struct solver_node_t : cache_state_holder<WithCacheState> {
+    explicit solver_node_t(move m) noexcept : mv(m), child_moves() {}
     const move mv;
     std::vector<move> child_moves;
-    boost::optional<lru_cache::item_list::iterator> cache_state; // Optional, as dominance moves aren't cached
 };
 
 struct solver_result {
@@ -67,7 +80,9 @@ class solver_impl {
 public:
     typename Policy::cache_type& cache;
 
-    using node = solver_node;
+    // Flat-cache policies (computes_hash) don't need the LRU live-bit iterator,
+    // so they use the empty-base node variant (no cache_state field).
+    using node = solver_node_t<!Policy::computes_hash>;
     using result = solver_result;
 
     explicit solver_impl(const game_state_impl<Policy>&, typename Policy::cache_type&);

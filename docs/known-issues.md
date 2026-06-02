@@ -276,3 +276,85 @@ of `SUIT_IRRELEVANT` (13 classes).
 computed once and propagated to all layers. See proposal in
 `01-Knowledge-Base/Design-Documents/suit-symmetry-centralisation-proposal.md`.
 
+### 26. Non-Cache Frontier Memory Dominates RAM on Deep Searches (runaway depth × per-frame `child_moves`)
+
+**Affected:** all cache policies (flat, multiplicity, hash-only, LRU) — solver-wide, not
+cache-specific
+**Status:** Open; **deferred — large algorithmic change, out of scope for cache work**
+**Impact:** OOM-kills of benchmark workers on hard instances (free-cell, somerset).
+Peak RSS reaches 20–40 GB.
+
+**Two intertwined causes, both algorithmic and unrelated to the cache implementation:**
+
+1. **Runaway search depth (already known).** On some hard seeds the DFS descends to
+   `10⁷–10⁸` moves deep before exhausting a branch. (Related: KI-2 Spanish Patience
+   move-ordering regression — same family of "search descends far further than the
+   solution length" behaviour.)
+
+2. **Per-frame `child_moves` storage.** The DFS frontier (`solver.cpp`: `std::vector<solver_node> frontier`)
+   keeps, on **every** ancestor frame, the *remaining unexplored legal moves* in a
+   `std::vector<move> child_moves` (`solver.cpp:188`), so siblings need not be recomputed
+   on backtrack. Memory is therefore `O(depth × branching)`. Measured ≈150–220 B/frame
+   (free-cell, branching ~15). At depth `1.3×10⁸` this is ~20 GB of **non-cache** memory.
+
+**Evidence (6-worker run `mult_20260531_164838`, 1000 free-cell seeds, `--cache-capacity` default 100M):**
+- `corr(peak_RSS, max_depth) = 0.82`.
+- flat seed 473: RSS 23.5 GB, depth 134 M → cache mmap ≤3.0 GB ⇒ **≈20.5 GB is non-cache frontier**.
+- mult seed 956: RSS 41.7 GB, depth 203 M → cache mmap ≤6.0 GB ⇒ **≈35.7 GB is non-cache frontier**.
+- This is **not** multiplicity-specific: paired same-seed `RSS(mult) − RSS(flat)` has
+  median ≈0 (both `streamliner=none`). flat and mult use comparable RAM.
+
+**Why deferred:** Fixing either cause is a significant algorithmic change to the DFS
+engine, not the cache:
+- (1) requires move-ordering / depth-bounding heuristics (see KI-2).
+- (2) requires *not* storing `child_moves` and recomputing legal moves on backtrack
+  (CPU-for-memory trade), or an iterative move generator — a core solver redesign.
+
+These are recorded here for completeness. **They are out of scope for the current
+cache/benchmark investigation.** The cache-specific finding from that investigation (the
+dead `cache_state` field carried on flat/mult frames) is tracked separately.
+
+> Note: LRU's large-RAM mechanism on these seeds differs — its `cache_size` fills to the
+> 100 M default capacity at ~320 B/entry (≈32 GB of heap cache), so LRU RAM *is* bounded
+> by `--cache-capacity`, whereas flat/mult frontier RAM is **not** (it scales with depth).
+
+### 27. `trace_regression_level1/2` Diverge From a Stale Reference Binary
+
+**Affected:** Gate 2 (trace) CTest targets `trace_regression_level1` (150 instances) and
+`trace_regression_level2` (160). Branch: `benchmark-rationalisation` (likely `dev` too).
+**Status:** Open; **needs triage — do not treat as a code regression without investigation.**
+**Impact:** The trace gate cannot pass on this branch, so it can't gate commits until
+resolved. No known correctness impact (see evidence below).
+
+**Symptom:** Both targets fail with `diverges at event N` across many game types
+(alpha-star, black-hole, delta-star, eight-off, fore-cell, klondike-deal-*, free-cell,
+somerset, accordion, worm-hole, …), often at very early events (4, 8, 12).
+
+**Evidence that the current binary is NOT the problem — the reference is stale:**
+- The failures are **identical with and without** the 2026-06-01 `cache_state` layout fix
+  (verified by `git stash` + rebuild + rerun). So no recent solver change caused them.
+- `trace_identity_flat`, `trace_identity_lru`, `trace_until_timeout`,
+  `SearchTraceAgreementTest.*`, all `^unit_tests$`, and `regression_level1` (default /
+  flat / hash-only / lru) **all pass** — the current binary is internally deterministic,
+  flat/LRU-agreeing, and outcome-correct against the oracles.
+- The CMake default `TRACE_REF_BIN` is `05-Executables/reference/solvitaire-trace-reference-mac-arm64`
+  (dated **2026-05-06**). The newer dated reference is from `dev @ 9673fd3` (2026-05-29),
+  but `9673fd3` is **NOT an ancestor of current HEAD** — dev history was reshaped by PR
+  merges (e.g. #8), so the reference predates / diverges from current branch behaviour.
+
+**Hypotheses (unverified — this is the "come back to it" part):**
+1. The search-event sequence changed *legitimately* since the reference was built
+   (candidates: KI-23 suit-symmetry centralisation `629f07f`, Stage-6 multiplicity
+   auto-dispatch `acbc8bf`, or other post-`9673fd3` work) → fix = **re-baseline** the
+   trace reference binaries (procedure in `05-Executables/reference/README.md`).
+2. A genuine trace-level regression slipped in between the reference commit and HEAD →
+   fix = find and repair it.
+3. The reference was built from a squashed/divergent history and never matched this
+   branch → fix = re-baseline.
+
+**Next step when revisited:** rebuild a trace reference from the current HEAD, diff a
+single divergent instance (e.g. `alpha-star_seed_4` at event 8) between current and
+reference traces with `scripts/compare_traces.py --full`, and decide between re-baseline
+(hyp. 1/3) and bug-fix (hyp. 2). Until then the trace *regression* sub-gate is known-red;
+the rest of Gate 2 (identity, agreement, until-timeout, unit tests) is green.
+

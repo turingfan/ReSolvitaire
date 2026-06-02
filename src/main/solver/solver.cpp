@@ -88,9 +88,6 @@ solver_impl<Policy>::solver_impl(const game_state_impl<Policy>& gs, typename Pol
 #endif
 }
 
-solver_node::solver_node(const ::move m) noexcept
-        : mv(m), child_moves(), cache_state() {
-}
 
 template <typename Policy>
 solver_result solver_impl<Policy>::run(boost::optional<millisec> timeout) {
@@ -268,8 +265,13 @@ bool solver_impl<Policy>::revert_to_last_node_with_children(optional<lru_cache::
 #endif
 
     // Gets a reference to the parent state which can be supplied if this function is
-    // called recursively. This ensures that the cached state's 'live' bit is set as appropriate
-    optional<lru_cache::item_list::iterator> p_state = prev(current_node)->cache_state;
+    // called recursively. This ensures that the cached state's 'live' bit is set as
+    // appropriate. Only the LRU path carries cache_state; flat-family nodes don't have
+    // the field (and never call set_non_live), so the parent state stays empty there.
+    optional<lru_cache::item_list::iterator> p_state;
+    if constexpr (!Policy::computes_hash) {
+        p_state = prev(current_node)->cache_state;
+    }
 
     // Reverts the current node to its parent and removes it
     frontier.pop_back();
