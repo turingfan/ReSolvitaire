@@ -1,9 +1,43 @@
 # PICKUP — benchmark-rationalisation branch
 
-**Last updated:** 2026-05-29
+**Last updated:** 2026-06-02
 **Branch:** `benchmark-rationalisation` (cut from `dev`; pushed to origin; NO PR yet)
 **Plan:** `01-Knowledge-Base/Implementation-Plans/benchmark-rationalisation-plan-2026-05-29.md`
 **Stage 2 detail:** `docs/benchmark-rationalisation/stage2-plan.md` (this folder)
+
+## 2026-06-02 update — OOM investigation + CPU-time timeout (this session)
+
+Triggered by remote OOM kills during `bench_multiplicity.sh`. Outcomes:
+
+- **OOM root cause characterised (not fixed — algorithmic).** Per-worker RAM on hard
+  instances is the **non-cache DFS frontier** (`child_moves` × runaway depth), not the
+  cache; it scales with depth and is NOT bounded by `--cache-capacity`. Multiplicity ≈ flat
+  (not mult-specific); LRU is bounded by capacity. Confirmed binding limit on the remote box
+  is a **cgroup `memory.max` = 64 GiB** on `user.slice/user-25002.slice` (invisible to
+  `ulimit`). Logged as **KI-26** (frontier memory) and **KI-28** (worker sizing can't bound a
+  single runaway worker; needs per-worker `systemd-run MemoryMax`). Worker-safety hardening
+  deferred to KI-28.
+- **Cache fix landed (`152e731`):** dropped the dead LRU `cache_state` (16 B) from
+  flat/multiplicity frontier frames (`solver_node` 48→32 B). Correctness-neutral; ~3–4%
+  RSS on deep searches. Not a fix for the OOM (that's KI-26).
+- **CPU-time timeout implemented (this session, pending commit):** `--timeout` is now a
+  **CPU-time (user+sys)** budget (`CLOCK_PROCESS_CPUTIME_ID`) + a **10× wall safety-cap**
+  (`--wall-cap-mult`, default 10) + a deterministic **`--max-states`** cutoff. Wrapper grace
+  (`run_benchmark.py`) and orchestrator chunk-ceiling now key off the wall ceiling, not the
+  CPU budget. `csv_schema.md`: `timeout_ms` = CPU ms, `time_us` = wall. Decisions taken with
+  Ian: user+sys / add `--max-states` / K=10 / switch-now-and-regenerate.
+- **Oracles:** L2/L3 regenerated under CPU-time and committed (all-definitive →
+  exactly reproducible; `--enforce-node-counts` exact-duplication). **L1 reverted** (regen was
+  a no-op + an unrelated hash_only cleanup). **L4/L5 NOT regenerated** — they compare
+  *outcome only*, which is untrustworthy with the unsound `both` streamliner (**KI-29**); and
+  L4 regen on a 32 GB box is memory-risky (KI-28).
+- **Trace regression gate (`trace_regression_level1/2`) is red on this branch** — a STALE
+  reference binary (commit not in HEAD's history), unrelated to any change here. **KI-27.**
+- Gates otherwise green: release (unit + regression_level1 ×4 + L2/L3), trace (unit incl.
+  SearchTraceAgreement + identity/until-timeout/mult-vs-flat), debug (248/248).
+
+New open items (decisions for Ian): KI-27 (re-baseline trace ref), KI-28 (per-worker mem
+cap), KI-29 (L4/L5 outcome-test methodology), and L5 (+L4) oracle regen when those are settled.
 
 ## Why this branch exists
 

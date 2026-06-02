@@ -358,3 +358,77 @@ reference traces with `scripts/compare_traces.py --full`, and decide between re-
 (hyp. 1/3) and bug-fix (hyp. 2). Until then the trace *regression* sub-gate is known-red;
 the rest of Gate 2 (identity, agreement, until-timeout, unit tests) is green.
 
+### 29. Level 4/5 Outcome-Only Regression Is Untrustworthy With Unsound Streamliners
+
+**Affected:** `regression_level4` and `regression_level5` (and their variant targets) —
+the CTest targets that compare **`solution_type` only** (no `--enforce-node-counts`).
+**Status:** Open; **needs a methodology decision — do not trust L4/L5 outcome pass/fail
+for unsound-streamliner instances.**
+
+**Root cause:** Many oracle instances run with `streamliner = both` (auto-foundations +
+suit-symmetry). **`both` is unsound** (it can report a winnable deal as `unsolvable`, and
+the result depends on search ordering). So the recorded `solution_type` for such an
+instance is **not stable ground truth** — a different search (different build, machine,
+cache policy, or even node-order change) can legitimately flip `solved`↔`unsolvable`.
+An outcome-only comparison therefore yields spurious failures (or false passes).
+
+**Evidence (2026-06-02):** regenerating the L2 oracle flipped
+`klondike-deal-8_316_winnable` from `solved` to `unsolvable` under `both`, purely from
+search reorganisation accumulated since the oracle was last baselined (KI-23 suit-symmetry
+centralisation etc.) — not a solver bug, just the unsoundness surfacing.
+
+**What IS fine:** the exact-duplication levels (`regression_level2/3`, which use
+`--enforce-node-counts`) are reliable — for a pinned binary the search is deterministic, so
+nodes *and* outcome reproduce exactly. The problem is specifically **outcome-only**
+comparison (L4 base, L5).
+
+**Options (for the deliberate decision):**
+1. Drop L4/L5 outcome regression entirely (cannot be trusted as written).
+2. Restrict outcome comparison to **sound** streamliners (`none`) only.
+3. Switch L4/L5 to deterministic cutoffs (`--max-states`) + `--enforce-node-counts`, making
+   them exact-duplication like L2/L3 (reproducible, but build/machine-pinned and expensive).
+
+**Status of oracles (2026-06-02):** L2/L3 oracles were regenerated under the new CPU-time
+`--timeout` and committed (all-definitive, reproducible). **L4/L5 oracles were deliberately
+NOT regenerated** pending this decision (and L4 regen on a 32 GB box is memory-risky per
+KI-28). See also the CPU-time timeout switch and KI-26/27/28.
+
+### 28. Benchmark Worker Sizing Cannot Bound a Single Runaway Worker (cache-based budget insufficient under a cgroup cap)
+
+**Affected:** `scripts/bench_lib/concurrency.py` worker-count sizing; any parallel
+benchmark run (`benchmark_orchestrator.py`, `bench_multiplicity.sh`) on a host with a
+fixed memory ceiling (notably a cgroup `memory.max`).
+**Status:** Open; **deferred (worker-safety hardening) — logged for a later pass.**
+**Impact:** OOM-kills on a shared/capped Linux box even when the worker count looks safe;
+the kernel's memcg OOM killer may kill *innocent* sibling workers, not the greedy one,
+so kills appear scattered across unrelated seeds.
+
+**Root cause:** `concurrency.py` budgets per-worker memory by **cache type × capacity**
+(the flat mmap reservation, or LRU per-entry). But per KI-26 the dominant per-worker term
+on hard instances is the **non-cache DFS frontier**, which scales with search depth and is
+**not bounded by the cache**. A single runaway-depth seed reached **20–40 GB** in the
+6-worker run (`mult_20260531_164838`: free-cell 956 → 41.7 GB). So:
+- The cache-based budget under-counts the real peak by an order of magnitude on the tail.
+- Under a fixed cgroup `memory.max` (confirmed on the remote box: `user-25002.slice`
+  `memory.max = 64 GiB`, and `memory.peak` reached it exactly), two or three workers
+  landing on deep seeds together exceed the slice limit and trigger a memcg OOM.
+
+**Confirmed environment fact (2026-06-02):** the binding limit on the remote host is a
+cgroup v2 `memory.max = 68719476736` (64 GiB) on `user.slice/user-25002.slice` — invisible
+to `ulimit -a` (which reports rlimits, all "unlimited" here). `memory.peak == memory.max`
+to the byte, i.e. runs drove the slice to its ceiling.
+
+**Proposed fix (when revisited):** bound each worker *independently* so a runaway dies
+cleanly in its own scope instead of taking down the slice (and siblings):
+- `systemd-run --user --scope -p MemoryMax=<N>G -p MemorySwapMax=0 <solver…>` per worker
+  (clean per-process memcg kill → solver/wrapper reports `terminated`/`KILLED` for that
+  one seed only), or
+- `ulimit -v <kbytes>` in the worker (caps virtual address space; must be set above the
+  flat-cache mmap reservation so it doesn't kill at startup).
+- Then derive worker count from `effective_memory_limit()` ÷ the per-worker `MemoryMax`,
+  not from the cache reservation alone.
+
+Until done, mitigate manually: fewer workers, and/or a modest `--cache-capacity`, and/or
+run under a per-worker `systemd-run … MemoryMax`. Relates to [[flat-cache-dedup-divergence-bug]]
+(KI-26) and the benchmark timeout/kill methodology.
+
