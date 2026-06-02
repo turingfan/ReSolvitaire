@@ -61,12 +61,21 @@ struct solve_output {
     std::function<void(std::ostream&)> print_init_state;  // streams init_state to given ostream
 };
 
+// Search budget threaded down to solver_impl::run(). cpu_timeout_ms is the
+// CPU-time (user+system) budget in ms; wall_cap_mult x that is the wall safety
+// cap; max_states (0 = off) is a deterministic state-count cutoff. See solver.h.
+struct search_limits {
+    uint64_t cpu_timeout_ms;
+    uint64_t wall_cap_mult = 10;
+    uint64_t max_states = 0;
+};
+
 // ─── solve_game_impl<Policy> ─────────────────────────────────────────────────
 // Constructs game_state, cache, and solver for the given policy. Runs the
 // solver and returns solve_output with lazy callbacks.
 
 template <typename Policy>
-solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
+solve_output solve_game_impl(const sol_rules& rules, const search_limits& lim, uint64_t cache_capacity,
                               game_state::streamliner_options str_opts,
                               boost::optional<int> seed,
                               boost::optional<const Document&> in_doc) {
@@ -82,7 +91,7 @@ solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t 
     }();
 
     solver_impl<Policy> sol(gs, cache);
-    auto res = sol.run(std::chrono::milliseconds(timeout));
+    auto res = sol.run(std::chrono::milliseconds(lim.cpu_timeout_ms), lim.wall_cap_mult, lim.max_states);
 
     solve_output out;
     out.result = res;
@@ -118,7 +127,7 @@ solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t 
 // ─── dispatch_solve ──────────────────────────────────────────────────────────
 // Selects the correct policy at compile time based on game rules and options.
 
-static solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
+static solve_output dispatch_solve(const sol_rules& rules, const search_limits& lim, uint64_t cache_capacity,
                              game_state::streamliner_options str_opts,
                              boost::optional<int> seed,
                              boost::optional<const Document&> in_doc,
@@ -130,34 +139,34 @@ static solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uin
 
 #if defined(SOLVITAIRE_LRU_ONLY)
     (void)cache_type; (void)force_lru; (void)suit_sym;
-    return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    return solve_game_impl<LRUPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
 #elif defined(SOLVITAIRE_FLAT_ONLY)
     (void)force_lru; (void)cache_type;
     if (use_predecessor_cache(rules))
-        return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+        return solve_game_impl<PredecessorPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     if (!use_new_cache(rules, suit_sym))
         throw std::runtime_error("flat-only binary: game requires LRU cache");
-    return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    return solve_game_impl<FlatPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
 #elif defined(SOLVITAIRE_HASH_ONLY)
     (void)force_lru; (void)cache_type;
     if (!use_new_cache(rules, suit_sym))
         throw std::runtime_error("hash-only binary: game requires LRU cache");
-    return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+    return solve_game_impl<HashOnlyPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
 #else
     if (force_lru) {
-        return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+        return solve_game_impl<LRUPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     } else if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
-        return solve_game_impl<MultiplicityPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+        return solve_game_impl<MultiplicityPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
-        return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+        return solve_game_impl<HashOnlyPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     } else if (use_predecessor_cache(rules)) {
-        return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+        return solve_game_impl<PredecessorPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     } else if (use_new_cache(rules, suit_sym)) {
-        return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+        return solve_game_impl<FlatPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     } else if (use_multiplicity_cache(rules, suit_sym)) {
-        return solve_game_impl<MultiplicityPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+        return solve_game_impl<MultiplicityPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     } else {
-        return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc);
+        return solve_game_impl<LRUPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     }
 #endif
 }
@@ -343,14 +352,15 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optiona
         timeout = clh.get_timeout();
         str_opt = clh.get_streamliners_game_state();
     }
-    solve_output solution = dispatch_solve(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type());
+    search_limits lim{timeout, clh.get_wall_cap_mult(), clh.get_max_states()};
+    solve_output solution = dispatch_solve(rules, lim, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type());
 
     bool run_again = smart && solution.result.sol_type != solver::result::type::SOLVED;
     cout.flush();
     if (run_again)
         if (!clh.get_classify() && !clh.get_json_output()) cout << "Unsolvable using streamliner. Running again...\n";
     boost::optional<solve_output> streamliner_solution = run_again
-            ? dispatch_solve(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type())
+            ? dispatch_solve(rules, search_limits{clh.get_timeout(), clh.get_wall_cap_mult(), clh.get_max_states()}, clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type())
             : boost::optional<solve_output>();
 
     if (clh.get_json_output()) {

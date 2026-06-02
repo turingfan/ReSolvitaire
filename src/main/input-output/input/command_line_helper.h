@@ -55,6 +55,8 @@ public:
     uint64_t get_cache_capacity();
     std::string get_describe_game_rules();
     uint64_t get_timeout();
+    uint64_t get_wall_cap_mult() const;
+    uint64_t get_max_states() const;
     bool get_json_output() const;
     bool get_reveal_hidden() const;
     bool get_debug() const;
@@ -105,7 +107,9 @@ private:
 
     streamliner_opt streamliners;
     uint64_t cache_capacity;
-    uint64_t timeout;
+    uint64_t timeout;            // CPU-time (user+sys) budget, milliseconds
+    uint64_t wall_cap_mult = 10; // solver wall safety-cap = this x timeout
+    uint64_t max_states = 0;     // hard cap on states searched (0 = off)
     bool json_output = false;
     bool reveal_hidden = false;
     bool debug = false;

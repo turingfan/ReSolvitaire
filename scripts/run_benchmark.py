@@ -119,12 +119,20 @@ def time_prefix() -> List[str]:
         return [time_bin, "-v"]
 
 
+# Must match the solver's default --wall-cap-mult (solver.h / command_line_helper).
+# The solver's --timeout is a CPU-time budget; it self-terminates by a wall-clock
+# safety cap of _WALL_CAP_MULT × timeout, so the wrapper deadline and overrun
+# diagnostics are keyed off that WALL ceiling, not the CPU budget.
+_WALL_CAP_MULT = 10
+
+
 def _diagnose_nonclean(cmd: List[str], result, timeout_ms: int) -> None:
     """Emit a detailed [kill-diag] line to stderr for any non-clean run.
 
     Interpretation is keyed on DISPOSITION first (what the wrapper did), then on
-    the exit signal, plus an overrun ratio (wall vs the solver's own --timeout)
-    which is the tell-tale of memory pressure / swap:
+    the exit signal, plus an overrun ratio (wall vs the solver's wall safety-cap,
+    = _WALL_CAP_MULT × the CPU-time --timeout) which is the tell-tale of memory
+    pressure / swap:
       * KILLED_HARD         → wrapper sent SIGTERM then SIGKILL after the grace
                               window; the process did not exit in time. With a
                               large wall/timeout overrun this means the solver
@@ -143,7 +151,8 @@ def _diagnose_nonclean(cmd: List[str], result, timeout_ms: int) -> None:
     disp = result.disposition
     wall_s = result.wall_us / 1e6
     timeout_s = timeout_ms / 1000.0
-    overrun = f"{wall_s / timeout_s:.1f}x timeout" if timeout_s > 0 else "?"
+    wall_ceiling_s = timeout_s * _WALL_CAP_MULT  # solver self-terminates by here (wall)
+    overrun = f"{wall_s / wall_ceiling_s:.1f}x wall-cap" if wall_ceiling_s > 0 else "?"
 
     def signame(n):
         try:
@@ -229,7 +238,11 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, 
     that the cause of a KILLED/TERMINATED run (OOM, bad_alloc, hang, ...) is
     visible in logs.
     """
-    solver_timeout_s = timeout_ms / 1000.0
+    # --timeout is a CPU-time budget; the solver may run up to _WALL_CAP_MULT ×
+    # that in WALL time before its own safety cap fires. The wrapper deadline must
+    # sit beyond the WALL ceiling, or it would kill a run that is merely descheduled
+    # under load (exactly the load-invariance the CPU budget exists to provide).
+    solver_wall_ceiling_s = (timeout_ms / 1000.0) * _WALL_CAP_MULT
     sigterm_grace_s = 30.0   # fixed flush window after SIGTERM
 
     prefix = time_prefix()
@@ -237,7 +250,7 @@ def run_solver(cmd: List[str], timeout_ms: int) -> Tuple[bool, str, str, float, 
 
     result = run_with_deadline(
         full_cmd,
-        solver_timeout_s=solver_timeout_s,
+        solver_timeout_s=solver_wall_ceiling_s,
         sigterm_grace_s=sigterm_grace_s,
     )
 

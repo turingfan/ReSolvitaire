@@ -30,6 +30,7 @@
 #include <chrono>
 #include <iomanip>
 #include <signal.h>
+#include <ctime>
 
 #include "solver.h"
 #include "search_trace.h"
@@ -89,16 +90,41 @@ solver_impl<Policy>::solver_impl(const game_state_impl<Policy>& gs, typename Pol
 }
 
 
+// Total process CPU time (user + system) in nanoseconds. This is the
+// load-invariant "work done" quantity the search budget is measured against:
+// unlike wall time it does not change with scheduler contention. POSIX
+// CLOCK_PROCESS_CPUTIME_ID (Linux; macOS >= 10.12). The solver is single-threaded.
+static inline uint64_t process_cpu_ns() {
+    struct timespec ts;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
+    return static_cast<uint64_t>(ts.tv_sec) * 1000000000ull
+         + static_cast<uint64_t>(ts.tv_nsec);
+}
+
 template <typename Policy>
-solver_result solver_impl<Policy>::run(boost::optional<millisec> timeout) {
+solver_result solver_impl<Policy>::run(boost::optional<millisec> cpu_timeout,
+                                       uint64_t wall_cap_mult, uint64_t max_states) {
     // Set interrupt handler (SIGTERM behaves like SIGINT: sets the flag so DFS
     // returns TERMINATED and the solver flushes its JSON before exiting).
     signal(SIGINT, sigint_handler);
     signal(SIGTERM, sigint_handler);
 
-    // Set timings
+    // Primary budget is CPU time (user+sys). A generous wall safety-cap
+    // (wall_cap_mult x cpu_timeout) guarantees self-termination even under heavy
+    // descheduling, so the solver almost always self-reports rather than being
+    // killed by the wrapper. res.time below is still reported in WALL ms.
     const clock::time_point start_time = clock::now();
-    typename result::type res_type = timeout ? dfs(start_time + *timeout) : dfs();
+    const uint64_t start_cpu_ns = process_cpu_ns();
+
+    boost::optional<uint64_t> cpu_budget_ns = boost::none;
+    boost::optional<clock::time_point> wall_deadline = boost::none;
+    if (cpu_timeout) {
+        cpu_budget_ns = static_cast<uint64_t>(cpu_timeout->count()) * 1000000ull;
+        wall_deadline = start_time
+                      + millisec(static_cast<uint64_t>(cpu_timeout->count()) * wall_cap_mult);
+    }
+
+    typename result::type res_type = dfs(start_cpu_ns, cpu_budget_ns, wall_deadline, max_states);
     res.sol_type = res_type;
     res.states_removed_from_cache = cache.get_states_removed_from_cache();
     res.cache_size = cache.size();
@@ -108,16 +134,37 @@ solver_result solver_impl<Policy>::run(boost::optional<millisec> timeout) {
 }
 
 template <typename Policy>
-solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> end_time) {
+solver_result::type solver_impl<Policy>::dfs(uint64_t start_cpu_ns,
+                                             boost::optional<uint64_t> cpu_budget_ns,
+                                             boost::optional<clock::time_point> wall_deadline,
+                                             uint64_t max_states) {
     bool states_exhausted = false;
 
+    // Reading CLOCK_PROCESS_CPUTIME_ID can be a syscall, and this loop runs
+    // millions of times per second, so sample the time/signal budgets only every
+    // CHECK_INTERVAL nodes (the granularity is negligible against the budget).
+    // max_states is a cheap integer compare, so it is checked every iteration.
+    constexpr uint64_t CHECK_MASK = (1u << 12) - 1;  // every 4096 nodes
+    uint64_t iter = 0;
+
     while(!(state.is_solved() || states_exhausted)) {
-        if (end_time && clock::now() >= *end_time) {
+        if (max_states != 0 && res.states_searched >= max_states) {
             STRACE_RESULT("TIMEOUT");
             return result::type::TIMEOUT;
-        } else if (sigint) {
-            STRACE_RESULT("TERMINATED");
-            return result::type::TERMINATED;
+        }
+        if ((iter++ & CHECK_MASK) == 0) {
+            if (cpu_budget_ns && (process_cpu_ns() - start_cpu_ns) >= *cpu_budget_ns) {
+                STRACE_RESULT("TIMEOUT");
+                return result::type::TIMEOUT;
+            }
+            if (wall_deadline && clock::now() >= *wall_deadline) {
+                STRACE_RESULT("TIMEOUT");
+                return result::type::TIMEOUT;
+            }
+            if (sigint) {
+                STRACE_RESULT("TERMINATED");
+                return result::type::TERMINATED;
+            }
         }
 
 #ifndef NDEBUG

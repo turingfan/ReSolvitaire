@@ -63,7 +63,13 @@ command_line_helper::command_line_helper()
             ("solvability", po::value<int>(), "calculates the solvability "
                     "percentage of the supplied solitaire game, given a limit for the number of seeds. Must supply "
                     "either 'random', 'benchmark', 'solvability' or list of deals to be solved.")
-            ("timeout", po::value<uint64_t>(), "adds a timeout to searches")
+            ("timeout", po::value<uint64_t>(), "search budget in CPU-time milliseconds "
+                    "(user+system, CLOCK_PROCESS_CPUTIME_ID) — load-invariant, unlike wall time")
+            ("wall-cap-mult", po::value<uint64_t>(), "solver wall-clock safety cap as a multiple of "
+                    "--timeout (default 10): the search self-terminates if wall time exceeds "
+                    "wall-cap-mult x timeout, guaranteeing termination even if badly descheduled")
+            ("max-states", po::value<uint64_t>(), "hard cap on states searched (default 0 = off). A "
+                    "deterministic, machine/load-independent cutoff for reproducible comparisons")
             ("resume", po::value<vector<int>>()->multitoken(), "resumes the solvability percentage calculation from a "
                                                     "previous run. Must be supplied with the solvability option. "
                                                     "Syntax: [sol unsol intract in-progress-1 in-progress-2 ...]")
@@ -174,6 +180,15 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
         timeout = vm["timeout"].as<uint64_t>();
     } else {
         timeout = 604800000; // 1 week in milliseconds
+    }
+
+    if (vm.count("wall-cap-mult")) {
+        wall_cap_mult = vm["wall-cap-mult"].as<uint64_t>();
+        if (wall_cap_mult < 1) wall_cap_mult = 1;
+    }
+
+    if (vm.count("max-states")) {
+        max_states = vm["max-states"].as<uint64_t>();
     }
 
     if (vm.count("cores")) {
@@ -389,6 +404,14 @@ int command_line_helper::get_solvability() {
 
 uint64_t command_line_helper::get_timeout() {
     return timeout;
+}
+
+uint64_t command_line_helper::get_wall_cap_mult() const {
+    return wall_cap_mult;
+}
+
+uint64_t command_line_helper::get_max_states() const {
+    return max_states;
 }
 
 vector<int> command_line_helper::get_resume() {

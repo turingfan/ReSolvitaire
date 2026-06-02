@@ -74,7 +74,7 @@ All of these come from the solver's JSON output. They are 0 when `solution_type`
 |---|---|---|---|---|---|
 | 17 | `streamliner` | string | `none` | `--streamliner` arg | Value passed to `--streamliners` on the solver command line. |
 | 18 | `cache_capacity` | int or blank | `100000000` | `--cache-capacity` arg | Blank if `--cache-capacity` was not specified (solver uses its own default). |
-| 19 | `timeout_ms` | int | `60000` | `--timeout` arg | Timeout passed to the solver via `--timeout`, in milliseconds. |
+| 19 | `timeout_ms` | int | `60000` | `--timeout` arg | Search budget passed via `--timeout`, in **CPU-time** milliseconds (user+system, `CLOCK_PROCESS_CPUTIME_ID`) — load-invariant, *not* wall time. The solver also self-terminates at a wall safety-cap of `--wall-cap-mult` × this (default 10×). `time_us` (col 5) remains the **wall** time actually elapsed. |
 | 20 | `solver_commit` | string | `bf4f811` | `git rev-parse --short HEAD` | 7-char git hash of HEAD at the time `run_benchmark.py` was invoked. Identifies which solver binary was used. `"unknown"` if git unavailable. |
 | 21 | `label` | string | `flat-cache` | `--label` arg | Freeform tag. Empty string `""` if not provided. Useful for grouping runs from different configurations in a single CSV when using `--append`. |
 

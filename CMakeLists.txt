@@ -356,8 +356,10 @@ if(SOLVITAIRE_TRACE)
     set_tests_properties(trace_identity_lru PROPERTIES TIMEOUT 120)
 
     # trace_until_timeout: run a hard instance (klondike) twice with a
-    # wall-clock timeout so both runs end mid-search.  The first 10 000
-    # events of both partial traces must be byte-identical.
+    # CPU-time timeout (the search may end mid-search or complete).  Either way
+    # the first 10 000 events of both traces must be byte-identical — the search
+    # is deterministic, so where the (CPU-time) cutoff lands past event 10 000
+    # is irrelevant to a 10 000-event prefix comparison.
     add_test(NAME trace_until_timeout
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMAND "python3" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compare_traces.py"

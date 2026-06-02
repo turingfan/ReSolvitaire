@@ -143,18 +143,23 @@ LEGACY_CACHE_CONFIGS = [
 # ---------------------------------------------------------------------------
 # Chunk timeout formula (T2)
 # ---------------------------------------------------------------------------
-# Per-seed allowance = solver_timeout_s × 1.5 (the bench_lib.process deadline
-# already applies this, so run_benchmark.py will exit after 1.5× per seed at
-# most in normal operation).  We add a further CHUNK_MARGIN outer factor to
-# cover process startup/teardown overhead per chunk.
+# The solver's --timeout is a CPU-time budget; under load a well-behaved run
+# may take up to SOLVER_WALL_CAP_MULT × that in WALL time before the solver's
+# own wall safety-cap fires. So the per-seed WALL allowance must be the wall
+# ceiling, not 1.5× — otherwise a heavily-descheduled (but correct) chunk is
+# killed prematurely, the very failure the CPU-time budget exists to avoid.
+# CHUNK_MARGIN is a further outer buffer for per-chunk startup/teardown.
 #
-# chunk_ceiling_s = ceil(seeds_in_chunk × solver_timeout_s × 1.5 × CHUNK_MARGIN)
+# chunk_ceiling_s = ceil(seeds_in_chunk × solver_timeout_s × SOLVER_WALL_CAP_MULT × CHUNK_MARGIN)
 #
-# This is conservative: a chunk of 10 seeds at 1200 s timeout each →
-#   10 × 1200 × 1.5 × 1.5 = 27,000 s (~7.5 hours) ceiling.
-# That sounds long but is correct for the full matrix.  A wedged chunk will
-# be killed at most one chunk_ceiling after it started.
+# This is deliberately a SAFETY ceiling (catch a wedged run_benchmark.py), not
+# an expected runtime: idle, each seed finishes at ~its CPU budget (CPU≈wall)
+# and the chunk returns as soon as run_benchmark exits.
 CHUNK_MARGIN: float = 1.5
+
+# Must match the solver's default --wall-cap-mult (see run_benchmark._WALL_CAP_MULT
+# and command_line_helper). The solver self-terminates by wall_cap_mult × timeout.
+SOLVER_WALL_CAP_MULT: float = 10.0
 
 # Minimum chunk ceiling in seconds (prevent absurdly short timeouts for quick games)
 MIN_CHUNK_CEILING_S: float = 120.0
@@ -165,14 +170,14 @@ def chunk_ceiling_s(seeds_in_chunk: int, timeout_ms: int) -> float:
 
     Formula:
         ceiling = max(MIN_CHUNK_CEILING_S,
-                      ceil(seeds × (timeout_ms / 1000) × 1.5 × CHUNK_MARGIN))
+                      ceil(seeds × (timeout_ms / 1000) × SOLVER_WALL_CAP_MULT × CHUNK_MARGIN))
 
-    The inner 1.5× factor accounts for the per-seed deadline already applied by
-    bench_lib.process.run_with_deadline (so run_benchmark.py completes each
-    seed within 1.5× its timeout in normal operation).  CHUNK_MARGIN is an
-    additional outer scheduling buffer.
+    The inner SOLVER_WALL_CAP_MULT factor is the solver's wall safety-cap as a
+    multiple of its CPU-time --timeout: a correct run can use that much WALL time
+    under load before self-terminating, so the chunk ceiling must allow it.
+    CHUNK_MARGIN is an additional outer scheduling buffer.
     """
-    per_seed_wall_s = (timeout_ms / 1000.0) * 1.5
+    per_seed_wall_s = (timeout_ms / 1000.0) * SOLVER_WALL_CAP_MULT
     ceiling = math.ceil(seeds_in_chunk * per_seed_wall_s * CHUNK_MARGIN)
     return max(MIN_CHUNK_CEILING_S, float(ceiling))
 

@@ -87,7 +87,13 @@ public:
 
     explicit solver_impl(const game_state_impl<Policy>&, typename Policy::cache_type&);
 
-    result run(boost::optional<std::chrono::milliseconds> = boost::none);
+    // cpu_timeout: CPU-time (user+system) search budget. The solver also keeps a
+    // wall safety-cap of wall_cap_mult x cpu_timeout so it always self-terminates
+    // even if badly descheduled. max_states (0 = off) is a deterministic hard cap on
+    // states searched, for reproducible cutoffs. All three map to a TIMEOUT result.
+    result run(boost::optional<std::chrono::milliseconds> cpu_timeout = boost::none,
+               uint64_t wall_cap_mult = 10,
+               uint64_t max_states = 0);
 
     void print_solution() const;
     static void print_header(long, command_line_helper::streamliner_opt);
@@ -101,7 +107,10 @@ private:
     typedef std::chrono::high_resolution_clock clock;
     typedef std::chrono::milliseconds millisec;
 
-    typename result::type dfs(boost::optional<clock::time_point> = boost::none);
+    typename result::type dfs(uint64_t start_cpu_ns,
+                              boost::optional<uint64_t> cpu_budget_ns,
+                              boost::optional<clock::time_point> wall_deadline,
+                              uint64_t max_states);
 
     bool revert_to_last_node_with_children(boost::optional<lru_cache::item_list::iterator> = boost::none);
     void set_to_child();
