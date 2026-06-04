@@ -68,7 +68,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 #
 # A — Incremental vs from-scratch multiplicity
-#     Games: klondike (suit-sym), free-cell (suit-sym), black-hole (auto-found)
+#     Games: klondike (suit-sym), free-cell (suit-sym), black-hole (suit-sym)
 #     Requires solvitaire-mult-scratch binary; skipped if absent.
 #     states_searched MUST be identical — any mismatch is a bug.
 #
@@ -390,7 +390,7 @@ if [[ "$PHASES" == *A* ]]; then
         echo "Phase A: Incremental vs From-Scratch Multiplicity"
 
         # game:streamliner pairs
-        for pair in klondike:suit-symmetry free-cell:suit-symmetry black-hole:auto-foundations; do
+        for pair in klondike:suit-symmetry free-cell:suit-symmetry black-hole:suit-symmetry; do
             game="${pair%%:*}"; str="${pair##*:}"
             game_matches "$game" || continue
             emit_chunks "A_incr"    "$SOLVER"         "$game" "$str" --cache-type multiplicity
@@ -407,7 +407,7 @@ if [[ "$PHASES" == *B* ]]; then
     echo "Phase B: Flat vs Multiplicity (No Symmetry)"
 
     for pair in klondike-deal-1:none free-cell:none bakers-game:none \
-                canfield:none somerset:none black-hole:auto-foundations; do
+                canfield:none somerset:none black-hole:suit-symmetry; do
         game="${pair%%:*}"; str="${pair##*:}"
         game_matches "$game" || continue
         emit_chunks "B_flat" "$SOLVER_FLAT" "$game" "$str"
@@ -423,7 +423,7 @@ if [[ "$PHASES" == *C* ]]; then
     echo "Phase C: LRU vs Multiplicity (No Symmetry)"
 
     for pair in klondike-deal-1:none free-cell:none bakers-game:none \
-                canfield:none somerset:none black-hole:auto-foundations; do
+                canfield:none somerset:none black-hole:suit-symmetry; do
         game="${pair%%:*}"; str="${pair##*:}"
         game_matches "$game" || continue
         emit_chunks "C_lru"  "$SOLVER_LRU" "$game" "$str"
@@ -439,7 +439,7 @@ if [[ "$PHASES" == *D* ]]; then
     echo "Phase D: LRU vs Multiplicity + Suit-Symmetry (THE CRITICAL TEST)"
 
     for pair in klondike:suit-symmetry klondike-deal-1:suit-symmetry \
-                free-cell:suit-symmetry black-hole:auto-foundations; do
+                free-cell:suit-symmetry black-hole:suit-symmetry; do
         game="${pair%%:*}"; str="${pair##*:}"
         game_matches "$game" || continue
         emit_chunks "D_lru"  "$SOLVER_LRU" "$game" "$str"
