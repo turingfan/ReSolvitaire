@@ -1,0 +1,48 @@
+# Apptainer/Singularity definition — companion to the Dockerfile.
+#
+# Apptainer cannot consume a Dockerfile directly, so this mirrors it for hosts
+# that have apptainer (e.g. HPC / shared boxes) instead of container/docker/podman.
+# scripts/container-build.sh does NOT drive apptainer — use the commands below.
+#
+# Build (run from the repo root so `%files . /workspace` copies the tree):
+#     apptainer build --fakeroot solvitaire.sif solvitaire.def
+#   (drop --fakeroot if building as root)
+#
+# Run:
+#     apptainer run  solvitaire.sif --type klondike --random 1 --json
+#     apptainer exec solvitaire.sif /workspace/cmake-build-release/bin/solvitaire --help
+#
+# Extract a built binary (e.g. the trace reference) from the read-only image:
+#     apptainer exec --bind "$PWD":/out solvitaire.sif \
+#         cp /workspace/cmake-build-trace/bin/solvitaire-trace /out/
+#
+# NB: apptainer builds for the HOST architecture. On x86_64 this yields a genuine
+# amd64 binary (unlike the Apple-Silicon container path, which produces aarch64).
+# NB: there is no .dockerignore equivalent — `%files . /workspace` copies everything
+# (incl. .git and host build dirs); the `rm -rf` in %post clears stale build dirs.
+
+Bootstrap: docker
+From: ubuntu:22.04
+
+%files
+    . /workspace
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update && apt-get install -y \
+        build-essential cmake libboost-program-options-dev git python3 ca-certificates time
+    rm -rf /var/lib/apt/lists/*
+    cd /workspace
+    rm -rf cmake-build-release cmake-build-trace cmake-build-debug build build-archive
+    # Release build (default + variant binaries + unit tests)
+    cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
+    cmake --build cmake-build-release --target solvitaire solvitaire-flat solvitaire-hash-only solvitaire-lru unit_tests
+    # Trace build (Release + SOLVITAIRE_TRACE=ON) — for trace tests / reference binaries
+    cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -Bcmake-build-trace -H.
+    cmake --build cmake-build-trace --target solvitaire solvitaire-trace solvitaire-flat-trace solvitaire-hash-only-trace solvitaire-lru-trace unit_tests
+
+%runscript
+    exec /workspace/cmake-build-release/bin/solvitaire "$@"
+
+%labels
+    Description Solvitaire solver (release + trace builds), apptainer companion to Dockerfile
