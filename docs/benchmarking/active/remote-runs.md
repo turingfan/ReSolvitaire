@@ -76,8 +76,15 @@ Results land in `./benchout/run1/` on the host. The dry-run / worker-safety / cl
 behaviour is identical to Options A/B (see **The run** below) — only the wrapping differs.
 Apptainer-specific notes:
 
-- **`scripts/container-build.sh` does not drive apptainer** (it only detects
-  container/docker/podman) — use the manual `apptainer build`/`exec` above.
+- **`scripts/container-build.sh` now supports apptainer** (detects apptainer/singularity;
+  override with `CONTAINER_RUNTIME=apptainer`). It builds the `.sif` from `solvitaire.def`
+  and runs the `--test/--regression/--variants/--trace-*` flags via `apptainer exec`. Add
+  **`--editable`** to build the image once and bind the live host repo at `/workspace`, so
+  script edits need no rebuild and C++ edits only an incremental compile into the host-bound
+  `cmake-build-*` dirs (dev/benchmarking — not production). The manual `apptainer build`/`exec`
+  above still works if you prefer driving it yourself. *Caveat:* `--editable` shares the host
+  `cmake-build-*` dirs with the container, so don't mix host-native and in-container builds of
+  different arch in the same checkout.
 - **Limits are the SLURM allocation, not the node.** apptainer runs under the job's
   cgroup, and the worker sizing is cgroup-aware — it detects the *allocation's* memory
   limit (confirm on the dry-run's detected-limit line). Memory usually caps workers below
