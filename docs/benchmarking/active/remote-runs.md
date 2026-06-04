@@ -47,6 +47,50 @@ git checkout benchmark-rationalisation
 ./build.sh --release --variants      # ~2 min; builds solvitaire + flat/hash-only/lru
 ```
 
+## Option C — Apptainer / Singularity (SLURM / HPC clusters)
+
+On clusters that provide `apptainer` (or `singularity`) instead of
+container/docker/podman, build a self-contained image from `solvitaire.def` (the
+companion to the Dockerfile) and run the benchmark **inside** it — binaries, GNU
+`parallel`, and libs are all baked in.
+
+```bash
+ssh you@cluster
+git clone git@github.com:turingfan/ReSolvitaire.git
+cd ReSolvitaire && git checkout benchmark-rationalisation
+apptainer build --fakeroot solvitaire.sif solvitaire.def    # ~2-4 min (parallel build)
+```
+
+Run the bench script in-container, writing results to a **host-bound** dir (the image
+filesystem is read-only, so output must NOT go to `/workspace`):
+
+```bash
+mkdir -p "$PWD/benchout"
+apptainer exec --bind "$PWD/benchout":/out solvitaire.sif bash -c \
+  'cd /workspace && scripts/experiments/bench_multiplicity.sh \
+     --phase D --games klondike --seeds 1-500 --timeout 120000 \
+     --outdir /out/run1 --dry-run'        # drop --dry-run for the real run
+```
+
+Results land in `./benchout/run1/` on the host. The dry-run / worker-safety / clean-timeout
+behaviour is identical to Options A/B (see **The run** below) — only the wrapping differs.
+Apptainer-specific notes:
+
+- **`scripts/container-build.sh` does not drive apptainer** (it only detects
+  container/docker/podman) — use the manual `apptainer build`/`exec` above.
+- **Limits are the SLURM allocation, not the node.** apptainer runs under the job's
+  cgroup, and the worker sizing is cgroup-aware — it detects the *allocation's* memory
+  limit (confirm on the dry-run's detected-limit line). Memory usually caps workers below
+  your core count at the default cache.
+- **Phase-D LRU memory caveat:** auto-sizing budgets per worker by the multiplicity reserve
+  (~6.5 GiB) and assumes LRU stays under it, but the LRU variant has been seen peaking
+  ~11 GB on klondike. On a tight allocation, cap `--workers ≈ allocation_GB × 0.8 / 11`
+  (e.g. ~30 on 480 G) to avoid a SLURM OOM during the LRU phase. See KI-28.
+- **`--fakeroot`** is for unprivileged builds (drop it if building as root). `%files .
+  /workspace` copies `.git` + host build dirs — build from a clean checkout if it's slow.
+- **Don't run `ctest`/test gates inside the read-only SIF** without `--writable-tmpfs`;
+  plain benchmark runs write nothing to the image, so they're fine.
+
 ## The run
 
 Always preview with `--dry-run` first — it prints the plan **and** the
