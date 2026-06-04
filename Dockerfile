@@ -27,22 +27,22 @@ RUN rm -rf cmake-build-release cmake-build-debug cmake-build-trace build build-a
 
 # Two separate RUN steps so cmake configure is cached independently of compile
 RUN cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
-RUN cmake --build cmake-build-release --target solvitaire \
- && cmake --build cmake-build-release --target solvitaire-flat \
- && cmake --build cmake-build-release --target solvitaire-hash-only \
- && cmake --build cmake-build-release --target solvitaire-lru \
- && cmake --build cmake-build-release --target unit_tests
+RUN cmake --build cmake-build-release --parallel --target solvitaire \
+ && cmake --build cmake-build-release --parallel --target solvitaire-flat \
+ && cmake --build cmake-build-release --parallel --target solvitaire-hash-only \
+ && cmake --build cmake-build-release --parallel --target solvitaire-lru \
+ && cmake --build cmake-build-release --parallel --target unit_tests
 
 # Build trace variant (for pre-merge validation against feature/search-trace reference binary).
 # cmake-build-trace uses Release + SOLVITAIRE_TRACE=ON.
 # Trace variant binaries: flat and lru needed for trace_identity_* tests;
 # hash-only needed for SearchTraceAgreementTest and manual collision investigation.
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -Bcmake-build-trace -H. \
- && cmake --build cmake-build-trace --target solvitaire \
- && cmake --build cmake-build-trace --target solvitaire-trace \
- && cmake --build cmake-build-trace --target solvitaire-flat-trace \
- && cmake --build cmake-build-trace --target solvitaire-hash-only-trace \
- && cmake --build cmake-build-trace --target solvitaire-lru-trace \
- && cmake --build cmake-build-trace --target unit_tests
+ && cmake --build cmake-build-trace --parallel --target solvitaire \
+ && cmake --build cmake-build-trace --parallel --target solvitaire-trace \
+ && cmake --build cmake-build-trace --parallel --target solvitaire-flat-trace \
+ && cmake --build cmake-build-trace --parallel --target solvitaire-hash-only-trace \
+ && cmake --build cmake-build-trace --parallel --target solvitaire-lru-trace \
+ && cmake --build cmake-build-trace --parallel --target unit_tests
 
 CMD ["/workspace/cmake-build-release/bin/solvitaire"]
