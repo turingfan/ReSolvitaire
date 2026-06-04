@@ -322,7 +322,15 @@ dead `cache_state` field carried on flat/mult frames) is tracked separately.
 
 **Affected:** Gate 2 (trace) CTest targets `trace_regression_level1` (150 instances) and
 `trace_regression_level2` (160). Branch: `benchmark-rationalisation` (likely `dev` too).
-**Status:** Open; **needs triage — do not treat as a code regression without investigation.**
+**Status:** **RESOLVED on mac (2026-06-03) by re-baseline; Linux binary built, pending
+verification on a Linux host.** Triage confirmed it was hypothesis (1) — legitimate
+path-only drift (KI-23 / Stage-6 multiplicity suit-symmetry), not a regression: outcomes
+correct, and current node counts match the validated level-1 oracle (which the
+`regression_level1` gate enforces ×4). Re-baselined `TRACE_REF_BIN` to fresh `…-20260603-7eb5883`
+binaries (commit `36162ea`); `trace_regression_level1` (36s) + `level2` (184s) now pass on
+mac. Linux arm64 reference built via `container` (unverified on a Linux host yet; both
+binaries live untracked in `05-Executables/reference/` for out-of-band distribution).
+*Original report below for context.*
 **Impact:** The trace gate cannot pass on this branch, so it can't gate commits until
 resolved. No known correctness impact (see evidence below).
 
