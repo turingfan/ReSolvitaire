@@ -30,7 +30,7 @@ From: ubuntu:22.04
 %post
     export DEBIAN_FRONTEND=noninteractive
     apt-get update && apt-get install -y \
-        build-essential cmake libboost-program-options-dev git python3 ca-certificates time
+        build-essential cmake libboost-program-options-dev git python3 ca-certificates time parallel
     rm -rf /var/lib/apt/lists/*
     cd /workspace
     rm -rf cmake-build-release cmake-build-trace cmake-build-debug build build-archive
