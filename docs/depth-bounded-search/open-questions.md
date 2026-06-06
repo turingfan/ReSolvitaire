@@ -16,10 +16,16 @@ What is the main thing this should buy us? The stages weight differently:
 - **(c) An anytime / "probably unknown" mode** that gives a confident answer
   quickly and only deepens hard instances.
 
-These are compatible; I want to know which to optimise for if they conflict.
-*Depth bounding does **not** speed up genuinely deep **unwinnable** proofs* — if
-that is the real target, the constraint-based route (Dang et al. 2025) is the
-better tool and this work is the wrong lever.
+- **(d) Faster *unwinnable* proofs on the deep tail** — via the depth-collapse
+  hypothesis (proposal §1.3): persistent cross-pass `DEAD` reuse can prove the
+  same `unwinnable` result at a far shallower maximum depth than unbounded DFS,
+  because the 27-M depths are a search-order artefact, not intrinsic.
+
+These are compatible; I want to know which to optimise for if they conflict. Note
+(d) is the corrected understanding — depth bounding **with persistent reuse** can
+help deep unwinnable proofs (it is the central hypothesis to test), not just the
+winnable tail. The constraint-based route (Dang et al. 2025) remains a
+complementary tool for *locally*-caused unwinnability.
 
 ### Q2 — Is any incompleteness acceptable?
 

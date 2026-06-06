@@ -30,3 +30,15 @@ when re-reached with no more budget than before, and re-expanded otherwise. This
 is a satisficing specialisation of the proven sound-and-complete IDA\*+TT
 algorithm **DFSTT3** of Akagi, Kishimoto & Fukunaga (2010) — the very paper the
 Solvitaire JAIR article already cites.
+
+**Why this can help even deep *unwinnable* instances.** The 27-/190-million
+search depths are largely an artefact of depth-first ordering, not intrinsic: DFS
+snakes down a line and caches each state at its *deep* first encounter, so its
+much shorter alternative paths are later skipped. A depth bound forces states to
+be discovered via their *shortest* paths first; a *persisted* cache then prunes
+the long paths in later passes (a deeper pass is cut at the shallow `DEAD` nodes
+proven earlier). The depth needed is governed by the space's shortest-path
+structure, not the snake length — so the same `unwinnable`/`winnable` results can
+often be reached far shallower, with far less RAM. This collapse is the main
+payoff, and the reason persistent cross-pass reuse (not bounding alone) is the
+heart of the scheme.

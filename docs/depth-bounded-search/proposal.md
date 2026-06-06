@@ -61,26 +61,92 @@ that:
 
 1. **Shallow wins are found fast.** If a deal is winnable at depth 190, we find
    it long before exploring to depth 190 million.
-2. **The unwinnability guarantee is preserved.** A reported `unwinnable` is still
+2. **The maximum search depth collapses for *unwinnable* instances too** (the
+   central hypothesis, §1.3): persistent cross-pass `DEAD` reuse lets a later,
+   deeper pass be cut at the shallow `DEAD` nodes a shorter pass already proved,
+   so the same `unwinnable` verdict is reached far shallower than the DFS-snake
+   length.
+3. **The unwinnability guarantee is preserved.** A reported `unwinnable` is still
    a complete-exhaustion certificate, *never* an artefact of the bound.
-3. **Cross-pass work is reused.** Re-searching from scratch at each bound is the
+4. **Cross-pass work is reused.** Re-searching from scratch at each bound is the
    "overhead [that] did not pay off". We keep what is provably bound-independent
    (dead subtrees) and re-do only what the larger budget might change.
-4. **Peak RAM on the deep tail is reduced**, not merely relocated, by capping
-   trail/ancestor depth.
+5. **Peak RAM on the deep tail is reduced**, not merely relocated, by capping
+   trail/ancestor depth (the collapse in (2) shrinks it further: few ancestors ⇒
+   the cache can evict normally instead of hitting "all entries are ancestors").
 
-### 1.3 Non-goals / honest limitations (read this)
+### 1.3 The central hypothesis: iterative deepening can *collapse* the search depth
 
-- **Depth bounding does not prove unwinnability any faster.** Proving a deal
-  unwinnable still requires a pass in which *no branch is truncated*, i.e.
-  `L ≥` the deepest acyclic line. For the 27-M-deep Beleaguered Castle refutation
-  you still need `L ≥ 27 M`. Depth bounding helps the *winnable* deep tail and
-  caps RAM; it does **not** help the genuinely-deep *unwinnable* tail. The
-  better tool for fast unwinnability is the constraint-based route (Dang et al.,
-  CP 2025), which is orthogonal and complementary.
-- A purely "double until it fits" schedule with a *lossy* re-expansion filter
-  can sacrifice completeness (see §3.6). The **default recommended scheme is
-  complete** in the limit `L → ∞`; lossy variants are opt-in and measured.
+The most important effect — and the real point of the idea — is that
+depth-bounded ID **with a persistent, reused cache** can dramatically reduce the
+*maximum search depth* reached, for **winnable and unwinnable instances alike**.
+The 27-/190-million depths are largely an **artefact of depth-first exploration
+order**, not an intrinsic property of the state space.
+
+Why the unbounded search goes so deep — using JAIR §5.1's own diagnosis of the
+27-M unwinnable instance: the tree is "very tall but thin", averaging *under 40
+nodes per depth*, because "almost all configurations may be achievable by
+continuing to move rather than backtracking to the root, with transposition
+tables preventing states being revisited." That is, DFS commits to a line and
+snakes downward; each state is first encountered *deep along the snake* and cached
+there, so its much shorter alternative paths later hit the cache and are skipped.
+The deep snake length becomes the max depth even though most of those states are
+reachable far shallower.
+
+**A depth bound inverts the discovery order.** In the pass at bound `L`, a state
+that sits at snake-depth 1.5 M *cannot* be reached via the deep path when
+`L < 1.5 M` — so it is discovered (if at all) via its **shortest** path. Once its
+subtree is fully exhausted at that shallow depth it is marked `DEAD`, and
+**because the cache persists across passes**, every later, deeper pass that snakes
+back down to it is **cut off at the shallow `DEAD` node**. The author's own
+example: if the `L = 1 M` pass proves a region dead, then in the `L = 2 M` pass
+"every new state we consider beyond depth ~1.1 M is identical to ones we already
+proved unwinnable in the 1 M search" — so the 2 M pass never actually descends to
+2 M.
+
+The maximum depth the scheme needs is therefore governed by the **shortest-path
+structure** (eccentricity) of the reachable space, not by the DFS-snake length.
+For a human patience game it is "unlikely that games with such deep searches are
+fundamentally essential", so the collapse should usually be large. This is a
+**hypothesis to test, not a theorem** (see §1.4), but if it holds it attacks the
+deep-*unwinnable* tail *and* the RAM blow-up, not merely the winnable tail.
+
+**Two corollaries that reshape the design:**
+
+1. **The collapse requires cross-pass persistence with `DEAD` retention
+   (Stage 2), not bounding alone (Stage 1).** A *fresh*-cache pass can re-snake
+   to the full depth before any shallow `DEAD` is rediscovered within that pass;
+   only a *persisted* `DEAD` set forces the early cut. So Stage 2 is the heart of
+   the idea, and `DEAD` entries must be *pinned* against eviction (§3.7).
+2. **This differs materially from the ID the paper tried.** Vanilla IDA\*/ID
+   keeps linear space precisely by *not* persisting the table; it re-searches
+   every pass and gets the overhead with *none* of the collapse. The negative
+   "ID didn't pay off" result almost certainly used that vanilla form. ID + a
+   *persistent, terminal-retaining* cache is the novel combination (the prior
+   review notes it is "not packaged exactly this way in the literature").
+
+### 1.4 Honest caveats
+
+- **The collapse is not guaranteed.** If a game genuinely requires deep lines (a
+  state reachable only via a long path, no shortcut), the bound buys little and
+  `L` may have to approach the unbounded depth. The downside is bounded, though:
+  with geometric growth the final `L` overshoots the true requirement by at most
+  ≈2×, and cache reuse limits the re-search cost — so the bad case is "no worse
+  than today, plus some overhead", while the good case is a large win. As the
+  author puts it: *"we might try it and it doesn't work, but that's ok."*
+- **Depth bounding does not change the *set* of distinct states**, only the depths
+  at which they are explored. The transposition table still ends up holding
+  roughly the same number of distinct states; the RAM win comes specifically from
+  collapsing the `O(depth)` trail + pinned-ancestor cost (§3.7), which is exactly
+  what caused the "all entries are ancestors → memory-out" failure.
+- **Constraint-based unwinnability (Dang et al., CP 2025) remains complementary.**
+  It proves unwinnability by a different route (relaxed-game UNSAT) and is the
+  better tool when the reason is a small *local* one; the depth-collapse attacks
+  the *search-order* cause of deep refutations. They are not mutually exclusive.
+- **Lossy variants can break completeness.** A "double until it fits" schedule
+  with the *half-depth* re-expansion filter (§3.6) can strand instances. The
+  default recommended scheme is **complete** in the limit `L → ∞`; lossy variants
+  are opt-in and measured.
 
 ---
 
@@ -341,12 +407,16 @@ unknown-count reporting (§5).
   Losing an `OPEN(b)` entry means we re-expand (sound). There is no eviction that
   turns a correct prune into an incorrect one, because we never trust an evicted
   entry. ✓
-- **Pin terminal entries.** `DEAD` and large-budget `OPEN` entries are the
-  expensive-to-recompute, high-value information; under plain LRU / depth-TwoBig1
-  they can be thrown away, undermining the scheme. Prefer a value-aware
-  replacement that evicts shallow/low-budget `OPEN` first and keeps `DEAD`. (The
-  flat cache's existing depth-preferred replacement already biases toward keeping
-  shallow entries; we want it to also respect a `DEAD` bit.)
+- **Pin terminal entries — this is what enables the depth collapse (§1.3).**
+  `DEAD` and large-budget `OPEN` entries are the expensive-to-recompute,
+  high-value information; under plain LRU / depth-TwoBig1 they can be thrown away,
+  undermining the scheme. Crucially, the cross-pass depth collapse *depends* on
+  `DEAD` verdicts surviving from one pass to the next: if a shallow `DEAD` is
+  evicted before the next, deeper pass snakes back down to it, that pass will
+  re-expand it and the snake will not be cut. Prefer a value-aware replacement
+  that evicts shallow/low-budget `OPEN` first and keeps `DEAD`. (The flat cache's
+  existing depth-preferred replacement already biases toward keeping shallow
+  entries; we want it to also respect a `DEAD` bit.)
 - **Ancestor / cycle safety must not depend on the cache.** The flat cache can
   evict an `ON_PATH` ancestor (no live bit). Under a bound this is *less*
   dangerous than today — a loop that re-expands an evicted ancestor is itself
@@ -494,15 +564,33 @@ proof; peak RAM; peak trail length; peak ancestor-pin count. Produce the **depth
 distribution of solutions vs. deep outliers** across the regression seed sets and
 a few hard games (Beleaguered Castle, Klondike, FreeCell, Spanish Patience).
 
-**Decision gate.** If the vast majority resolve below a modest `L` with a thin
-deep tail → a large one-shot `L` helps the tail at near-zero cost → proceed. If
-solution depth is broadly distributed → depth bounding will manufacture unknowns
-→ reconsider (and lean on constraint-based unwinnability instead).
+**Directly probe the depth-collapse hypothesis (§1.3).** The key unknown is how
+much shallower the *shortest-path* structure is than the DFS-snake length. Two
+cheap proxies, both implementable before any algorithm change:
+
+- For a deep outlier, record the **minimum depth at which each cached state was
+  ever reached** (instrument the existing cache to track first-seen vs.
+  min-seen depth). A large gap between a state's snake-depth and its min-reachable
+  depth is direct evidence the collapse will work.
+- Run the *unbounded* solver but with an artificially imposed depth cap and see
+  at what cap the deep outliers still get *truncated* — i.e. how the
+  truncation-frontier depth relates to the eventual full depth.
+
+**Decision gate.** If most instances resolve below a modest `L` with a thin deep
+tail, **or** the deep outliers show a large snake-vs-shortest-path gap → proceed
+(the collapse should pay off). If solution depth is broadly distributed *and*
+states are genuinely only reachable via long paths → the collapse will not fire,
+depth bounding will manufacture unknowns → reconsider (and lean on
+constraint-based unwinnability instead).
 
 ### Stage 1 — Sound bounded ID, fresh cache per pass (the safe core)
 
-Smallest change that delivers shallow-win-finding and the RAM cap, with **zero
-GHI risk and zero cache-format change**.
+Smallest change that delivers shallow-win-finding and the per-pass RAM cap, with
+**zero GHI risk and zero cache-format change**. Note Stage 1 does **not** deliver
+the cross-pass *depth collapse* (§1.3) — with a fresh cache each pass can re-snake
+to full depth — so for the deep-*unwinnable* tail Stage 1 may still need `L` near
+the unbounded depth. Stage 1 is the correctness foundation; Stage 2 is where the
+collapse (and the main payoff) appears.
 
 - Add `--depth-bound`, `--depth-grow`, `--max-depth-bound` CLI options.
 - In `dfs()`: refuse to expand at `res.depth >= L` (both the dominance branch and
@@ -521,7 +609,11 @@ solution depths and reduced peak RAM on the deep outliers.
 ### Stage 2 — Cross-pass cache reuse (`DEAD` retention + `OPEN(b)` + `g_min`)
 
 The "reuse the cache / cleansed version" the author wants. This is where the real
-subtlety (and payoff) lives.
+subtlety **and the main payoff** live: persistent `DEAD` retention is the
+mechanism that produces the cross-pass **depth collapse** (§1.3) — the deep snake
+of a later pass is cut at shallow `DEAD` nodes proven in earlier passes — which is
+the difference between this scheme and the vanilla ID the paper found didn't pay
+off.
 
 - Add per-entry `status` (`DEAD`/`OPEN`), `b` (verified budget), `g_min` (min
   arrival depth) — see §6.3 for layout per cache.
@@ -662,7 +754,7 @@ struct `{present, status, b, g_min}`, leaving `insert_t` for Stage-1/legacy use.
 | Flat cache evicts an `ON_PATH` ancestor | Low under a bound | explicit on-path set (§3.7); bound caps any resulting loop |
 | 16-/8-bit depth fields too narrow for `g_min`/`b` | Medium | widen via side array (§6.3); not needed in Stage 1 |
 | Half-depth filter strands hard instances (incomplete) | Medium | off by default (§3.6); Stage 3 only, measured |
-| Depth bounding **does not** speed up genuine deep unwinnability | Inherent | set expectations (§1.3); pair with constraint-based proofs (Dang et al. 2025) |
+| Depth collapse (§1.3) fails to materialise — a game genuinely needs deep lines | Medium | bounded downside (≈2× overshoot + reuse-limited re-search); measure in Stage 0/2; constraint-based proofs (Dang et al. 2025) as a complementary route |
 | ID re-search overhead ("didn't pay off") | Medium | large per-game `L0` so easy mass finishes in pass 1; Stage 2 reuse; geometric growth |
 
 ---
