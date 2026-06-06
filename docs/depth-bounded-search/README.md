@@ -1,7 +1,7 @@
 # Depth-Bounded, Cache-Reusing Iterative Deepening — Branch Documentation
 
 **Branch:** `claude/ecstatic-hopper-tpykG`
-**Status:** Design proposal (no code yet) — for author review
+**Status:** Design proposal (no code yet) — **author decisions recorded 2026-06-06** (proposal §1.5)
 **Date:** 2026-06-06
 
 This folder holds the design documents for adding *depth-bounded iterative
@@ -15,7 +15,15 @@ exists, while preserving Solvitaire's defining guarantee that a reported
 | File | Purpose |
 |---|---|
 | [`proposal.md`](proposal.md) | The full design proposal: theory, algorithm, staged implementation plan, code-touch points, correctness/testing strategy, risks, and open questions. **Start here.** |
-| [`open-questions.md`](open-questions.md) | Consolidated list of decisions needed from the author before implementation. |
+| [`open-questions.md`](open-questions.md) | The seven decisions needed from the author — **all RESOLVED 2026-06-06**, with rationale and a feasibility investigation per decision. |
+
+**Decisions (2026-06-06):** primary goal is faster *unwinnable* proofs via the
+depth collapse (so Stage 2 is the heart); a complete mode is mandatory; absolute
+budget `b` (no generations); the monotone **`DEAD` bit** layout (option C);
+`L0 ≈ 1000` with `×2` growth; **start on the LRU cache**. The first *shippable*
+configuration is therefore Stage 2 + LRU + small `L0` (Stage 1 with a fresh cache
+is only a correctness/measurement scaffold at this `L0`). Full detail in
+proposal §1.5.
 
 ## One-paragraph summary
 

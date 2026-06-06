@@ -148,6 +148,54 @@ deep-*unwinnable* tail *and* the RAM blow-up, not merely the winnable tail.
   default recommended scheme is **complete** in the limit `L → ∞`; lossy variants
   are opt-in and measured.
 
+### 1.5 Author decisions (2026-06-06) and how they reshape the plan
+
+The author has now answered the §9 / [`open-questions.md`](open-questions.md)
+list. The decisions and their design consequences:
+
+| # | Decision | Consequence for the plan |
+|---|---|---|
+| **Q1** | **Primary goal is (d)** — faster *unwinnable* proofs on the deep tail via the depth-collapse hypothesis (§1.3); shallow-win-finding (a) is secondary. | The payoff lives in **Stage 2** (cross-pass `DEAD` retention), not Stage 1. Stage 0's depth-collapse probe (§5) becomes the **go/no-go gate**. |
+| **Q2** | **A complete mode is mandatory** — there must be a mode in which incompleteness is unacceptable. | Ship the sound `b < B_now` scheme (complete in the limit) as the default/required mode; the lossy half-depth filter (§3.6) stays strictly opt-in. |
+| **Q3** | Absolute-budget `b` confirmed as the encoding (author asked for, and was given, the explanation — §3.3 worked example). | No generation counter / cleanse needed for soundness. |
+| **Q4** | **Option C — the `DEAD` bit** — chosen for its decisive, monotone property ("definitive, stays true once set"). | `DEAD` bit in the key entry + side table for the `OPEN` minority's `(g_min, b)`. Feasibility confirmed below. |
+| **Q5** | **`L0 ≈ 1000`** to start (sweep upward; even `10⁶` is acceptable on modern RAM). Geometric **`×2`** growth. | Small `L0` maximises depth-collapse pressure but means ~18 passes to reach 256 M — viable **only with** Stage-2 reuse. |
+| **Q6** | **Start with `LRUPolicy`** — ease of implementation. | Build Stage 2 on the LRU cache first; flat / hash-only / predecessor deferred. |
+| **Q7** | **Flat-cache games do contain cycles.** | GHI handling (§3.5) is required on the flat path → another reason to start with LRU (its `live` bit already tracks ancestors). |
+
+**The decisions are mutually reinforcing, and they sharpen the staging:**
+
+- **Stage 2 is now the heart, not an enhancement.** Q1 (goal d) needs cross-pass
+  `DEAD` reuse; Q5 (small `L0`) needs it too. With `L0 = 1000` and `×2` growth, a
+  *fresh-cache* Stage-1 run would re-search ~18 times over — non-viable as a
+  product. **Stage 1 therefore becomes a correctness/measurement scaffold** (prove
+  `L = ∞` identity and finite-`L` verdict agreement; gather Stage-0 depth data),
+  and the **first shippable configuration is Stage 2 + LRU + small `L0`**.
+- **The dead bit (Q4) pairs cleanly with absolute budget (Q3).** `DEAD` is
+  budget-independent, so the dead bit carries *no* number; only the `OPEN`
+  minority stores `(g_min, b)` in the side table. Most resolved states become
+  `DEAD` once `L` grows, so the cheap bit covers the common case and the wide
+  `(g_min, b)` fields touch only the truncation frontier.
+
+**Q4 feasibility — "do we have it working?" (code read on this branch):**
+
+- **LRU (the chosen first target): the mutation substrate already exists and
+  works.** `cached_game_state` carries a mutable `bool live`, set on insert and
+  cleared on backtrack via `lru_cache::set_non_live` → `cache.modify(iter, …)`
+  (`global_cache.cpp:273`), with the result asserted; `insert_with_iterator`
+  already hands the solver the entry iterator. Adding `status`/`b`/`g_min` and a
+  `set_dead` is a direct extension of this proven path — the dead bit is nearly
+  free here.
+- **Flat: the bit has a home, but the write path does not exist yet.**
+  `compact_state` (`compact_state.h`) uses byte 0 = occupied, bytes 1–2 = depth
+  (both **excluded from `matches()`**, which compares only bytes 3–31), bytes
+  3–31 = key. A `DEAD` flag fits in a spare bit of byte 0 or the depth field
+  without affecting key comparison/dedup. **But** `generic_flat_cache::insert_t`
+  no-ops on a hit (`generic_flat_cache.h:82`), so there is no update-on-hit path
+  to flip `OPEN → DEAD` after insert; the flat path needs the new
+  `probe_and_update`/upsert (§6.4) first. This is a further reason Q6 picks LRU
+  first.
+
 ---
 
 ## 2. What the current code does, and which invariants break under a bound
@@ -298,6 +346,26 @@ so on the next (larger-`L`) pass `b < B_now` triggers re-open automatically. The
 of the same idea (store `depth + generation` and compare within a generation);
 the two are equivalent (see §3.8). We recommend absolute-budget storage as the
 primary scheme and discuss the generation encoding as a memory-saving variant.
+
+**Worked example (why no generation counter is needed).** Suppose the `L = 1000`
+pass searches state `s`, first reached at depth 200. It finds no win below `s`
+but truncates somewhere underneath, so it stores `s = OPEN` with
+`b = L − d = 1000 − 200 = 800` ("verified: no win within 800 moves of `s`"). In
+the next, `L = 2000` pass we reach `s` again at depth 200, so now
+`B_now = 2000 − 200 = 1800`. Apply the rule `prune iff b ≥ B_now`: `800 ≥ 1800`
+is **false** → **re-open** — automatically, with nothing telling the entry it
+came from an older pass. Conversely, an entry with `b = 800` re-reached in a pass
+where `B_now = 700` gives `800 ≥ 700` → **prune**, also correct (we already
+looked deeper than we can now). The single absolute number `b` thus subsumes the
+`(generation, depth)` pair: a smaller-`L` pass simply *writes a smaller `b`*,
+which fails the next comparison on its own, so the cross-pass "staleness" is
+handled by the arithmetic — there is no separate cleanse/generation-bump step.
+The generation encoding re-derives this very `b` implicitly (via the
+*same-generation* gate plus that pass's `L`); the only thing it buys is fewer
+bits for `b`, which in this codebase is no real saving because the *depth* it
+must store instead is the wide field (§6.3-D). Note the dead bit (Q4) needs none
+of this: `DEAD` is budget-independent, so only the `OPEN` minority ever carries
+`b`.
 
 ### 3.4 Min-arrival-depth and re-opening (DAG re-expansion)
 
@@ -532,9 +600,14 @@ solve(instance):
 
 `grow` doubling gives a geometric schedule; total work is dominated by the last
 pass when growth is geometric and the tree is roughly exponential, so the ID
-overhead factor is bounded (cf. Korf 1985). With a large `L0`, the easy mass
-finishes in pass 1 and never deepens — this is the configuration the JAIR
-"overhead didn't pay off" experiment most likely lacked.
+overhead factor is bounded (cf. Korf 1985). The author's chosen `L0 ≈ 1000`
+(§1.5 Q5) is deliberately small — it maximises depth-collapse pressure — so
+reaching the deep tail takes ~18 doublings; what keeps that affordable is
+**Stage-2 cross-pass reuse** (pinned `DEAD` cuts each later snake early), *not* a
+large `L0`. This is the configuration the JAIR "overhead didn't pay off"
+experiment most likely lacked: vanilla ID with a *fresh* cache re-pays the full
+cost every pass (§1.3 corollary 2), which is exactly why a small `L0` is viable
+only once Stage 2 is in place.
 
 ### 4.3 New solver result types
 
@@ -590,7 +663,10 @@ Smallest change that delivers shallow-win-finding and the per-pass RAM cap, with
 the cross-pass *depth collapse* (§1.3) — with a fresh cache each pass can re-snake
 to full depth — so for the deep-*unwinnable* tail Stage 1 may still need `L` near
 the unbounded depth. Stage 1 is the correctness foundation; Stage 2 is where the
-collapse (and the main payoff) appears.
+collapse (and the main payoff) appears. **With the author's chosen `L0 ≈ 1000`
+(§1.5), a fresh-cache Stage-1 run would re-search ~18 times over, so Stage 1 is a
+correctness/measurement scaffold, not a shippable configuration** — the first
+shippable config is Stage 2 + LRU + small `L0`.
 
 - Add `--depth-bound`, `--depth-grow`, `--max-depth-bound` CLI options.
 - In `dfs()`: refuse to expand at `res.depth >= L` (both the dominance branch and
@@ -615,6 +691,9 @@ of a later pass is cut at shallow `DEAD` nodes proven in earlier passes — whic
 the difference between this scheme and the vanilla ID the paper found didn't pay
 off.
 
+- **Implement on `LRUPolicy` first (§1.5 Q6), using option C — the `DEAD` bit +
+  `OPEN` side-table (§6.3).** Flat / hash-only / predecessor follow once the LRU
+  path is differential-tested.
 - Add per-entry `status` (`DEAD`/`OPEN`), `b` (verified budget), `g_min` (min
   arrival depth) — see §6.3 for layout per cache.
 - `insert` must support **update-on-hit** (raise `b`, lower `g_min`, upgrade
@@ -675,26 +754,37 @@ roughly: `g_min` (min arrival depth) and `b`/`status` (verified budget, with a
 depth field (16 bit) and `predecessor_state` depth field (8 bit) must be treated
 as replacement-hints only, not as `g_min`/`b`.
 
-Options (recommend deciding in review):
+**Author decision (§1.5 Q4/Q6): option C — the `DEAD` bit — on the LRU cache
+first.** Options, for reference:
 
 - **(A) Parallel metadata array** for the flat cache: a separate
   `meta[num_clusters]` of `{uint32 g_min; uint32 b}` per slot (16 B/cluster),
   allocated next to the 64 B key clusters via the same `platform::lazy_buffer`
   mechanism. Keeps the key cluster cache-line-clean; metadata fetched only on a
-  hit. **Recommended.**
+  hit. *(Was the leading option for a flat-first plan; superseded by C now that
+  LRU is the first target.)*
 - **(B) Widen the entry.** `compact_state` 32→40 B breaks the 64 B cluster
   static-asserts and the cache-line story; intrusive.
-- **(C) `DEAD` bit in the key entry + side map for `OPEN` only.** Most explored
-  subtrees become `DEAD` once `L` is large; store a single `DEAD` bit cheaply in
-  the key entry (steal a byte) and keep `(g_min, b)` in a small open-addressed
-  side table for the `OPEN` minority near the truncation frontier. Most
-  memory-efficient; slightly more code.
+- **(C) `DEAD` bit in the key entry + side map for `OPEN` only. ← chosen
+  (§1.5).** Most explored subtrees become `DEAD` once `L` is large; store a single
+  `DEAD` bit cheaply in the key entry (steal a bit) and keep `(g_min, b)` in a
+  small open-addressed side table for the `OPEN` minority near the truncation
+  frontier. Most memory-efficient; slightly more code. The author prefers the
+  dead bit precisely because it is **definitive and monotone** (set once, never
+  cleared). On the flat cache the bit fits in a spare bit of `compact_state`
+  byte 0 or the depth bytes (both already excluded from `matches()`); on the LRU
+  cache it is a new field beside `live` (see the "LRU is easy" note below).
 - **(D) Generation encoding** (§3.8): store `gen` (≈8 bit) + `depth` (needs ~28
   bit). Saves nothing over absolute `b` here because `depth` is the wide field;
   its only advantage is the trivial cross-pass cleanse.
 
-The **LRU cache is easy**: add `status`, `b`, `g_min` to `cached_game_state` and
-mutate via the existing `cache.modify(...)` (as `set_non_live` already does).
+The **LRU cache is the first target (§1.5 Q6) and is easy**: add `status` (incl.
+the `DEAD` bit), `b`, `g_min` to `cached_game_state` and mutate via the existing
+`cache.modify(...)` exactly as `set_non_live` already does (`global_cache.cpp:273`)
+— the mutation path is already working and asserted, so the dead bit is a
+near-trivial extension there. (The flat path additionally needs the
+update-on-hit `probe_and_update` of §6.4, since `insert_t` currently no-ops on a
+hit.)
 
 ### 6.4 What "insert" must become (Stage 2)
 
@@ -710,11 +800,17 @@ struct `{present, status, b, g_min}`, leaving `insert_t` for Stage-1/legacy use.
   notion of "one move" (K+ compresses several stock moves into one; dominance
   moves are forced singletons). Define `L` on the same move counter used by
   `res.depth` — consistent, if coarse.
-- **`L0` should be per game** (or adaptive from Stage 0 data). A single fixed
-  `L0` (say `10⁶`) is far more binding in some games than others because K+
-  changes the branching/depth trade-off per game. Suggest `L0 ≈` a high
-  percentile of the Stage-0 solution-depth distribution for that game, with
-  geometric growth (`×2`) thereafter.
+- **`L0` (author decision, §1.5 Q5): default `≈ 1000`**, geometric `×2` growth,
+  treated as a tunable to sweep upward (the author notes even `10⁶` is reasonable
+  on modern RAM). A small `L0` is chosen on purpose: it forces shallow discovery
+  and so maximises the depth-collapse pressure Stage 2 exploits — but it is viable
+  **only** with cross-pass reuse (a fresh-cache pass would re-search ~18 times to
+  reach the deep tail). **Pass-count cost:** ~18 passes from `1000` to `256 M`
+  means ~18× the per-pass fixed overhead (frontier reinit + re-probing pinned
+  `DEAD` nodes to get cut), so sweeping `L0` upward trades collapse pressure
+  against pass count — a Stage-0/Stage-2 measurement. `L0` may still be made
+  per-game/adaptive from Stage-0 data; K+ makes a single fixed bound more binding
+  in some games than others.
 
 ---
 
@@ -755,14 +851,14 @@ struct `{present, status, b, g_min}`, leaving `insert_t` for Stage-1/legacy use.
 | 16-/8-bit depth fields too narrow for `g_min`/`b` | Medium | widen via side array (§6.3); not needed in Stage 1 |
 | Half-depth filter strands hard instances (incomplete) | Medium | off by default (§3.6); Stage 3 only, measured |
 | Depth collapse (§1.3) fails to materialise — a game genuinely needs deep lines | Medium | bounded downside (≈2× overshoot + reuse-limited re-search); measure in Stage 0/2; constraint-based proofs (Dang et al. 2025) as a complementary route |
-| ID re-search overhead ("didn't pay off") | Medium | large per-game `L0` so easy mass finishes in pass 1; Stage 2 reuse; geometric growth |
+| ID re-search overhead ("didn't pay off") | Medium | **Stage-2 cross-pass reuse** (pinned `DEAD` cuts later passes early) + geometric growth; with the chosen small `L0` (§1.5 Q5) reuse is what makes the ~18 passes affordable — *not* a large `L0` |
 
 ---
 
 ## 9. Open questions for the author
 
-See [`open-questions.md`](open-questions.md) for the consolidated list with
-context. The highest-leverage ones:
+**These are now resolved — see §1.5 above and [`open-questions.md`](open-questions.md)
+for the author's decisions (2026-06-06).** The list, for reference:
 
 1. **Primary objective?** Shallow-win-finding on the winnable deep tail, vs. peak
    RAM reduction, vs. an anytime/"probably unknown" mode — these weight the
