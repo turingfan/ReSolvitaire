@@ -98,3 +98,22 @@ Append-only. Newest entries at the bottom. One block per session/work-chunk.
   against the identity gate + release gates; orchestrator verifies independently
   before it's blessed. Outer ID loop (1e) + differential harness (1f) deferred to PR2.
 
+### WIP-backup decision (process)
+
+- **Problem:** the implementer ran in the **shared working tree** (not an isolated
+  worktree), so its uncommitted edits keep the tree dirty → the stop-hook nags to
+  commit, but committing unverified/possibly-non-compiling WIP would corrupt the
+  subagent's own commit flow. Won't do that.
+- **Decision (Ian, 2026-06-07):** **WIP-backup branches are permitted** for durably
+  snapshotting an in-flight subagent's work against container reclaim. Recorded as a
+  standing rule in `implementation-plan.md` §1.4.
+- **Action:** pushed a **non-destructive** snapshot (isolated `GIT_INDEX_FILE`:
+  `read-tree HEAD`→`add -A`→`write-tree`→`commit-tree -p HEAD`, never touching the
+  subagent's tree/index/HEAD) to **`claude/ecstatic-hopper-tpykG-wip-backup`**
+  (commit `8470b73`; 6 files, +165/-22, all within PR1 scope). Delete this ref once
+  the implementer's real commit lands on the feature branch.
+- **Prevention / lesson:** plan §3 already says implementers should use
+  `isolation: worktree` — I didn't this time, which caused the dirty-tree churn.
+  **Dispatch future implementers (PR2, Stage 2) with `isolation: worktree`** so they
+  never dirty the main tree and no backup is needed.
+

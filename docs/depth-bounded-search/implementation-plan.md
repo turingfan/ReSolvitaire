@@ -71,6 +71,16 @@ record; raw measurement CSVs are an open logistics question, §8-D5.)
   commits.
 - **Branch:** continue on `claude/ecstatic-hopper-tpykG` unless Ian opts for
   per-stage branches (§8-D1). Never push elsewhere without explicit permission.
+- **WIP-backup branches (permitted exception, Ian 2026-06-07).** A
+  `<branch>-wip-backup` ref MAY be pushed to durably snapshot an **in-flight
+  subagent's uncommitted work** against container reclaim, when the orchestrator
+  won't commit that WIP to the feature branch (unverified / possibly non-compiling).
+  Push it **non-destructively** — build the snapshot via an isolated `GIT_INDEX_FILE`
+  (`read-tree HEAD` → `add -A` → `write-tree` → `commit-tree -p HEAD`) so the
+  subagent's working tree, real index, and HEAD are never touched. Delete the
+  backup ref once the subagent's real commit lands on the feature branch.
+  *Prevention:* prefer dispatching implementers with `isolation: worktree` (§3) so
+  they never dirty the main tree in the first place — that avoids needing a backup.
 - **PRs are the async review surface.** Open a PR per (sub-)stage **only once Ian
   has greenlit that stage** (the global rule is "no PR unless asked"; approving a
   stage = asking). The orchestrator may then offer to watch the PR for CI/review.
