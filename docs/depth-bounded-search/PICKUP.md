@@ -22,13 +22,16 @@ background implementer subagent; orchestrator to verify independently before ble
 - Tooling added: `scripts/experiments/stage0_depth_sweep.py`, `stage0_analyze.py`.
 - Environment: Boost dev headers must be installed per session (ephemeral) — see
   SessionStart-hook recommendation in the log; build + Gate 1 confirmed working here.
-- **Trace identity gate READY.** Reference = pristine `solvitaire-trace` from HEAD
-  `45ccd43`, at session-local `/home/user/reference-bin/solvitaire-trace-ref-45ccd43`
-  (SHA1 `894bcbb…`, not committed). Regenerate any session via
-  `git checkout 45ccd43 && ./build.sh --trace`; wire with
-  `cmake -DTRACE_REF_BIN=<binary> cmake-build-trace`. Validated: `trace_regression_level1`
-  = **150/150** with candidate == reference. The committed CMake default is ARM64
-  (useless here). **Open for Ian:** commit an amd64 reference in-repo for durability?
+- **Trace identity gate READY** — full detail + recreate steps in
+  [`trace-identity-reference.md`](trace-identity-reference.md). Reference = pristine
+  `solvitaire-trace` from HEAD `45ccd43`, at session-local
+  `/home/user/reference-bin/solvitaire-trace-ref-45ccd43` (SHA1 `894bcbb…`, not
+  committed). Regenerate via `git worktree add /tmp/resolv-ref 45ccd43 &&
+  (cd /tmp/resolv-ref && ./build.sh --trace)`; wire with
+  `cmake -DTRACE_REF_BIN=<binary> cmake-build-trace`. Validated:
+  `trace_regression_level1` = **150/150** (candidate == reference). The committed
+  CMake default is ARM64 (useless here). **Decided (Ian):** keep session-local +
+  documented reproducer.
 
 ## Key constraints carried forward
 
