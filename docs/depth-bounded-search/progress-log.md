@@ -187,3 +187,83 @@ Append-only. Newest entries at the bottom. One block per session/work-chunk.
   durable state lives in these docs + git so a fresh session can resume at any point.
 - **Kicked off PR2** (1e loop + 1f differential harness) as the first night-shift unit.
 
+## 2026-06-07 — Stage 1 PR2 (items 1e + 1f) implemented + self-validated
+
+**Scope:** outer iterative-deepening loop (1e) + differential-verdict harness (1f).
+Stage 1 only — **no cross-pass cache reuse** (that is Stage 2). Implemented in an
+isolated worktree off `claude/depth-bounded-search` (HEAD `70068cb`).
+
+### 1e — outer ID loop (`src/main/main.cpp`, `solve_game_impl`)
+- New `struct id_options {initial_bound, grow, max_bound}`; threaded through
+  `dispatch_solve` (replacing the bare `depth_bound`) to **both** `dispatch_solve`
+  call sites in `solve_game` (main solve + `smart` `run_again` retry).
+- **Flag absent ⇒ verbatim single unbounded pass** (`if (!id_opts) { … return; }`)
+  — the original PR1 single-pass body, so the L=∞ identity holds byte-for-byte.
+- **Flag present ⇒ ID loop:** fresh cache + fresh initial game state per pass;
+  total `--timeout` shared across passes (deadline computed once, each pass gets the
+  remaining time). Per-pass mapping: `SOLVED`→winnable; `UNSOLVABLE`→unsolvable
+  (sound: that pass exhausted with no truncation); `TIMEOUT`/`MEM_LIMIT`/`TERMINATED`
+  →surface as-is; `BOUNDED_EXHAUSTED`→grow `L` and loop.
+- **Growth + non-progress guard:** `next_L = L*grow`; if `grow<=1` or `next_L<=L`
+  (overflow/no-progress) force `next_L = L+1`. Plus `--depth-grow < 2` is rejected
+  up front in `solve_game` (logs an error, clamps to 2) — belt-and-braces so the
+  loop can never spin forever.
+- **L_max:** `--max-depth-bound M` stops deepening once `next_L > M`. Absent ⇒ no
+  cap (deepen until timeout — D6 default). The explicitly-requested L0 pass always
+  runs (L_max bounds *deepening*, not the initial bound).
+- **SOUNDNESS RED LINE:** if the loop stops without a `SOLVED`/`UNSOLVABLE` pass
+  (timeout or L_max while last pass was `BOUNDED_EXHAUSTED`), the verdict is remapped
+  to **`TIMEOUT`** (JSON `"timeout"`), **never `unsolvable`** and never surfaced as
+  `bounded-exhausted`. `--solvability`/`--benchmark` stay unbounded (unchanged).
+
+### 1f — differential-verdict harness
+- Extended `scripts/regression_runner.py` with `--initial-depth-bound` /
+  `--depth-grow` / `--max-depth-bound` (append the ID flags to each solver call;
+  guard: refuses `--enforce-node-counts` with ID since node counts legitimately
+  differ under truncation). The existing comparison policy already hard-fails on a
+  verdict OUTCOME FLIP and soft-passes when either side is `timeout`.
+- New thin wrapper `scripts/differential_verdict.py` (default L1, L0=1000, ×2):
+  drives the runner in verdict-only ID mode, parses its summary, prints a crisp
+  `N/N verdicts match`, and propagates a **loud non-zero exit on any mismatch**.
+
+### Self-validation (all VERBATIM in the PR2 report / handoff)
+- Builds: release + debug + trace all **clean under `-Werror`**.
+- **L=∞ IDENTITY `trace_regression_level1` = 150/150 PASS (52.99s)** (ref
+  `45ccd43` vs candidate, flag absent). `trace_identity_flat|lru` +
+  `trace_until_timeout` = 3/3 PASS.
+- Release `unit_tests` **248/248**; `regression_level1` (+flat/hash_only/lru)
+  **4/4 PASS**. Debug `unit_tests` **248/248**. Trace `unit_tests` **248/248**.
+- **1f on L1 (L0=1000, ×2): 150/150 verdicts match, 0 OUTCOME FLIPs.** Breakdown:
+  **146 definitive verdict matches** (all 74 unsolvable proven `unsolvable`; 72/76
+  winnable found) + **4 sound timeouts** (free-cell s36, spanish-patience s6/s24/s45
+  — deep-snake winnables whose unbounded `max_depth` is 4103/52649/165196-states/2605;
+  the fresh-cache ID run explodes 34M–103M nodes and times out → `timeout`, **never a
+  wrong verdict**). This is the expected Stage-1 fresh-cache re-search cost and is
+  exactly the depth-collapse case Stage 2 targets.
+- **1f self-test (net catches a planted mismatch):** ran the harness against a temp
+  oracle with one entry flipped (`alpha-star_seed_34` claimed `solved` when truly
+  `unsolvable`) ⇒ `[FAIL] OUTCOME FLIP: unsolvable (expected solved)`, **exit 1**.
+  Correct single-instance oracle ⇒ PASS exit 0. Temp oracles live in `/tmp`; the real
+  `tests/oracles/level1.json` was never modified (git clean) — nothing to revert.
+- **Loop smoke tests (release `--json`):**
+  - klondike s1 unbounded ⇒ `unsolvable`, max_depth 23 (matches documented proof).
+  - klondike s1 `--initial-depth-bound 10` ⇒ deepens 10→20→40>23 ⇒ **`unsolvable`**
+    (158295 states, max_depth 23) — resolves, NOT bounded-exhausted/timeout.
+  - klondike s1 `--initial-depth-bound 1000` ⇒ `unsolvable` in one pass.
+  - black-hole s1 (winnable, depth 51) `--initial-depth-bound 20` ⇒ deepens ⇒
+    **`winnable`** (matches unbounded); black-hole s2 (unsolvable, depth 50)
+    `--initial-depth-bound 20` ⇒ deepens ⇒ **`unsolvable`** (matches unbounded).
+  - **L_max red-line:** klondike s1 `--initial-depth-bound 8 --max-depth-bound 16`
+    (proof depth 23>16) ⇒ **`timeout`**, max_depth 16 — **NEVER `unsolvable`**.
+  - **infinite-loop guard:** klondike s1 `--initial-depth-bound 8 --depth-grow 1` ⇒
+    logs `--depth-grow must be >= 2`, clamps to 2, terminates `unsolvable` — **no hang**.
+
+### Findings (non-blocking; no `BLOCKERS.md` — no soundness ambiguity)
+- **Test-isolation gotcha (not a code bug):** `SearchTraceAgreementTest.HashOnlyVsFlat`
+  writes hardcoded `/tmp/st_agree_{a,b}.trace`. Running two `unit_tests` binaries
+  (e.g. release + debug) **concurrently** collides on those paths → spurious
+  "cannot open trace B" / false divergences. Run unit_tests suites **sequentially**.
+  Verified: the test PASSES in isolation on all three builds (248/248 each). My
+  initial parallel run was the only thing that failed — fixed by serialising.
+- No soundness/semantic ambiguity hit ⇒ no `BLOCKERS.md` opened.
+

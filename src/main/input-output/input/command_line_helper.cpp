@@ -438,6 +438,10 @@ uint64_t command_line_helper::get_depth_grow() const {
     return depth_grow;
 }
 
+bool command_line_helper::has_max_depth_bound() const {
+    return has_max_depth_bound_;
+}
+
 uint64_t command_line_helper::get_max_depth_bound() const {
     return max_depth_bound;
 }

@@ -58,6 +58,7 @@ public:
     bool has_initial_depth_bound() const;
     uint64_t get_initial_depth_bound() const;
     uint64_t get_depth_grow() const;
+    bool has_max_depth_bound() const;
     uint64_t get_max_depth_bound() const;
     bool get_json_output() const;
     bool get_reveal_hidden() const;

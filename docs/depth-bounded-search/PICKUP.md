@@ -3,11 +3,16 @@
 **Branch:** `claude/depth-bounded-search`
 **Last updated:** 2026-06-07
 **Phase:** **M1 GO.** Stage 0 complete; trace identity gate built + validated on x86_64.
-**Stage 1 PR1 (items 1a–1d) COMPLETE + double-verified** (`9dcca88`; orchestrator +
-fresh-worktree verifier, both PASS; red line confirmed across all 73 L1 unsolvables).
+**Stage 1 PR1 (items 1a–1d) COMPLETE + double-verified** (`9dcca88`).
+**Stage 1 PR2 (items 1e + 1f) IMPLEMENTED + self-validated** (this session): outer
+iterative-deepening loop + differential-verdict harness. All gates green — L=∞ identity
+150/150; release/debug/trace `unit_tests` 248/248 each; `regression_level1` (+variants)
+4/4; **1f L1 = 150/150 verdicts match (0 flips)**; 1f self-test catches a planted
+mismatch (loud exit 1); all 6 loop smoke tests correct (incl. L_max→timeout red-line and
+depth-grow=1 no-hang guard). **Awaiting independent verifier sign-off** before M2.
 **NIGHT-SHIFT ACTIVE (Ian asleep, 2026-06-07):** this session is running autonomously
-per [`night-shift-protocol.md`](night-shift-protocol.md) — PR2 then Stage 2 under the
-automated safety net; **no `AskUserQuestion`**, blockers → `BLOCKERS.md`.
+per [`night-shift-protocol.md`](night-shift-protocol.md) — PR2 done, Stage 2 next under
+the automated safety net; **no `AskUserQuestion`**, blockers → `BLOCKERS.md`.
 **Branch renamed** `claude/ecstatic-hopper-tpykG` → `claude/depth-bounded-search`
 (old branch + `…-wip-backup` orphaned on remote — proxy 403 blocks deletion).
 
@@ -61,21 +66,35 @@ model · D4 PR cadence · D5 where raw measurement data lives · D6 `L_max` poli
 
 ## Next-session prompt (draft)
 
-> Read `implementation-plan.md` and `progress-log.md` (latest entry). PR1 is done +
-> double-verified (`9dcca88`). Implement **Stage 1 PR2 (items 1e + 1f)** on branch
-> `claude/depth-bounded-search`, **dispatching the implementer with `isolation:
-> worktree`** (PR1 lesson). **1e:** outer iterative-deepening loop in `solve_game_impl`
-> — loop `bounded_pass(L)`, grow `L` ×`--depth-grow` (default 2), **fresh cache per
-> pass** (cross-pass reuse is Stage 2, NOT here), stop on SOLVED / UNSOLVABLE /
-> `L ≥ L_max` / timeout. **1f:** differential-verdict harness — finite-`L` verdicts
-> must match the unbounded oracle 100% on L1–L2 (reuse `regression_runner.py
-> --compare-outcome-only`). **Gates:** `L=∞` identity must stay **150/150** (reference
-> at `/home/user/reference-bin/solvitaire-trace-ref-45ccd43`; rebuild via
-> `git worktree add /tmp/resolv-ref 45ccd43 && (cd /tmp/resolv-ref && ./build.sh
-> --trace)` if absent — see `trace-identity-reference.md`); then verify with a fresh
-> independent verifier subagent. Before building, install Boost
-> (`sudo apt-get install -y libboost-program-options-dev`) — ephemeral per session.
-> Keep `progress-log.md`/`PICKUP.md` current. **If running autonomously/overnight,
-> follow [`night-shift-protocol.md`](night-shift-protocol.md)** — Stage 2 IS in scope
-> under the 6-point safety net; blockers → `BLOCKERS.md`; **no `AskUserQuestion`**. If
-> Ian is available, escalate soundness/semantic questions (plan §1.2) instead of guessing.
+> Read `implementation-plan.md`, `night-shift-protocol.md`, and `progress-log.md`
+> (latest entry). PR1 done (`9dcca88`); **PR2 (items 1e+1f) implemented + self-validated**
+> this session (outer ID loop in `solve_game_impl` + `scripts/differential_verdict.py`
+> wrapper + `regression_runner.py` ID flags). **First, independently VERIFY PR2** with a
+> fresh-context verifier subagent (repo rule: read the actual diff, re-run gates from
+> clean — L=∞ identity 150/150 at `/home/user/reference-bin/solvitaire-trace-ref-45ccd43`,
+> rebuild via `git worktree add /tmp/resolv-ref 45ccd43 && (cd /tmp/resolv-ref &&
+> ./build.sh --trace)` if absent; run the 1f harness on L1 and confirm 150/150 + that the
+> self-test catches a planted flip; run unit_tests suites **sequentially** — they share
+> `/tmp/st_agree_*.trace`). Then proceed to **Stage 2** (the heart: cross-pass `DEAD`
+> retention + `OPEN(b)` + `g_min`, LRU first) per plan §5 / §6 sub-items 2a–2d, each gated
+> on the 6-point safety net; author the GHI/cycle adversarial tests in a SEPARATE subagent.
+> Before building, install Boost (`sudo apt-get install -y libboost-program-options-dev`)
+> — ephemeral per session. Keep `progress-log.md`/`PICKUP.md` current. **If running
+> autonomously/overnight, follow [`night-shift-protocol.md`](night-shift-protocol.md)**;
+> blockers → `BLOCKERS.md`; **no `AskUserQuestion`**. If Ian is available, escalate
+> soundness/semantic questions (plan §1.2) instead of guessing.
+
+## PR2 quick-run (commands)
+
+```bash
+sudo apt-get install -y libboost-program-options-dev   # ephemeral per session
+./build.sh --release --unit-tests && ./build.sh --debug --unit-tests && ./build.sh --trace
+REF=/home/user/reference-bin/solvitaire-trace-ref-45ccd43
+cmake -DTRACE_REF_BIN="$REF" cmake-build-trace
+(cd cmake-build-trace && ctest -R '^trace_regression_level1$' --output-on-failure)  # 150/150
+# 1f differential harness (L1):
+python3 scripts/differential_verdict.py --exe cmake-build-release/bin/solvitaire \
+    --initial-depth-bound 1000 --depth-grow 2          # => 150/150 verdicts match
+# run unit_tests suites ONE AT A TIME (shared /tmp trace paths):
+./cmake-build-release/bin/unit_tests ; ./cmake-build-debug/bin/unit_tests ; ./cmake-build-trace/bin/unit_tests
+```

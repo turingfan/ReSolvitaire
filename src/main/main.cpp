@@ -22,6 +22,8 @@
 #include <sys/resource.h>
 #include <functional>
 #include <sstream>
+#include <chrono>
+#include <cassert>
 
 #include "version.h"
 #include "../../lib/rapidjson/document.h"
@@ -61,61 +63,196 @@ struct solve_output {
     std::function<void(std::ostream&)> print_init_state;  // streams init_state to given ostream
 };
 
+// ─── id_options ──────────────────────────────────────────────────────────────
+// Configuration for the outer iterative-deepening loop (Stage 1 item 1e). When a
+// caller passes boost::none for this, the solver runs a single UNBOUNDED pass and
+// the loop is never entered (preserving the L = infinity trace identity exactly).
+//
+// initial_bound : L0, the depth bound of the first pass.
+// grow          : factor by which L grows between passes (--depth-grow; default 2).
+//                 A non-progress guard below forces L = L + 1 if grow would not
+//                 strictly increase L, so the loop can never spin forever.
+// max_bound     : optional L_max. If set, deepening stops once L would exceed it.
+//                 If unset, deepening continues until the (shared) timeout.
+
+struct id_options {
+    uint64_t initial_bound;
+    uint64_t grow;
+    boost::optional<uint64_t> max_bound;
+};
+
 // ─── solve_game_impl<Policy> ─────────────────────────────────────────────────
 // Constructs game_state, cache, and solver for the given policy. Runs the
 // solver and returns solve_output with lazy callbacks.
+//
+// When id_opts is boost::none the search is a single unbounded pass — byte
+// identical to the pre-feature behaviour (the L = infinity identity gate enforces
+// this). When id_opts is set, an outer iterative-deepening loop runs: each pass
+// uses a FRESH cache and a FRESH initial game state (no cross-pass reuse — that is
+// Stage 2), sharing the total timeout, growing L until SOLVED / UNSOLVABLE /
+// L_max / timeout.
 
 template <typename Policy>
 solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t cache_capacity,
                               game_state::streamliner_options str_opts,
                               boost::optional<int> seed,
                               boost::optional<const Document&> in_doc,
-                              boost::optional<uint64_t> depth_bound) {
-    game_state_impl<Policy> gs = seed
-        ? game_state_impl<Policy>(rules, *seed, static_cast<typename game_state_impl<Policy>::streamliner_options>(str_opts))
-        : game_state_impl<Policy>(rules, *in_doc, static_cast<typename game_state_impl<Policy>::streamliner_options>(str_opts));
+                              boost::optional<id_options> id_opts) {
+    // Builds a solve_output (result + lazy solution/init-state closures) from a
+    // finished pass's solver. Shared by the unbounded and iterative-deepening
+    // paths so the printing behaviour is identical regardless of which produced
+    // the final verdict.
+    auto build_output = [](solver_impl<Policy>& sol, solver::result res) -> solve_output {
+        solve_output out;
+        out.result = res;
 
-    typename Policy::cache_type cache = [&]() {
+        // Capture init_state for lazy printing (one copy; type-erased inside std::function)
+        auto init_copy = sol.init_state;
+        out.print_init_state = [init_copy](std::ostream& os) { os << init_copy; };
+
+        if (res.sol_type == solver_impl<Policy>::result::type::SOLVED) {
+            // Extract just the move sequence (vector<::move> is non-templated) — cheap
+            std::vector<::move> solution_moves;
+            auto it = sol.get_frontier().begin();
+            ++it;  // skip root node (null move)
+            for (; it != sol.get_frontier().end(); ++it)
+                solution_moves.push_back(it->mv);
+            uint64_t n = res.states_searched;
+
+            out.print_solution = [init_copy, solution_moves, n]() {
+                game_state_impl<Policy> state_copy = init_copy;
+                std::cout << "Solution:\n" << state_copy << "\n";
+                if (n > 1) {
+                    for (const auto& m : solution_moves) {
+                        state_copy.make_move(m);
+                        std::cout << state_copy << "\n";
+                    }
+                }
+                std::cout << "\n";
+            };
+        }
+        return out;
+    };
+
+    // Builds a fresh initial game state for a pass.
+    auto make_gs = [&]() {
+        return seed
+            ? game_state_impl<Policy>(rules, *seed, static_cast<typename game_state_impl<Policy>::streamliner_options>(str_opts))
+            : game_state_impl<Policy>(rules, *in_doc, static_cast<typename game_state_impl<Policy>::streamliner_options>(str_opts));
+    };
+
+    // Builds a fresh cache for a pass (Stage 1: never reused across passes).
+    auto make_cache = [&](const game_state_impl<Policy>& gs) {
         if constexpr (std::is_same_v<typename Policy::cache_type, lru_cache>)
             return lru_cache(gs, cache_capacity);
         else
             return typename Policy::cache_type(cache_capacity);
-    }();
+    };
 
-    solver_impl<Policy> sol(gs, cache);
-    // Single bounded pass at L0 (or unbounded when depth_bound is boost::none).
-    // No outer iterative-deepening loop here — that is added in a later change.
-    auto res = sol.run(std::chrono::milliseconds(timeout), depth_bound);
-
-    solve_output out;
-    out.result = res;
-
-    // Capture init_state for lazy printing (one copy; type-erased inside std::function)
-    auto init_copy = sol.init_state;
-    out.print_init_state = [init_copy](std::ostream& os) { os << init_copy; };
-
-    if (res.sol_type == solver_impl<Policy>::result::type::SOLVED) {
-        // Extract just the move sequence (vector<::move> is non-templated) — cheap
-        std::vector<::move> solution_moves;
-        auto it = sol.get_frontier().begin();
-        ++it;  // skip root node (null move)
-        for (; it != sol.get_frontier().end(); ++it)
-            solution_moves.push_back(it->mv);
-        uint64_t n = res.states_searched;
-
-        out.print_solution = [init_copy, solution_moves, n]() {
-            game_state_impl<Policy> state_copy = init_copy;
-            std::cout << "Solution:\n" << state_copy << "\n";
-            if (n > 1) {
-                for (const auto& m : solution_moves) {
-                    state_copy.make_move(m);
-                    std::cout << state_copy << "\n";
-                }
-            }
-            std::cout << "\n";
-        };
+    // ─── Unbounded path (flag absent) ────────────────────────────────────────
+    // Verbatim single unbounded pass. MUST stay byte-identical to the pre-feature
+    // behaviour: the loop below is never entered, so the L = infinity identity
+    // gate holds.
+    if (!id_opts) {
+        game_state_impl<Policy> gs = make_gs();
+        typename Policy::cache_type cache = make_cache(gs);
+        solver_impl<Policy> sol(gs, cache);
+        auto res = sol.run(std::chrono::milliseconds(timeout), boost::none);
+        return build_output(sol, res);
     }
-    return out;
+
+    // ─── Iterative-deepening path (flag present) ─────────────────────────────
+    using clock = std::chrono::high_resolution_clock;
+    const auto deadline = clock::now() + std::chrono::milliseconds(timeout);
+
+    uint64_t L = id_opts->initial_bound;
+    const uint64_t grow = id_opts->grow;
+
+    // The result of the most recent pass — surfaced if the loop stops without a
+    // definitive SOLVED/UNSOLVABLE verdict (so we never lose the pass's stats).
+    boost::optional<solve_output> last_out;
+
+    while (true) {
+        // Share the total timeout across passes: each pass gets the remaining time.
+        const auto now = clock::now();
+        if (now >= deadline) {
+            // Out of time before this pass could start. SOUNDNESS: the last pass
+            // (if any) was BOUNDED_EXHAUSTED — unresolved, NOT a proof — so we
+            // surface TIMEOUT, never UNSOLVABLE. last_out always exists here
+            // because the first pass runs unconditionally (deadline is in the
+            // future at entry for any sane timeout).
+            if (last_out) {
+                last_out->result.sol_type = solver::result::type::TIMEOUT;
+                return *last_out;
+            }
+            // Defensive: no pass ran at all (timeout already elapsed). Build an
+            // empty TIMEOUT result from a fresh solver so callers have stats.
+            game_state_impl<Policy> gs = make_gs();
+            typename Policy::cache_type cache = make_cache(gs);
+            solver_impl<Policy> sol(gs, cache);
+            solver::result empty{};
+            empty.sol_type = solver::result::type::TIMEOUT;
+            return build_output(sol, empty);
+        }
+        const auto remaining = std::chrono::duration_cast<millisec>(deadline - now);
+
+        // Fresh cache + fresh initial state every pass (no cross-pass reuse — Stage 2).
+        game_state_impl<Policy> gs = make_gs();
+        typename Policy::cache_type cache = make_cache(gs);
+        solver_impl<Policy> sol(gs, cache);
+        auto res = sol.run(remaining, boost::optional<uint64_t>(L));
+
+        using rtype = solver::result::type;
+        switch (res.sol_type) {
+            case rtype::SOLVED:
+                // Winnable: a shallow solution within L. Monotone in budget — valid.
+                return build_output(sol, res);
+            case rtype::UNSOLVABLE:
+                // Sound proof: this pass exhausted with NO truncation (any_truncation
+                // == false), so the bound did not restrict the proof. Return it.
+                return build_output(sol, res);
+            case rtype::TIMEOUT:
+            case rtype::MEM_LIMIT:
+            case rtype::TERMINATED:
+                // Stop conditions independent of the bound. Surface as-is (the JSON
+                // mapping turns these into timeout/failed — never unsolvable).
+                return build_output(sol, res);
+            case rtype::BOUNDED_EXHAUSTED:
+            default:
+                // No win within L and a truncation occurred ⇒ deepen and retry.
+                // Keep this pass's output in case the NEXT growth/limit check stops
+                // the loop (so we can surface its stats under a TIMEOUT verdict).
+                last_out = build_output(sol, res);
+                break;
+        }
+
+        // ─── Growth + non-progress guard ─────────────────────────────────────
+        // Next bound = L * grow. GUARD: if grow <= 1 or the product would not
+        // strictly exceed L (e.g. overflow), force L = L + 1 so the loop always
+        // makes progress and can never spin forever. (--depth-grow < 2 is also
+        // rejected up front in solve_game(), so this is belt-and-braces.)
+        uint64_t next_L;
+        if (grow <= 1) {
+            next_L = L + 1;
+        } else {
+            next_L = L * grow;
+            if (next_L <= L) next_L = L + 1;  // overflow or no progress
+        }
+
+        // ─── L_max handling ──────────────────────────────────────────────────
+        // If --max-depth-bound M is set, stop deepening once the next bound would
+        // exceed M. SOUNDNESS RED LINE: the loop is stopping while the last pass
+        // was BOUNDED_EXHAUSTED (unresolved) — the verdict is TIMEOUT / unknown,
+        // NEVER unsolvable. (last_out is guaranteed set: we only reach here after
+        // the BOUNDED_EXHAUSTED arm above stored it.)
+        if (id_opts->max_bound && next_L > *id_opts->max_bound) {
+            assert(last_out);
+            last_out->result.sol_type = solver::result::type::TIMEOUT;
+            return *last_out;
+        }
+
+        L = next_L;
+    }
 }
 
 // ─── dispatch_solve ──────────────────────────────────────────────────────────
@@ -127,41 +264,41 @@ static solve_output dispatch_solve(const sol_rules& rules, uint64_t timeout, uin
                              boost::optional<const Document&> in_doc,
                              bool force_lru,
                              const std::string& cache_type,
-                             boost::optional<uint64_t> depth_bound) {
+                             boost::optional<id_options> id_opts) {
     bool suit_sym = str_opts == game_state::streamliner_options::SUIT_SYMMETRY
                  || str_opts == game_state::streamliner_options::BOTH
                  || rules.inherent_suit_symmetry();
 
 #if defined(SOLVITAIRE_LRU_ONLY)
     (void)cache_type; (void)force_lru; (void)suit_sym;
-    return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+    return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
 #elif defined(SOLVITAIRE_FLAT_ONLY)
     (void)force_lru; (void)cache_type;
     if (use_predecessor_cache(rules))
-        return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+        return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
     if (!use_new_cache(rules, suit_sym))
         throw std::runtime_error("flat-only binary: game requires LRU cache");
-    return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+    return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
 #elif defined(SOLVITAIRE_HASH_ONLY)
     (void)force_lru; (void)cache_type;
     if (!use_new_cache(rules, suit_sym))
         throw std::runtime_error("hash-only binary: game requires LRU cache");
-    return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+    return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
 #else
     if (force_lru) {
-        return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+        return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
     } else if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
-        return solve_game_impl<MultiplicityPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+        return solve_game_impl<MultiplicityPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
     } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
-        return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+        return solve_game_impl<HashOnlyPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
     } else if (use_predecessor_cache(rules)) {
-        return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+        return solve_game_impl<PredecessorPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
     } else if (use_new_cache(rules, suit_sym)) {
-        return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+        return solve_game_impl<FlatPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
     } else if (use_multiplicity_cache(rules, suit_sym)) {
-        return solve_game_impl<MultiplicityPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+        return solve_game_impl<MultiplicityPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
     } else {
-        return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, depth_bound);
+        return solve_game_impl<LRUPolicy>(rules, timeout, cache_capacity, str_opts, seed, in_doc, id_opts);
     }
 #endif
 }
@@ -347,19 +484,39 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optiona
         timeout = clh.get_timeout();
         str_opt = clh.get_streamliners_game_state();
     }
-    // Single depth bound L0 from the CLI; boost::none means unbounded (the flag is
-    // absent), in which case the solver runs exactly as before. No outer loop here.
-    boost::optional<uint64_t> depth_bound = clh.has_initial_depth_bound()
-            ? boost::optional<uint64_t>(clh.get_initial_depth_bound())
-            : boost::none;
-    solve_output solution = dispatch_solve(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type(), depth_bound);
+    // Build the iterative-deepening configuration from the CLI (Stage 1 item 1e).
+    // boost::none means the flag --initial-depth-bound is ABSENT ⇒ a single
+    // unbounded pass, byte-identical to the pre-feature behaviour (the loop is
+    // never entered). When present, the outer ID loop runs in solve_game_impl.
+    boost::optional<id_options> id_opts;
+    if (clh.has_initial_depth_bound()) {
+        id_options o;
+        o.initial_bound = clh.get_initial_depth_bound();
+        // Reject --depth-grow < 2 up front: a factor < 2 cannot grow a positive
+        // bound geometrically. (The loop also has a belt-and-braces L = L + 1
+        // non-progress guard, so a value of 1 still terminates rather than hangs.)
+        o.grow = clh.get_depth_grow();
+        if (o.grow < 2) {
+            LOG_ERROR("Error: --depth-grow must be >= 2 (got " << o.grow << ")");
+            // Fall back to the minimal progressing factor so we never spin; the
+            // loop's non-progress guard would do the same, but we make it explicit.
+            o.grow = 2;
+        }
+        // --max-depth-bound absent ⇒ no separate depth cap; deepen until timeout
+        // ("tied to --timeout" per the plan, decision D6 default).
+        o.max_bound = clh.has_max_depth_bound()
+                ? boost::optional<uint64_t>(clh.get_max_depth_bound())
+                : boost::none;
+        id_opts = o;
+    }
+    solve_output solution = dispatch_solve(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type(), id_opts);
 
     bool run_again = smart && solution.result.sol_type != solver::result::type::SOLVED;
     cout.flush();
     if (run_again)
         if (!clh.get_classify() && !clh.get_json_output()) cout << "Unsolvable using streamliner. Running again...\n";
     boost::optional<solve_output> streamliner_solution = run_again
-            ? dispatch_solve(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type(), depth_bound)
+            ? dispatch_solve(rules, clh.get_timeout(), clh.get_cache_capacity(), game_state::streamliner_options::NONE, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type(), id_opts)
             : boost::optional<solve_output>();
 
     if (clh.get_json_output()) {
@@ -370,10 +527,15 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optiona
         writer.Key("instance_name");
         writer.String(instance_name.c_str());
         writer.Key("solution_type");
-        // BOUNDED_EXHAUSTED is surfaced distinctly here for PR1: there is no outer
-        // iterative-deepening loop yet to consume it, so a single bounded pass that
-        // truncates reports "bounded-exhausted" rather than being conflated with a
-        // genuine "unsolvable" (the soundness red line) or a generic "failed".
+        // SOUNDNESS RED LINE: a depth-bounded/iterative-deepening run reports
+        // "unsolvable" ONLY via a pass that returned UNSOLVABLE (exhausted with no
+        // truncation — a genuine proof). When the ID loop (item 1e) stops without a
+        // SOLVED/UNSOLVABLE pass (timeout or L_max reached while the last pass was
+        // BOUNDED_EXHAUSTED), it remaps the verdict to TIMEOUT before we get here —
+        // so the unresolved case becomes "timeout", NEVER "unsolvable". The
+        // BOUNDED_EXHAUSTED → "bounded-exhausted" arm below is therefore a
+        // defensive fallback (it should not occur on the normal ID solve path, but
+        // if it ever did it must still NOT be conflated with "unsolvable").
         writer.String(s.result.sol_type == solver::result::type::SOLVED ? "winnable" :
                       s.result.sol_type == solver::result::type::UNSOLVABLE ? "unsolvable" :
                       s.result.sol_type == solver::result::type::TIMEOUT ? "timeout" :

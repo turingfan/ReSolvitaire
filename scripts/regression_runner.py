@@ -26,7 +26,9 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
                    max_instance_timeout_ms=120000, regenerate=False,
                    force_lru=False, skip_ineligible=False,
                    compare_outcome_only=False, cache_type=None,
-                   enforce_node_counts=False):
+                   enforce_node_counts=False,
+                   initial_depth_bound=None, depth_grow=None,
+                   max_depth_bound=None):
     if not os.path.exists(solver_path):
         print(f"Error: Solver not found at {solver_path}")
         return 1
@@ -78,6 +80,13 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
     mode = "Regenerating" if regenerate else "Running"
     print(f"{mode} Regression: {total} instances (Oracle: {os.path.basename(oracle_path)})",
           flush=True)
+    if initial_depth_bound is not None:
+        grow_note = f", depth-grow={depth_grow}" if depth_grow is not None else ""
+        max_note = f", max-depth-bound={max_depth_bound}" if max_depth_bound is not None else ""
+        print(f"ITERATIVE-DEEPENING MODE: initial-depth-bound={initial_depth_bound}"
+              f"{grow_note}{max_note} "
+              f"(asserting bounded final verdict == unbounded oracle verdict)",
+              flush=True)
     print("-" * 60, flush=True)
 
     for filename in instance_filenames:
@@ -128,6 +137,17 @@ def run_regression(solver_path, instances_dir, oracle_path, verbose=False,
 
         if cache_type:
             cmd.extend(["--cache-type", cache_type])
+
+        # Iterative-deepening (depth-bounded) mode. When --initial-depth-bound is
+        # set, the solver runs the outer ID loop instead of a single unbounded
+        # pass. The differential-verdict harness (Stage 1 item 1f) uses this to
+        # assert the bounded FINAL verdict equals the unbounded oracle verdict.
+        if initial_depth_bound is not None:
+            cmd.extend(["--initial-depth-bound", str(initial_depth_bound)])
+        if depth_grow is not None:
+            cmd.extend(["--depth-grow", str(depth_grow)])
+        if max_depth_bound is not None:
+            cmd.extend(["--max-depth-bound", str(max_depth_bound)])
 
         try:
             # Give the process 60s on top of the solver's own timeout to flush output.
@@ -305,8 +325,33 @@ if __name__ == "__main__":
                         help="Fail if states_searched differs from oracle (in addition "
                              "to outcome checks). Use when the change under test should "
                              "not alter traversal order.")
+    parser.add_argument("--initial-depth-bound", type=int, default=None,
+                        help="Run the solver in iterative-deepening mode with this "
+                             "initial depth bound L0 (appends --initial-depth-bound). "
+                             "The differential-verdict harness (Stage 1 item 1f) uses "
+                             "this to assert the bounded FINAL verdict equals the "
+                             "unbounded oracle verdict. Node counts are NOT enforced in "
+                             "this mode (truncation reshapes traversal) — do not combine "
+                             "with --enforce-node-counts.")
+    parser.add_argument("--depth-grow", type=int, default=None,
+                        help="Append --depth-grow <N> (ID growth factor; solver default 2). "
+                             "Only meaningful with --initial-depth-bound.")
+    parser.add_argument("--max-depth-bound", type=int, default=None,
+                        help="Append --max-depth-bound <N> (ID L_max cap). Only meaningful "
+                             "with --initial-depth-bound.")
 
     args = parser.parse_args()
+
+    # Guard: enforcing node counts under iterative deepening is meaningless — a
+    # bounded run truncates and reshapes cache interactions, so states_searched
+    # legitimately differs from the unbounded oracle. Fail fast rather than emit
+    # confusing spurious NODE COUNT failures.
+    if args.initial_depth_bound is not None and args.enforce_node_counts:
+        print("Error: --enforce-node-counts cannot be combined with "
+              "--initial-depth-bound (node counts differ under depth bounding; "
+              "the harness compares verdicts only).", flush=True)
+        sys.exit(2)
+
     sys.exit(run_regression(
         args.exe, args.instances, args.oracle,
         verbose=args.verbose,
@@ -317,4 +362,7 @@ if __name__ == "__main__":
         compare_outcome_only=args.compare_outcome_only,
         cache_type=args.cache_type,
         enforce_node_counts=args.enforce_node_counts,
+        initial_depth_bound=args.initial_depth_bound,
+        depth_grow=args.depth_grow,
+        max_depth_bound=args.max_depth_bound,
     ))
