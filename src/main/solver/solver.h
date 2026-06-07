@@ -47,7 +47,13 @@ struct solver_node {
 };
 
 struct solver_result {
-    enum class type { TIMEOUT, SOLVED, UNSOLVABLE, MEM_LIMIT, TERMINATED };
+    // BOUNDED_EXHAUSTED: a depth-bounded pass exhausted the search within the
+    // bound L without finding a solution, but at least one node was truncated at
+    // the bound (any_truncation == true). It is therefore NOT a proof of
+    // unsolvability. It is an internal per-pass outcome consumed by the outer
+    // iterative-deepening loop (added in a later change); a normal unbounded run
+    // can never produce it.
+    enum class type { TIMEOUT, SOLVED, UNSOLVABLE, MEM_LIMIT, TERMINATED, BOUNDED_EXHAUSTED };
 
     type sol_type;
     uint64_t states_searched;
@@ -72,7 +78,11 @@ public:
 
     explicit solver_impl(const game_state_impl<Policy>&, typename Policy::cache_type&);
 
-    result run(boost::optional<std::chrono::milliseconds> = boost::none);
+    // depth_bound is the per-pass bound L. boost::none means unbounded (L = inf),
+    // in which case the depth cut can never fire and any_truncation stays false —
+    // the search is byte-identical to an unbounded run.
+    result run(boost::optional<std::chrono::milliseconds> = boost::none,
+               boost::optional<uint64_t> depth_bound = boost::none);
 
     void print_solution() const;
     static void print_header(long, command_line_helper::streamliner_opt);
@@ -93,6 +103,13 @@ private:
 
     game_state_impl<Policy> state;
     std::vector<node> frontier;
+
+    // Depth-bounded search state (Stage 1). When depth_bound is boost::none the
+    // bound is disabled (L = infinity): the cut can never fire. any_truncation is
+    // a monotone, set-only flag — once a node is truncated at the bound it stays
+    // set for the whole pass and is never cleared.
+    boost::optional<uint64_t> depth_bound;
+    bool any_truncation = false;
 
     result res;
 

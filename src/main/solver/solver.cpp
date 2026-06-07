@@ -93,9 +93,14 @@ solver_node::solver_node(const ::move m) noexcept
 }
 
 template <typename Policy>
-solver_result solver_impl<Policy>::run(boost::optional<millisec> timeout) {
+solver_result solver_impl<Policy>::run(boost::optional<millisec> timeout,
+                                       boost::optional<uint64_t> bound) {
     // Set interrupt handler
     signal(SIGINT, sigint_handler);
+
+    // Configure the depth bound for this pass. boost::none => unbounded (L = inf).
+    depth_bound = bound;
+    any_truncation = false;
 
     // Set timings
     const clock::time_point start_time = clock::now();
@@ -120,6 +125,24 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
             STRACE_RESULT("TERMINATED");
             return result::type::TERMINATED;
         }
+
+        // ─── Depth cut (Stage 1) ─────────────────────────────────────────────
+        // If this node's depth has reached the bound L, treat it as a truncated
+        // leaf: do NOT expand it (neither the dominance/auto-foundation push nor
+        // legal-move expansion). Record that a truncation happened (monotone,
+        // set-only) and backtrack. res.depth is the number of moves from the root
+        // to the current node (incremented once per ply below), so this fires
+        // exactly when the node sits at depth == L.
+        //
+        // When depth_bound is boost::none the bound is disabled (L = infinity):
+        // this condition can never be true, the node is never an artificial leaf,
+        // and any_truncation can never be set — the search is byte-identical to an
+        // unbounded run. The truncated node was cut before any cache insert, so it
+        // has no cache entry / live bit; backtracking with no iterator is correct.
+        if (depth_bound && res.depth >= *depth_bound) {
+            any_truncation = true;
+            states_exhausted = revert_to_last_node_with_children();
+        } else {
 
 #ifndef NDEBUG
         if (current_node->mv.dominance_move) {
@@ -195,6 +218,7 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
                 return result::type::MEM_LIMIT;
             }
         }
+        } // end else of the depth-cut guard
 
         // Sets the current node to one of its children
         assert(states_exhausted == current_node->child_moves.empty());
@@ -217,8 +241,26 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
         return result::type::SOLVED;
     } else {
         assert(states_exhausted);
-        STRACE_RESULT("UNSOLV");
-        return result::type::UNSOLVABLE;
+        // The search was exhausted within the bound without finding a solution.
+        // SOUNDNESS: we may report UNSOLVABLE only if NO node was ever truncated
+        // at the bound — then the bound did not restrict the proof and the
+        // exhaustion is a genuine completeness certificate, exactly as in an
+        // unbounded run. If any truncation occurred the verdict is not trustworthy
+        // as UNSOLVABLE, so we return BOUNDED_EXHAUSTED instead (consumed by the
+        // outer iterative-deepening loop in a later change).
+        //
+        // Invariant: when the bound is disabled (L = infinity) the cut can never
+        // fire, so any_truncation is always false here and this path is identical
+        // to the original "exhausted => UNSOLVABLE".
+        if (any_truncation) {
+            STRACE_RESULT("BOUNDED_EXHAUSTED");
+            return result::type::BOUNDED_EXHAUSTED;
+        } else {
+            // §7.3(c): root finalised DEAD  <=>  any_truncation == false.
+            assert(!any_truncation);
+            STRACE_RESULT("UNSOLV");
+            return result::type::UNSOLVABLE;
+        }
     }
 }
 
@@ -330,6 +372,9 @@ std::ostream& operator<< (std::ostream& out, const solver_result::type& rt) {
             break;
         case solver_result::type::TERMINATED:
             out << "terminated";
+            break;
+        case solver_result::type::BOUNDED_EXHAUSTED:
+            out << "bounded-exhausted";
             break;
     }
     return out;

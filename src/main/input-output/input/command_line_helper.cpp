@@ -64,6 +64,19 @@ command_line_helper::command_line_helper()
                     "percentage of the supplied solitaire game, given a limit for the number of seeds. Must supply "
                     "either 'random', 'benchmark', 'solvability' or list of deals to be solved.")
             ("timeout", po::value<uint64_t>(), "adds a timeout to searches")
+            ("initial-depth-bound", po::value<uint64_t>(),
+                    "depth bound L0 for a single bounded search pass. When absent "
+                    "the search is unbounded (L = infinity) and behaves identically "
+                    "to a normal run. A node whose depth reaches L is treated as a "
+                    "truncated leaf and not expanded.")
+            ("depth-grow", po::value<uint64_t>()->default_value(2),
+                    "factor by which the depth bound grows between iterative-deepening "
+                    "passes (parsed and stored now; the outer loop is added in a later "
+                    "change and does not yet consume this).")
+            ("max-depth-bound", po::value<uint64_t>(),
+                    "upper limit on the depth bound for iterative deepening (parsed and "
+                    "stored now; the outer loop is added in a later change and does not "
+                    "yet consume this). Defaults to being tied to --timeout.")
             ("resume", po::value<vector<int>>()->multitoken(), "resumes the solvability percentage calculation from a "
                                                     "previous run. Must be supplied with the solvability option. "
                                                     "Syntax: [sol unsol intract in-progress-1 in-progress-2 ...]")
@@ -174,6 +187,28 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
         timeout = vm["timeout"].as<uint64_t>();
     } else {
         timeout = 604800000; // 1 week in milliseconds
+    }
+
+    // Depth-bounded search (Stage 1). The bound is OFF unless --initial-depth-bound
+    // is supplied, so a normal run is byte-identical to before.
+    if (vm.count("initial-depth-bound")) {
+        has_initial_depth_bound_ = true;
+        initial_depth_bound = vm["initial-depth-bound"].as<uint64_t>();
+    } else {
+        has_initial_depth_bound_ = false;
+        initial_depth_bound = 0;
+    }
+
+    // Parsed and stored now; consumed only by the PR2 outer iterative-deepening loop.
+    depth_grow = vm["depth-grow"].as<uint64_t>();
+
+    if (vm.count("max-depth-bound")) {
+        has_max_depth_bound_ = true;
+        max_depth_bound = vm["max-depth-bound"].as<uint64_t>();
+    } else {
+        // Default tied to --timeout per the plan; the PR2 loop will refine this.
+        has_max_depth_bound_ = false;
+        max_depth_bound = 0;
     }
 
     if (vm.count("cores")) {
@@ -389,6 +424,22 @@ int command_line_helper::get_solvability() {
 
 uint64_t command_line_helper::get_timeout() {
     return timeout;
+}
+
+bool command_line_helper::has_initial_depth_bound() const {
+    return has_initial_depth_bound_;
+}
+
+uint64_t command_line_helper::get_initial_depth_bound() const {
+    return initial_depth_bound;
+}
+
+uint64_t command_line_helper::get_depth_grow() const {
+    return depth_grow;
+}
+
+uint64_t command_line_helper::get_max_depth_bound() const {
+    return max_depth_bound;
 }
 
 vector<int> command_line_helper::get_resume() {

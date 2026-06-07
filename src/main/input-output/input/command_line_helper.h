@@ -55,6 +55,10 @@ public:
     uint64_t get_cache_capacity();
     std::string get_describe_game_rules();
     uint64_t get_timeout();
+    bool has_initial_depth_bound() const;
+    uint64_t get_initial_depth_bound() const;
+    uint64_t get_depth_grow() const;
+    uint64_t get_max_depth_bound() const;
     bool get_json_output() const;
     bool get_reveal_hidden() const;
     bool get_debug() const;
@@ -106,6 +110,13 @@ private:
     streamliner_opt streamliners;
     uint64_t cache_capacity;
     uint64_t timeout;
+    // Depth-bounded search (Stage 1). When --initial-depth-bound is absent the
+    // bound is OFF (L = infinity) and the solver behaves identically to before.
+    bool has_initial_depth_bound_ = false;
+    uint64_t initial_depth_bound = 0;
+    uint64_t depth_grow = 2;        // parsed/stored now; used by the PR2 outer loop
+    bool has_max_depth_bound_ = false;
+    uint64_t max_depth_bound = 0;   // parsed/stored now; used by the PR2 outer loop
     bool json_output = false;
     bool reveal_hidden = false;
     bool debug = false;

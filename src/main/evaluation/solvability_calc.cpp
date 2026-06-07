@@ -238,5 +238,10 @@ void solvability_calc::seed_results::add_result(solver::result::type t) {
             break;
         case solver::result::type ::TERMINATED:
             break;
+        case solver::result::type::BOUNDED_EXHAUSTED:
+            // Inconclusive within the depth bound: not a proof of (un)solvability.
+            // Not counted here; the outer iterative-deepening loop (added later)
+            // resolves it to a final verdict before this point is reached.
+            break;
     }
 }
