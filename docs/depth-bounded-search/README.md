@@ -1,8 +1,8 @@
 # Depth-Bounded, Cache-Reusing Iterative Deepening — Branch Documentation
 
 **Branch:** `claude/ecstatic-hopper-tpykG`
-**Status:** Design proposal (no code yet) — **author decisions recorded 2026-06-06** (proposal §1.5)
-**Date:** 2026-06-06
+**Status:** Design approved + **implementation plan written** (no code yet) — awaiting plan review (milestone M0)
+**Date:** 2026-06-07
 
 This folder holds the design documents for adding *depth-bounded iterative
 deepening with cache reuse* to ReSolvitaire: a way to avoid disappearing down a
@@ -15,6 +15,8 @@ exists, while preserving Solvitaire's defining guarantee that a reported
 | File | Purpose |
 |---|---|
 | [`proposal.md`](proposal.md) | The full design proposal: theory, algorithm, staged implementation plan, code-touch points, correctness/testing strategy, risks, and open questions. **Start here.** |
+| [`implementation-plan.md`](implementation-plan.md) | The detailed, web-execution implementation plan: working agreement for async/autonomous Claude Code on the web, subagent model, testing & verification strategy, per-stage work items with acceptance criteria, milestones, and decisions needed from Ian. |
+| [`PICKUP.md`](PICKUP.md) | Branch resume state + drafted next-session prompt. |
 | [`open-questions.md`](open-questions.md) | The seven decisions needed from the author — **all RESOLVED 2026-06-06**, with rationale and a feasibility investigation per decision. |
 
 **Decisions (2026-06-06):** primary goal is faster *unwinnable* proofs via the
