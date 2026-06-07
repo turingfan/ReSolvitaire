@@ -9,10 +9,12 @@ iterative-deepening loop + differential-verdict harness. All gates green — L=�
 150/150; release/debug/trace `unit_tests` 248/248 each; `regression_level1` (+variants)
 4/4; **1f L1 = 150/150 verdicts match (0 flips)**; 1f self-test catches a planted
 mismatch (loud exit 1); all 6 loop smoke tests correct (incl. L_max→timeout red-line and
-depth-grow=1 no-hang guard). **Awaiting independent verifier sign-off** before M2.
-**NIGHT-SHIFT ACTIVE (Ian asleep, 2026-06-07):** this session is running autonomously
-per [`night-shift-protocol.md`](night-shift-protocol.md) — PR2 done, Stage 2 next under
-the automated safety net; **no `AskUserQuestion`**, blockers → `BLOCKERS.md`.
+depth-grow=1 no-hang guard). **PR2 DOUBLE-VERIFIED + BLESSED (M2 reached)** — fresh
+worktree verifier found no discrepancies; 1f flip-detection proven; adversarial probe clean.
+**Stage 2 (night-shift):** 2a (cache-format, behaviorally inert) + 2d (GHI/cycle adversarial
+tests) dispatched; **2b BLOCKED on Ian** — 3 soundness questions in `BLOCKERS.md`; 2c is
+downstream of 2b. **NIGHT-SHIFT ACTIVE:** autonomous per
+[`night-shift-protocol.md`](night-shift-protocol.md); **no `AskUserQuestion`**, blockers → `BLOCKERS.md`.
 **Branch renamed** `claude/ecstatic-hopper-tpykG` → `claude/depth-bounded-search`
 (old branch + `…-wip-backup` orphaned on remote — proxy 403 blocks deletion).
 

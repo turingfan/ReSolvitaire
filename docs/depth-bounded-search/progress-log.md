@@ -267,3 +267,38 @@ isolated worktree off `claude/depth-bounded-search` (HEAD `70068cb`).
   initial parallel run was the only thing that failed — fixed by serialising.
 - No soundness/semantic ambiguity hit ⇒ no `BLOCKERS.md` opened.
 
+### Stage 1 PR2 — COMPLETE + double-verified (BLESSED)
+
+- **Orchestrator verification:** synced + read the actual `main.cpp` loop diff; confirmed
+  every exit preserves the red line (`unsolvable` only from a pass that returned
+  `UNSOLVABLE`; all unresolved stops remap to `TIMEOUT`; `last_out` provably set at the
+  `L_max` check). Own re-run: identity **150/150**; klondike s1 `-L10→unsolvable`,
+  `-L8 -M16→timeout` (not unsolvable), `--depth-grow 1→no hang`, `-L1000→unsolvable`.
+  Read `differential_verdict.py` — a real check (hard-fails on outcome flips).
+- **Fresh-context verifier subagent (isolated worktree, from clean):** **no discrepancies.**
+  3 builds clean; release/debug/trace `unit_tests` 248 each; `regression_level1` 4/4;
+  identity **150/150** (non-vacuous, real event compare); **1f L1 = 150/150, 0 flips**
+  (147 definitive + 3 sound timeouts); **1f flip-detection PROVEN** (planted
+  `alpha-star_seed_3` flip → `[FAIL] OUTCOME FLIP`, exit 1); adversarial tiny-bound
+  (`-L3`) probe on 12 solvable instances → **0** false `unsolvable`. Code-read confirmed.
+- **M2 (Stage 1 verified) — the bounded core + the 1f safety net are sound and proven.**
+  The 1f harness now guards all of Stage 2.
+
+## 2026-06-07 — Stage 2 scoping (night-shift): 2a + 2d safe; 2b blocked on Ian
+
+Read plan §5 Stage 2 (items 2a–2d) + §7 risks. Classified for autonomous overnight work:
+
+- **2a (cache-format: `status`/`DEAD`-bit, `b`, `g_min` + `set_dead`/upsert) — SAFE.**
+  Behaviorally inert (acceptance: "Stage-1 verdicts + trace identity unchanged"); the
+  identity + 1f gates verify inertness. **Dispatching the 2a implementer overnight**
+  (commit-on-worktree; I verify + merge). Flag M3 (cache-format sign-off) for Ian.
+- **2d (GHI/cycle adversarial tests, authored independently) — SAFE.** Encodes the
+  soundness contract (verdict == unbounded oracle on cycle/GHI-prone inputs);
+  guards 2b. **Dispatching the test-author overnight.**
+- **2b (cross-pass reuse + DFSTT3 backup + on-path set) — BLOCKED on Ian.** Plan §5
+  lists three "escalate, do not guess — all soundness/semantic" questions (dominance/K+
+  edge budget accounting; pin-`DEAD` vs all-live→`MEM_LIMIT`; stale `ON_PATH` across
+  passes). Per the red line + night-shift §1, these go to **`BLOCKERS.md`** for Ian's
+  resolution — NOT guessed. **2c** depends on 2b ⇒ also deferred. A read-only analyst
+  is grounding the `BLOCKERS.md` entries against proposal §3.5/§3.8.
+
