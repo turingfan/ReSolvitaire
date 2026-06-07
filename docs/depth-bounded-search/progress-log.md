@@ -163,3 +163,27 @@ Append-only. Newest entries at the bottom. One block per session/work-chunk.
   flag). The verifier's 73-instance sweep already prototypes this check.
 - **Dispatch the PR2 implementer with `isolation: worktree`** (lesson from PR1).
 
+## 2026-06-07 — Branch rename + night-shift kickoff
+
+- **Branch renamed** `claude/ecstatic-hopper-tpykG` → **`claude/depth-bounded-search`**
+  (Ian: "this branch should have a more meaningful name"; chose this name). Created at
+  `d38330f`, pushed, now the working branch. Current-state docs repointed; this log's
+  historical mentions left intact. The old branch and `…-wip-backup` remain orphaned on
+  the remote — the web git proxy denies deletion (HTTP 403); needs manual cleanup with
+  direct repo access.
+- **Night-shift authorized** (Ian, bedtime): make maximal feasible *independent*
+  progress overnight, whole-plan-aware, beyond just 1e/1f. Wrote
+  [`night-shift-protocol.md`](night-shift-protocol.md) — the autonomous guardrails:
+  red-line prime directive; **no `AskUserQuestion`** (it would freeze on an absent
+  human → blockers go to `BLOCKERS.md`); a **6-point safety net** every committed unit
+  must pass (clean 3-config build · L=∞ identity 150/150 · existing gates · the
+  differential-verdict harness once 1f exists · soundness asserts · implementer→
+  independent-verifier→orchestrator spot-check); the Stage 2 nuance (verify the *code*
+  for non-regression vs. don't autonomously *declare* new deep `unwinnable` — flag those
+  for Ian's sign-off); commit+push every verified unit; keep the wake-chain alive.
+- **Mechanism:** this session continues autonomously, driven by the background
+  subagent-completion wake-chain (implement → verify → commit → dispatch next). Heavy
+  work in fresh-context subagents keeps orchestrator context bounded across compaction;
+  durable state lives in these docs + git so a fresh session can resume at any point.
+- **Kicked off PR2** (1e loop + 1f differential harness) as the first night-shift unit.
+

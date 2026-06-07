@@ -1,6 +1,6 @@
 # Implementation Plan — Depth-Bounded, Cache-Reusing Iterative Deepening
 
-**Branch:** `claude/ecstatic-hopper-tpykG`
+**Branch:** `claude/depth-bounded-search`
 **Status:** Plan for review — **no code until Ian approves Stage 0** (AGENTS.md: "no code until reviewed")
 **Date:** 2026-06-07
 **Governs:** the implementation of the design in [`proposal.md`](proposal.md),
@@ -69,7 +69,7 @@ record; raw measurement CSVs are an open logistics question, §8-D5.)
   **one coherent, independently-reviewable unit per PR** (a stage or sub-stage),
   with clear messages and behaviour-preserving refactors split into their own
   commits.
-- **Branch:** continue on `claude/ecstatic-hopper-tpykG` unless Ian opts for
+- **Branch:** continue on `claude/depth-bounded-search` unless Ian opts for
   per-stage branches (§8-D1). Never push elsewhere without explicit permission.
 - **WIP-backup branches (permitted exception, Ian 2026-06-07).** A
   `<branch>-wip-backup` ref MAY be pushed to durably snapshot an **in-flight
@@ -357,7 +357,7 @@ open blockers forward, and drafts the next-session prompt.
 
 These do not block writing the plan; they shape execution. Defaults proposed.
 
-- **D1 — Branch strategy.** Continue all stages on `claude/ecstatic-hopper-tpykG`
+- **D1 — Branch strategy.** Continue all stages on `claude/depth-bounded-search`
   *(default)*, or per-stage branches off it? (Task currently pins this branch.)
 - **D2 — Regression depth before a soundness merge.** L1–L3 *(default)*, or also
   L4/L5 (long: ~100 min / ~600 min) before M4/M5?

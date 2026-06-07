@@ -3,7 +3,7 @@
 **Date:** 2026-06-06
 **Status:** Design proposal — for author review (no code yet)
 **Authors:** Ian Gent & AI assistant
-**Branch:** `claude/ecstatic-hopper-tpykG`
+**Branch:** `claude/depth-bounded-search`
 
 **Reading order:** §1 (why) → §2 (what breaks) → §3 (theory) → §4 (algorithm)
 → §5 (staging) → §6 (code touch-points). §7–§9 cover testing, risks, and

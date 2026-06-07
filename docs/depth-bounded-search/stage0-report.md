@@ -1,7 +1,7 @@
 # Stage 0 Report — Depth Distributions & the Collapse Precondition
 
 **Date:** 2026-06-07
-**Branch:** `claude/ecstatic-hopper-tpykG`
+**Branch:** `claude/depth-bounded-search`
 **Phase:** Stage 0 (measurement, no algorithm change) — milestone **M1 go/no-go**
 **Data:** [`stage0-data/`](stage0-data/) (raw CSVs); reproduce with
 `scripts/experiments/stage0_depth_sweep.py` + `stage0_analyze.py`.

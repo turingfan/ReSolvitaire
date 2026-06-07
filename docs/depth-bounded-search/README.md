@@ -1,6 +1,6 @@
 # Depth-Bounded, Cache-Reusing Iterative Deepening — Branch Documentation
 
-**Branch:** `claude/ecstatic-hopper-tpykG`
+**Branch:** `claude/depth-bounded-search`
 **Status:** **M1 GO** — Stage 0 (measurement) complete; trace identity gate built +
 validated on x86_64; **Stage 1 (depth cut + bounded result) in progress.**
 **Date:** 2026-06-07
@@ -17,6 +17,7 @@ exists, while preserving Solvitaire's defining guarantee that a reported
 |---|---|
 | [`proposal.md`](proposal.md) | The full design proposal: theory, algorithm, staged implementation plan, code-touch points, correctness/testing strategy, risks, and open questions. **Start here.** |
 | [`implementation-plan.md`](implementation-plan.md) | The detailed, web-execution implementation plan: working agreement for async/autonomous Claude Code on the web, subagent model, testing & verification strategy, per-stage work items with acceptance criteria, milestones, and decisions needed from Ian. |
+| [`night-shift-protocol.md`](night-shift-protocol.md) | Rules for **autonomous overnight execution** (Ian async): the red-line prime directive, the no-`AskUserQuestion` rule, the 6-point safety net per committed unit, and work order. |
 | [`PICKUP.md`](PICKUP.md) | Branch resume state + drafted next-session prompt. **Read this first when resuming.** |
 | [`progress-log.md`](progress-log.md) | Append-only session-by-session record (env fixes, baselines, Stage 0 sweep, M1 GO, gate setup). |
 | [`stage0-report.md`](stage0-report.md) | Stage 0 measurement results + the GO recommendation. Raw CSVs in `stage0-data/`. |

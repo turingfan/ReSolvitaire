@@ -1,11 +1,15 @@
 # PICKUP — depth-bounded-search branch
 
-**Branch:** `claude/ecstatic-hopper-tpykG`
+**Branch:** `claude/depth-bounded-search`
 **Last updated:** 2026-06-07
 **Phase:** **M1 GO.** Stage 0 complete; trace identity gate built + validated on x86_64.
 **Stage 1 PR1 (items 1a–1d) COMPLETE + double-verified** (`9dcca88`; orchestrator +
 fresh-worktree verifier, both PASS; red line confirmed across all 73 L1 unsolvables).
-**Next: Stage 1 PR2 (items 1e + 1f).**
+**NIGHT-SHIFT ACTIVE (Ian asleep, 2026-06-07):** this session is running autonomously
+per [`night-shift-protocol.md`](night-shift-protocol.md) — PR2 then Stage 2 under the
+automated safety net; **no `AskUserQuestion`**, blockers → `BLOCKERS.md`.
+**Branch renamed** `claude/ecstatic-hopper-tpykG` → `claude/depth-bounded-search`
+(old branch + `…-wip-backup` orphaned on remote — proxy 403 blocks deletion).
 
 ## State of play
 
@@ -15,6 +19,12 @@ fresh-worktree verifier, both PASS; red line confirmed across all 73 L1 unsolvab
   2026-06-06).
 - [`implementation-plan.md`](implementation-plan.md) — detailed staged plan,
   web-execution working agreement, subagent model, testing strategy. **Approved (M0).**
+- [`night-shift-protocol.md`](night-shift-protocol.md) — **autonomous overnight rules:**
+  prime directive (red line), the no-`AskUserQuestion` rule, the 6-point safety net every
+  committed unit must pass, the Stage 2 "verify code vs trust new results" nuance, work
+  order, and terminal conditions.
+- [`trace-identity-reference.md`](trace-identity-reference.md) — the `L=∞` identity gate
+  + how to recreate the reference binary in a fresh container.
 - [`stage0-report.md`](stage0-report.md) — Stage 0 measurement + **GO**
   recommendation. **Awaiting Ian's M1 decision.** Raw data in `stage0-data/`.
 - [`progress-log.md`](progress-log.md) — session-by-session record (env fix,
@@ -53,7 +63,7 @@ model · D4 PR cadence · D5 where raw measurement data lives · D6 `L_max` poli
 
 > Read `implementation-plan.md` and `progress-log.md` (latest entry). PR1 is done +
 > double-verified (`9dcca88`). Implement **Stage 1 PR2 (items 1e + 1f)** on branch
-> `claude/ecstatic-hopper-tpykG`, **dispatching the implementer with `isolation:
+> `claude/depth-bounded-search`, **dispatching the implementer with `isolation:
 > worktree`** (PR1 lesson). **1e:** outer iterative-deepening loop in `solve_game_impl`
 > — loop `bounded_pass(L)`, grow `L` ×`--depth-grow` (default 2), **fresh cache per
 > pass** (cross-pass reuse is Stage 2, NOT here), stop on SOLVED / UNSOLVABLE /
@@ -65,5 +75,7 @@ model · D4 PR cadence · D5 where raw measurement data lives · D6 `L_max` poli
 > --trace)` if absent — see `trace-identity-reference.md`); then verify with a fresh
 > independent verifier subagent. Before building, install Boost
 > (`sudo apt-get install -y libboost-program-options-dev`) — ephemeral per session.
-> Keep `progress-log.md`/`PICKUP.md` current; open `BLOCKERS.md` + escalate (plan
-> §1.2) on any soundness/semantic question instead of guessing. Do not start Stage 2.
+> Keep `progress-log.md`/`PICKUP.md` current. **If running autonomously/overnight,
+> follow [`night-shift-protocol.md`](night-shift-protocol.md)** — Stage 2 IS in scope
+> under the 6-point safety net; blockers → `BLOCKERS.md`; **no `AskUserQuestion`**. If
+> Ian is available, escalate soundness/semantic questions (plan §1.2) instead of guessing.

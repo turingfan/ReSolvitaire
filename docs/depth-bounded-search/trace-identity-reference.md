@@ -1,6 +1,6 @@
 # Trace Identity Reference — how to build, recreate, and use it
 
-**Owner:** depth-bounded-search branch (`claude/ecstatic-hopper-tpykG`)
+**Owner:** depth-bounded-search branch (`claude/depth-bounded-search`)
 **Created:** 2026-06-07 · **Status:** active, session-local reference in use
 
 This document is the durable record of the **trace identity reference binary** used
