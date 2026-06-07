@@ -66,3 +66,6 @@ venv/
 
 # Editor backup files
 *~
+
+# Claude Code harness state — transient agent worktrees (isolation: worktree)
+.claude/worktrees/
