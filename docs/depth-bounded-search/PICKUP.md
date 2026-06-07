@@ -2,9 +2,10 @@
 
 **Branch:** `claude/ecstatic-hopper-tpykG`
 **Last updated:** 2026-06-07
-**Phase:** **M1 GO given.** Stage 0 complete. **Trace identity gate built + validated
-on x86_64** (own pristine reference). **Stage 1 PR1 (items 1a–1d) dispatched** to a
-background implementer subagent; orchestrator to verify independently before blessing.
+**Phase:** **M1 GO.** Stage 0 complete; trace identity gate built + validated on x86_64.
+**Stage 1 PR1 (items 1a–1d) COMPLETE + double-verified** (`9dcca88`; orchestrator +
+fresh-worktree verifier, both PASS; red line confirmed across all 73 L1 unsolvables).
+**Next: Stage 1 PR2 (items 1e + 1f).**
 
 ## State of play
 
@@ -50,16 +51,19 @@ model · D4 PR cadence · D5 where raw measurement data lives · D6 `L_max` poli
 
 ## Next-session prompt (draft)
 
-> Read `implementation-plan.md`, `progress-log.md` (latest entry), and the in-flight
-> **Stage 1 PR1** (items 1a–1d) on branch `claude/ecstatic-hopper-tpykG`. **First
-> step: independently verify PR1** (read the actual diff, re-run the gates — do not
-> trust the implementer's summary; repo rule). The **identity gate is ready**: build
-> the reference if absent (`git checkout 45ccd43 && ./build.sh --trace`), then
-> `cmake -DTRACE_REF_BIN=/home/user/reference-bin/solvitaire-trace-ref-45ccd43
-> cmake-build-trace && (cd cmake-build-trace && ctest -R '^trace_regression_level1$')`
-> → **must be 150/150** (proves `L=∞` byte-identity). Then do **PR2**: the outer ID
-> loop (1e, fresh cache per pass) + differential-verdict harness (1f); finite-`L`
-> verdicts must match unbounded 100% on L1–L2. Before building, install Boost
+> Read `implementation-plan.md` and `progress-log.md` (latest entry). PR1 is done +
+> double-verified (`9dcca88`). Implement **Stage 1 PR2 (items 1e + 1f)** on branch
+> `claude/ecstatic-hopper-tpykG`, **dispatching the implementer with `isolation:
+> worktree`** (PR1 lesson). **1e:** outer iterative-deepening loop in `solve_game_impl`
+> — loop `bounded_pass(L)`, grow `L` ×`--depth-grow` (default 2), **fresh cache per
+> pass** (cross-pass reuse is Stage 2, NOT here), stop on SOLVED / UNSOLVABLE /
+> `L ≥ L_max` / timeout. **1f:** differential-verdict harness — finite-`L` verdicts
+> must match the unbounded oracle 100% on L1–L2 (reuse `regression_runner.py
+> --compare-outcome-only`). **Gates:** `L=∞` identity must stay **150/150** (reference
+> at `/home/user/reference-bin/solvitaire-trace-ref-45ccd43`; rebuild via
+> `git worktree add /tmp/resolv-ref 45ccd43 && (cd /tmp/resolv-ref && ./build.sh
+> --trace)` if absent — see `trace-identity-reference.md`); then verify with a fresh
+> independent verifier subagent. Before building, install Boost
 > (`sudo apt-get install -y libboost-program-options-dev`) — ephemeral per session.
 > Keep `progress-log.md`/`PICKUP.md` current; open `BLOCKERS.md` + escalate (plan
 > §1.2) on any soundness/semantic question instead of guessing. Do not start Stage 2.

@@ -78,7 +78,10 @@ record; raw measurement CSVs are an open logistics question, §8-D5.)
   Push it **non-destructively** — build the snapshot via an isolated `GIT_INDEX_FILE`
   (`read-tree HEAD` → `add -A` → `write-tree` → `commit-tree -p HEAD`) so the
   subagent's working tree, real index, and HEAD are never touched. Delete the
-  backup ref once the subagent's real commit lands on the feature branch.
+  backup ref once the subagent's real commit lands on the feature branch — **but
+  note the web git proxy may deny branch deletion (observed: HTTP 403, 2026-06-07).**
+  If so, leave the (harmless, clearly-named) backup branch and flag it for manual
+  cleanup with direct repo access rather than retrying.
   *Prevention:* prefer dispatching implementers with `isolation: worktree` (§3) so
   they never dirty the main tree in the first place — that avoids needing a backup.
 - **PRs are the async review surface.** Open a PR per (sub-)stage **only once Ian

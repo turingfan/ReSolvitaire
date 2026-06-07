@@ -117,3 +117,49 @@ Append-only. Newest entries at the bottom. One block per session/work-chunk.
   **Dispatch future implementers (PR2, Stage 2) with `isolation: worktree`** so they
   never dirty the main tree and no backup is needed.
 
+### Stage 1 PR1 (items 1a–1d) — COMPLETE + double-verified
+
+- **Implemented** (`9dcca88`): `--initial-depth-bound`/`--depth-grow`/`--max-depth-bound`
+  flags (bound OFF by default); the depth cut in `dfs()`; `BOUNDED_EXHAUSTED` result;
+  sound mapping (`exhausted ∧ ¬any_truncation → UNSOLVABLE`, else `BOUNDED_EXHAUSTED`);
+  bound threaded CLI→`dispatch_solve`→`solve_game_impl`→`sol.run()`. No outer loop (PR2).
+- **Definition of Done (§1.5) satisfied — TWO independent verifications, both PASS:**
+  - *Orchestrator* (read actual diff incl. `revert_to_last_node_with_children`; re-ran
+    identity gate; adversarial tests).
+  - *Fresh-context verifier subagent* (`isolation: worktree`, all 3 configs built FROM
+    CLEAN, all gates re-run).
+  - **L=∞ identity:** `trace_regression_level1` = **150/150** byte-identical to pristine
+    `45ccd43` (confirmed by both).
+  - **Soundness red line:** klondike s1 (unsolvable, proof depth 23) → `unsolvable` only
+    at L≥24 (state count identical to unbounded), `bounded-exhausted` at L≤23. Verifier's
+    **exhaustive sweep: all 73 L1 unsolvable instances at bound = depth−1/depth/depth+1
+    → 0 false `unsolvable`, 0 boundary failures**; 228 (solvable, tiny-bound) pairs → 0
+    false `unsolvable`. The red line holds across the whole L1 unsolvable corpus.
+  - **Cut+LRU under debug asserts** (`--force-lru -L 8`) → `bounded-exhausted`, no assert.
+  - Release+debug+trace `unit_tests`, `regression_level1`(+variants), `trace_identity_*`
+    all pass from clean.
+- **Follow-up items (non-blocking, recorded for later):**
+  1. `--solvability`/`--benchmark` silently **accept but ignore** `--initial-depth-bound`
+     (those paths call `run()` with default `boost::none`). Benign now; a later PR may
+     reject or honor it.
+  2. `L` counts dominance/auto-foundation/K+ edges as plies (`res.depth++` is per-move).
+     Correct for PR1; **Stage 2 must keep this in mind when budgets tie to depth.**
+  3. `has_max_depth_bound_` is dead state until PR2; `--depth-grow`/`--max-depth-bound`
+     parsed but unused until the PR2 loop.
+  4. `states_searched` is **not monotone in the bound** (truncation reshapes cache
+     interactions) — expected, does not affect verdicts.
+- **Housekeeping:** added `.claude/worktrees/` to `.gitignore` (`b607fca`); the
+  `…-wip-backup` branch could **not** be deleted — the web git proxy denied it (HTTP
+  403). Left in place (harmless); needs manual cleanup with direct repo access.
+
+### Next: Stage 1 PR2 (items 1e + 1f)
+
+- **1e** outer iterative-deepening loop in `solve_game_impl`: loop `bounded_pass(L)`;
+  grow `L` (×`--depth-grow`, default 2); **fresh cache per pass** (cross-pass reuse is
+  Stage 2, NOT here); stop on SOLVED / UNSOLVABLE / `L ≥ L_max` / timeout → map the
+  exhausted-bound terminal to timeout/unknown.
+- **1f** differential-verdict harness: finite-`L` verdicts must match the unbounded
+  oracle 100% on L1–L2 (reuse `regression_runner.py --compare-outcome-only` + the bound
+  flag). The verifier's 73-instance sweep already prototypes this check.
+- **Dispatch the PR2 implementer with `isolation: worktree`** (lesson from PR1).
+
