@@ -2,8 +2,8 @@
 
 **Branch:** `claude/ecstatic-hopper-tpykG`
 **Last updated:** 2026-06-07
-**Phase:** Design + planning complete. **No code yet.** Awaiting Ian's review of
-the implementation plan (milestone **M0**).
+**Phase:** Plan approved (M0). **Stage 0 (measurement) complete — no algorithm
+code yet.** Awaiting Ian's **M1 go/no-go** on `stage0-report.md` before Stage 1.
 
 ## State of play
 
@@ -12,9 +12,15 @@ the implementation plan (milestone **M0**).
 - [`open-questions.md`](open-questions.md) — all seven questions **RESOLVED** (Ian,
   2026-06-06).
 - [`implementation-plan.md`](implementation-plan.md) — detailed staged plan,
-  web-execution working agreement, subagent model, testing strategy. **For review.**
-- No `progress-log.md` / `BLOCKERS.md` yet — created when implementation starts /
-  on the first blocker.
+  web-execution working agreement, subagent model, testing strategy. **Approved (M0).**
+- [`stage0-report.md`](stage0-report.md) — Stage 0 measurement + **GO**
+  recommendation. **Awaiting Ian's M1 decision.** Raw data in `stage0-data/`.
+- [`progress-log.md`](progress-log.md) — session-by-session record (env fix,
+  Gate 1 baseline green, Stage 0 sweep).
+- No `BLOCKERS.md` yet — none hit so far (created on first blocker).
+- Tooling added: `scripts/experiments/stage0_depth_sweep.py`, `stage0_analyze.py`.
+- Environment: Boost dev headers must be installed per session (ephemeral) — see
+  SessionStart-hook recommendation in the log; build + Gate 1 confirmed working here.
 
 ## Key constraints carried forward
 
@@ -33,9 +39,13 @@ model · D4 PR cadence · D5 where raw measurement data lives · D6 `L_max` poli
 
 ## Next-session prompt (draft)
 
-> Read `docs/depth-bounded-search/implementation-plan.md`. If Ian has approved it
-> (M0) and greenlit Stage 0, begin **Stage 0** only (items 0a–0c: measurement +
-> go/no-go report) — no algorithm change. Use a measurement-runner subagent per
-> hard game in parallel and an independent verifier. Keep `progress-log.md`,
-> `PICKUP.md`, and (on any blocker) `BLOCKERS.md` current. Do not start Stage 1.
-> Escalate any soundness/semantic question per plan §1.2 instead of guessing.
+> Read `implementation-plan.md` and `stage0-report.md`. **If Ian has given the M1
+> go**, implement **Stage 1 only** (items 1a–1f, plan §5): CLI depth-bound flags,
+> the depth cut + `BOUNDED_EXHAUSTED` + result mapping, the outer ID loop
+> (fresh cache per pass), and the differential-verdict harness. Gates: `L=∞`
+> trace identity must be byte-identical (needs the trace reference binaries — ask
+> Ian); finite-`L` verdicts must match unbounded 100% on L1–L2. Use an
+> implementer→independent-verifier subagent split. Before building, install Boost
+> (`sudo apt-get install -y libboost-program-options-dev`) — ephemeral per session.
+> Keep `progress-log.md`/`PICKUP.md` current; open `BLOCKERS.md` + escalate (plan
+> §1.2) on any soundness/semantic question instead of guessing. Do not start Stage 2.

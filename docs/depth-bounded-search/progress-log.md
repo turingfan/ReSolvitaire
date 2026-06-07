@@ -49,3 +49,20 @@ Append-only. Newest entries at the bottom. One block per session/work-chunk.
 2. Stage 0 sweep across games + seeds (deep-tail focus) → `stage0-report.md` → M1
    go/no-go. Parallel measurement-runner subagents per game.
 
+### Gate 1 baseline + Stage 0 sweep — done
+
+- **Gate 1 baseline GREEN** (clean starting point before any code change):
+  release `unit_tests` pass (120 s); `regression_level1` + flat/hash_only/lru
+  variants pass (27 s). Gate 2 (trace) deferred — needs reference binaries.
+- **Stage 0 sweep complete.** 4 games × seeds 1–50, 6 s cap, run as 4 parallel
+  background jobs (mechanical CLI loops — chose background Bash over LLM subagents
+  as the simpler tool for a pure measurement sweep). Raw CSVs committed to
+  `stage0-data/`; analysis via `stage0_analyze.py`.
+- **Result → GO (recommended).** See [`stage0-report.md`](stage0-report.md).
+  Headline: snake pathology real in 3/4 games; Beleaguered Castle (the JAIR
+  target) shows shallow unwinnable proofs (`max_depth` ≤186) and a **230× gap**
+  between resolved (median 1 252) and timeout (median 288 530) depths. Honest
+  caveat: free-cell/spanish-patience are *broadly* deep (depth not a thin-tail
+  artifact) — whether their deep timeouts collapse is the question Stage 1 settles.
+- **Awaiting Ian: M1 go/no-go** before writing any Stage 1 code.
+
