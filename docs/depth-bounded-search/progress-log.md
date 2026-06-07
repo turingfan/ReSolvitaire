@@ -66,3 +66,35 @@ Append-only. Newest entries at the bottom. One block per session/work-chunk.
   artifact) — whether their deep timeouts collapse is the question Stage 1 settles.
 - **Awaiting Ian: M1 go/no-go** before writing any Stage 1 code.
 
+---
+
+## 2026-06-07 — M1 GO; trace identity gate built (own x86_64 reference)
+
+- **Ian gave M1 GO** ("build Stage 1") and chose **self-baseline** for the identity
+  gate. Follow-up: the committed trace reference is **Linux ARM64** (`…-linux-arm64-…`)
+  — wrong arch for this x86_64 web container — so Ian authorised **building our own
+  reference from the current pre-change state before any code change.**
+- **Reference built (pristine).** Confirmed zero diff in `src/`+`CMakeLists.txt` at
+  HEAD `45ccd43`, then `./build.sh --trace` → snapshotted `solvitaire-trace` to
+  **`/home/user/reference-bin/solvitaire-trace-ref-45ccd43`** (SHA1 `894bcbb…`).
+  Kept **session-local, not committed**: `AGENTS.md`/`01-KB` are absent from this
+  checkout so the authoritative "where binaries go" rule is unverifiable, and the
+  visible convention (CMake default → external `05-Executables/`; `.gitignore` skips
+  `cmake-build-*`) says binaries live outside the solver repo. Offered to commit it
+  in-repo if Ian prefers (1-min change).
+- **Reproducer (any future session regenerates the identical reference):**
+  `git checkout 45ccd43 && ./build.sh --trace` → `cmake-build-trace/bin/solvitaire-trace`.
+  Wire the gate with `cmake -DTRACE_REF_BIN=<that binary> cmake-build-trace`.
+- **Identity gate validated on x86_64 (candidate == reference now → must pass):**
+  - `trace_identity_flat` / `trace_identity_lru` / `trace_until_timeout` — PASS (determinism).
+  - `SearchTraceTest.*` + `SearchTraceAgreementTest.*` (5 tests) — PASS (incl. the
+    107 s HashOnlyVsFlat 50-seed agreement test).
+  - **`trace_regression_level1` = 150/150 instances, every event matched** (up to
+    212 591 events/instance; 41 s direct run). This is the real `L=∞` identity gate:
+    after Stage 1, the bound-disabled rebuild must still be 150/150 to prove
+    byte-identical search.
+- **Stage 1 PR1 (items 1a–1d) dispatched** to a background implementer subagent
+  (CLI bound flags + depth cut + `BOUNDED_EXHAUSTED` + result mapping), self-checked
+  against the identity gate + release gates; orchestrator verifies independently
+  before it's blessed. Outer ID loop (1e) + differential harness (1f) deferred to PR2.
+

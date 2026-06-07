@@ -2,8 +2,9 @@
 
 **Branch:** `claude/ecstatic-hopper-tpykG`
 **Last updated:** 2026-06-07
-**Phase:** Plan approved (M0). **Stage 0 (measurement) complete — no algorithm
-code yet.** Awaiting Ian's **M1 go/no-go** on `stage0-report.md` before Stage 1.
+**Phase:** **M1 GO given.** Stage 0 complete. **Trace identity gate built + validated
+on x86_64** (own pristine reference). **Stage 1 PR1 (items 1a–1d) dispatched** to a
+background implementer subagent; orchestrator to verify independently before blessing.
 
 ## State of play
 
@@ -21,6 +22,13 @@ code yet.** Awaiting Ian's **M1 go/no-go** on `stage0-report.md` before Stage 1.
 - Tooling added: `scripts/experiments/stage0_depth_sweep.py`, `stage0_analyze.py`.
 - Environment: Boost dev headers must be installed per session (ephemeral) — see
   SessionStart-hook recommendation in the log; build + Gate 1 confirmed working here.
+- **Trace identity gate READY.** Reference = pristine `solvitaire-trace` from HEAD
+  `45ccd43`, at session-local `/home/user/reference-bin/solvitaire-trace-ref-45ccd43`
+  (SHA1 `894bcbb…`, not committed). Regenerate any session via
+  `git checkout 45ccd43 && ./build.sh --trace`; wire with
+  `cmake -DTRACE_REF_BIN=<binary> cmake-build-trace`. Validated: `trace_regression_level1`
+  = **150/150** with candidate == reference. The committed CMake default is ARM64
+  (useless here). **Open for Ian:** commit an amd64 reference in-repo for durability?
 
 ## Key constraints carried forward
 
@@ -39,13 +47,16 @@ model · D4 PR cadence · D5 where raw measurement data lives · D6 `L_max` poli
 
 ## Next-session prompt (draft)
 
-> Read `implementation-plan.md` and `stage0-report.md`. **If Ian has given the M1
-> go**, implement **Stage 1 only** (items 1a–1f, plan §5): CLI depth-bound flags,
-> the depth cut + `BOUNDED_EXHAUSTED` + result mapping, the outer ID loop
-> (fresh cache per pass), and the differential-verdict harness. Gates: `L=∞`
-> trace identity must be byte-identical (needs the trace reference binaries — ask
-> Ian); finite-`L` verdicts must match unbounded 100% on L1–L2. Use an
-> implementer→independent-verifier subagent split. Before building, install Boost
+> Read `implementation-plan.md`, `progress-log.md` (latest entry), and the in-flight
+> **Stage 1 PR1** (items 1a–1d) on branch `claude/ecstatic-hopper-tpykG`. **First
+> step: independently verify PR1** (read the actual diff, re-run the gates — do not
+> trust the implementer's summary; repo rule). The **identity gate is ready**: build
+> the reference if absent (`git checkout 45ccd43 && ./build.sh --trace`), then
+> `cmake -DTRACE_REF_BIN=/home/user/reference-bin/solvitaire-trace-ref-45ccd43
+> cmake-build-trace && (cd cmake-build-trace && ctest -R '^trace_regression_level1$')`
+> → **must be 150/150** (proves `L=∞` byte-identity). Then do **PR2**: the outer ID
+> loop (1e, fresh cache per pass) + differential-verdict harness (1f); finite-`L`
+> verdicts must match unbounded 100% on L1–L2. Before building, install Boost
 > (`sudo apt-get install -y libboost-program-options-dev`) — ephemeral per session.
 > Keep `progress-log.md`/`PICKUP.md` current; open `BLOCKERS.md` + escalate (plan
 > §1.2) on any soundness/semantic question instead of guessing. Do not start Stage 2.
