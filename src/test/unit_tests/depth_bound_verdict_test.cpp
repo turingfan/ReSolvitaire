@@ -177,6 +177,31 @@ sot id_lru_fresh(const sol_rules& rules, int seed) {
     }
 }
 
+// Iterative deepening REUSING one LRU cache across passes — the Stage-2 (2b)
+// configuration on the IMPLEMENTED path (decision Q6 / B4: LRU first). This mirrors
+// exactly what the product's solve_game_impl now does for LRUPolicy: a single
+// persistent cache, fresh game state per pass, growing L. On TODAY's engine the
+// DFSTT3 DEAD/OPEN(b)/g_min reuse + cycle backup make this match the unbounded
+// verdict; a naive cross-pass prune would FALSELY report unwinnable (the bug the
+// teeth test below catches).
+sot id_lru_reuse(const sol_rules& rules, int seed) {
+    uint64_t L = kL0;
+    sot last = sot::BOUNDED_EXHAUSTED;
+    game_state_impl<LRUPolicy> seed_gs(rules, seed, game_state_impl<LRUPolicy>::streamliner_options::NONE);
+    lru_cache cache(seed_gs, kCacheCap);                    // shared across passes
+    for (;;) {
+        game_state_impl<LRUPolicy> gs(rules, seed, game_state_impl<LRUPolicy>::streamliner_options::NONE);
+        solver_impl<LRUPolicy> sol(gs, cache);
+        last = sol.run(std::chrono::milliseconds(kTimeoutMs), boost::optional<uint64_t>(L)).sol_type;
+        if (is_definitive(last) || last == sot::TIMEOUT || last == sot::MEM_LIMIT)
+            return last;
+        if (L >= kLmax) return sot::TIMEOUT;
+        uint64_t next = L * kGrow;
+        if (next <= L) next = L + 1;
+        L = next;
+    }
+}
+
 // ─── The core check: ID (fresh-cache) verdict == unbounded verdict ────────────
 // Returns a per-case outcome. A non-definitive ground truth, or an ID run that
 // does not converge within the (generous) budget, is NOT a soundness failure —
@@ -301,6 +326,36 @@ TEST_F(DepthBoundVerdictTest, LruIdMatchesUnbounded_AdversarialBattery) {
     RecordProperty("lru_skipped", t.skipped);
 }
 
+// ─── Stage-2b TEETH (LRU): cross-pass cache REUSE == unbounded verdict ─────────
+//
+// THE soundness gate for the implemented 2b path. Unlike the fresh-cache test
+// above, this REUSES one LRU cache across all iterative-deepening passes — exactly
+// the product configuration (solve_game_impl, LRUPolicy) and the regime where GHI /
+// cross-pass-reuse hazards bite (a node cached in a shallow truncated pass must NOT
+// be pruned forever). On today's DFSTT3 engine it MUST match the unbounded verdict
+// for every definitive case. It has TEETH: a naive cross-pass prune (DEAD/OPEN-blind)
+// reproduces the false-`unwinnable` failures (verified during 2b sign-off by
+// temporarily disabling the reuse discipline — the same battery then mismatches, as
+// the flat DISABLED_ test below still demonstrates on the un-fixed flat path).
+TEST_F(DepthBoundVerdictTest, LruReuseAcrossPasses_MatchesUnbounded) {
+    Tally t;
+    for (const Battery& b : kLruBatteries) {
+        const sol_rules rules = rules_parser::from_preset(b.preset);
+        for (int seed = b.seed_lo; seed <= b.seed_hi; ++seed) {
+            t.add(check_case(
+                [&] { return unbounded_lru(rules, seed); },
+                [&] { return id_lru_reuse(rules, seed); },
+                seed, std::string(b.preset) + " (LRU reuse)"));
+        }
+    }
+    EXPECT_EQ(t.mismatched, 0)
+        << "Stage-2b RED LINE: cross-pass LRU reuse produced a verdict != unbounded";
+    EXPECT_GT(t.matched, 10) << "too few definitive LRU-reuse matches (matched=" << t.matched
+                             << " skipped=" << t.skipped << ")";
+    RecordProperty("lru_reuse_matched", t.matched);
+    RecordProperty("lru_reuse_skipped", t.skipped);
+}
+
 // A focused, low-noise sentinel on the single most important property: a
 // depth-bounded run must NEVER turn a winnable instance into `unwinnable` (the
 // false-unwinnable red line) on a seed known to be solvable, nor an unwinnable one
@@ -323,18 +378,19 @@ TEST_F(DepthBoundVerdictTest, NeverFlipsVerdictOnKnownInstances) {
     }
 }
 
-// ─── Stage-2 (2b) CONTRACT, recorded as DISABLED_ until 2b lands ──────────────
+// ─── Stage-2 (2b) FLAT cross-pass reuse — DISABLED: flat 2b is DEFERRED ───────
 //
-// The SAME adversarial battery, but driven with a CACHE REUSED ACROSS PASSES — the
-// Stage-2 cross-pass configuration that the GHI hazards target.  This is the test
-// the orchestrator's verifier should ENABLE (rename without the DISABLED_ prefix)
-// once 2b implements the DEAD/OPEN(b)/g_min reuse + DFSTT3 backup.  After 2b it
-// MUST hold; on today's Stage-1 engine the plain "in cache => prune" rule makes it
-// KNOWN-UNSOUND (a shallow-pass cache entry is pruned forever => false unwinnable),
-// which is precisely the bug 2b fixes — so it is left DISABLED_ here rather than
-// asserted.  Keeping it in-tree documents the contract and gives the verifier a
-// one-line switch.
-TEST_F(DepthBoundVerdictTest, DISABLED_Stage2_ReuseAcrossPasses_MatchesUnbounded) {
+// The SAME adversarial battery driven with a FLAT cache REUSED ACROSS PASSES. Stage
+// 2b landed for LRU only (decision Q6 / B4: "LRU first"); the flat cache still has
+// no update-on-hit path or live bit (proposal §6.4), so its cross-pass reuse is the
+// naive "in cache => prune" rule, which is KNOWN-UNSOUND here (a shallow-pass entry
+// is pruned forever => false `unwinnable`). The product therefore keeps a FRESH
+// cache per pass for flat games (sound Stage-1 behaviour); this test stays DISABLED_
+// and serves two purposes: (1) it documents the contract a future FLAT 2b must
+// satisfy (enable it then), and (2) force-run today it demonstrates the false-
+// `unwinnable` failures, proving the LRU teeth test above (LruReuseAcrossPasses_…)
+// guards a real, reproducible hazard class.
+TEST_F(DepthBoundVerdictTest, DISABLED_Stage2_FlatReuseAcrossPasses_DeferredFlat2b) {
     int checked = 0, mismatches = 0;
     for (const Battery& b : kFlatBatteries) {
         const sol_rules rules = rules_parser::from_preset(b.preset);

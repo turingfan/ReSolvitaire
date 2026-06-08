@@ -141,6 +141,13 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
         // has no cache entry / live bit; backtracking with no iterator is correct.
         if (depth_bound && res.depth >= *depth_bound) {
             any_truncation = true;
+            // (bounded LRU only) This node is a truncated leaf: OPEN(0). Record b = 0
+            // so its parent folds plus_one(0) = 1 into its running `verified`, making
+            // every ancestor of a truncated leaf OPEN (never DEAD) — the core
+            // soundness mechanism. The node itself is uncached (cut before insert),
+            // so nothing is written to the cache here. (Flat bounded keeps Stage-1
+            // behaviour: any_truncation only.)
+            if constexpr (!Policy::computes_hash) current_node->verified = 0;
             states_exhausted = revert_to_last_node_with_children();
         } else {
 
@@ -193,7 +200,80 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
                 if (is_new_state) { STRACE_MISS(); STRACE_INSERT(); }
                 else              { STRACE_HIT(); }
 
-                if (is_new_state) {
+                // ─── Stage 2b: DFSTT3 cross-pass reuse (bounded LRU only) ────────
+                // Replaces the plain "in cache ⇒ backtrack" prune (which is unsound
+                // under a bound: a node searched only to a small budget may hide a
+                // win/truncation beyond its old horizon) with the reuse inequality
+                // (proposal §3.3/§3.4) + the DFSTT3 cycle backup (§3.5). Engaged only
+                // when depth_bound is set on the LRU policy, so the unbounded/legacy
+                // path below is byte-identical (the L=∞ trace identity gate enforces
+                // this) and the flat path is untouched.
+                bool handled_by_reuse = false;
+                if constexpr (!Policy::computes_hash) {
+                  if (depth_bound) {
+                    handled_by_reuse = true;
+                    const lru_cache::item_list::iterator e_it = *current_node->cache_state;
+                    const uint64_t L     = *depth_bound;
+                    const uint64_t d     = res.depth;          // d < L (the cut handled d >= L)
+                    const uint64_t B_now = L - d;              // remaining budget here
+
+                    bool expand;
+                    if (is_new_state) {
+                        expand = true;                          // never seen ⇒ expand
+                    } else if (e_it->live) {
+                        // CYCLE: back-edge to an ON_PATH ancestor. Contribute the
+                        // ancestor's CURRENT finite estimate (its provisional OPEN b),
+                        // never +inf / a closed edge (DFSTT3, proposal §3.5).
+                        current_node->verified = e_it->b;
+                        expand = false;
+                    } else if (e_it->dead) {
+                        // DEAD: subtree exhausted with no truncation below ⇒ prune,
+                        // budget-independent and safe across all passes (the collapse).
+                        current_node->verified = solver_node::INF_B;
+                        expand = false;
+                    } else {
+                        // OPEN(b): prune iff covered — b ≥ B_now AND not re-reached via
+                        // a strictly shorter path (a shorter path grants more budget).
+                        const bool shorter_path = d < e_it->g_min;
+                        if (!shorter_path && static_cast<uint64_t>(e_it->b) >= B_now) {
+                            assert(static_cast<uint64_t>(e_it->b) >= B_now);  // §7.3(b)
+                            current_node->verified = e_it->b;
+                            expand = false;
+                        } else {
+                            expand = true;                      // re-open: more budget / shorter path
+                        }
+                    }
+
+                    if (expand) {
+                        // Mark ON_PATH + record a provisional OPEN estimate while the
+                        // subtree is explored (so back-edges to it read a finite b).
+                        cache.begin_expand(e_it,
+                            static_cast<uint32_t>(std::min<uint64_t>(d, UINT32_MAX)),
+                            static_cast<uint32_t>(std::min<uint64_t>(B_now, UINT32_MAX)));
+                        current_node->expanded = true;
+                        current_node->verified = solver_node::INF_B;   // reset accumulator
+                        vector<move> next_moves = state.get_legal_moves(current_node->mv);
+                        STRACE_LEGAL(next_moves.size());
+                        if (next_moves.empty()) {
+                            // genuine dead end ⇒ DEAD (verified stays +inf; finalised
+                            // in revert).
+                            states_exhausted = revert_to_last_node_with_children(current_node->cache_state);
+                        } else {
+                            current_node->child_moves = std::move(next_moves);
+                        }
+                    } else {
+                        // Prune: current_node->verified is set; revert folds
+                        // plus_one(verified) into the parent and (for hit nodes) does
+                        // NOT touch the cache entry or its live bit (a cycle target is
+                        // a still-live ancestor).
+                        if (!is_new_state) res.unique_states_searched--;
+                        states_exhausted = revert_to_last_node_with_children(current_node->cache_state);
+                    }
+                  }
+                }
+
+                if (!handled_by_reuse) {
+                  if (is_new_state) {
                     // Gets the legal moves in the current state
                     vector<move> next_moves = state.get_legal_moves(current_node->mv);
                     STRACE_LEGAL(next_moves.size());
@@ -208,11 +288,12 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
                     } else {
                         current_node->child_moves = std::move(next_moves);
                     }
-                }
+                  }
                     // If the state is not a new one, reverts to the last node with children
-                else {
+                  else {
                     res.unique_states_searched--;
                     states_exhausted = revert_to_last_node_with_children();
+                  }
                 }
             } catch (const std::runtime_error& e) {
                 return result::type::MEM_LIMIT;
@@ -256,7 +337,16 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
             STRACE_RESULT("BOUNDED_EXHAUSTED");
             return result::type::BOUNDED_EXHAUSTED;
         } else {
-            // §7.3(c): root finalised DEAD  <=>  any_truncation == false.
+            // §7.3(c): UNSOLVABLE is sound iff NO node was truncated at the bound —
+            // then the search was complete (it explored everything an unbounded run
+            // would; nothing was cut), so the exhaustion is a genuine proof regardless
+            // of cycles. NOTE: the root's DFSTT3 budget is NOT necessarily +inf here:
+            // a back-edge to an on-path ancestor contributes that ancestor's finite
+            // provisional estimate (the admissible DFSTT3 cycle rule, proposal §3.5),
+            // so a fully-exhausted node in a CYCLIC region backs up to a finite OPEN
+            // esti even with any_truncation == false. That finite esti is sound for
+            // cross-pass reuse (it can only cause re-search, never a false prune); the
+            // verdict rests on any_truncation, not on the root being finalised DEAD.
             assert(!any_truncation);
             STRACE_RESULT("UNSOLV");
             return result::type::UNSOLVABLE;
@@ -272,12 +362,29 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
 // make sure to turn the 'live' bit off upon backtracking
 template <typename Policy>
 bool solver_impl<Policy>::revert_to_last_node_with_children(optional<lru_cache::item_list::iterator> cur_state) {
-    if (current_node == begin(frontier))
+    if (current_node == begin(frontier)) {
+        // Reached the root with nothing left ⇒ the pass is exhausted. (bounded LRU)
+        // Finalise the root too — write its DEAD/OPEN status and clear its live bit —
+        // so the reused cache carries NO stale ON_PATH marker into the next pass
+        // (assert 4.4d) and the root's verdict is available for cross-pass reuse.
+        if constexpr (!Policy::computes_hash) {
+            if (depth_bound) finalise_node(*current_node);
+        }
         return true;
+    }
 
-    // Turns the 'live' bit false on the state we are backtracking out of
+    // (bounded LRU) The node we are backtracking out of is fully resolved; remember
+    // its budget so we can fold plus_one(b) into its parent's running min below.
+    const uint64_t abandoned_b = current_node->verified;
+
     if constexpr (!Policy::computes_hash) {
-        if (cur_state) {
+        if (depth_bound) {
+            // Stage 2b: write this node's final DEAD/OPEN(b) status and clear its live
+            // bit — a no-op for hit-pruned/cycle/dominance/truncated nodes, so a cycle
+            // target (a still-live ancestor) is never written or un-lived.
+            finalise_node(*current_node);
+        } else if (cur_state) {
+            // Legacy: just turn the 'live' bit off on the state we back out of.
             cache.set_non_live(*cur_state);
         }
     }
@@ -315,6 +422,16 @@ bool solver_impl<Policy>::revert_to_last_node_with_children(optional<lru_cache::
     frontier.pop_back();
     current_node = prev(end(frontier));
 
+    // (bounded LRU) DFSTT3 backup: fold the abandoned child's resolved budget into
+    // its parent's running min — verified = min over children of (1 + child_b). A
+    // forced UNCACHED edge (dominance/K+) folds through here transparently, charging
+    // +1 ply into the nearest cached ancestor without ever keying on a cache
+    // iterator (B1 = A; the trap the docs warn about).
+    if constexpr (!Policy::computes_hash) {
+        if (depth_bound)
+            current_node->verified = std::min(current_node->verified, plus_one(abandoned_b));
+    }
+
     // If the current node now has no children, repeat
     if (current_node->child_moves.empty()) {
         return revert_to_last_node_with_children(p_state);
@@ -332,6 +449,32 @@ void solver_impl<Policy>::set_to_child() {
     frontier.emplace_back(b);
 
     current_node = prev(end(frontier));
+}
+
+// ─── Stage 2b: finalise an EXPANDED node's cache entry (bounded LRU only) ─────
+// Called from revert when a node's subtree is fully explored. Writes the node's
+// terminal status — DEAD (verified == +inf: no truncation and no goal below it) or
+// OPEN(verified) (a truncation remains below) — and clears its live bit. It acts
+// ONLY on nodes WE expanded this visit (current_node->expanded): hit-pruned, cycle,
+// dominance and truncated nodes are left completely untouched, which is essential —
+// a cycle target is a still-live ancestor whose entry must not be written or
+// un-lived. set_dead is monotone, so re-finalising a node that became DEAD with more
+// budget only ever strengthens the verdict (the depth collapse).
+template <typename Policy>
+void solver_impl<Policy>::finalise_node(node& n) {
+    if constexpr (!Policy::computes_hash) {
+        if (n.expanded && n.cache_state) {
+            if (n.verified == solver_node::INF_B) {
+                cache.set_dead(*n.cache_state);
+            } else {
+                cache.finalise_open(*n.cache_state,
+                    static_cast<uint32_t>(std::min<uint64_t>(n.verified, UINT32_MAX)));
+            }
+            cache.set_non_live(*n.cache_state);
+        }
+    } else {
+        (void)n;
+    }
 }
 
 template <typename Policy>

@@ -172,6 +172,21 @@ solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t 
     // definitive SOLVED/UNSOLVABLE verdict (so we never lose the pass's stats).
     boost::optional<solve_output> last_out;
 
+    // ─── Stage 2b: cross-pass cache reuse (LRU only) ─────────────────────────────
+    // For LRUPolicy the transposition table PERSISTS across passes: DEAD entries an
+    // earlier (shallower) pass proved cut a later, deeper pass at those shallow nodes
+    // — the depth collapse (proposal §1.3). The solver engages the DFSTT3 reuse rule
+    // whenever depth_bound is set on the LRU policy. Flat/hash/predecessor keep a
+    // FRESH cache per pass (sound Stage-1 behaviour) until 2b is extended to them
+    // (decision Q6 / B4: LRU first). With cross_pass_reuse == false the loop is
+    // byte-identical to the Stage-1 fresh-cache-per-pass loop.
+    constexpr bool cross_pass_reuse = std::is_same_v<typename Policy::cache_type, lru_cache>;
+    boost::optional<typename Policy::cache_type> reused_cache;
+    if constexpr (cross_pass_reuse) {
+        game_state_impl<Policy> seed_gs = make_gs();
+        reused_cache.emplace(make_cache(seed_gs));
+    }
+
     while (true) {
         // Share the total timeout across passes: each pass gets the remaining time.
         const auto now = clock::now();
@@ -196,33 +211,54 @@ solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t 
         }
         const auto remaining = std::chrono::duration_cast<millisec>(deadline - now);
 
-        // Fresh cache + fresh initial state every pass (no cross-pass reuse — Stage 2).
+        // Fresh initial state every pass. The cache is reused across passes for LRU
+        // (Stage 2b) and rebuilt fresh per pass otherwise (Stage 1). build_output's
+        // closures capture COPIES (init_state + the move sequence), so the cache may
+        // safely die when the pass returns — hence the fresh cache can be a stack
+        // local inside the IIFE below (flat caches are non-movable, so they cannot
+        // live in a boost::optional; copy-elision into the local is the only option).
         game_state_impl<Policy> gs = make_gs();
-        typename Policy::cache_type cache = make_cache(gs);
-        solver_impl<Policy> sol(gs, cache);
-        auto res = sol.run(remaining, boost::optional<uint64_t>(L));
+        solve_output out = [&]() -> solve_output {
+            if constexpr (cross_pass_reuse) {
+                solver_impl<Policy> sol(gs, *reused_cache);   // persistent cache
+                auto res = sol.run(remaining, boost::optional<uint64_t>(L));
+                return build_output(sol, res);
+            } else {
+                typename Policy::cache_type cache = make_cache(gs);  // fresh per pass
+                solver_impl<Policy> sol(gs, cache);
+                auto res = sol.run(remaining, boost::optional<uint64_t>(L));
+                return build_output(sol, res);
+            }
+        }();
 
         using rtype = solver::result::type;
-        switch (res.sol_type) {
+        switch (out.result.sol_type) {
             case rtype::SOLVED:
                 // Winnable: a shallow solution within L. Monotone in budget — valid.
-                return build_output(sol, res);
+                return out;
             case rtype::UNSOLVABLE:
                 // Sound proof: this pass exhausted with NO truncation (any_truncation
                 // == false), so the bound did not restrict the proof. Return it.
-                return build_output(sol, res);
+                return out;
             case rtype::TIMEOUT:
             case rtype::MEM_LIMIT:
             case rtype::TERMINATED:
                 // Stop conditions independent of the bound. Surface as-is (the JSON
                 // mapping turns these into timeout/failed — never unsolvable).
-                return build_output(sol, res);
+                return out;
             case rtype::BOUNDED_EXHAUSTED:
             default:
                 // No win within L and a truncation occurred ⇒ deepen and retry.
                 // Keep this pass's output in case the NEXT growth/limit check stops
                 // the loop (so we can surface its stats under a TIMEOUT verdict).
-                last_out = build_output(sol, res);
+                last_out = out;
+#ifndef NDEBUG
+                // §7.3(d): a BOUNDED_EXHAUSTED pass fully backtracks (root finalised),
+                // so the reused cache must carry NO live (ON_PATH) marker into the
+                // next pass — otherwise a stale ancestor bit could be misread as a
+                // cycle (B3).
+                if constexpr (cross_pass_reuse) assert(!reused_cache->any_live());
+#endif
                 break;
         }
 

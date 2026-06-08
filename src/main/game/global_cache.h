@@ -124,11 +124,27 @@ public:
     std::string get_diagnostic_info(const game_state& gs) const override;
 
     void set_non_live(item_list::iterator);
-    // Stage 2 substrate (item 2a): mutate the dormant fields in place, mirroring
-    // set_non_live's cache.modify pattern. Declared now, called in 2b. set_dead is
-    // monotone (upholds the DEAD-bit invariant: once dead, always dead).
+    // ─── Stage 2b: DFSTT3 cross-pass reuse mutators (LRU only) ───────────────────
+    // All mutate the entry in place via cache.modify, exactly like set_non_live, so
+    // they never touch the hashed key (`data`) — equality/eviction-count unaffected.
+    // They are called ONLY on the bounded LRU path (solver gates on
+    // `!Policy::computes_hash && depth_bound`), so unbounded runs never write these
+    // fields and the L=∞ trace identity is preserved.
+    //
+    // begin_expand   : mark the entry an ON_PATH ancestor for this visit and record a
+    //                  PROVISIONAL OPEN estimate while its subtree is explored —
+    //                  live=true, g_min=min(g_min,d), b=max(b,B_now). A back-edge to
+    //                  this (live) entry then reads a FINITE b (DFSTT3, proposal §3.5).
+    // finalise_open  : write the verified budget when the subtree is fully explored
+    //                  with a truncation still below it — OPEN(b). Leaves g_min and
+    //                  the (false) dead bit alone.
+    // set_dead       : monotone DEAD bit (subtree fully exhausted, no truncation, no
+    //                  goal). Once set it never reverts (decision Q4, option C).
     void set_dead(item_list::iterator);
-    void update_open(item_list::iterator, uint32_t b, uint32_t g_min);
+    void begin_expand(item_list::iterator, uint32_t d, uint32_t b_now);
+    void finalise_open(item_list::iterator, uint32_t b);
+    // Debug-only invariant support (assert 4.4d: no ON_PATH marker survives a pass).
+    bool any_live() const;
     item_list::size_type cached_size() const;
 
 private:

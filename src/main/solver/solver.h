@@ -44,6 +44,23 @@ struct solver_node {
     const move mv;
     std::vector<move> child_moves;
     boost::optional<lru_cache::item_list::iterator> cache_state; // Optional, as dominance moves aren't cached
+
+    // ─── Stage 2b (DFSTT3) per-node backup state. Used ONLY on the bounded LRU
+    // path; untouched (and meaningless) on the unbounded/flat paths. ─────────────
+    // `verified` is this node's resolved remaining-budget b (the satisficing
+    // `esti`): while a node is expanding it is the running min over its children of
+    // (1 + child_b); on a pruned/cycle/truncated leaf it is set directly to the
+    // contributed value. UINT64_MAX is the +inf sentinel ⇔ DEAD. The parent folds
+    // plus_one(child.verified) into its own `verified` when the child is popped, so
+    // a forced UNCACHED edge (dominance/K+) passes its child's budget +1 up to the
+    // nearest cached ancestor without ever keying on a cache iterator (B1 = A).
+    // `expanded` marks the nodes WE inserted/re-opened this visit (so we own their
+    // finalisation and their live bit) vs hit-pruned/cycle/dominance/truncated
+    // nodes (which must NOT be written or have their live bit cleared — a cycle hit
+    // points at a still-live ancestor).
+    static constexpr uint64_t INF_B = UINT64_MAX;
+    uint64_t verified = INF_B;
+    bool expanded = false;
 };
 
 struct solver_result {
@@ -100,6 +117,19 @@ private:
 
     bool revert_to_last_node_with_children(boost::optional<lru_cache::item_list::iterator> = boost::none);
     void set_to_child();
+
+    // ─── Stage 2b helpers (bounded LRU path only) ────────────────────────────────
+    // saturating 1 + child budget (plus_one(+inf) == +inf).
+    static uint64_t plus_one(uint64_t b) {
+        return b == solver_node::INF_B ? solver_node::INF_B : b + 1;
+    }
+    // Finalise an EXPANDED node's cache entry when its subtree is fully explored:
+    // write DEAD (verified == +inf) or OPEN(verified), then clear its live bit. A
+    // no-op for nodes we did not expand (hit-pruned/cycle/dominance/truncated) —
+    // critically, it must NOT clear the live bit of a cycle target (a live ancestor
+    // still on the frontier). Only ever called when depth_bound is set, on the LRU
+    // (non-hash) policy.
+    void finalise_node(node& n);
 
     game_state_impl<Policy> state;
     std::vector<node> frontier;

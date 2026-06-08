@@ -148,6 +148,27 @@ on this; it documents the test strategy and reinforces B1.
 
 ---
 
+## B4 — [Stage 2b · scope · RESOLVED] LRU-first vs the flat-reuse teeth test contradiction
+
+**Context.** HANDOFF line 31 says implement 2b "LRU first" (Q6; flat/hash/predecessor
+deferred). HANDOFF line 35 says the teeth test
+`DISABLED_Stage2_ReuseAcrossPasses_MatchesUnbounded` "must go green" — but that test drives
+`id_flat_reuse<FlatPolicy>` (cross-pass reuse on the **flat** cache). An LRU-only 2b leaves
+flat cross-pass reuse on the naive "in cache ⇒ prune" rule, so that specific flat test stays
+a false-`unwinnable` generator and cannot go green. The flat path also needs strictly more
+work (flat `insert_t` no-ops on hit — no update path — and has no `live` bit; proposal §6.4).
+
+**Status: RESOLVED → LRU-only; retarget the teeth test (Ian, 2026-06-08, lead present).**
+- 2b implements cross-pass reuse for **LRUPolicy only**. The product ID loop
+  (`solve_game_impl`) keeps the cache across passes **only for LRU**; flat/hash/predecessor
+  stay fresh-cache-per-pass (sound Stage-1 behaviour) under a bound.
+- Add an `id_lru_reuse` driver + an **ENABLED** LRU cross-pass-reuse teeth test that must go
+  green AND must demonstrably fail on a naive LRU reuse (real teeth, shown during verify).
+- Keep the flat-reuse test `DISABLED_`, retitled to track the **deferred** flat 2b.
+- All 2b machinery is gated on `!Policy::computes_hash && depth_bound`, so the L=∞ legacy
+  path is byte-identical (identity gate unaffected). `dead`/`b`/`g_min` are written **only**
+  under a bound, so 2c's DEAD-pin eviction cannot perturb unbounded eviction (identity-safe).
+
 ### Status log
 - 2026-06-07 — opened B1/B2/B3 from the 2b readiness analysis (night-shift; Ian asleep).
   2b held; 2a + 2d proceed independently.

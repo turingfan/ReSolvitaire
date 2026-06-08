@@ -352,6 +352,66 @@ Read plan §5 Stage 2 (items 2a–2d) + §7 risks. Classified for autonomous ove
   on identity 150/150 + 1f + the 2d suite; **un-`DISABLED_` the teeth test when 2b lands** (it
   must go green). M3 (2a cache-format) is verified-inert and ready for a formal sign-off.
 
+## 2026-06-08 — Stage 2b-i LANDED (LRU cross-pass reuse; DFSTT3) — implementer pass green
+
+New lead took over per `HANDOFF.md`. **Gates confirmed green from clean** before any change
+(L=∞ identity 150/150; release/debug/trace unit_tests; regression_level1 +variants; 1f 150/150;
+2d suite 8/8 + teeth force-run = ~49 false-unwinnable mismatches). Reference rebuilt from
+`45ccd43` (SHA1 `894bcbb…`, matches recorded).
+
+**B4 resolved by Ian (present at kickoff): LRU-only; retarget the teeth test.** (The HANDOFF's
+"LRU first" vs "the flat-reuse teeth test must go green" were contradictory — the teeth test
+drives `id_flat_reuse<FlatPolicy>`. Resolution recorded in `BLOCKERS.md` B4.)
+
+**2b-i implemented (orchestrator-as-implementer, full design held from this session's deep
+read; independent verifier + adversarial reviewer dispatched next):**
+- `global_cache.{h,cpp}`: replaced the 2a stub `update_open` with the real DFSTT3 mutators —
+  `begin_expand` (mark ON_PATH + provisional OPEN estimate: live=true, g_min=min, b=max(b,B_now)),
+  `finalise_open` (write verified OPEN budget), `set_dead` (monotone). Debug `any_live()` for 4.4d.
+- `solver.{h,cpp}`: per-node `verified` (DFSTT3 esti; INF_B=DEAD) + `expanded` flag. In `dfs()`
+  the bounded-LRU hit path now applies the **reuse inequality** (DEAD→prune; OPEN→prune iff
+  `b≥B_now ∧ d≥g_min`, else re-open; live ancestor→**finite** cycle contribution e.b) instead of
+  the unsound "in cache⇒prune". `revert` **folds** `min(1+child_b)` into the parent (forced
+  uncached dominance/K+ edges fold through transparently — **B1=A**, never keyed on the absent
+  iterator) and `finalise_node` writes DEAD/OPEN(b) + clears live for **expanded** nodes only
+  (cycle targets / hit-pruned nodes untouched — never un-lives a still-live ancestor). Truncated
+  leaf contributes b=0 (uncached). Root finalised at pass exit (clears the only would-be-stale
+  live bit ⇒ no separate per-pass set / generation stamp needed — **B3**).
+- `main.cpp`: `solve_game_impl` keeps **one persistent cache across passes for LRUPolicy only**
+  (`if constexpr`); flat/hash/predecessor stay fresh-cache-per-pass. IIFE keeps the fresh cache a
+  stack local (flat caches are non-movable). Debug assert 4.4d (`!any_live()`) between passes.
+- ALL 2b machinery gated on `!Policy::computes_hash && depth_bound` ⇒ unbounded/flat paths
+  byte-identical; `dead`/`b`/`g_min` written only under a bound ⇒ 2c's DEAD-pin (next) cannot
+  perturb unbounded eviction.
+- **Teeth retargeted (B4):** added `id_lru_reuse` + **enabled** `LruReuseAcrossPasses_MatchesUnbounded`
+  (must go green). The flat-reuse test kept `DISABLED_` and retitled `…_DeferredFlat2b`.
+
+**Removed a WRONG assert (caught by the debug build):** my first 4.4c assert
+`root.verified==INF ⟺ ¬any_truncation` aborted on cyclic games. It is false: the admissible
+DFSTT3 finite cycle contribution makes a fully-exhausted node in a cyclic region back up to a
+**finite OPEN esti** even with no truncation (the reference `DfsTt3Pass` does the same on the
+unwinnable-with-cycle graph). The verdict correctly rests on `any_truncation`, not on root==DEAD;
+the finite esti is sound for reuse (re-search only, never a false prune — Akagi Thm 2). Replaced
+with an explanatory comment. (4.4b OPEN-prune assert + 4.4d no-stale-live assert remain and pass.)
+
+**6-point net — implementer pass GREEN (independent verify pending):**
+1. release+debug+trace build clean (`-Werror`).
+2. **L=∞ identity `trace_regression_level1` = 150/150** byte-identical to `45ccd43`.
+3. release `unit_tests` + `regression_level1` (+flat/hash_only/lru 4/4); debug `unit_tests` (asserts).
+4. **1f differential = 150/150** (default mix) AND **150/150 under `--force-lru`** (the real 2b
+   cross-pass-reuse product path on all 150 L1 instances; only soft-pass timeouts, 0 outcome flips).
+5. soundness asserts 4.4(b)(d) compiled in + green.
+6. **Teeth proven:** `LruReuseAcrossPasses` green with DFSTT3; under a temporary naive break
+   (OPEN→always-prune) it FAILS with the expected false-unwinnable mismatches (free-cell s2–6,
+   klondike s2–3, …). Independent verifier + adversarial reviewer dispatched next (the authoritative pass).
+
+**Collapse signal (early):** klondike s1 `--force-lru -L1000` cross-pass = **151,497** states vs
+**158,295** unbounded — DEAD reuse already cutting the snake. (Full M5 measurement after 2c.)
+
+**Next:** 2c (soft-pin DEAD in LRU eviction, B2) → then independent verification of 2b+2c → M4
+sign-off (Ian). F1 still deferred (revisit while finalising reuse — the finite-cycle-esti insight
+above is exactly the F1 territory; noted for Ian).
+
 ## 2026-06-08 — Morning: review + B1/B2/B3 resolved; tidy; handoff for a fresh session
 
 - **Ian reviewed the night's work** (re-read the actual 2a + 2d committed code, not summaries)

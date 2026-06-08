@@ -280,10 +280,9 @@ void lru_cache::set_non_live(item_list::iterator state_iter) {
 #endif
 }
 
-// ─── Stage 2 (item 2a) ───────────────────────────────────────────────────────
-// Mutate the dormant DEAD/OPEN(b)/g_min fields in place, mirroring set_non_live.
-// Not called anywhere yet (the reuse logic that calls these is item 2b); defining
-// them now isolates the cache-format change from the algorithm change.
+// ─── Stage 2b: DFSTT3 cross-pass reuse mutators ──────────────────────────────
+// Mutate the DEAD/OPEN(b)/g_min fields in place, mirroring set_non_live. Called
+// only on the bounded LRU path (see header), so unbounded runs never reach them.
 void lru_cache::set_dead(item_list::iterator state_iter) {
 #ifndef NDEBUG
     bool succ =
@@ -294,14 +293,35 @@ void lru_cache::set_dead(item_list::iterator state_iter) {
 #endif
 }
 
-void lru_cache::update_open(item_list::iterator state_iter, uint32_t b, uint32_t g_min) {
+void lru_cache::begin_expand(item_list::iterator state_iter, uint32_t d, uint32_t b_now) {
 #ifndef NDEBUG
     bool succ =
 #endif
-    cache.modify(state_iter, [b, g_min](auto& v){ v.b = b; v.g_min = g_min; });
+    cache.modify(state_iter, [d, b_now](auto& v){
+        v.live  = true;                          // ON_PATH ancestor for this visit
+        v.g_min = std::min(v.g_min, d);          // monotone min arrival depth
+        v.b     = std::max(v.b, b_now);          // provisional finite estimate (back-edges)
+    });
 #ifndef NDEBUG
     assert(succ);
 #endif
+}
+
+void lru_cache::finalise_open(item_list::iterator state_iter, uint32_t b) {
+#ifndef NDEBUG
+    bool succ =
+#endif
+    cache.modify(state_iter, [b](auto& v){ v.b = b; });  // verified OPEN budget; g_min/dead unchanged
+#ifndef NDEBUG
+    assert(succ);
+#endif
+}
+
+bool lru_cache::any_live() const {
+    for (const cached_game_state& v : cache) {
+        if (v.live) return true;
+    }
+    return false;
 }
 
 uint64_t lru_cache::get_states_removed_from_cache() const {
