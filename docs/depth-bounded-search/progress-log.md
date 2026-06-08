@@ -408,9 +408,23 @@ with an explanatory comment. (4.4b OPEN-prune assert + 4.4d no-stale-live assert
 **Collapse signal (early):** klondike s1 `--force-lru -L1000` cross-pass = **151,497** states vs
 **158,295** unbounded — DEAD reuse already cutting the snake. (Full M5 measurement after 2c.)
 
-**Next:** 2c (soft-pin DEAD in LRU eviction, B2) → then independent verification of 2b+2c → M4
-sign-off (Ian). F1 still deferred (revisit while finalising reuse — the finite-cycle-esti insight
-above is exactly the F1 territory; noted for Ian).
+**INDEPENDENT VERIFIER — PASS (fresh worktree, from clean; `323d10f`).** Re-ran every gate:
+3 builds clean (`-Werror`); **identity `trace_regression_level1` 150/150** event-identical to
+`45ccd43`; release/debug/trace `unit_tests`; `regression_level1` +variants 4/4; **1f 150/150
+default AND `--force-lru` (0 OUTCOME FLIPs over all 150 L1, incl. all 74 unsolvable oracles)**;
+**teeth re-proven** (naive OPEN-prune ⇒ 16 false-unwinnables on the LRU battery, e.g. canfield s6;
+restore ⇒ green). Adversarial code review found **no soundness concern**: faithful port of the
+abstract `DfsTt3Pass`; B1=A fold-through for uncached dominance/K+ edges confirmed (never keyed on
+the absent iterator); finite cycle contribution; `finalise_node` only on `expanded` (cycle/ancestor
+live bit never cleared); all 2b gated off the L=∞/flat paths; the wrong-4.4c removal justified.
+Orchestrator spot-checked the two critical lines (identity 150/150, 1f 150/150) — concur.
+
+**Net delivery of 2b-i:** implementer pass + independent verifier PASS + orchestrator spot-check =
+the full 6-point net. **M4 (2b + 2d soundness gate) READY for Ian sign-off.**
+
+**Next (after M4 sign-off):** 2c (soft-pin DEAD in LRU eviction, B2 — gated so unbounded eviction is
+identity-safe) + measured collapse (M5). F1 still deferred — the finite-cycle-esti insight above is
+exactly the F1 territory; walk it through with Ian.
 
 ## 2026-06-08 — Morning: review + B1/B2/B3 resolved; tidy; handoff for a fresh session
 
