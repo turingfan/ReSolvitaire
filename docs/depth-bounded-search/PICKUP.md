@@ -1,11 +1,27 @@
 # PICKUP — depth-bounded-search branch
 
-**Branch:** `claude/depth-bounded-search`
+**Branch:** `claude/focused-dirac-1hhhkv` (current working branch; based on
+`claude/depth-bounded-search` @ `606a2d7`).
 **Last updated:** 2026-06-08
-**Phase:** **Stage 1 DONE (M2)** + **Stage 2a/2d DONE** — all independently verified (HEAD
-`a15b023` + doc commits; all pushed). **B1/B2/B3 RESOLVED** (Ian, 2026-06-08): B1=A
-(pass-through, `+1`), B2=A (soft-pin `DEAD`), B3=`live`-bit per-pass cycle detection.
-**F1 DEFERRED.** **Stage 2b/2c are UNBLOCKED but DEFERRED** to a fresh focused session.
+**Phase:** **Stage 2b-i LANDED** (LRU cross-pass reuse / DFSTT3) — implementer (lead) pass
+GREEN on the full 6-point net; **independent verifier running** (fresh worktree, from clean).
+Pushed. **M4 (2b+2d soundness gate) pending Ian sign-off** once the verifier confirms.
+
+- **B4 RESOLVED (Ian, present):** 2b is **LRU-only**; teeth test retargeted to the LRU reuse
+  path (`LruReuseAcrossPasses_MatchesUnbounded`, enabled, proven to have teeth); flat-reuse test
+  kept DISABLED (deferred flat 2b). See `BLOCKERS.md` B4.
+- **2b-i results (implementer pass):** identity 150/150; release/debug/trace unit_tests;
+  regression_level1 +variants; **1f = 150/150 default AND under `--force-lru`** (the real LRU
+  cross-pass-reuse product path, all 150 L1 instances, 0 outcome flips). Early collapse signal:
+  klondike s1 `--force-lru -L1000` = 151,497 states vs 158,295 unbounded.
+- **NEXT after M4 sign-off:** **2c** (soft-pin DEAD in LRU eviction, B2 — gated so unbounded
+  eviction is untouched/identity-safe) + measured collapse (M5). **F1** still deferred — the
+  finite-cycle-esti insight recorded in the 2026-06-08 2b-i progress entry is exactly F1
+  territory; walk it through with Ian.
+
+---
+_Earlier state (pre-2b, for reference):_ **Stage 1 DONE (M2)** + **Stage 2a/2d DONE** — all
+independently verified (`a15b023`). **B1=A, B2=A, B3=`live`-bit per-pass**, **F1 DEFERRED**.
 
 > ➤ **New session / new lead: read [`HANDOFF.md`](HANDOFF.md) FIRST** — the control doc (full
 > state, resolved decisions, working agreement + gates, environment quirks, the 2b task).
