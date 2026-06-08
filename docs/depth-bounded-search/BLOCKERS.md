@@ -4,11 +4,11 @@ Open questions for **Ian**. Per `night-shift-protocol.md` §1, these are **NOT g
 (the red line); autonomous work proceeds on independent items while they stay open.
 Each: id · severity · context · options · recommendation · status.
 
-**Bottom line:** Stage 2 **2b** (cross-pass reuse) is **held** pending **B1** (a genuine
-red-line decision) plus confirmation of **B2/B3** (recommended defaults below). Nothing
-in 2b is implemented autonomously. Independent safe work (2a cache-format, 2d adversarial
-tests) proceeds meanwhile. Grounding for all three: the 2b readiness analysis (proposal
-§3.3/§3.5/§3.7/§3.8, §4.1; plan §5 Stage 2; code cited inline).
+**STATUS: B1/B2/B3 RESOLVED (Ian, 2026-06-08).** Stage 2 **2b is now UNBLOCKED** (deferred to
+a focused session — not built yet). Decisions: **B1 = A** (forced uncached edge: pass-through,
+`+1`), **B2 = A** (soft-pin `DEAD`), **B3 = `live`-bit per-pass cycle detection kept
+cross-pass-clean** (no separate set). **F1 = DEFERRED** (Ian to revisit). Per-section detail
+below; grounding: the 2b readiness analysis (proposal §3.3/§3.5/§3.7/§3.8, §4.1; plan §5).
 
 ---
 
@@ -31,9 +31,11 @@ by the docs.
   uncached). `DEAD` child ⇒ ancestor `DEAD`; `OPEN(bc)` child ⇒ ancestor `OPEN(1+bc)`.
 - **B: cache dominance states with their own finalisation.** Rejected — breaks the
   deliberate "dominance not cached" design + the 2a trace-identity gate; no soundness gain.
-- **C: charge 0 for the forced edge** (`verified = child_b`). **UNSOUND** — over-states
-  `b` ⇒ premature cross-pass reuse-prune ⇒ **FALSE `unwinnable`**; also lets forced chains
-  descend past `L` uncapped.
+- **C: charge 0 for the forced edge** (`verified = child_b`). **Actually SOUND** (correction,
+  Ian 2026-06-08): under-counting `b` makes cross-pass reuse strictly *more conservative* —
+  it can never falsely prune. Not chosen because A gives **accurate** budgets (stronger
+  depth-collapse) and one **uniform ply-metric** consistent with PR1's `res.depth`; C would be
+  coherent only if the *whole* metric (cut included) excluded forced moves.
 
 **Recommendation:** **A.** Unit edge cost ⇒ a forced edge must add 1; `B(child)=B(parent)−1`
 keeps budget bookkeeping consistent. **Implementation trap to confirm:** the backup must
@@ -42,7 +44,10 @@ ancestor's accumulator. Keying finalisation naively on the (absent) cache iterat
 **silently drop** the contribution ⇒ a parent finalised `DEAD` over an unexplored region
 ⇒ false `unwinnable` (violates soundness assert 4.4a).
 
-**Severity:** **HIGH (red line).** **Status: OPEN — needs your decision.**
+**Severity:** **HIGH (red line).** **Status: RESOLVED → Option A** (Ian, 2026-06-08). K+ stock
+moves count as **1 ply** (confirmed; current engine behavior). *2b trap recorded:* fold the
+uncached edge's `1 + child_b` upward into the nearest cached ancestor; never key finalisation
+on the (absent) cache iterator, or the contribution is silently dropped ⇒ false `unwinnable`.
 
 ---
 
@@ -63,7 +68,7 @@ spurious `MEM_LIMIT`/`unknown`).
 
 **Recommendation:** **A** — matches plan 2c's "**prefer** evicting shallow/low-budget
 `OPEN`". **Not a false-`unwinnable` risk** (only an unknown-rate/RAM tradeoff).
-**Severity: MEDIUM. Status: CONFIRM** (default A; no code rides on it until 2b unblocks).
+**Severity: MEDIUM. Status: RESOLVED → Option A (soft-pin `DEAD`)** (Ian, 2026-06-08).
 
 ---
 
@@ -80,18 +85,22 @@ cache stores no cycle/on-path bit. **B:** persistent `live` bit for cycles + gen
 stamp. **C:** persistent bit + clear-on-abort (fragile — many abort paths:
 timeout/SIGINT/`MEM_LIMIT` throw).
 
-**Recommendation:** **A** — satisfies assert 4.4d ("no `ON_PATH` survives a completed
-pass") by construction. **Load-bearing condition:** the `live` bit may still pin ancestors
-against eviction, but **cycle/on-path detection must be the single per-pass set** — do not
-let `ON_PATH` semantics leak into a persisted bit (that silently reintroduces staleness ⇒
-phantom-cycle pruning ⇒ possible false `unwinnable`). **Severity: MEDIUM (red-line-adjacent
-if violated). Status: CONFIRM** (default A).
-
----
+**Status: RESOLVED (Ian, 2026-06-08) — refined.** Cycle detection is **intra-pass only** (a
+new pass is a fresh search from root; only the cache's *reuse* info crosses passes), so **no
+separate per-pass set is needed**. Keep the existing `live` bit for cycle detection and simply
+guarantee **no stale `live` bit survives into a new pass** (assert 4.4d). Mechanism = 2b
+implementer's choice, both sound: (i) **zero** the live bits at pass exit (clear the abandoned
+frontier), or (ii) a **generation stamp** on the live mark. Cache nodes (`dead`/`b`/`g_min`)
+persist for reuse; only the on-path/`live` state resets each pass. **Severity: MEDIUM
+(red-line-adjacent if a stale `live` bit leaks).**
 
 ---
 
 ## F1 — [Stage 2d · FINDING · informational, not a blocker] In a pure recursive reachability model, the "closed-edge / contributes ∞" back-edge rule (proposal §3.5 naive choice 2) does NOT, by itself, flip the final winnable/unwinnable verdict — the false-`unwinnable` hazard is reproduced by the **partial-node-reuse** rule instead.
+
+**Status: DEFERRED — Ian to revisit (2026-06-08):** "revisit the F1 point as I don't totally
+understand it; mark for later work." Not a blocker; tracked for a future walkthrough (best
+done alongside building 2b, where it concretely informs the finalisation/reuse code).
 
 **Where this came from.** Authoring the 2d adversarial tests
 (`src/test/unit_tests/ghi_cycle_abstract_test.cpp`, the Part-B abstract demonstrator).

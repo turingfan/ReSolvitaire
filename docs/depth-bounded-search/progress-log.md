@@ -334,3 +334,49 @@ Read plan §5 Stage 2 (items 2a–2d) + §7 risks. Classified for autonomous ove
 - After 2d, the night-shift reaches its terminal state: **2b + 2c are blocked on Ian's B1**
   (`BLOCKERS.md`). Net overnight delivery: PR1 + PR2 + 2a (all verified) + 2d + BLOCKERS.
 
+### Stage 2d — DONE + verified + merged (`a15b023`); NIGHT-SHIFT TERMINAL
+
+- **2d verified by orchestrator + merged (fast-forward):** tests-only (no `src/main`); the
+  8 new tests pass on the current sound engine (3 `DepthBoundVerdictTest` + 5
+  `GhiCycleAbstract`); **teeth proven** — the `DISABLED_` cross-pass-reuse test, force-run
+  today, fails with **49 false-`unwinnable` mismatches** (`mismatches==0` asserted), so it
+  will catch a naive 2b. Worktree cleaned. **F1** finding reviewed: informational, reinforces
+  B1, explicitly does NOT license dropping the finite back-edge contribution.
+- **NIGHT-SHIFT TERMINAL.** All autonomous-safe work complete. **Delivered this session:**
+  PR1 (1a–1d), PR2 (1e–1f), 2a (cache-format), 2d (adversarial tests) — **all independently
+  verified**; `BLOCKERS.md` (B1 red-line + B2/B3 confirms + F1). **Stopping** per night-shift
+  §6: everything remaining (2b, 2c) is **blocked on Ian's B1** and cannot proceed without it
+  (the red line); Stage 3 needs 2b churn data.
+- **Morning path for Ian:** resolve **B1** (rec. Option A) + confirm **B2/B3** (defaults A) →
+  unblocks 2b. Then 2b (cross-pass reuse, the 2a fields are ready) + 2c, LRU first, each gated
+  on identity 150/150 + 1f + the 2d suite; **un-`DISABLED_` the teeth test when 2b lands** (it
+  must go green). M3 (2a cache-format) is verified-inert and ready for a formal sign-off.
+
+## 2026-06-08 — Morning: review + B1/B2/B3 resolved; tidy; handoff for a fresh session
+
+- **Ian reviewed the night's work** (re-read the actual 2a + 2d committed code, not summaries)
+  and **resolved the Stage-2b blockers:**
+  - **B1 = A** (forced uncached dominance/K+ edge: pass-through, contribute `1+child_b` to the
+    nearest cached ancestor; uniform ply-metric; K+ = 1 ply). **Ian's correction (recorded):**
+    Option C is actually *sound* (under-counting `b` ⇒ more conservative reuse, never a false
+    prune) — my BLOCKERS had mislabelled C as unsound. A still preferred (accurate budgets ⇒
+    stronger collapse; metric consistency with PR1's `res.depth`). BLOCKERS C-note fixed.
+  - **B2 = A** (soft-pin `DEAD`: evict before `MEM_LIMIT`; fire only when all `live`).
+  - **B3 = `live`-bit per-pass cycle detection, kept cross-pass-clean** (zero-on-exit or gen
+    stamp). **Ian's simplification:** cycle detection is intra-pass only (a new pass is a fresh
+    search; only the cache's reuse info crosses passes), so **no separate per-pass set needed**.
+  - **F1 = DEFERRED** — Ian to revisit (doesn't fully understand it yet); best walked through
+    while building 2b. Marked in BLOCKERS; not a blocker.
+- **Tidy:** BLOCKERS.md → B1/B2/B3 RESOLVED + C-correction + F1 deferred + removed stray `---`.
+  Committed the terminal docs. Saved the approved plan in-repo
+  ([`2026-06-08-morning-plan.md`](2026-06-08-morning-plan.md)). Orphaned branches
+  (`ecstatic-hopper` + `…-wip-backup`) documented for manual deletion (proxy 403; no MCP
+  branch-delete). **No `src/main` changes** today (docs/decisions only) — behavioral state
+  unchanged at `a15b023`.
+- **Way forward (Ian's call):** this session's context is very large and Stage 2b is a large,
+  soundness-critical effort ⇒ **recommend a FRESH session** (clean context) over compaction.
+  Created **[`HANDOFF.md`](HANDOFF.md)** — the control doc that lets a new agent take over as
+  project lead (state, resolved decisions, working agreement + 6-point gate net, environment
+  quirks, the 2b task). PICKUP's next-session prompt now points at it. **2b/2c unblocked, not
+  started.**
+

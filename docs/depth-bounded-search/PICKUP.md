@@ -1,25 +1,22 @@
 # PICKUP — depth-bounded-search branch
 
 **Branch:** `claude/depth-bounded-search`
-**Last updated:** 2026-06-07
-**Phase:** **M1 GO.** Stage 0 complete; trace identity gate built + validated on x86_64.
-**Stage 1 PR1 (items 1a–1d) COMPLETE + double-verified** (`9dcca88`).
-**Stage 1 PR2 (items 1e + 1f) IMPLEMENTED + self-validated** (this session): outer
-iterative-deepening loop + differential-verdict harness. All gates green — L=∞ identity
-150/150; release/debug/trace `unit_tests` 248/248 each; `regression_level1` (+variants)
-4/4; **1f L1 = 150/150 verdicts match (0 flips)**; 1f self-test catches a planted
-mismatch (loud exit 1); all 6 loop smoke tests correct (incl. L_max→timeout red-line and
-depth-grow=1 no-hang guard). **PR2 DOUBLE-VERIFIED + BLESSED (M2 reached)** — fresh
-worktree verifier found no discrepancies; 1f flip-detection proven; adversarial probe clean.
-**Stage 2 (night-shift):** 2a **DONE+verified** (`7899edb`; identity 150/150, regression 4/4,
-inert — M3 ready for sign-off); 2d (GHI/cycle adversarial tests) **in flight**; **2b BLOCKED
-on Ian** — 3 soundness questions in `BLOCKERS.md` (B1 red-line); 2c downstream of 2b. **NIGHT-SHIFT ACTIVE:** autonomous per
-[`night-shift-protocol.md`](night-shift-protocol.md); **no `AskUserQuestion`**, blockers → `BLOCKERS.md`.
-**Branch renamed** `claude/ecstatic-hopper-tpykG` → `claude/depth-bounded-search`
-(old branch + `…-wip-backup` orphaned on remote — proxy 403 blocks deletion).
+**Last updated:** 2026-06-08
+**Phase:** **Stage 1 DONE (M2)** + **Stage 2a/2d DONE** — all independently verified (HEAD
+`a15b023` + doc commits; all pushed). **B1/B2/B3 RESOLVED** (Ian, 2026-06-08): B1=A
+(pass-through, `+1`), B2=A (soft-pin `DEAD`), B3=`live`-bit per-pass cycle detection.
+**F1 DEFERRED.** **Stage 2b/2c are UNBLOCKED but DEFERRED** to a fresh focused session.
+
+> ➤ **New session / new lead: read [`HANDOFF.md`](HANDOFF.md) FIRST** — the control doc (full
+> state, resolved decisions, working agreement + gates, environment quirks, the 2b task).
+
+**Orphaned remote branches** `claude/ecstatic-hopper-tpykG` + `…-wip-backup` need manual
+deletion (web git proxy 403s on branch deletion).
 
 ## State of play
 
+- [`HANDOFF.md`](HANDOFF.md) — **the new-lead control doc (read first to take over).**
+- [`2026-06-08-morning-plan.md`](2026-06-08-morning-plan.md) — latest decisions/plan record.
 - [`proposal.md`](proposal.md) — full design. **Author-approved** (Ian: "I agree
   with the current version of the proposal"). Decisions baked in at §1.5.
 - [`open-questions.md`](open-questions.md) — all seven questions **RESOLVED** (Ian,
@@ -36,8 +33,8 @@ on Ian** — 3 soundness questions in `BLOCKERS.md` (B1 red-line); 2c downstream
   recommendation. **Awaiting Ian's M1 decision.** Raw data in `stage0-data/`.
 - [`progress-log.md`](progress-log.md) — session-by-session record (env fix,
   Gate 1 baseline green, Stage 0 sweep).
-- [`BLOCKERS.md`](BLOCKERS.md) — **B1 (dominance/K+ edge finalisation) = RED-LINE, needs
-  Ian; blocks 2b.** B2/B3 = confirmations (safe defaults). 2a + 2d proceed independently.
+- [`BLOCKERS.md`](BLOCKERS.md) — **B1/B2/B3 RESOLVED** (Ian, 2026-06-08): B1=A, B2=A,
+  B3=`live`-bit per-pass cycle detection. **F1 DEFERRED** (revisit while building 2b). No open blockers.
 - Tooling added: `scripts/experiments/stage0_depth_sweep.py`, `stage0_analyze.py`.
 - Environment: Boost dev headers must be installed per session (ephemeral) — see
   SessionStart-hook recommendation in the log; build + Gate 1 confirmed working here.
@@ -69,23 +66,13 @@ model · D4 PR cadence · D5 where raw measurement data lives · D6 `L_max` poli
 
 ## Next-session prompt (draft)
 
-> Read `implementation-plan.md`, `night-shift-protocol.md`, and `progress-log.md`
-> (latest entry). PR1 done (`9dcca88`); **PR2 (items 1e+1f) implemented + self-validated**
-> this session (outer ID loop in `solve_game_impl` + `scripts/differential_verdict.py`
-> wrapper + `regression_runner.py` ID flags). **First, independently VERIFY PR2** with a
-> fresh-context verifier subagent (repo rule: read the actual diff, re-run gates from
-> clean — L=∞ identity 150/150 at `/home/user/reference-bin/solvitaire-trace-ref-45ccd43`,
-> rebuild via `git worktree add /tmp/resolv-ref 45ccd43 && (cd /tmp/resolv-ref &&
-> ./build.sh --trace)` if absent; run the 1f harness on L1 and confirm 150/150 + that the
-> self-test catches a planted flip; run unit_tests suites **sequentially** — they share
-> `/tmp/st_agree_*.trace`). Then proceed to **Stage 2** (the heart: cross-pass `DEAD`
-> retention + `OPEN(b)` + `g_min`, LRU first) per plan §5 / §6 sub-items 2a–2d, each gated
-> on the 6-point safety net; author the GHI/cycle adversarial tests in a SEPARATE subagent.
-> Before building, install Boost (`sudo apt-get install -y libboost-program-options-dev`)
-> — ephemeral per session. Keep `progress-log.md`/`PICKUP.md` current. **If running
-> autonomously/overnight, follow [`night-shift-protocol.md`](night-shift-protocol.md)**;
-> blockers → `BLOCKERS.md`; **no `AskUserQuestion`**. If Ian is available, escalate
-> soundness/semantic questions (plan §1.2) instead of guessing.
+> **Read [`HANDOFF.md`](HANDOFF.md) and take over as lead of the depth-bounded-search
+> project.** It carries the full state, the resolved B1/B2/B3 decisions, the working agreement
+> + 6-point gate net, the environment quirks, and the next task. **First confirm the gates are
+> green from clean** (rebuild incl. the trace reference from `45ccd43`), then begin **Stage 2b**
+> per B1/B2/B3 (implementer → independent-verifier, `isolation: worktree`), then **2c**.
+> Escalate genuine soundness forks to Ian (or `BLOCKERS.md` if he's away); revisit the deferred
+> **F1** while building 2b.
 
 ## PR2 quick-run (commands)
 
