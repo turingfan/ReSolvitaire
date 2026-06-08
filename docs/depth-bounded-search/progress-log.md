@@ -319,3 +319,18 @@ Read plan §5 Stage 2 (items 2a–2d) + §7 risks. Classified for autonomous ove
 - **Economy note:** the parallel heavy-subagent pace hit the session limit. Resuming more
   economically — durable artifacts committed first, then re-dispatch 2a.
 
+### Stage 2a — DONE + verified (`7899edb`); 2d dispatched
+
+- **2a implemented directly by the orchestrator** (economical, post-limit): dormant
+  `dead`/`b`/`g_min` + `set_dead`/`update_open` on the LRU `cached_game_state`. Committed
+  `7899edb` (durable) with gate running; **gate now GREEN:** 3 builds clean (no warnings);
+  **identity `trace_regression_level1` 150/150**; release/debug/trace `unit_tests` 100%;
+  **`regression_level1` (+flat/hash_only/lru) 4/4** (verdicts/counts unchanged). Inertness
+  confirmed — no fix-forward needed. **M3 (cache-format sign-off) ready for Ian** (inert).
+- **2d (GHI/cycle adversarial tests) dispatched** — authored independently *now* (before
+  2b exists) per the plan's independence intent; encodes verdict == unbounded-oracle truth
+  on cycle/transposition-stressing inputs, self-validated by simulating a naive cycle rule.
+  Will guard 2b.
+- After 2d, the night-shift reaches its terminal state: **2b + 2c are blocked on Ian's B1**
+  (`BLOCKERS.md`). Net overnight delivery: PR1 + PR2 + 2a (all verified) + 2d + BLOCKERS.
+
