@@ -141,6 +141,8 @@ set(sources_test_unit
         src/test/unit_tests/multiplicity_canonicalisation_test.cpp
         src/test/unit_tests/multiplicity_incremental_test.cpp
         src/test/unit_tests/suit_symmetry_dispatch_test.cpp
+        src/test/unit_tests/ghi_cycle_abstract_test.cpp
+        src/test/unit_tests/depth_bound_verdict_test.cpp
 )
 
 set(sources_test_helper

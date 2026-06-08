@@ -89,6 +89,60 @@ if violated). Status: CONFIRM** (default A).
 
 ---
 
+---
+
+## F1 — [Stage 2d · FINDING · informational, not a blocker] In a pure recursive reachability model, the "closed-edge / contributes ∞" back-edge rule (proposal §3.5 naive choice 2) does NOT, by itself, flip the final winnable/unwinnable verdict — the false-`unwinnable` hazard is reproduced by the **partial-node-reuse** rule instead.
+
+**Where this came from.** Authoring the 2d adversarial tests
+(`src/test/unit_tests/ghi_cycle_abstract_test.cpp`, the Part-B abstract demonstrator).
+
+**What was observed (verified, not guessed).** I implemented the §4.1 bounded pass faithfully
+(DEAD/OPEN(b)/g_min + cross-pass reuse) with the back-edge contribution as a toggle
+(finite-ancestor-estimate vs ∞/closed-edge), plus a brute-force reachability oracle, and:
+- **Fuzzed ~3.2 M random ≤6-node cyclic graphs**: found **zero** cases where the
+  closed-edge-∞ choice *alone* produced a wrong final verdict while the finite (DFSTT3)
+  choice was right. Structural reason: any region reachable *through* a back-edge to an
+  on-path ancestor `a` is also reachable **from `a` directly**, and `a` is always expanded
+  — so in a clean recursive satisficing search the cycle edge contributes no new
+  reachability, and truncation-keeps-OPEN propagates correctly regardless of the ∞ vs finite
+  choice.
+- The genuinely-discriminating false-`unwinnable` is produced by a **"seen ⇒ prune"**
+  transposition rule that caches a node as terminal even when a **descendant was truncated**
+  (conflating `OPEN(truncated)` with `DEAD`) and persists it across passes. A later, deeper
+  pass then prunes at that false-terminal node and exhausts with **no truncation flag** ⇒
+  false `unwinnable`. This is the §3.4/§3.3 min-arrival-depth / reuse-inequality violation,
+  and it is what the Part-B test now uses (graph `ROOT→D→C→{ROOT, G}`, hand-traced in the
+  file). The incompleteness failure (proposal §3.5 naive choice 1, "taint-OPEN ⇒ never
+  `unwinnable`") **does** reproduce cleanly and is also asserted.
+
+**Why this matters for 2b (and why it is a finding, not an ambiguity).** It does **not**
+change the recommendation to mirror DFSTT3 exactly — the finite back-edge contribution is
+still required for *budget/`esti` correctness* (the OPEN budgets it produces feed the
+`b ≥ B_now` reuse test), and the formal admissibility proof (Akagi Thm 2) needs it. The
+practical takeaway is: **the dominant false-`unwinnable` risk in 2b is finalising a
+partially-explored node as terminal (writing DEAD, or trusting a stale OPEN, over a region
+that was truncated or reachable-only-via-a-not-yet-finalised cycle), NOT the isolated
+back-edge value.** This is exactly the B1 trap ("keying finalisation on the absent cache
+iterator silently drops a forced edge's contribution ⇒ parent DEAD over unexplored region")
+and the assert-4.4(a) invariant. Test coverage was steered accordingly:
+- the **abstract** demonstrator proves teeth on the *seen⇒prune* and *taint* failures (the
+  reproducible ones) and shows DFSTT3 stays correct under both back-edge rules;
+- the **engine-level** guard (`depth_bound_verdict_test.cpp`, Part A) is the real GHI net:
+  its `DISABLED_Stage2_ReuseAcrossPasses_MatchesUnbounded` test, force-run on **today's**
+  Stage-1 engine, already yields **42 false-`unwinnable` mismatches** (e.g.
+  `-test-spanish-patience` s7/s8, `-test-alpha-star` s4) under naive cross-pass reuse — i.e.
+  it will fail loudly if 2b reintroduces that class of bug. After 2b lands, the orchestrator
+  should **remove the `DISABLED_` prefix**; it must then go green.
+
+**Severity: INFORMATIONAL (no Ian decision required).** **Status: recorded.** No code rides
+on this; it documents the test strategy and reinforces B1.
+
+---
+
 ### Status log
 - 2026-06-07 — opened B1/B2/B3 from the 2b readiness analysis (night-shift; Ian asleep).
   2b held; 2a + 2d proceed independently.
+- 2026-06-08 — 2d adversarial tests authored (Part A engine-level guard +
+  Part B abstract demonstrator); recorded finding **F1** (closed-edge-∞ alone does not flip
+  the verdict in a clean model; partial-node reuse is the reproducible false-`unwinnable`
+  hazard). Tests pass release+debug on today's sound engine. Does not unblock B1.
