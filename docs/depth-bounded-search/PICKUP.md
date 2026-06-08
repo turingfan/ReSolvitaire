@@ -36,7 +36,8 @@ downstream of 2b. **NIGHT-SHIFT ACTIVE:** autonomous per
   recommendation. **Awaiting Ian's M1 decision.** Raw data in `stage0-data/`.
 - [`progress-log.md`](progress-log.md) — session-by-session record (env fix,
   Gate 1 baseline green, Stage 0 sweep).
-- No `BLOCKERS.md` yet — none hit so far (created on first blocker).
+- [`BLOCKERS.md`](BLOCKERS.md) — **B1 (dominance/K+ edge finalisation) = RED-LINE, needs
+  Ian; blocks 2b.** B2/B3 = confirmations (safe defaults). 2a + 2d proceed independently.
 - Tooling added: `scripts/experiments/stage0_depth_sweep.py`, `stage0_analyze.py`.
 - Environment: Boost dev headers must be installed per session (ephemeral) — see
   SessionStart-hook recommendation in the log; build + Gate 1 confirmed working here.

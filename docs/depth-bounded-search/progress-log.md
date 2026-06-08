@@ -302,3 +302,20 @@ Read plan §5 Stage 2 (items 2a–2d) + §7 risks. Classified for autonomous ove
   resolution — NOT guessed. **2c** depends on 2b ⇒ also deferred. A read-only analyst
   is grounding the `BLOCKERS.md` entries against proposal §3.5/§3.8.
 
+### Analyst done; BLOCKERS opened; 2a interrupted by session limit
+
+- **2b readiness analyst — DONE.** Grounded all three escalations → **`BLOCKERS.md`**:
+  - **B1 (dominance/K+ forced-uncached edge finalisation) = genuine RED-LINE blocker**
+    for Ian. Budget arithmetic is pinned (count the ply, `1+child_b`) but threading a
+    forced *uncached* edge's status/budget into the nearest cached ancestor is undefined;
+    a wrong choice (charge 0, or drop the contribution) ⇒ silent false `unwinnable`.
+    Recommended Option A (pass-through, +1, fold into nearest cached ancestor).
+  - **B2 (DEAD soft-pin vs `MEM_LIMIT`)** + **B3 (per-pass `on_path` set, no persistent
+    live-bit-for-cycles)** = CONFIRMs with safe recommended defaults.
+  - **2b held** pending B1; **2c** downstream. No 2b code written autonomously.
+- **2a implementer — INTERRUPTED by session limit** ("session limit · resets 2:20am UTC",
+  no commit produced; worktree at base `949809c`). Worktree removed. **2a still TO DO**
+  (safe/inert; re-dispatch). 2d still TO DO (safe).
+- **Economy note:** the parallel heavy-subagent pace hit the session limit. Resuming more
+  economically — durable artifacts committed first, then re-dispatch 2a.
+
