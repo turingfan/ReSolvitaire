@@ -35,6 +35,7 @@
 
 #include "sol_rules.h"
 #include "search-state/game_state.h"
+#include <cstdint>
 #include "cache_interface.h"
 
 struct cached_game_state {
@@ -49,6 +50,17 @@ struct cached_game_state {
 
     state_data data;
     bool live; // Is a parent in the current search tree
+    // ─── Stage 2 cache-format fields (item 2a). DORMANT until 2b reads them. ─────
+    // Non-key (operator== / hasher key only on `data`), mutated in place via
+    // cache.modify exactly like `live`, so they never affect hashing/equality or
+    // eviction (max_num_items is an entry COUNT, independent of entry size). No
+    // search decision reads these yet ⇒ behaviorally inert; the L=∞ trace identity
+    // and the 1f differential verify that. `dead` is the monotone DEAD bit
+    // (decision Q4, option C): once set it never reverts; OPEN ⇔ !dead. `b` =
+    // verified budget (OPEN(b)); `g_min` = minimum arrival depth.
+    bool dead = false;
+    uint32_t b = 0;
+    uint32_t g_min = UINT32_MAX;
 };
 
 bool operator==(const cached_game_state&, const cached_game_state&);
@@ -112,6 +124,11 @@ public:
     std::string get_diagnostic_info(const game_state& gs) const override;
 
     void set_non_live(item_list::iterator);
+    // Stage 2 substrate (item 2a): mutate the dormant fields in place, mirroring
+    // set_non_live's cache.modify pattern. Declared now, called in 2b. set_dead is
+    // monotone (upholds the DEAD-bit invariant: once dead, always dead).
+    void set_dead(item_list::iterator);
+    void update_open(item_list::iterator, uint32_t b, uint32_t g_min);
     item_list::size_type cached_size() const;
 
 private:

@@ -280,6 +280,30 @@ void lru_cache::set_non_live(item_list::iterator state_iter) {
 #endif
 }
 
+// ─── Stage 2 (item 2a) ───────────────────────────────────────────────────────
+// Mutate the dormant DEAD/OPEN(b)/g_min fields in place, mirroring set_non_live.
+// Not called anywhere yet (the reuse logic that calls these is item 2b); defining
+// them now isolates the cache-format change from the algorithm change.
+void lru_cache::set_dead(item_list::iterator state_iter) {
+#ifndef NDEBUG
+    bool succ =
+#endif
+    cache.modify(state_iter, [](auto& v){ v.dead = true; });  // monotone: never reverts
+#ifndef NDEBUG
+    assert(succ);
+#endif
+}
+
+void lru_cache::update_open(item_list::iterator state_iter, uint32_t b, uint32_t g_min) {
+#ifndef NDEBUG
+    bool succ =
+#endif
+    cache.modify(state_iter, [b, g_min](auto& v){ v.b = b; v.g_min = g_min; });
+#ifndef NDEBUG
+    assert(succ);
+#endif
+}
+
 uint64_t lru_cache::get_states_removed_from_cache() const {
     return states_removed_from_cache;
 }
