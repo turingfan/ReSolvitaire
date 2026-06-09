@@ -426,6 +426,43 @@ the full 6-point net. **M4 (2b + 2d soundness gate) READY for Ian sign-off.**
 identity-safe) + measured collapse (M5). F1 still deferred — the finite-cycle-esti insight above is
 exactly the F1 territory; walk it through with Ian.
 
+## 2026-06-08 — M4 sign-off pending: L2/L3 deeper differential + F1 walkthrough
+
+Ian signed off M4 **conditional on L2/L3 differential first**, and asked to **walk through F1 now**.
+
+- **F1 RESOLVED** (walkthrough written into `BLOCKERS.md` F1). Finite DFSTT3 cycle contribution is
+  the safe/proven/accurate choice; closed-edge-∞ doesn't flip the satisficing-reachability verdict
+  (cycle target is an always-expanded ancestor); the real hazard is partial-node reuse (guarded by
+  B1 fold-through + finalise-only-on-`expanded` + the teeth tests).
+
+- **Deeper differential (bounded ID vs oracle):** **L1 150/150** (default + `--force-lru`),
+  **L2 default-mix 160/160**, **L3 default-mix 160/160** — all zero outcome flips.
+
+- **`--force-lru` "flip" investigated → PRE-EXISTING streamliner incompleteness, NOT 2b.** L2
+  `--force-lru` vs the (default-cache) oracle flagged `klondike-deal-8_316` (`solved` vs oracle
+  `unsolvable`); a same-config bounded-vs-unbounded check then flagged
+  `klondike-deal-11-noworryback_903394` (`winnable` vs `unsolvable`). Root cause, isolated on the
+  latter:
+  - **streamliner `none` (complete/trusted mode):** unbounded force-lru = **winnable** (d79),
+    bounded force-lru = **winnable** (d79) — **IDENTICAL**. 2b is verdict-identical to unbounded in
+    the trusted mode.
+  - **streamliner `both` (lossy suit-symmetry):** UNBOUNDED force-lru *itself* = **unsolvable**
+    (d44) on this **winnable** deal — a FALSE-unsolvable from the lossy "both" streamliner, with NO
+    depth-bounding/2b involved. Bounded "both" happened to find the real win (the SAFE direction).
+  ⇒ The mismatches are the known incompleteness of the `both`/suit-symmetry streamliner (why
+  `smart` retries `none`), surfaced because the L2/L3 oracles were generated with `both`/`smart`.
+  They are **not** a 2b regression and **never** a false-`unwinnable` in the trusted sense.
+  My first same-config test script wrongly hardcoded `--streamliners both`; re-running it in
+  **complete mode (`none`)** is the authoritative 2b soundness test (L2/L3 running).
+
+- **FINDING (pre-existing, flag to Ian; not 2b, not depth-bounding):** unbounded
+  `--streamliners both` reports `unsolvable` on winnable deals (`klondike-deal-8_316`,
+  `klondike-deal-11-noworryback_903394` under force-lru). This is the documented lossiness of the
+  suit-symmetry streamliner (trusted unwinnable requires `none`/`smart`), recorded for awareness;
+  NOT silently touched (plan §1.2).
+
+**Next:** await L2/L3 same-config `none` differential → if clean, M4 evidence complete → 2c.
+
 ## 2026-06-08 — Morning: review + B1/B2/B3 resolved; tidy; handoff for a fresh session
 
 - **Ian reviewed the night's work** (re-read the actual 2a + 2d committed code, not summaries)
