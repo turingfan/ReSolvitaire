@@ -114,22 +114,28 @@ def main():
             out, peak_kib, status = run_one(argv, hard_timeout_s, args.ceiling_kib)
             wall_ms = int((time.time() - t0) * 1000)
             verdict, states, removed, depth = "?", "", "", ""
+            final_depth, solver_rss = "", ""
             if status == "ok":
                 try:
                     d = json.loads(out)
                     verdict = d.get("solution_type", "?")
                     states = d.get("states_searched", "")
                     removed = d.get("states_removed_from_cache", "")
-                    depth = d.get("max_depth", "")
+                    depth = d.get("max_depth", "")          # deepest node reached (≈ L at timeout)
+                    final_depth = d.get("final_depth", "")   # solution depth (winnable)
+                    solver_rss = d.get("solver_resident_bytes", "")
                 except Exception:
                     verdict = "parse-error"
             else:
                 verdict = status
             row = dict(label=label, seed=seed, arm=arm, verdict=verdict, expect=expect,
-                       states=states, peak_rss_mib=round(peak_kib/1024, 1),
-                       removed=removed, depth=depth, wall_ms=wall_ms, status=status)
+                       states=states, max_depth=depth, final_depth=final_depth,
+                       peak_rss_mib=round(peak_kib/1024, 1),
+                       solver_rss_mib=(round(int(solver_rss)/1048576, 1) if solver_rss else ""),
+                       removed=removed, wall_ms=wall_ms, status=status)
             rows.append(row)
             print(f"  {label:24s} {arm:4s} -> {verdict:12s} states={states} "
+                  f"max_depth={depth} final_depth={final_depth} "
                   f"peakRSS={row['peak_rss_mib']}MiB wall={wall_ms}ms ({status})")
 
     with open(args.out, "w", newline="") as f:
