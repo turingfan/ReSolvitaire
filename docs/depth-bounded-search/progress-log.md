@@ -461,7 +461,31 @@ Ian signed off M4 **conditional on L2/L3 differential first**, and asked to **wa
   suit-symmetry streamliner (trusted unwinnable requires `none`/`smart`), recorded for awareness;
   NOT silently touched (plan §1.2).
 
-**Next:** await L2/L3 same-config `none` differential → if clean, M4 evidence complete → 2c.
+- **AUTHORITATIVE complete-mode (streamliner `none`) same-config force-lru differential —
+  bounded ID vs UNBOUNDED, same config, trusted mode (no streamliner confound):**
+  - **L2: checked=117, mismatched=0** (43 skipped: `none` is slower ⇒ timeout/non-definitive).
+  - **L3: checked=91, mismatched=0** (69 skipped).
+  ⇒ 2b's LRU cross-pass reuse is **verdict-identical to unbounded** on every definitive
+  trusted-mode instance across L2+L3.
+
+### M4 EVIDENCE COMPLETE (soundness gate) — Ian's L2/L3 condition satisfied, all clean
+| Check | Result |
+|---|---|
+| L=∞ identity (`trace_regression_level1`) | 150/150 byte-identical to `45ccd43` |
+| Independent verifier (from clean, adversarial) | PASS, no soundness concern |
+| LRU teeth test + naive-break re-proof | green + proven teeth |
+| 1f L1 differential (default + `--force-lru`) | 150/150 + 150/150, 0 flips |
+| L2 / L3 default-mix differential (vs oracle) | 160/160 / 160/160, 0 flips |
+| L2 / L3 same-config force-lru, **complete mode** | 117/117 / 91/91, **0 mismatch** |
+| force-lru "flips" | fully explained = pre-existing `both`/suit-symmetry streamliner lossiness, NOT 2b |
+
+**M4 (2b + 2d soundness gate): conditions met. Proceeding to 2c per Ian's sign-off
+("sign off + run L2/L3 first").**
+
+**Next:** 2c — soft-pin DEAD in LRU eviction (B2; 3-tier: live hard-pinned, DEAD preferred-keep
+but evicted before `MEM_LIMIT`, OPEN normal LRU). Identity-safe because `dead` is written only
+under a bound (unbounded eviction sees all `dead==false` ⇒ tier logic inert). Then M5 collapse
+measurement.
 
 ## 2026-06-08 — Morning: review + B1/B2/B3 resolved; tidy; handoff for a fresh session
 
