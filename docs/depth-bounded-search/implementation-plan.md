@@ -1,8 +1,14 @@
 # Implementation Plan — Depth-Bounded, Cache-Reusing Iterative Deepening
 
-**Branch:** `claude/depth-bounded-search`
-**Status:** Plan for review — **no code until Ian approves Stage 0** (AGENTS.md: "no code until reviewed")
-**Date:** 2026-06-07
+**Branch:** `claude/focused-dirac-1hhhkv` (orig. `claude/depth-bounded-search`)
+**Status:** **AS-BUILT through Stage 2 — M1/M2/M3/M4 signed off (M4 2026-06-09); M5 measurement
+planned next** (see [`m5-measurement-plan.md`](m5-measurement-plan.md)). Stage 0/1/2a/2b/2c/2d all
+landed and independently verified (twice for the 2b core: finite then the +∞ cycle default). The
+per-stage acceptance criteria below are met; the authoritative as-built narrative is
+[`progress-log.md`](progress-log.md). One design change vs the original plan: the cycle back-edge
+contributes **+∞ (closed edge) by default** to collapse cyclic-dead regions (BLOCKERS F1),
+`--finite-cycle-backedge` retaining the finite rule.
+**Date:** 2026-06-07 (plan) · 2026-06-09 (status)
 **Governs:** the implementation of the design in [`proposal.md`](proposal.md),
 with the author decisions recorded in proposal §1.5 / [`open-questions.md`](open-questions.md).
 
@@ -324,15 +330,15 @@ retained terminal cache. **Do not start without Stage 2 churn data justifying it
 
 ## 6. Milestones & approval gates (Ian sign-off points)
 
-| M | Gate | Ian decision |
-|---|---|---|
-| **M0** | This plan reviewed | Approve / amend → unblock Stage 0 |
-| **M1** | Stage 0 report | **Go/no-go** on the collapse hypothesis |
-| **M2** | Stage 1 verified (1a–1f) | Sign off the bounded core + harness |
-| **M3** | Stage 2a verified | Sign off the cache-format change (verdicts unchanged) |
-| **M4** | Stage 2b+2d verified | **Soundness gate** — the cross-pass reuse + GHI handling |
-| **M5** | Stage 2c verified + collapse measured | **Firm answer to the central hypothesis**; sign off |
-| **M6** | Stage 3 (optional) | Only if churn data justifies it |
+| M | Gate | Ian decision | Status |
+|---|---|---|---|
+| **M0** | This plan reviewed | Approve / amend → unblock Stage 0 | ✅ done |
+| **M1** | Stage 0 report | **Go/no-go** on the collapse hypothesis | ✅ GO |
+| **M2** | Stage 1 verified (1a–1f) | Sign off the bounded core + harness | ✅ signed off |
+| **M3** | Stage 2a verified | Sign off the cache-format change (verdicts unchanged) | ✅ signed off |
+| **M4** | Stage 2b+2d verified | **Soundness gate** — the cross-pass reuse + GHI handling | ✅ **signed off 2026-06-09** (double-verified; +∞ cycle default) |
+| **M5** | Stage 2c verified + collapse measured | **Firm answer to the central hypothesis**; sign off | 🔄 2c verified; **collapse measurement planned** (`m5-measurement-plan.md`) |
+| **M6** | Stage 3 (optional) | Only if churn data justifies it | ⏸ not started (needs churn data) |
 
 At each milestone the orchestrator updates `progress-log.md` + `PICKUP.md`, carries
 open blockers forward, and drafts the next-session prompt.

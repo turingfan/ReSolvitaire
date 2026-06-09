@@ -1,9 +1,12 @@
 # Depth-Bounded, Cache-Reusing Iterative Deepening — Branch Documentation
 
-**Branch:** `claude/depth-bounded-search`
-**Status:** **M1 GO** — Stage 0 (measurement) complete; trace identity gate built +
-validated on x86_64; **Stage 1 (depth cut + bounded result) in progress.**
-**Date:** 2026-06-07
+**Branch:** `claude/focused-dirac-1hhhkv`
+**Status:** **Stage 2 COMPLETE + double-verified — M4 signed off (2026-06-09).** Stage 0
+(measurement) done; trace identity gate built + validated; Stage 1 (depth cut + bounded
+result) done; **Stage 2 (LRU cross-pass reuse + ∞ cyclic-region collapse + DEAD-pin eviction
++ teeth tests) done and independently verified twice.** Next: **M5 collapse measurement**
+(planned in [`m5-measurement-plan.md`](m5-measurement-plan.md), RAM-safe bounded-vs-bounded).
+**Date:** 2026-06-09
 
 This folder holds the design documents for adding *depth-bounded iterative
 deepening with cache reuse* to ReSolvitaire: a way to avoid disappearing down a
@@ -15,22 +18,34 @@ exists, while preserving Solvitaire's defining guarantee that a reported
 
 | File | Purpose |
 |---|---|
-| [`proposal.md`](proposal.md) | The full design proposal: theory, algorithm, staged implementation plan, code-touch points, correctness/testing strategy, risks, and open questions. **Start here.** |
-| [`implementation-plan.md`](implementation-plan.md) | The detailed, web-execution implementation plan: working agreement for async/autonomous Claude Code on the web, subagent model, testing & verification strategy, per-stage work items with acceptance criteria, milestones, and decisions needed from Ian. |
-| [`night-shift-protocol.md`](night-shift-protocol.md) | Rules for **autonomous overnight execution** (Ian async): the red-line prime directive, the no-`AskUserQuestion` rule, the 6-point safety net per committed unit, and work order. |
-| [`PICKUP.md`](PICKUP.md) | Branch resume state + drafted next-session prompt. **Read this first when resuming.** |
-| [`progress-log.md`](progress-log.md) | Append-only session-by-session record (env fixes, baselines, Stage 0 sweep, M1 GO, gate setup). |
+| [`proposal.md`](proposal.md) | The full design proposal: theory, algorithm, staged implementation plan, code-touch points, correctness/testing strategy, risks, and open questions. **Start here** for the *why*. |
+| [`implementation-plan.md`](implementation-plan.md) | The detailed web-execution implementation plan: working agreement, subagent model, testing & verification strategy, per-stage work items + acceptance criteria, milestones. |
+| [`PICKUP.md`](PICKUP.md) | Branch resume state + next-session prompt. **Read this first when resuming.** |
+| [`progress-log.md`](progress-log.md) | Append-only session-by-session record (Stage 0 sweep, M1 GO, Stage 1, Stage 2b/2c/2d, the ∞ decision, both independent-verifier passes). The authoritative **as-built** narrative. |
+| [`BLOCKERS.md`](BLOCKERS.md) | The B1–B4 implementation traps + **F1** (the cycle back-edge rule: why +∞ "mark `a-s-a` dead" is the sound default — the prefix-reachability argument). |
+| [`future-optimisations.md`](future-optimisations.md) | Search-saving opportunities deliberately deferred (with teeth-test requirements). O1 (cyclic collapse) is now the shipped default; O2 (suit-symmetry + reuse) remains open. |
+| [`m5-measurement-plan.md`](m5-measurement-plan.md) | The **RAM-safe** M5 collapse-measurement design: bounded-ID vs a single large *bounded* baseline, capped cache, peak-RSS/states metrics, instance set. |
+| [`night-shift-protocol.md`](night-shift-protocol.md) | Rules for autonomous overnight execution: the red-line prime directive, the 6-point safety net per committed unit, work order. |
+| [`trace-identity-reference.md`](trace-identity-reference.md) | The `L=∞` trace identity gate: what it is, the reference binary, how to recreate + run it. |
 | [`stage0-report.md`](stage0-report.md) | Stage 0 measurement results + the GO recommendation. Raw CSVs in `stage0-data/`. |
-| [`trace-identity-reference.md`](trace-identity-reference.md) | The `L=∞` trace identity gate: what it is, the reference binary, how to **recreate** it, and how to run it. |
-| [`open-questions.md`](open-questions.md) | The seven decisions needed from the author — **all RESOLVED 2026-06-06**, with rationale and a feasibility investigation per decision. |
+| [`open-questions.md`](open-questions.md) / [`HANDOFF.md`](HANDOFF.md) | The seven author decisions (all RESOLVED 2026-06-06) and the original session handoff. Historical. |
 
-**Decisions (2026-06-06):** primary goal is faster *unwinnable* proofs via the
-depth collapse (so Stage 2 is the heart); a complete mode is mandatory; absolute
-budget `b` (no generations); the monotone **`DEAD` bit** layout (option C);
-`L0 ≈ 1000` with `×2` growth; **start on the LRU cache**. The first *shippable*
-configuration is therefore Stage 2 + LRU + small `L0` (Stage 1 with a fresh cache
-is only a correctness/measurement scaffold at this `L0`). Full detail in
-proposal §1.5.
+## CLI flags (as-built)
+
+Depth-bounded iterative deepening is **off by default** (a normal run is byte-identical to
+upstream). It is enabled per-invocation:
+
+| Flag | Meaning |
+|---|---|
+| `--initial-depth-bound <L0>` | Enable bounded ID with first-pass depth bound `L0` (absent ⇒ unbounded `L=∞`, identical to upstream). A node whose depth reaches `L` is a truncated leaf. |
+| `--depth-grow <k>` | Growth factor between passes (default 2 ⇒ doubling). |
+| `--max-depth-bound <Lmax>` | Upper limit on `L` for iterative deepening (default tied to `--timeout`). |
+| `--finite-cycle-backedge` | **A/B / fallback only.** Forces the *finite* DFSTT3 back-edge rule. Default (flag absent) is the **+∞ closed-edge** rule, which collapses cyclic-dead regions to `DEAD` across passes (see BLOCKERS F1). Both are sound. |
+
+The cross-pass reuse + cyclic collapse currently apply on the **LRU** cache path (the default
+for two-deck / spider-stock / suit-symmetry games, and forceable elsewhere with `--force-lru`).
+The flat / hash-only / predecessor caches run a fresh cache per pass (sound; reuse extension
+deferred under BLOCKERS B4).
 
 ## One-paragraph summary
 
