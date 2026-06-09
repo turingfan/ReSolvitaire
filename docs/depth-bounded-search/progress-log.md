@@ -563,3 +563,33 @@ games (Beleaguered Castle etc.), and extending 2b to flat/hash/predecessor (defe
   quirks, the 2b task). PICKUP's next-session prompt now points at it. **2b/2c unblocked, not
   started.**
 
+
+## 2026-06-09 — M5 depth measurements (free-cell pilot)
+
+Harness `scripts/m5_collapse.py` (one child/arm, /proc VmHWM peak-RSS, 10 GB hard-kill
+guard). Finite-cycle arm DROPPED per Ian (finite cycle can go arbitrarily deep — not
+tenable); cycle rule is always the **infinite cycle (cost=inf)**. Now records
+`max_depth` / `final_depth` / `solver_rss` per arm. All arms `--force-lru`,
+cache-cap 2^22, solver self-timeout.
+
+**`free-cell_537751` (cyclic unsolvable):** U=B=T all `unsolvable`, 54,939 states,
+**max_depth 93** (shallow proof), ~7 MiB. The dropped finite-cycle arm had been 389,120
+states (7x) — i.e. the inf-cycle/cost=inf rule is a clean ~7x win and is depth-independent.
+
+**`free-cell_1` (winnable) — depth-bounding fails in BOTH directions:**
+| Arm | verdict | states | max_depth | wall |
+|---|---|---|---|---|
+| U unbounded | winnable | 86,992 | 28,453 | 0.7 s |
+| B single L=1e6 | winnable | 86,992 | 28,453 | 0.2 s |
+| T L0=10,000 x2 | timeout | 263 M | 10,000 (stuck pass 1) | 240 s |
+| T L0=100 x2 (1 hr) | timeout | **2,964,596,135** | 100 (stuck pass 1) | 3,600 s |
+
+The depth-<=100 region of free-cell_1 holds >2.96e9 reachable states and did not exhaust
+in an hour; the <=10,000 region is 263 M. Unbounded DFS resolves in 87 k states by
+snaking one deep path (depth 28,453). So bounding is catastrophic on winnable free-cell:
+small L drowns in width, large L can't reach the deep solution. Confirms Stage 0's
+"free-cell blow-ups are wide, not deep" — the bounded search IS that width.
+
+**M5 status:** only demonstrated win is the inf-cycle rule (cost=inf), ~7x on shallow
+cyclic unsolvable. Depth-bounding shows no benefit on instances tested. Deep-unwinnable
+test deferred (Ian: "not the crux now").
