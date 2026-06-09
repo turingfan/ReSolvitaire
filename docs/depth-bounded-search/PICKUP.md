@@ -3,9 +3,12 @@
 **Branch:** `claude/focused-dirac-1hhhkv` (current working branch; based on
 `claude/depth-bounded-search` @ `606a2d7`).
 **Last updated:** 2026-06-08
-**Phase:** **Stage 2b-i LANDED** (LRU cross-pass reuse / DFSTT3) — implementer (lead) pass
-GREEN on the full 6-point net; **independent verifier running** (fresh worktree, from clean).
-Pushed. **M4 (2b+2d soundness gate) pending Ian sign-off** once the verifier confirms.
+**Phase:** **Stage 2 COMPLETE + double-verified** — 2b (LRU cross-pass reuse) + **+inf cycle
+collapse (default; `--finite-cycle-backedge` fallback)** + 2c (DEAD-pin eviction) + 2d (teeth).
+Two independent verifiers PASS (finite then +inf). Identity 150/150; 1f 150/150 default+force-lru;
+L2/L3 same-config 0 mismatch; collapse demonstrated (british-canister ≈15×). All pushed
+(`302b0c6`+docs). **Awaiting Ian's M4+M5 sign-off.** Post-sign-off: broader deep-tail collapse
+measurement; extend 2b to flat/hash/predecessor (deferred, B4). F1 RESOLVED (+inf sound, recorded).
 
 - **B4 RESOLVED (Ian, present):** 2b is **LRU-only**; teeth test retargeted to the LRU reuse
   path (`LruReuseAcrossPasses_MatchesUnbounded`, enabled, proven to have teeth); flat-reuse test

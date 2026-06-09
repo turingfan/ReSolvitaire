@@ -507,6 +507,34 @@ measurement.
   free-cell s1 44.0M vs 45.8M). L2 same-config under +inf re-running.
 - **O1** future-optimisation = now the implemented default (`future-optimisations.md` updated).
 
+### INDEPENDENT VERIFIER #2 — PASS (full state: 2b + 2c + +inf default; from clean, `302b0c6`)
+Fresh worktree, all gates re-run, adversarial +inf review:
+- 3 builds clean `-Werror`; **identity 150/150 byte-identical**; release/debug/trace unit_tests;
+  `regression_level1` +variants 4/4.
+- **1f 150/150 default AND `--force-lru` (0 OUTCOME FLIPs)**; spot-checked unsolvable cyclic
+  instances (fore-cell-same-suit, british-canister, delta/alpha-star) — bounded == unbounded ==
+  `unsolvable`; **no false `unwinnable` producible.**
+- 6/6 `GhiCycleAbstract` (incl. the new goal-behind-cycle test) + 4/4 `DepthBoundVerdict`;
+  **teeth re-proven** (naive OPEN-prune ⇒ free-cell s2/s3 false-unwinnable; restore ⇒ green).
+- **Flag wiring + collapse, concrete:** `british-canister_seed_2379239` (winnable, cyclic),
+  force-lru, L0=64 — **+inf default = 84 states vs `--finite-cycle-backedge` = 1259 states**
+  (≈15× collapse), unbounded = 969; verdict `winnable` in all three. The +inf cyclic-collapse
+  payoff is real and measurable.
+- Engine-level +inf review: `finalise_node` acts only on `expanded` (cycle target never
+  written/un-lived); back-edge folds `plus_one(INF)=INF` (contributes nothing); DEAD only when all
+  non-cycle children DEAD; prefix-reachability argument holds in code. 2c: `dead` only under a
+  bound ⇒ eviction identity-safe. **No soundness concern.**
+- (Noted: a transient trace-test race on the shared `/tmp/st_agree_*.trace` — self-inflicted
+  concurrency, not a code defect; passes when run serially. Matches the known isolation gotcha.)
+
+### STAGE 2 COMPLETE + DOUBLE-VERIFIED — M4 + M5 evidence ready for Ian sign-off
+2b (cross-pass reuse, +inf cycle collapse) + 2c (DEAD-pin eviction) + 2d (teeth) all landed and
+**independently verified twice** (finite then +inf). Red line intact: 0 false `unwinnable` across
+L1 (default+force-lru), L2 (default + same-config complete-mode 120/120), L3 (default 160/160 +
+same-config 91/91 under finite). Collapse demonstrated (british-canister ≈15×). **Awaiting Ian's
+M4/M5 sign-off.** Remaining (post-sign-off): broader M5 collapse measurement on the deep-tail
+games (Beleaguered Castle etc.), and extending 2b to flat/hash/predecessor (deferred, B4).
+
 ## 2026-06-08 — Morning: review + B1/B2/B3 resolved; tidy; handoff for a fresh session
 
 - **Ian reviewed the night's work** (re-read the actual 2a + 2d committed code, not summaries)
