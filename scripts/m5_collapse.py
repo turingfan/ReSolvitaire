@@ -5,14 +5,15 @@ Per (instance x arm): run ONE solver child, capture its peak RSS (VmHWM via a /p
 monitor thread), parse the JSON verdict, and emit a CSV row. One run at a time; a monitor
 thread hard-kills any child exceeding --ceiling-kib so a mis-estimate cannot OOM the box.
 
-Arms (all share --force-lru + --cache-capacity + --timeout; only the schedule differs):
+Arms (all share --force-lru + --cache-capacity + --timeout; only the schedule differs).
+The cycle rule is ALWAYS the infinite cycle (cost=inf optimisation); the finite-cycle
+A/B arm was dropped (decision: finite cycle can go arbitrarily deep — not tenable).
   T     : --initial-depth-bound L0 --depth-grow 2          (treatment: doubling ID + reuse + inf-collapse)
   B     : --initial-depth-bound 1000000                    (baseline: single large BOUNDED pass)
   U     : (no depth bound)                                 (true unbounded; only where safe)
-  Tfin  : T + --finite-cycle-backedge                      (A/B: finite cycle rule, no collapse)
 
 Usage:
-  python3 scripts/m5_collapse.py --arms T,B,U,Tfin --only free-cell:537751 --out /tmp/m5_pilot.csv
+  python3 scripts/m5_collapse.py --arms T,B,U --only free-cell:537751 --out /tmp/m5_pilot.csv
   python3 scripts/m5_collapse.py --out /tmp/m5_sweep.csv          # full INSTANCES set
 """
 import argparse, csv, json, os, subprocess, sys, threading, time
@@ -76,13 +77,12 @@ def arm_flags(arm, l0, big_bound):
     if arm == "T":    return ["--initial-depth-bound", str(l0), "--depth-grow", "2"]
     if arm == "B":    return ["--initial-depth-bound", str(big_bound)]
     if arm == "U":    return []
-    if arm == "Tfin": return ["--initial-depth-bound", str(l0), "--depth-grow", "2", "--finite-cycle-backedge"]
     raise ValueError(arm)
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--solver", default=SOLVER)
-    ap.add_argument("--arms", default="T,B,U,Tfin")
+    ap.add_argument("--arms", default="T,B,U")
     ap.add_argument("--only", default="", help="label:seed filter, e.g. free-cell:537751")
     ap.add_argument("--cache-capacity", type=int, default=4194304)   # 2^22 entries (~1-2 GB)
     ap.add_argument("--timeout-ms", type=int, default=300000)        # solver self-timeout
