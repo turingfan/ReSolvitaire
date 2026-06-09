@@ -392,6 +392,37 @@ Graph make_unwinnable_with_cycle() {
     return g;
 }
 
+// Graph 3 — WINNABLE, goal hidden BEHIND a cycle (the proposal §3.5 "naive choice 2
+// is unsound" scenario — here shown SOUND for satisficing reachability).
+//
+//     ROOT(0) -> A(1) -> { B(2) -> A (back-edge / cycle),  T(3) -> U(4) -> G(5)=goal }
+//
+// The back-edge B->A closes a cycle. Under the +inf (closed-edge) rule, B's only child
+// is the cycle, so B finalises DEAD and is cached across passes. The ONLY goal path is
+// ROOT->A->T->U->G (length 4), which sits BEHIND the cycle in the sense that B can reach
+// it only via B->A->T->...->G. The hazard the proposal warned about: B is cached DEAD
+// while a goal is reachable "through" the cycle. It is NOT unsound, because the cycle
+// target A is an ANCESTOR of B — reachable from ROOT via the prefix ROOT->A that does
+// not pass through B — so the goal is found by expanding A directly (A->T->U->G), and
+// B's DEAD never blocks it. Oracle: WINNABLE. Both cycle rules must agree.
+//
+// Hand-trace (L0=3): pass L=3 expands B (d2<3), hits B->A on-path => B contributes the
+// cycle value and finalises DEAD (cached); A->T->U(d3==L) truncates => deepen, B stays
+// cached DEAD. Pass L=6: B is pruned (DEAD), but A is re-opened and A->T->U->G (d4<6) is
+// found => WINNABLE. A DEAD-via-+inf B did not hide the goal.
+Graph make_goal_behind_cycle() {
+    Graph g;
+    g.root = 0;
+    g.succ[0] = {1};        // ROOT -> A
+    g.succ[1] = {2, 3};     // A -> B (cycle, tried first), A -> T
+    g.succ[2] = {1};        // B -> A   (back-edge / cycle)
+    g.succ[3] = {4};        // T -> U
+    g.succ[4] = {5};        // U -> G
+    g.succ[5] = {};         // G is the goal
+    g.goals   = {5};
+    return g;
+}
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 // Sanity: the brute-force oracle classifies the two graphs as intended.
@@ -471,6 +502,32 @@ TEST(GhiCycleAbstract, DFSTT3CorrectUnderBothCycleRules) {
     EXPECT_EQ(id_dfstt3(win,   CycleRule::NAIVE_CLOSED_INF, 2, 2, 64),   Verdict::WINNABLE);
     EXPECT_EQ(id_dfstt3(unwin, CycleRule::DFSTT3_FINITE,    2, 2, 4096), Verdict::UNWINNABLE);
     EXPECT_EQ(id_dfstt3(unwin, CycleRule::NAIVE_CLOSED_INF, 2, 2, 4096), Verdict::UNWINNABLE);
+}
+
+// TEETH for the +inf (closed-edge) cycle rule — the engine's DEFAULT since the 2b
+// review (Ian, 2026-06-08: "mark a-s-a as dead ... but not a-s or a- on its own", to
+// collapse cyclic-dead regions). On a graph with a goal hidden BEHIND a cycle, the
+// +inf rule caches the cycle node DEAD yet MUST still report WINNABLE (the goal is
+// reachable from the always-expanded ancestor). This directly tests the proposal's
+// claimed-unsound scenario and confirms it is sound for satisficing reachability.
+// Both cycle rules must equal the oracle.
+TEST(GhiCycleAbstract, ClosedEdgeCycleDeadDoesNotHideGoalBehindCycle_BothRules) {
+    const Graph g = make_goal_behind_cycle();
+    const Verdict truth = oracle(g);
+    ASSERT_EQ(truth, Verdict::WINNABLE);
+
+    // L0=3 so B (depth 2) is EXPANDED (cycle detected, not truncated) while the goal
+    // (depth 4) is beyond the first horizon — forcing the cache-DEAD-then-deepen path.
+    const int L0 = 3, grow = 2, Lmax = 256;
+
+    const Verdict closed = id_dfstt3(g, CycleRule::NAIVE_CLOSED_INF, L0, grow, Lmax);
+    const Verdict finite = id_dfstt3(g, CycleRule::DFSTT3_FINITE,    L0, grow, Lmax);
+
+    EXPECT_EQ(closed, truth)
+        << "+inf (closed-edge) cycle rule must NOT turn a goal-behind-a-cycle into a "
+           "false unwinnable; got " << to_str(closed);
+    EXPECT_EQ(finite, truth)
+        << "finite DFSTT3 rule must also match the oracle; got " << to_str(finite);
 }
 
 // Belt-and-braces: when the initial bound already covers the whole (small,

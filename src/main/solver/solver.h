@@ -98,8 +98,13 @@ public:
     // depth_bound is the per-pass bound L. boost::none means unbounded (L = inf),
     // in which case the depth cut can never fire and any_truncation stays false —
     // the search is byte-identical to an unbounded run.
+    // finite_cycle_backedge: Stage 2b cycle rule (bounded LRU only). false (default)
+    // ⇒ a back-edge to an on-path ancestor contributes +inf (closed edge), so cyclic
+    // regions collapse to DEAD; true ⇒ the finite DFSTT3 estimate (no collapse). Both
+    // sound. Ignored when depth_bound is absent or on the flat path.
     result run(boost::optional<std::chrono::milliseconds> = boost::none,
-               boost::optional<uint64_t> depth_bound = boost::none);
+               boost::optional<uint64_t> depth_bound = boost::none,
+               bool finite_cycle_backedge = false);
 
     void print_solution() const;
     static void print_header(long, command_line_helper::streamliner_opt);
@@ -140,6 +145,9 @@ private:
     // set for the whole pass and is never cleared.
     boost::optional<uint64_t> depth_bound;
     bool any_truncation = false;
+    // Stage 2b cycle rule (see run()). false ⇒ +inf closed-edge (default); true ⇒
+    // finite DFSTT3 estimate. Only read on the bounded LRU cycle path.
+    bool finite_cycle_backedge_ = false;
 
     result res;
 

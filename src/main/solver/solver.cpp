@@ -94,13 +94,15 @@ solver_node::solver_node(const ::move m) noexcept
 
 template <typename Policy>
 solver_result solver_impl<Policy>::run(boost::optional<millisec> timeout,
-                                       boost::optional<uint64_t> bound) {
+                                       boost::optional<uint64_t> bound,
+                                       bool finite_cycle_backedge) {
     // Set interrupt handler
     signal(SIGINT, sigint_handler);
 
     // Configure the depth bound for this pass. boost::none => unbounded (L = inf).
     depth_bound = bound;
     any_truncation = false;
+    finite_cycle_backedge_ = finite_cycle_backedge;
 
     // Set timings
     const clock::time_point start_time = clock::now();
@@ -221,10 +223,22 @@ solver_result::type solver_impl<Policy>::dfs(boost::optional<clock::time_point> 
                     if (is_new_state) {
                         expand = true;                          // never seen ⇒ expand
                     } else if (e_it->live) {
-                        // CYCLE: back-edge to an ON_PATH ancestor. Contribute the
-                        // ancestor's CURRENT finite estimate (its provisional OPEN b),
-                        // never +inf / a closed edge (DFSTT3, proposal §3.5).
-                        current_node->verified = e_it->b;
+                        // CYCLE: back-edge to an ON_PATH ancestor. DEFAULT (+inf /
+                        // closed edge): the cycle contributes nothing, so a cyclic
+                        // region with no truncation/goal below it finalises DEAD and
+                        // COLLAPSES across passes (the Q1 payoff on cyclic stock/cell
+                        // games). SOUND: the cycle target `a` is an always-expanded
+                        // ancestor, reachable from the root via a prefix NOT through
+                        // this node, so any goal reachable via the back-edge is
+                        // reachable from `a` directly — caching this node DEAD can
+                        // never hide a goal ⇒ never a false `unwinnable`. (~3.2 M-graph
+                        // 2d fuzz + GhiCycleAbstract.DFSTT3CorrectUnderBothCycleRules
+                        // confirm the +inf choice is verdict-correct.) Setting
+                        // --finite-cycle-backedge forces the finite DFSTT3 estimate
+                        // instead (also sound; mirrors Akagi's proven rule; no cyclic
+                        // collapse) — kept for A/B comparison.
+                        current_node->verified = finite_cycle_backedge_
+                            ? static_cast<uint64_t>(e_it->b) : solver_node::INF_B;
                         expand = false;
                     } else if (e_it->dead) {
                         // DEAD: subtree exhausted with no truncation below ⇒ prune,

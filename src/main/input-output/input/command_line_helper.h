@@ -60,6 +60,7 @@ public:
     uint64_t get_depth_grow() const;
     bool has_max_depth_bound() const;
     uint64_t get_max_depth_bound() const;
+    bool get_finite_cycle_backedge() const;
     bool get_json_output() const;
     bool get_reveal_hidden() const;
     bool get_debug() const;
@@ -118,6 +119,7 @@ private:
     uint64_t depth_grow = 2;        // parsed/stored now; used by the PR2 outer loop
     bool has_max_depth_bound_ = false;
     uint64_t max_depth_bound = 0;   // parsed/stored now; used by the PR2 outer loop
+    bool finite_cycle_backedge = false;  // Stage 2b: false ⇒ +inf closed-edge (default, collapses); true ⇒ finite DFSTT3
     bool json_output = false;
     bool reveal_hidden = false;
     bool debug = false;

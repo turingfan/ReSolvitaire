@@ -77,6 +77,15 @@ command_line_helper::command_line_helper()
                     "upper limit on the depth bound for iterative deepening (parsed and "
                     "stored now; the outer loop is added in a later change and does not "
                     "yet consume this). Defaults to being tied to --timeout.")
+            ("finite-cycle-backedge", po::bool_switch()->default_value(false),
+                    "Stage 2b (LRU, bounded only): use the FINITE DFSTT3 back-edge "
+                    "contribution for cycles (a back-edge to an on-path ancestor "
+                    "contributes the ancestor's finite estimate). Default OFF means the "
+                    "back-edge contributes +inf (a 'closed' edge), so a cyclic region "
+                    "with no truncation/goal below it finalises DEAD and collapses across "
+                    "passes. Both are sound (the cycle target is an always-expanded "
+                    "ancestor); +inf is the default as it enables the cyclic-region "
+                    "collapse. This flag forces the finite rule for A/B comparison.")
             ("resume", po::value<vector<int>>()->multitoken(), "resumes the solvability percentage calculation from a "
                                                     "previous run. Must be supplied with the solvability option. "
                                                     "Syntax: [sol unsol intract in-progress-1 in-progress-2 ...]")
@@ -210,6 +219,10 @@ bool command_line_helper::parse(int argc, const char* argv[]) {
         has_max_depth_bound_ = false;
         max_depth_bound = 0;
     }
+
+    // Stage 2b cycle back-edge rule. Default false ⇒ +inf (closed-edge, collapses
+    // cyclic-dead regions); true ⇒ finite DFSTT3 estimate (for A/B comparison).
+    finite_cycle_backedge = vm["finite-cycle-backedge"].as<bool>();
 
     if (vm.count("cores")) {
         cores = vm["cores"].as<uint>();
@@ -444,6 +457,10 @@ bool command_line_helper::has_max_depth_bound() const {
 
 uint64_t command_line_helper::get_max_depth_bound() const {
     return max_depth_bound;
+}
+
+bool command_line_helper::get_finite_cycle_backedge() const {
+    return finite_cycle_backedge;
 }
 
 vector<int> command_line_helper::get_resume() {

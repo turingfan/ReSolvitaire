@@ -487,6 +487,26 @@ but evicted before `MEM_LIMIT`, OPEN normal LRU). Identity-safe because `dead` i
 under a bound (unbounded eviction sees all `dead==false` ⇒ tier logic inert). Then M5 collapse
 measurement.
 
+## 2026-06-08 — 2c (DEAD-pin eviction) + cycle rule switched to +inf default (Ian, F1 reconsidered)
+
+- **2c landed** (`global_cache.cpp`): 3-tier LRU eviction (live hard-pin / DEAD soft-pin / OPEN
+  LRU; `MEM_LIMIT` only when all live). Identity 150/150 (unaffected — `dead` only written under a
+  bound). Verified under heavy eviction pressure: klondike s1 `--force-lru -L? cap=2^14`, 91k
+  evictions ⇒ still correctly `unsolvable`.
+- **Cycle back-edge rule switched to +inf (closed-edge) as DEFAULT** (Ian reconsidered F1):
+  `--finite-cycle-backedge` flag keeps the finite DFSTT3 rule for A/B. Rationale + soundness in
+  `BLOCKERS.md` F1 (prefix-reachability argument). Threaded CLI→`id_options`→`solve_game_impl`→
+  `solver::run`→`dfs` cycle case (`verified = finite ? e_it->b : INF_B`).
+- **New teeth test** `GhiCycleAbstract.ClosedEdgeCycleDeadDoesNotHideGoalBehindCycle_BothRules`:
+  goal hidden BEHIND a cycle (the proposal's claimed-unsound scenario); both cycle rules must give
+  WINNABLE == oracle. PASSES — confirms +inf doesn't fabricate a false `unwinnable`.
+- **Re-verified under the +inf default:** identity 150/150; release/debug `unit_tests` (incl. new
+  test + engine teeth `LruReuseAcrossPasses`); **1f 150/150 default AND `--force-lru` (0 flips)**.
+  Collapse demo (modest on small instances; dramatic case is deep unwinnable cyclic games beyond
+  this session's budget): verdicts identical, +inf ≤ finite states (klondike s2 29.0M vs 29.3M;
+  free-cell s1 44.0M vs 45.8M). L2 same-config under +inf re-running.
+- **O1** future-optimisation = now the implemented default (`future-optimisations.md` updated).
+
 ## 2026-06-08 — Morning: review + B1/B2/B3 resolved; tidy; handoff for a fresh session
 
 - **Ian reviewed the night's work** (re-read the actual 2a + 2d committed code, not summaries)

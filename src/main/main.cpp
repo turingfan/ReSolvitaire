@@ -79,6 +79,9 @@ struct id_options {
     uint64_t initial_bound;
     uint64_t grow;
     boost::optional<uint64_t> max_bound;
+    // Stage 2b cycle rule: false ⇒ +inf closed-edge (default, collapses cyclic-dead
+    // regions); true ⇒ finite DFSTT3 estimate (--finite-cycle-backedge, for A/B).
+    bool finite_cycle_backedge = false;
 };
 
 // ─── solve_game_impl<Policy> ─────────────────────────────────────────────────
@@ -221,12 +224,12 @@ solve_output solve_game_impl(const sol_rules& rules, uint64_t timeout, uint64_t 
         solve_output out = [&]() -> solve_output {
             if constexpr (cross_pass_reuse) {
                 solver_impl<Policy> sol(gs, *reused_cache);   // persistent cache
-                auto res = sol.run(remaining, boost::optional<uint64_t>(L));
+                auto res = sol.run(remaining, boost::optional<uint64_t>(L), id_opts->finite_cycle_backedge);
                 return build_output(sol, res);
             } else {
                 typename Policy::cache_type cache = make_cache(gs);  // fresh per pass
                 solver_impl<Policy> sol(gs, cache);
-                auto res = sol.run(remaining, boost::optional<uint64_t>(L));
+                auto res = sol.run(remaining, boost::optional<uint64_t>(L), id_opts->finite_cycle_backedge);
                 return build_output(sol, res);
             }
         }();
@@ -543,6 +546,7 @@ void solve_game(const sol_rules& rules, command_line_helper& clh, boost::optiona
         o.max_bound = clh.has_max_depth_bound()
                 ? boost::optional<uint64_t>(clh.get_max_depth_bound())
                 : boost::none;
+        o.finite_cycle_backedge = clh.get_finite_cycle_backedge();
         id_opts = o;
     }
     solve_output solution = dispatch_solve(rules, timeout, clh.get_cache_capacity(), str_opt, seed, in_doc, clh.get_force_lru_cache(), clh.get_cache_type(), id_opts);

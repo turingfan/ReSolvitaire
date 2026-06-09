@@ -98,11 +98,31 @@ persist for reuse; only the on-path/`live` state resets each pass. **Severity: M
 
 ## F1 — [Stage 2d · FINDING · informational, not a blocker] In a pure recursive reachability model, the "closed-edge / contributes ∞" back-edge rule (proposal §3.5 naive choice 2) does NOT, by itself, flip the final winnable/unwinnable verdict — the false-`unwinnable` hazard is reproduced by the **partial-node-reuse** rule instead.
 
-**Status: WALKED THROUGH + RESOLVED (2026-06-08, Ian asked to do it now, while building 2b).**
-The 2b engine made F1 concrete — see the plain-language walkthrough below. **Bottom line: the
-finite DFSTT3 back-edge contribution is the safe, proven choice we ship; the real
-false-`unwinnable` hazard is partial-node reuse (writing DEAD over a truncated / not-yet-finalised
-region), which the B1 fold-through + finalise-only-on-`expanded` + the teeth tests all guard.**
+**Status: RESOLVED → ship +inf (closed-edge) as the DEFAULT cycle rule (Ian, 2026-06-08, after a
+two-step discussion).** First Ian accepted the cautious finite rule + flagged the collapse it
+loses as a future optimisation (O1); then he reconsidered: a loop must not stop us proving a deep
+cyclic game `unwinnable` in practice (the finite rule re-searches cyclic-dead regions every pass
+⇒ never collapses ⇒ deep cyclic games hit timeout/`unknown`, defeating Q1). Decision: **mark the
+back-edge `a-s-a` as dead (+inf / closed edge) — but NOT `a-s` or `a` on its own** — so a cyclic
+region with no truncation/goal below it finalises **DEAD** and collapses. Implemented as the
+**default**; `--finite-cycle-backedge` forces the finite DFSTT3 rule for A/B. **Both are sound**
+(see the prefix-reachability argument below); +inf is default because it delivers the cyclic
+collapse. The real false-`unwinnable` hazard remains **partial-node reuse**, guarded by B1
+fold-through + finalise-only-on-`expanded` + the teeth tests (now incl.
+`ClosedEdgeCycleDeadDoesNotHideGoalBehindCycle_BothRules`).
+
+**Why +inf ("mark a-s-a dead") is sound (the prefix-reachability argument — the key result).**
+A back-edge `s→a` targets an **ancestor** `a`, so `a` is reachable from the root via a prefix that
+does **not** pass through `s`. Anything reachable from `s` *through* the cycle `s→a` is reachable
+from `a` **directly**. Therefore caching `s` DEAD (the +inf choice) can never hide a reachable
+goal: any goal beyond the cycle is found by expanding `a` (always reached/expanded, independently
+of `s`). And `s`/`a` are marked dead only via real resolution of their **non-cycle** children
+(only the back-edge contributes +inf), never "on their own" — matching Ian's "not a-s or a-". The
+proposal §3.5 called this "naive choice 2 unsound", but that was overly conservative: the truncated
+region it worried about is reachable from `a` directly and re-explored from `a` next pass, so the
+verdict is never wrong. Confirmed by the ~3.2 M-graph 2d fuzz (0 flips) and the abstract teeth
+tests. (Honest caveat: this relies on the structural argument + tests, not Akagi's *finite*-DFSTT3
+theorem — hence the flag to fall back to finite, and the dedicated cycle-truncation teeth test.)
 
 ### F1 in plain language (the walkthrough Ian asked for)
 
