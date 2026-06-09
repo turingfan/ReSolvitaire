@@ -227,21 +227,52 @@ pair<item_list::iterator, bool> lru_cache::insert_with_iterator(const GS& gs) {
         cache.relocate(cache.begin(), p.first); /* put in front */
     } else if(cache.size() > max_num_items){    /* keep the length <= max_num_items */
 
-        // If the least recently used node is 'live' (i.e. a parent), relocates
-        // it to the head of the list until this is no longer the case
-        for (uint64_t i = 0; prev(cache.end())->live; i++) {
-            cache.relocate(cache.begin(), prev(cache.end()));
+        // ─── Stage 2c: 3-tier eviction (B2) ──────────────────────────────────
+        // `live` = HARD pin (soundness: never evict an ancestor, or loops occur).
+        // `dead` = SOFT pin: kept in preference to OPEN so the cross-pass DEAD
+        // collapse survives (proposal §3.7), but evicted before we ever throw
+        // MEM_LIMIT (evicting DEAD only costs re-search, never correctness). OPEN =
+        // normal LRU. MEM_LIMIT fires only when ALL remaining entries are live.
+        //
+        // IDENTITY: `dead` is written ONLY on the bounded LRU path (the solver gates
+        // every write on depth_bound). An unbounded run therefore has dead==false
+        // everywhere, so Tier 1's `!live && !dead` test reduces to `!live` and this
+        // block behaves byte-identically to the original "skip live, evict the LRU
+        // tail" loop — the L=∞ trace identity is preserved.
+        bool evicted = false;
 
-            if (i == max_num_items) {
-#ifndef NDEBUG
-                LOG_ERROR("All items in cache are live and cache is full");
-#endif
-                throw runtime_error("All items in cache are live and cache is full");
+        // Tier 1: evict the LRU-most OPEN entry (non-live, non-dead). Relocate live
+        // AND dead entries to the front (keep them) while scanning from the tail.
+        for (uint64_t i = 0; i < cache.size(); i++) {
+            auto tail = prev(cache.end());
+            if (!tail->live && !tail->dead) {       // OPEN → evict
+                STRACE_EVICT();
+                cache.pop_back();
+                states_removed_from_cache++;
+                evicted = true;
+                break;
             }
+            cache.relocate(cache.begin(), tail);    // live or DEAD → keep (move to front)
         }
-        STRACE_EVICT();
-        cache.pop_back();
-        states_removed_from_cache++;
+
+        if (!evicted) {
+            // Tier 2: no OPEN remains (all live + dead). Evict the LRU-most DEAD
+            // (non-live) entry — sound, only forces re-derivation. If ALL remaining
+            // are live, the cache is genuinely exhausted by ancestors → MEM_LIMIT.
+            for (uint64_t i = 0; prev(cache.end())->live; i++) {
+                cache.relocate(cache.begin(), prev(cache.end()));
+
+                if (i == max_num_items) {
+#ifndef NDEBUG
+                    LOG_ERROR("All items in cache are live and cache is full");
+#endif
+                    throw runtime_error("All items in cache are live and cache is full");
+                }
+            }
+            STRACE_EVICT();
+            cache.pop_back();
+            states_removed_from_cache++;
+        }
     }
     return p;
 }
