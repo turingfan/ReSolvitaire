@@ -98,53 +98,82 @@ persist for reuse; only the on-path/`live` state resets each pass. **Severity: M
 
 ## F1 — [Stage 2d · FINDING · informational, not a blocker] In a pure recursive reachability model, the "closed-edge / contributes ∞" back-edge rule (proposal §3.5 naive choice 2) does NOT, by itself, flip the final winnable/unwinnable verdict — the false-`unwinnable` hazard is reproduced by the **partial-node-reuse** rule instead.
 
-**Status: DEFERRED — Ian to revisit (2026-06-08):** "revisit the F1 point as I don't totally
-understand it; mark for later work." Not a blocker; tracked for a future walkthrough (best
-done alongside building 2b, where it concretely informs the finalisation/reuse code).
+**Status: WALKED THROUGH + RESOLVED (2026-06-08, Ian asked to do it now, while building 2b).**
+The 2b engine made F1 concrete — see the plain-language walkthrough below. **Bottom line: the
+finite DFSTT3 back-edge contribution is the safe, proven choice we ship; the real
+false-`unwinnable` hazard is partial-node reuse (writing DEAD over a truncated / not-yet-finalised
+region), which the B1 fold-through + finalise-only-on-`expanded` + the teeth tests all guard.**
+
+### F1 in plain language (the walkthrough Ian asked for)
+
+**The puzzle.** Proposal §3.5 lists two ways to handle a back-edge `s → a` to an on-path
+ancestor `a`:
+- *naive 1 "taint-OPEN"*: once any cycle is seen, never finalise `DEAD` ⇒ **sound but
+  incomplete** (a reachable cycle blocks every unwinnability proof forever).
+- *naive 2 "closed-edge / contributes ∞"*: the back-edge contributes `∞` ⇒ the proposal calls
+  this **complete but UNSOUND** (it could let `s` be finalised `DEAD` while `s` can still reach,
+  through the cycle, a region that later truncates).
+
+F1 is the finding that **naive 2 does not, by itself, flip the final verdict in a satisficing
+reachability search** — which seemed to contradict "unsound". The walkthrough reconciles it.
+
+**Why naive-2 looks harmless (the structural argument).** The cycle target `a` is an
+**ancestor of `s` that is itself always expanded** on the current path. Anything `s` can reach
+*through* the back-edge `s → a` is reachable **from `a` directly**. So the cycle edge adds no
+new reachability that the search wouldn't already see by expanding `a`. Concretely: `s` is
+finalised `DEAD` only if **all of `s`'s own direct children were `DEAD`** (no truncation among
+them — a truncated child would fold `1` up and force `s` OPEN). `s`'s direct subtree is therefore
+genuinely exhausted; the *only* thing the `∞` choice "hides" is the `s → a` edge, which reaches
+nothing new. So pruning a `DEAD`-via-∞ `s` in a later pass loses nothing, and if `a`'s region
+ever holds a goal, expanding `a` directly finds it (SOLVED) before `s`'s prune could matter. The
+~3.2 M-graph fuzz (2d) saw **zero** verdict flips from the ∞ choice for exactly this reason.
+
+**So why does 2b use the FINITE contribution anyway?** Three reasons, in order of importance:
+1. **It is unconditionally safe; ∞ relies on the subtle argument above.** A finite back-edge
+   makes `verified = 1 + a.esti` **finite**, so `s` is finalised **OPEN, never DEAD**. OPEN can
+   only ever cause *re-search* (sound), never an unsound prune. We do **not** want soundness to
+   hinge on the "cycle target is an always-expanded ancestor" reasoning — the finite rule is
+   safe even if that reasoning has an edge case we missed.
+2. **Accurate budgets.** The reuse inequality `prune iff b ≥ B_now` and the cross-pass collapse
+   need *real* `OPEN(b)` budgets; `∞` would throw that information away.
+3. **It is the proven rule.** DFSTT3 (Akagi Thm 2) is admissible + complete with the finite
+   contribution; we inherit the proof rather than re-deriving per case.
+
+**The engine confirmed this concretely.** A first, over-strict debug assert
+(`root.verified == ∞ ⟺ ¬any_truncation`) **aborted on cyclic games** — because a fully-exhausted
+node in a cyclic region backs up to a **finite OPEN esti even with `any_truncation == false`**
+(the finite cycle contribution at work). That is correct and intended: the verdict rests on
+**`any_truncation`**, not on the root being `DEAD`. (Matches `ghi_cycle_abstract_test.cpp`'s
+`id_dfstt3`, which returns UNWINNABLE iff `!any_truncation`.) The assert was removed; soundness
+asserts 4.4(b) (OPEN-prune only when `b ≥ B_now`) and 4.4(d) (no stale live bit across passes)
+remain and pass.
+
+**The REAL hazard (what actually produces a false `unwinnable`).** Not the back-edge value, but
+**partial-node reuse**: caching a node as terminal/`DEAD` when a descendant was **truncated** or
+a contribution was **silently dropped** (e.g. the B1 trap — keying finalisation on a forced
+uncached edge's absent cache iterator), then persisting it so a later, deeper pass prunes there
+and exhausts with no truncation flag ⇒ false `unwinnable`. 2b defends this with: the `verified`
+fold that runs for **every** popped node incl. uncached dominance/K+ (B1=A); `finalise_node`
+writing only `expanded` nodes (never a hit/cycle/truncated node, never un-living an ancestor);
+truncated leaf ⇒ `b = 0` ⇒ ancestors forced OPEN. The teeth tests target exactly this class:
+`LruReuseAcrossPasses_MatchesUnbounded` (engine-level, enabled) + the abstract `seen⇒prune` /
+`taint` demonstrators — both shown to FAIL on the naive rule and PASS on DFSTT3.
 
 **Where this came from.** Authoring the 2d adversarial tests
 (`src/test/unit_tests/ghi_cycle_abstract_test.cpp`, the Part-B abstract demonstrator).
 
-**What was observed (verified, not guessed).** I implemented the §4.1 bounded pass faithfully
-(DEAD/OPEN(b)/g_min + cross-pass reuse) with the back-edge contribution as a toggle
-(finite-ancestor-estimate vs ∞/closed-edge), plus a brute-force reachability oracle, and:
-- **Fuzzed ~3.2 M random ≤6-node cyclic graphs**: found **zero** cases where the
-  closed-edge-∞ choice *alone* produced a wrong final verdict while the finite (DFSTT3)
-  choice was right. Structural reason: any region reachable *through* a back-edge to an
-  on-path ancestor `a` is also reachable **from `a` directly**, and `a` is always expanded
-  — so in a clean recursive satisficing search the cycle edge contributes no new
-  reachability, and truncation-keeps-OPEN propagates correctly regardless of the ∞ vs finite
-  choice.
-- The genuinely-discriminating false-`unwinnable` is produced by a **"seen ⇒ prune"**
-  transposition rule that caches a node as terminal even when a **descendant was truncated**
-  (conflating `OPEN(truncated)` with `DEAD`) and persists it across passes. A later, deeper
-  pass then prunes at that false-terminal node and exhausts with **no truncation flag** ⇒
-  false `unwinnable`. This is the §3.4/§3.3 min-arrival-depth / reuse-inequality violation,
-  and it is what the Part-B test now uses (graph `ROOT→D→C→{ROOT, G}`, hand-traced in the
-  file). The incompleteness failure (proposal §3.5 naive choice 1, "taint-OPEN ⇒ never
-  `unwinnable`") **does** reproduce cleanly and is also asserted.
+**What was observed (verified, not guessed).** A faithful §4.1 bounded pass with the back-edge
+contribution as a toggle (finite vs ∞), plus a brute-force reachability oracle:
+- **Fuzzed ~3.2 M random ≤6-node cyclic graphs**: **zero** cases where the closed-edge-∞ choice
+  *alone* produced a wrong final verdict while the finite (DFSTT3) choice was right (the
+  structural reason above).
+- The genuinely-discriminating false-`unwinnable` is the **"seen ⇒ prune"** partial-node-reuse
+  rule (graph `ROOT→D→C→{ROOT, G}`, hand-traced in the file). The incompleteness failure
+  (taint-OPEN) also reproduces cleanly and is asserted.
 
-**Why this matters for 2b (and why it is a finding, not an ambiguity).** It does **not**
-change the recommendation to mirror DFSTT3 exactly — the finite back-edge contribution is
-still required for *budget/`esti` correctness* (the OPEN budgets it produces feed the
-`b ≥ B_now` reuse test), and the formal admissibility proof (Akagi Thm 2) needs it. The
-practical takeaway is: **the dominant false-`unwinnable` risk in 2b is finalising a
-partially-explored node as terminal (writing DEAD, or trusting a stale OPEN, over a region
-that was truncated or reachable-only-via-a-not-yet-finalised cycle), NOT the isolated
-back-edge value.** This is exactly the B1 trap ("keying finalisation on the absent cache
-iterator silently drops a forced edge's contribution ⇒ parent DEAD over unexplored region")
-and the assert-4.4(a) invariant. Test coverage was steered accordingly:
-- the **abstract** demonstrator proves teeth on the *seen⇒prune* and *taint* failures (the
-  reproducible ones) and shows DFSTT3 stays correct under both back-edge rules;
-- the **engine-level** guard (`depth_bound_verdict_test.cpp`, Part A) is the real GHI net:
-  its `DISABLED_Stage2_ReuseAcrossPasses_MatchesUnbounded` test, force-run on **today's**
-  Stage-1 engine, already yields **42 false-`unwinnable` mismatches** (e.g.
-  `-test-spanish-patience` s7/s8, `-test-alpha-star` s4) under naive cross-pass reuse — i.e.
-  it will fail loudly if 2b reintroduces that class of bug. After 2b lands, the orchestrator
-  should **remove the `DISABLED_` prefix**; it must then go green.
-
-**Severity: INFORMATIONAL (no Ian decision required).** **Status: recorded.** No code rides
-on this; it documents the test strategy and reinforces B1.
+**Severity: INFORMATIONAL.** **Status: resolved/understood.** No code rides on the ∞-vs-finite
+verdict-flip question; 2b ships the finite rule for the safety/accuracy/proof reasons above, and
+the dominant hazard (partial-node reuse) is guarded by B1 + the teeth tests.
 
 ---
 
