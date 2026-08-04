@@ -72,6 +72,9 @@ companion to the Dockerfile) and run the benchmark **inside** it — binaries, G
 
 - Run `apptainer exec …` from *inside* the job (via `srun` or an `sbatch` script),
   never on the login node — the worker sizing reads the job cgroup's memory limit.
+- **Build the image on a compute node too.** `apptainer build` compiles the solver
+  with a parallel make + LTO and overloaded (crashed) the sturm login node when
+  tried there (2026-08-04). Do the build inside an `srun` shell.
 
 ```bash
 ssh you@cluster
