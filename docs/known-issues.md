@@ -423,3 +423,22 @@ Until done, mitigate manually: fewer workers, and/or a modest `--cache-capacity`
 run under a per-worker `systemd-run … MemoryMax`. Relates to [[flat-cache-dedup-divergence-bug]]
 (KI-26) and the benchmark timeout/kill methodology.
 
+
+### 30. Reference Binaries Are Not Version-Controlled (out-of-band distribution only)
+
+**Affected:** everything that depends on `05-Executables/reference/` — the trace
+regression gate (`TRACE_REF_BIN`), the legacy regression references, and now the
+verified Linux amd64 trace reference from the KI-27 closure.
+**Status:** Open; **not urgent** (Ian, 2026-08-04).
+
+The reference binaries live untracked in `05-Executables/reference/` (project dir, not
+a git repo) and are distributed out-of-band — the mac copy is the de-facto master, with
+a second copy on sturm at `~/05-Executables/reference/`. The dir's README describes the
+binaries as "committed to the knowledge base", which has never actually been true. Risks:
+a lost/corrupted copy is unrecoverable except by rebuild-from-commit (procedure exists
+but relies on the toolchain reproducing the binary's behaviour), and there is no
+authoritative record of which copy on which machine is canonical.
+
+**Proposed fix:** bring `05-Executables/` under DataLad/git-annex, like the results repo
+(04-Results) — binaries are exactly the large-immutable-artifact case annex is for. Could
+be done together with the planned DataLad adoption for `03-Large-Datasets/` (TODO M7).
