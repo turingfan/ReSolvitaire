@@ -54,6 +54,25 @@ container/docker/podman, build a self-contained image from `solvitaire.def` (the
 companion to the Dockerfile) and run the benchmark **inside** it — binaries, GNU
 `parallel`, and libs are all baked in.
 
+### Site notes — the "sturm" cluster (verified 2026-08-04)
+
+- Every job submission needs an explicit partition **and** QOS: `-p sturm -q sturm`
+  (applies to `salloc`, `srun`, and `#SBATCH` lines alike).
+- `salloc` here only **grants** the allocation — your shell stays on the login
+  node. To actually get a shell on the compute node, use `srun`:
+
+  ```bash
+  # one-shot interactive shell on a compute node:
+  srun -p sturm -q sturm -c 16 --mem=64G -t 4:00:00 --pty bash
+
+  # or two-step: salloc first, then srun (no -p/-q needed inside the allocation):
+  salloc -p sturm -q sturm -c 16 --mem=64G -t 4:00:00
+  srun --pty bash
+  ```
+
+- Run `apptainer exec …` from *inside* the job (via `srun` or an `sbatch` script),
+  never on the login node — the worker sizing reads the job cgroup's memory limit.
+
 ```bash
 ssh you@cluster
 git clone git@github.com:turingfan/ReSolvitaire.git
