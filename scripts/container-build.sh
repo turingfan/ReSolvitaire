@@ -37,7 +37,14 @@ EDITABLE_FLAG=""
 
 # Linux reference trace binary (KI-27 re-baseline 2026-06-03). Host path + the path it
 # is mounted/copied to inside the container for --trace-regression.
-REF_BIN_NAME="solvitaire-trace-reference-linux-arm64-20260603-7eb5883"
+# Arch-dependent: Apple-container VMs on Apple Silicon are arm64; real Linux hosts
+# (e.g. the sturm cluster) are typically x86_64 -> amd64 (verified 2026-08-04).
+case "$(uname -m)" in
+    x86_64|amd64)  _ref_arch="amd64" ;;
+    aarch64|arm64) _ref_arch="arm64" ;;
+    *)             _ref_arch="$(uname -m)" ;;
+esac
+REF_BIN_NAME="solvitaire-trace-reference-linux-${_ref_arch}-20260603-7eb5883"
 LINUX_REF_BIN_HOST="${REPO_ROOT}/../../05-Executables/reference/${REF_BIN_NAME}"
 LINUX_REF_BIN_CONTAINER="/05-Executables/reference/${REF_BIN_NAME}"
 

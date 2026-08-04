@@ -294,12 +294,19 @@ dead `cache_state` field carried on flat/mult frames) is tracked separately.
 > 100 M default capacity at ~320 B/entry (≈32 GB of heap cache), so LRU RAM *is* bounded
 > by `--cache-capacity`, whereas flat/mult frontier RAM is **not** (it scales with depth).
 
-### 27. `trace_regression_level1/2` Diverge From a Stale Reference Binary
+### 27. ~~`trace_regression_level1/2` Diverge From a Stale Reference Binary~~ RESOLVED
 
 **Affected:** Gate 2 (trace) CTest targets `trace_regression_level1` (150 instances) and
 `trace_regression_level2` (160). Branch: `benchmark-rationalisation` (likely `dev` too).
-**Status:** **RESOLVED on mac (2026-06-03) by re-baseline; Linux binary built, pending
-verification on a Linux host.** Triage confirmed it was hypothesis (1) — legitimate
+**Status:** **FULLY RESOLVED.** Mac: re-baseline 2026-06-03, level1+level2 pass. Linux:
+verified 2026-08-04 on the sturm cluster (x86_64) — an amd64 reference was built from
+commit `7eb5883` inside the Apptainer image and `trace_regression_level1` passed against
+it (35.4s), post-merge dev. The amd64 reference is
+`solvitaire-trace-reference-linux-amd64-20260603-7eb5883` (on sturm at `~/reference/`;
+copy to `05-Executables/reference/` alongside the mac/arm64 ones). Procedure documented
+in `docs/benchmarking/active/remote-runs.md` (sturm runbook).
+*Historical status line:* RESOLVED on mac (2026-06-03) by re-baseline; Linux binary built, pending
+verification on a Linux host. Triage confirmed it was hypothesis (1) — legitimate
 path-only drift (KI-23 / Stage-6 multiplicity suit-symmetry), not a regression: outcomes
 correct, and current node counts match the validated level-1 oracle (which the
 `regression_level1` gate enforces ×4). Re-baselined `TRACE_REF_BIN` to fresh `…-20260603-7eb5883`

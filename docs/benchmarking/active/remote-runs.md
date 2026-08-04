@@ -54,27 +54,78 @@ container/docker/podman, build a self-contained image from `solvitaire.def` (the
 companion to the Dockerfile) and run the benchmark **inside** it — binaries, GNU
 `parallel`, and libs are all baked in.
 
-### Site notes — the "sturm" cluster (verified 2026-08-04)
+### The sturm runbook (whole process verified end-to-end 2026-08-04)
+
+The complete working process on the sturm cluster, as actually run — not
+speculation. Repo lives at `~/ReSolvitaire-sturm/ReSolvitaire`; the cluster is
+x86_64. Apptainer **auto-binds `$HOME`**, so the container sees the same `~/...`
+paths as the host — no explicit `--bind` needed for anything under home.
+
+**Ground rules (all verified the hard way):**
 
 - Every job submission needs an explicit partition **and** QOS: `-p sturm -q sturm`
-  (applies to `salloc`, `srun`, and `#SBATCH` lines alike).
-- `salloc` here only **grants** the allocation — your shell stays on the login
-  node. To actually get a shell on the compute node, use `srun`:
+  (`salloc`, `srun`, and `#SBATCH` alike).
+- `salloc` only **grants** an allocation — your shell stays on the login node. Get a
+  compute-node shell with `srun -p sturm -q sturm -c 16 --mem=64G -t 4:00:00 --pty bash`
+  (or `salloc` first, then a bare `srun --pty bash` inside it).
+- **Do ALL builds and runs on a compute node.** `apptainer build` (parallel make +
+  LTO) crashed/overloaded the login node when tried there. Runs must be in-job
+  anyway: the bench worker sizing reads the job cgroup's memory limit.
 
-  ```bash
-  # one-shot interactive shell on a compute node:
-  srun -p sturm -q sturm -c 16 --mem=64G -t 4:00:00 --pty bash
+**1. Build the image** (compute node, ~minutes):
 
-  # or two-step: salloc first, then srun (no -p/-q needed inside the allocation):
-  salloc -p sturm -q sturm -c 16 --mem=64G -t 4:00:00
-  srun --pty bash
-  ```
+```bash
+cd ~/ReSolvitaire-sturm/ReSolvitaire
+git fetch && git checkout dev && git pull
+apptainer build --fakeroot solvitaire.sif solvitaire.def
+```
 
-- Run `apptainer exec …` from *inside* the job (via `srun` or an `sbatch` script),
-  never on the login node — the worker sizing reads the job cgroup's memory limit.
-- **Build the image on a compute node too.** `apptainer build` compiles the solver
-  with a parallel make + LTO and overloaded (crashed) the sturm login node when
-  tried there (2026-08-04). Do the build inside an `srun` shell.
+**2. Regression gates in-container** (verified green):
+
+```bash
+CONTAINER_RUNTIME=apptainer ./scripts/container-build.sh --editable --regression
+```
+
+**3. Benchmark run** — dry-run first, always:
+
+```bash
+mkdir -p "$PWD/benchout"
+apptainer exec --bind "$PWD/benchout":/out solvitaire.sif bash -c \
+  'cd /workspace && scripts/experiments/bench_multiplicity.sh \
+     --phase D --games klondike --seeds 1-50 --timeout 120000 \
+     --outdir /out/run1 --dry-run'
+```
+
+Check the dry-run's **Workers / Memory budget** line reports the *allocation's*
+memory (verified: cgroup-aware sizing works under SLURM). Then rerun without
+`--dry-run`; results land in `benchout/run1/` on the host, with clean
+`TIMEOUT`s and no `KILLED` rows.
+
+**4. Linux trace reference / trace regression** (KI-27 closure, verified):
+build the reference from the re-baseline commit inside the container, then point
+the trace build at it. `~` paths work because home is auto-bound.
+
+```bash
+git worktree add ~/resolv-ref-7eb5883 7eb5883
+apptainer exec solvitaire.sif bash -c 'cd ~/resolv-ref-7eb5883 && ./build.sh --trace'
+mkdir -p ~/05-Executables/reference     # = $REPO_ROOT/../../05-Executables/reference
+cp ~/resolv-ref-7eb5883/cmake-build-trace/bin/solvitaire-trace \
+   ~/05-Executables/reference/solvitaire-trace-reference-linux-amd64-20260603-7eb5883
+
+apptainer exec solvitaire.sif bash -c 'cd ~/ReSolvitaire-sturm/ReSolvitaire && ./build.sh --trace'
+apptainer exec solvitaire.sif bash -c \
+  'cd ~/ReSolvitaire-sturm/ReSolvitaire && cmake -DTRACE_REF_BIN=$HOME/05-Executables/reference/solvitaire-trace-reference-linux-amd64-20260603-7eb5883 cmake-build-trace'
+apptainer exec solvitaire.sif bash -c \
+  'cd ~/ReSolvitaire-sturm/ReSolvitaire/cmake-build-trace && ctest -R "^trace_regression_level1$" --output-on-failure'
+```
+
+Result 2026-08-04: `trace_regression_level1` **Passed, 35.39 s** (mac took ~36 s).
+With the reference in `~/05-Executables/reference/`,
+`./scripts/container-build.sh --editable --trace-regression` also finds it by
+its default path (the script arch-detects amd64 vs arm64 since 2026-08-04).
+Keep a copy of the amd64 reference binary in the project's
+`05-Executables/reference/` on the mac too (scp it back) so both arches live
+together.
 
 ```bash
 ssh you@cluster
