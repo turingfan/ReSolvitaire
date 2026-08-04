@@ -1,5 +1,8 @@
 # Depth-Bounded, Cache-Reusing Iterative Deepening — Branch Documentation
 
+> **⛔ PARKED (2026-08-04): this project is parked indefinitely — read `PARKED.md` before acting on anything below.**
+
+
 **Branch:** `claude/depth-bounded-search`
 **Status:** **M1 GO** — Stage 0 (measurement) complete; trace identity gate built +
 validated on x86_64; **Stage 1 (depth cut + bounded result) in progress.**

@@ -1,5 +1,8 @@
 # PICKUP — depth-bounded-search branch
 
+> **⛔ PARKED (2026-08-04): this project is parked indefinitely — read `PARKED.md` before acting on anything below.**
+
+
 **Branch:** `claude/depth-bounded-search`
 **Last updated:** 2026-06-08
 **Phase:** **Stage 1 DONE (M2)** + **Stage 2a/2d DONE** — all independently verified (HEAD

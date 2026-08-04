@@ -1,5 +1,8 @@
 # HANDOFF — take over as LEAD of the depth-bounded-search project
 
+> **⛔ PARKED (2026-08-04): this project is parked indefinitely — read `PARKED.md` before acting on anything below.**
+
+
 **You are taking over as the LEAD/orchestrator of the depth-bounded-search project**
 on branch `claude/depth-bounded-search`. Ian (the author) made the assistant the lead
 and is **asynchronous** — you own day-to-day decisions and only escalate genuine
