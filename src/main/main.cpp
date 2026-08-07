@@ -34,6 +34,7 @@
 #include "input-output/output/log_helper.h"
 #include "game/cache_interface.h"
 #include "game/cache_policy.h"
+#include "game/bitmap_cache.h"
 #include "game/zobrist.h"
 #include "solver/solver.h"
 #include "solver/search_trace.h"
@@ -152,9 +153,16 @@ static solve_output dispatch_solve(const sol_rules& rules, const search_limits& 
     if (!use_new_cache(rules, suit_sym))
         throw std::runtime_error("hash-only binary: game requires LRU cache");
     return solve_game_impl<HashOnlyPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
+#elif defined(SOLVITAIRE_BITMAP_ONLY)
+    (void)force_lru; (void)cache_type; (void)suit_sym;
+    if (!use_bitmap_cache(rules))
+        throw std::runtime_error("bitmap-only binary: game not eligible for bitmap cache");
+    return solve_game_impl<BitmapPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
 #else
     if (force_lru) {
         return solve_game_impl<LRUPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
+    } else if (cache_type == "bitmap" && use_bitmap_cache(rules)) {
+        return solve_game_impl<BitmapPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     } else if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
         return solve_game_impl<MultiplicityPolicy>(rules, lim, cache_capacity, str_opts, seed, in_doc);
     } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {

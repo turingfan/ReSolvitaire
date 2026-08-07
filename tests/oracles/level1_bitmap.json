@@ -1,0 +1,1302 @@
+{
+    "alpha-star_seed_20.json": {
+        "instance_name": "level1/instances/alpha-star_seed_20.json",
+        "solution_type": "solved",
+        "states_searched": 259,
+        "unique_states": 134,
+        "backtracks": 125,
+        "max_depth": 134,
+        "game_type": "alpha-star",
+        "streamliner": "both"
+    },
+    "alpha-star_seed_24.json": {
+        "instance_name": "level1/instances/alpha-star_seed_24.json",
+        "solution_type": "solved",
+        "states_searched": 92,
+        "unique_states": 77,
+        "backtracks": 15,
+        "max_depth": 77,
+        "game_type": "alpha-star",
+        "streamliner": "both"
+    },
+    "alpha-star_seed_3.json": {
+        "instance_name": "level1/instances/alpha-star_seed_3.json",
+        "solution_type": "unsolvable",
+        "states_searched": 34,
+        "unique_states": 18,
+        "backtracks": 33,
+        "max_depth": 5,
+        "game_type": "alpha-star",
+        "streamliner": "none"
+    },
+    "alpha-star_seed_34.json": {
+        "instance_name": "level1/instances/alpha-star_seed_34.json",
+        "solution_type": "unsolvable",
+        "states_searched": 2,
+        "unique_states": 2,
+        "backtracks": 1,
+        "max_depth": 1,
+        "game_type": "alpha-star",
+        "streamliner": "none"
+    },
+    "alpha-star_seed_38.json": {
+        "instance_name": "level1/instances/alpha-star_seed_38.json",
+        "solution_type": "solved",
+        "states_searched": 2667,
+        "unique_states": 735,
+        "backtracks": 1932,
+        "max_depth": 735,
+        "game_type": "alpha-star",
+        "streamliner": "both"
+    },
+    "alpha-star_seed_4.json": {
+        "instance_name": "level1/instances/alpha-star_seed_4.json",
+        "solution_type": "solved",
+        "states_searched": 404,
+        "unique_states": 173,
+        "backtracks": 255,
+        "max_depth": 149,
+        "game_type": "alpha-star",
+        "streamliner": "both"
+    },
+    "alpha-star_seed_5.json": {
+        "instance_name": "level1/instances/alpha-star_seed_5.json",
+        "solution_type": "unsolvable",
+        "states_searched": 28,
+        "unique_states": 22,
+        "backtracks": 27,
+        "max_depth": 9,
+        "game_type": "alpha-star",
+        "streamliner": "none"
+    },
+    "alpha-star_seed_7.json": {
+        "instance_name": "level1/instances/alpha-star_seed_7.json",
+        "solution_type": "unsolvable",
+        "states_searched": 18,
+        "unique_states": 15,
+        "backtracks": 17,
+        "max_depth": 8,
+        "game_type": "alpha-star",
+        "streamliner": "none"
+    },
+    "alpha-star_seed_72.json": {
+        "instance_name": "level1/instances/alpha-star_seed_72.json",
+        "solution_type": "unsolvable",
+        "states_searched": 8,
+        "unique_states": 6,
+        "backtracks": 7,
+        "max_depth": 3,
+        "game_type": "alpha-star",
+        "streamliner": "none"
+    },
+    "alpha-star_seed_77.json": {
+        "instance_name": "level1/instances/alpha-star_seed_77.json",
+        "solution_type": "solved",
+        "states_searched": 101,
+        "unique_states": 81,
+        "backtracks": 20,
+        "max_depth": 81,
+        "game_type": "alpha-star",
+        "streamliner": "both"
+    },
+    "black-hole_seed_6476518.json": {
+        "instance_name": "level1/instances/black-hole_seed_6476518.json",
+        "solution_type": "solved",
+        "states_searched": 6219,
+        "unique_states": 4460,
+        "backtracks": 6168,
+        "max_depth": 51,
+        "game_type": "black-hole",
+        "streamliner": "both"
+    },
+    "black-hole_seed_6848018.json": {
+        "instance_name": "level1/instances/black-hole_seed_6848018.json",
+        "solution_type": "unsolvable",
+        "states_searched": 22,
+        "unique_states": 18,
+        "backtracks": 21,
+        "max_depth": 4,
+        "game_type": "black-hole",
+        "streamliner": "none"
+    },
+    "black-hole_seed_6859056.json": {
+        "instance_name": "level1/instances/black-hole_seed_6859056.json",
+        "solution_type": "unsolvable",
+        "states_searched": 38,
+        "unique_states": 33,
+        "backtracks": 37,
+        "max_depth": 6,
+        "game_type": "black-hole",
+        "streamliner": "none"
+    },
+    "black-hole_seed_7113129.json": {
+        "instance_name": "level1/instances/black-hole_seed_7113129.json",
+        "solution_type": "unsolvable",
+        "states_searched": 39,
+        "unique_states": 34,
+        "backtracks": 38,
+        "max_depth": 5,
+        "game_type": "black-hole",
+        "streamliner": "none"
+    },
+    "black-hole_seed_7663082.json": {
+        "instance_name": "level1/instances/black-hole_seed_7663082.json",
+        "solution_type": "solved",
+        "states_searched": 22763,
+        "unique_states": 16023,
+        "backtracks": 22712,
+        "max_depth": 51,
+        "game_type": "black-hole",
+        "streamliner": "both"
+    },
+    "black-hole_seed_7668047.json": {
+        "instance_name": "level1/instances/black-hole_seed_7668047.json",
+        "solution_type": "solved",
+        "states_searched": 3820,
+        "unique_states": 2771,
+        "backtracks": 3769,
+        "max_depth": 51,
+        "game_type": "black-hole",
+        "streamliner": "both"
+    },
+    "black-hole_seed_8104875.json": {
+        "instance_name": "level1/instances/black-hole_seed_8104875.json",
+        "solution_type": "unsolvable",
+        "states_searched": 5,
+        "unique_states": 5,
+        "backtracks": 4,
+        "max_depth": 2,
+        "game_type": "black-hole",
+        "streamliner": "none"
+    },
+    "black-hole_seed_8256437.json": {
+        "instance_name": "level1/instances/black-hole_seed_8256437.json",
+        "solution_type": "solved",
+        "states_searched": 415,
+        "unique_states": 301,
+        "backtracks": 364,
+        "max_depth": 51,
+        "game_type": "black-hole",
+        "streamliner": "both"
+    },
+    "black-hole_seed_8391072.json": {
+        "instance_name": "level1/instances/black-hole_seed_8391072.json",
+        "solution_type": "unsolvable",
+        "states_searched": 1068,
+        "unique_states": 642,
+        "backtracks": 1067,
+        "max_depth": 14,
+        "game_type": "black-hole",
+        "streamliner": "none"
+    },
+    "black-hole_seed_9641730.json": {
+        "instance_name": "level1/instances/black-hole_seed_9641730.json",
+        "solution_type": "solved",
+        "states_searched": 202,
+        "unique_states": 174,
+        "backtracks": 151,
+        "max_depth": 51,
+        "game_type": "black-hole",
+        "streamliner": "both"
+    },
+    "british-canister_seed_1.json": {
+        "instance_name": "level1/instances/british-canister_seed_1.json",
+        "solution_type": "unsolvable",
+        "states_searched": 5,
+        "unique_states": 5,
+        "backtracks": 4,
+        "max_depth": 3,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_1079457.json": {
+        "instance_name": "level1/instances/british-canister_seed_1079457.json",
+        "solution_type": "solved",
+        "states_searched": 1717,
+        "unique_states": 717,
+        "backtracks": 1634,
+        "max_depth": 83,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_1885620.json": {
+        "instance_name": "level1/instances/british-canister_seed_1885620.json",
+        "solution_type": "solved",
+        "states_searched": 4868,
+        "unique_states": 2198,
+        "backtracks": 4789,
+        "max_depth": 79,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_228947.json": {
+        "instance_name": "level1/instances/british-canister_seed_228947.json",
+        "solution_type": "solved",
+        "states_searched": 1231,
+        "unique_states": 523,
+        "backtracks": 1140,
+        "max_depth": 91,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_2379239.json": {
+        "instance_name": "level1/instances/british-canister_seed_2379239.json",
+        "solution_type": "solved",
+        "states_searched": 990,
+        "unique_states": 591,
+        "backtracks": 919,
+        "max_depth": 71,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_3.json": {
+        "instance_name": "level1/instances/british-canister_seed_3.json",
+        "solution_type": "unsolvable",
+        "states_searched": 25,
+        "unique_states": 16,
+        "backtracks": 24,
+        "max_depth": 8,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_4.json": {
+        "instance_name": "level1/instances/british-canister_seed_4.json",
+        "solution_type": "unsolvable",
+        "states_searched": 19,
+        "unique_states": 10,
+        "backtracks": 18,
+        "max_depth": 8,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_6.json": {
+        "instance_name": "level1/instances/british-canister_seed_6.json",
+        "solution_type": "unsolvable",
+        "states_searched": 11,
+        "unique_states": 9,
+        "backtracks": 10,
+        "max_depth": 5,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_606821.json": {
+        "instance_name": "level1/instances/british-canister_seed_606821.json",
+        "solution_type": "solved",
+        "states_searched": 11410,
+        "unique_states": 5514,
+        "backtracks": 11325,
+        "max_depth": 85,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "british-canister_seed_7.json": {
+        "instance_name": "level1/instances/british-canister_seed_7.json",
+        "solution_type": "unsolvable",
+        "states_searched": 9,
+        "unique_states": 6,
+        "backtracks": 8,
+        "max_depth": 3,
+        "game_type": "british-canister",
+        "streamliner": "none"
+    },
+    "delta-star_seed_10.json": {
+        "instance_name": "level1/instances/delta-star_seed_10.json",
+        "solution_type": "unsolvable",
+        "states_searched": 59,
+        "unique_states": 42,
+        "backtracks": 58,
+        "max_depth": 9,
+        "game_type": "delta-star",
+        "streamliner": "none"
+    },
+    "delta-star_seed_11.json": {
+        "instance_name": "level1/instances/delta-star_seed_11.json",
+        "solution_type": "solved",
+        "states_searched": 533,
+        "unique_states": 300,
+        "backtracks": 460,
+        "max_depth": 73,
+        "game_type": "delta-star",
+        "streamliner": "both"
+    },
+    "delta-star_seed_13.json": {
+        "instance_name": "level1/instances/delta-star_seed_13.json",
+        "solution_type": "unsolvable",
+        "states_searched": 17,
+        "unique_states": 14,
+        "backtracks": 16,
+        "max_depth": 7,
+        "game_type": "delta-star",
+        "streamliner": "none"
+    },
+    "delta-star_seed_3.json": {
+        "instance_name": "level1/instances/delta-star_seed_3.json",
+        "solution_type": "unsolvable",
+        "states_searched": 34,
+        "unique_states": 18,
+        "backtracks": 33,
+        "max_depth": 5,
+        "game_type": "delta-star",
+        "streamliner": "none"
+    },
+    "delta-star_seed_39.json": {
+        "instance_name": "level1/instances/delta-star_seed_39.json",
+        "solution_type": "solved",
+        "states_searched": 141,
+        "unique_states": 100,
+        "backtracks": 42,
+        "max_depth": 99,
+        "game_type": "delta-star",
+        "streamliner": "both"
+    },
+    "delta-star_seed_5.json": {
+        "instance_name": "level1/instances/delta-star_seed_5.json",
+        "solution_type": "unsolvable",
+        "states_searched": 28,
+        "unique_states": 22,
+        "backtracks": 27,
+        "max_depth": 9,
+        "game_type": "delta-star",
+        "streamliner": "none"
+    },
+    "delta-star_seed_72.json": {
+        "instance_name": "level1/instances/delta-star_seed_72.json",
+        "solution_type": "unsolvable",
+        "states_searched": 7,
+        "unique_states": 6,
+        "backtracks": 6,
+        "max_depth": 3,
+        "game_type": "delta-star",
+        "streamliner": "none"
+    },
+    "delta-star_seed_77.json": {
+        "instance_name": "level1/instances/delta-star_seed_77.json",
+        "solution_type": "solved",
+        "states_searched": 101,
+        "unique_states": 81,
+        "backtracks": 20,
+        "max_depth": 81,
+        "game_type": "delta-star",
+        "streamliner": "both"
+    },
+    "delta-star_seed_84.json": {
+        "instance_name": "level1/instances/delta-star_seed_84.json",
+        "solution_type": "solved",
+        "states_searched": 699,
+        "unique_states": 387,
+        "backtracks": 477,
+        "max_depth": 222,
+        "game_type": "delta-star",
+        "streamliner": "both"
+    },
+    "delta-star_seed_99.json": {
+        "instance_name": "level1/instances/delta-star_seed_99.json",
+        "solution_type": "solved",
+        "states_searched": 226,
+        "unique_states": 137,
+        "backtracks": 89,
+        "max_depth": 137,
+        "game_type": "delta-star",
+        "streamliner": "both"
+    },
+    "eight-off_seed_0.json": {
+        "instance_name": "level1/instances/eight-off_seed_0.json",
+        "solution_type": "solved",
+        "states_searched": 1152,
+        "unique_states": 649,
+        "backtracks": 960,
+        "max_depth": 192,
+        "game_type": "eight-off",
+        "streamliner": "both"
+    },
+    "eight-off_seed_101.json": {
+        "instance_name": "level1/instances/eight-off_seed_101.json",
+        "solution_type": "unsolvable",
+        "states_searched": 52628,
+        "unique_states": 22842,
+        "backtracks": 52627,
+        "max_depth": 471,
+        "game_type": "eight-off",
+        "streamliner": "none"
+    },
+    "eight-off_seed_11.json": {
+        "instance_name": "level1/instances/eight-off_seed_11.json",
+        "solution_type": "solved",
+        "states_searched": 387,
+        "unique_states": 236,
+        "backtracks": 169,
+        "max_depth": 218,
+        "game_type": "eight-off",
+        "streamliner": "both"
+    },
+    "eight-off_seed_2.json": {
+        "instance_name": "level1/instances/eight-off_seed_2.json",
+        "solution_type": "solved",
+        "states_searched": 4874,
+        "unique_states": 1653,
+        "backtracks": 4091,
+        "max_depth": 783,
+        "game_type": "eight-off",
+        "streamliner": "both"
+    },
+    "eight-off_seed_2272.json": {
+        "instance_name": "level1/instances/eight-off_seed_2272.json",
+        "solution_type": "unsolvable",
+        "states_searched": 219016,
+        "unique_states": 65166,
+        "backtracks": 219015,
+        "max_depth": 1532,
+        "game_type": "eight-off",
+        "streamliner": "none"
+    },
+    "eight-off_seed_26.json": {
+        "instance_name": "level1/instances/eight-off_seed_26.json",
+        "solution_type": "solved",
+        "states_searched": 783,
+        "unique_states": 511,
+        "backtracks": 512,
+        "max_depth": 271,
+        "game_type": "eight-off",
+        "streamliner": "both"
+    },
+    "eight-off_seed_2708.json": {
+        "instance_name": "level1/instances/eight-off_seed_2708.json",
+        "solution_type": "unsolvable",
+        "states_searched": 47480,
+        "unique_states": 17732,
+        "backtracks": 47479,
+        "max_depth": 111,
+        "game_type": "eight-off",
+        "streamliner": "none"
+    },
+    "eight-off_seed_4.json": {
+        "instance_name": "level1/instances/eight-off_seed_4.json",
+        "solution_type": "solved",
+        "states_searched": 163,
+        "unique_states": 143,
+        "backtracks": 42,
+        "max_depth": 121,
+        "game_type": "eight-off",
+        "streamliner": "both"
+    },
+    "eight-off_seed_5559.json": {
+        "instance_name": "level1/instances/eight-off_seed_5559.json",
+        "solution_type": "unsolvable",
+        "states_searched": 22714,
+        "unique_states": 9254,
+        "backtracks": 22713,
+        "max_depth": 195,
+        "game_type": "eight-off",
+        "streamliner": "none"
+    },
+    "eight-off_seed_6101.json": {
+        "instance_name": "level1/instances/eight-off_seed_6101.json",
+        "solution_type": "unsolvable",
+        "states_searched": 4579,
+        "unique_states": 2091,
+        "backtracks": 4578,
+        "max_depth": 24,
+        "game_type": "eight-off",
+        "streamliner": "none"
+    },
+    "fore-cell-same-suit_seed_11.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_11.json",
+        "solution_type": "solved",
+        "states_searched": 161,
+        "unique_states": 137,
+        "backtracks": 42,
+        "max_depth": 119,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "both"
+    },
+    "fore-cell-same-suit_seed_144.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_144.json",
+        "solution_type": "solved",
+        "states_searched": 10930,
+        "unique_states": 4809,
+        "backtracks": 10704,
+        "max_depth": 226,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "both"
+    },
+    "fore-cell-same-suit_seed_15.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_15.json",
+        "solution_type": "unsolvable",
+        "states_searched": 11,
+        "unique_states": 8,
+        "backtracks": 10,
+        "max_depth": 4,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "none"
+    },
+    "fore-cell-same-suit_seed_167.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_167.json",
+        "solution_type": "solved",
+        "states_searched": 153,
+        "unique_states": 130,
+        "backtracks": 53,
+        "max_depth": 100,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "both"
+    },
+    "fore-cell-same-suit_seed_38.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_38.json",
+        "solution_type": "solved",
+        "states_searched": 1217,
+        "unique_states": 601,
+        "backtracks": 1074,
+        "max_depth": 143,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "both"
+    },
+    "fore-cell-same-suit_seed_4.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_4.json",
+        "solution_type": "unsolvable",
+        "states_searched": 3,
+        "unique_states": 3,
+        "backtracks": 2,
+        "max_depth": 2,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "none"
+    },
+    "fore-cell-same-suit_seed_6.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_6.json",
+        "solution_type": "unsolvable",
+        "states_searched": 8,
+        "unique_states": 7,
+        "backtracks": 7,
+        "max_depth": 4,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "none"
+    },
+    "fore-cell-same-suit_seed_71.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_71.json",
+        "solution_type": "unsolvable",
+        "states_searched": 1,
+        "unique_states": 1,
+        "backtracks": 0,
+        "max_depth": 0,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "none"
+    },
+    "fore-cell-same-suit_seed_9.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_9.json",
+        "solution_type": "unsolvable",
+        "states_searched": 42,
+        "unique_states": 35,
+        "backtracks": 41,
+        "max_depth": 5,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "none"
+    },
+    "fore-cell-same-suit_seed_95.json": {
+        "instance_name": "level1/instances/fore-cell-same-suit_seed_95.json",
+        "solution_type": "solved",
+        "states_searched": 202,
+        "unique_states": 180,
+        "backtracks": 99,
+        "max_depth": 103,
+        "game_type": "fore-cell-same-suit",
+        "streamliner": "both"
+    },
+    "free-cell-4-pile_seed_10.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_10.json",
+        "solution_type": "unsolvable",
+        "states_searched": 242,
+        "unique_states": 138,
+        "backtracks": 241,
+        "max_depth": 10,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "none"
+    },
+    "free-cell-4-pile_seed_11849.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_11849.json",
+        "solution_type": "solved",
+        "states_searched": 5050,
+        "unique_states": 2254,
+        "backtracks": 4825,
+        "max_depth": 244,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "none"
+    },
+    "free-cell-4-pile_seed_3.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_3.json",
+        "solution_type": "unsolvable",
+        "states_searched": 360,
+        "unique_states": 179,
+        "backtracks": 359,
+        "max_depth": 12,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "none"
+    },
+    "free-cell-4-pile_seed_31098.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_31098.json",
+        "solution_type": "solved",
+        "states_searched": 3805,
+        "unique_states": 1939,
+        "backtracks": 3251,
+        "max_depth": 554,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "both"
+    },
+    "free-cell-4-pile_seed_34.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_34.json",
+        "solution_type": "unsolvable",
+        "states_searched": 328,
+        "unique_states": 179,
+        "backtracks": 327,
+        "max_depth": 17,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "none"
+    },
+    "free-cell-4-pile_seed_44638.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_44638.json",
+        "solution_type": "solved",
+        "states_searched": 1245,
+        "unique_states": 803,
+        "backtracks": 762,
+        "max_depth": 483,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "both"
+    },
+    "free-cell-4-pile_seed_46885.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_46885.json",
+        "solution_type": "solved",
+        "states_searched": 16788,
+        "unique_states": 6362,
+        "backtracks": 16504,
+        "max_depth": 490,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "none"
+    },
+    "free-cell-4-pile_seed_5.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_5.json",
+        "solution_type": "unsolvable",
+        "states_searched": 456,
+        "unique_states": 244,
+        "backtracks": 455,
+        "max_depth": 28,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "none"
+    },
+    "free-cell-4-pile_seed_8948.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_8948.json",
+        "solution_type": "solved",
+        "states_searched": 1872,
+        "unique_states": 1120,
+        "backtracks": 1559,
+        "max_depth": 313,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "none"
+    },
+    "free-cell-4-pile_seed_9.json": {
+        "instance_name": "level1/instances/free-cell-4-pile_seed_9.json",
+        "solution_type": "unsolvable",
+        "states_searched": 315,
+        "unique_states": 151,
+        "backtracks": 314,
+        "max_depth": 11,
+        "game_type": "free-cell-4-pile",
+        "streamliner": "none"
+    },
+    "free-cell_seed_20.json": {
+        "instance_name": "level1/instances/free-cell_seed_20.json",
+        "solution_type": "solved",
+        "states_searched": 3718,
+        "unique_states": 1632,
+        "backtracks": 2719,
+        "max_depth": 999,
+        "game_type": "free-cell",
+        "streamliner": "both"
+    },
+    "free-cell_seed_206991.json": {
+        "instance_name": "level1/instances/free-cell_seed_206991.json",
+        "solution_type": "unsolvable",
+        "states_searched": 474461,
+        "unique_states": 154220,
+        "backtracks": 474460,
+        "max_depth": 919,
+        "game_type": "free-cell",
+        "streamliner": "none"
+    },
+    "free-cell_seed_275993.json": {
+        "instance_name": "level1/instances/free-cell_seed_275993.json",
+        "solution_type": "unsolvable",
+        "states_searched": 159967,
+        "unique_states": 62850,
+        "backtracks": 159966,
+        "max_depth": 1612,
+        "game_type": "free-cell",
+        "streamliner": "none"
+    },
+    "free-cell_seed_318100.json": {
+        "instance_name": "level1/instances/free-cell_seed_318100.json",
+        "solution_type": "unsolvable",
+        "states_searched": 26971,
+        "unique_states": 11308,
+        "backtracks": 26970,
+        "max_depth": 279,
+        "game_type": "free-cell",
+        "streamliner": "none"
+    },
+    "free-cell_seed_334270.json": {
+        "instance_name": "level1/instances/free-cell_seed_334270.json",
+        "solution_type": "unsolvable",
+        "states_searched": 20729,
+        "unique_states": 10360,
+        "backtracks": 20728,
+        "max_depth": 191,
+        "game_type": "free-cell",
+        "streamliner": "none"
+    },
+    "free-cell_seed_36.json": {
+        "instance_name": "level1/instances/free-cell_seed_36.json",
+        "solution_type": "solved",
+        "states_searched": 11579,
+        "unique_states": 4609,
+        "backtracks": 7476,
+        "max_depth": 4103,
+        "game_type": "free-cell",
+        "streamliner": "both"
+    },
+    "free-cell_seed_39.json": {
+        "instance_name": "level1/instances/free-cell_seed_39.json",
+        "solution_type": "solved",
+        "states_searched": 4182,
+        "unique_states": 2043,
+        "backtracks": 3076,
+        "max_depth": 1106,
+        "game_type": "free-cell",
+        "streamliner": "both"
+    },
+    "free-cell_seed_59.json": {
+        "instance_name": "level1/instances/free-cell_seed_59.json",
+        "solution_type": "solved",
+        "states_searched": 4955,
+        "unique_states": 2091,
+        "backtracks": 3033,
+        "max_depth": 1922,
+        "game_type": "free-cell",
+        "streamliner": "both"
+    },
+    "free-cell_seed_60.json": {
+        "instance_name": "level1/instances/free-cell_seed_60.json",
+        "solution_type": "solved",
+        "states_searched": 7828,
+        "unique_states": 3484,
+        "backtracks": 5262,
+        "max_depth": 2566,
+        "game_type": "free-cell",
+        "streamliner": "both"
+    },
+    "free-cell_seed_80960.json": {
+        "instance_name": "level1/instances/free-cell_seed_80960.json",
+        "solution_type": "unsolvable",
+        "states_searched": 17694,
+        "unique_states": 8377,
+        "backtracks": 17693,
+        "max_depth": 236,
+        "game_type": "free-cell",
+        "streamliner": "none"
+    },
+    "golf_seed_1000002.json": {
+        "instance_name": "level1/instances/golf_seed_1000002.json",
+        "solution_type": "solved",
+        "states_searched": 443544,
+        "unique_states": 282535,
+        "backtracks": 443493,
+        "max_depth": 51,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000003.json": {
+        "instance_name": "level1/instances/golf_seed_1000003.json",
+        "solution_type": "solved",
+        "states_searched": 14182,
+        "unique_states": 9934,
+        "backtracks": 14131,
+        "max_depth": 51,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000006.json": {
+        "instance_name": "level1/instances/golf_seed_1000006.json",
+        "solution_type": "unsolvable",
+        "states_searched": 186222,
+        "unique_states": 130972,
+        "backtracks": 186221,
+        "max_depth": 48,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000008.json": {
+        "instance_name": "level1/instances/golf_seed_1000008.json",
+        "solution_type": "solved",
+        "states_searched": 15078,
+        "unique_states": 10964,
+        "backtracks": 15027,
+        "max_depth": 51,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000014.json": {
+        "instance_name": "level1/instances/golf_seed_1000014.json",
+        "solution_type": "unsolvable",
+        "states_searched": 107191,
+        "unique_states": 64004,
+        "backtracks": 107190,
+        "max_depth": 44,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000020.json": {
+        "instance_name": "level1/instances/golf_seed_1000020.json",
+        "solution_type": "solved",
+        "states_searched": 1486,
+        "unique_states": 1030,
+        "backtracks": 1435,
+        "max_depth": 51,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000021.json": {
+        "instance_name": "level1/instances/golf_seed_1000021.json",
+        "solution_type": "unsolvable",
+        "states_searched": 63360,
+        "unique_states": 44733,
+        "backtracks": 63359,
+        "max_depth": 36,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000024.json": {
+        "instance_name": "level1/instances/golf_seed_1000024.json",
+        "solution_type": "unsolvable",
+        "states_searched": 139841,
+        "unique_states": 94368,
+        "backtracks": 139840,
+        "max_depth": 50,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000029.json": {
+        "instance_name": "level1/instances/golf_seed_1000029.json",
+        "solution_type": "solved",
+        "states_searched": 84729,
+        "unique_states": 54430,
+        "backtracks": 84678,
+        "max_depth": 51,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "golf_seed_1000041.json": {
+        "instance_name": "level1/instances/golf_seed_1000041.json",
+        "solution_type": "unsolvable",
+        "states_searched": 28325,
+        "unique_states": 21298,
+        "backtracks": 28324,
+        "max_depth": 45,
+        "game_type": "golf",
+        "streamliner": "none"
+    },
+    "klondike-deal-1_seed_480318.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_480318.json",
+        "solution_type": "solved",
+        "states_searched": 386,
+        "unique_states": 142,
+        "backtracks": 255,
+        "max_depth": 131,
+        "game_type": "klondike-deal-1",
+        "streamliner": "none"
+    },
+    "klondike-deal-1_seed_610728.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_610728.json",
+        "solution_type": "solved",
+        "states_searched": 143,
+        "unique_states": 103,
+        "backtracks": 53,
+        "max_depth": 90,
+        "game_type": "klondike-deal-1",
+        "streamliner": "both"
+    },
+    "klondike-deal-1_seed_640589.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_640589.json",
+        "solution_type": "unsolvable",
+        "states_searched": 575,
+        "unique_states": 239,
+        "backtracks": 574,
+        "max_depth": 13,
+        "game_type": "klondike-deal-1",
+        "streamliner": "none"
+    },
+    "klondike-deal-1_seed_656219.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_656219.json",
+        "solution_type": "solved",
+        "states_searched": 924,
+        "unique_states": 379,
+        "backtracks": 854,
+        "max_depth": 70,
+        "game_type": "klondike-deal-1",
+        "streamliner": "none"
+    },
+    "klondike-deal-1_seed_656768.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_656768.json",
+        "solution_type": "unsolvable",
+        "states_searched": 3246,
+        "unique_states": 886,
+        "backtracks": 3245,
+        "max_depth": 13,
+        "game_type": "klondike-deal-1",
+        "streamliner": "none"
+    },
+    "klondike-deal-1_seed_750264.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_750264.json",
+        "solution_type": "solved",
+        "states_searched": 77100,
+        "unique_states": 30396,
+        "backtracks": 77008,
+        "max_depth": 92,
+        "game_type": "klondike-deal-1",
+        "streamliner": "both"
+    },
+    "klondike-deal-1_seed_851465.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_851465.json",
+        "solution_type": "unsolvable",
+        "states_searched": 29469,
+        "unique_states": 8014,
+        "backtracks": 29468,
+        "max_depth": 25,
+        "game_type": "klondike-deal-1",
+        "streamliner": "none"
+    },
+    "klondike-deal-1_seed_889757.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_889757.json",
+        "solution_type": "unsolvable",
+        "states_searched": 2054,
+        "unique_states": 840,
+        "backtracks": 2053,
+        "max_depth": 13,
+        "game_type": "klondike-deal-1",
+        "streamliner": "none"
+    },
+    "klondike-deal-1_seed_912913.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_912913.json",
+        "solution_type": "solved",
+        "states_searched": 93,
+        "unique_states": 71,
+        "backtracks": 22,
+        "max_depth": 71,
+        "game_type": "klondike-deal-1",
+        "streamliner": "both"
+    },
+    "klondike-deal-1_seed_96577.json": {
+        "instance_name": "level1/instances/klondike-deal-1_seed_96577.json",
+        "solution_type": "solved",
+        "states_searched": 948,
+        "unique_states": 307,
+        "backtracks": 872,
+        "max_depth": 76,
+        "game_type": "klondike-deal-1",
+        "streamliner": "both"
+    },
+    "klondike_seed_400002.json": {
+        "instance_name": "level1/instances/klondike_seed_400002.json",
+        "solution_type": "unsolvable",
+        "states_searched": 44528,
+        "unique_states": 22333,
+        "backtracks": 44527,
+        "max_depth": 18,
+        "game_type": "klondike",
+        "streamliner": "none"
+    },
+    "klondike_seed_400005.json": {
+        "instance_name": "level1/instances/klondike_seed_400005.json",
+        "solution_type": "solved",
+        "states_searched": 91,
+        "unique_states": 78,
+        "backtracks": 15,
+        "max_depth": 76,
+        "game_type": "klondike",
+        "streamliner": "both"
+    },
+    "klondike_seed_400006.json": {
+        "instance_name": "level1/instances/klondike_seed_400006.json",
+        "solution_type": "solved",
+        "states_searched": 155,
+        "unique_states": 89,
+        "backtracks": 68,
+        "max_depth": 87,
+        "game_type": "klondike",
+        "streamliner": "both"
+    },
+    "klondike_seed_400007.json": {
+        "instance_name": "level1/instances/klondike_seed_400007.json",
+        "solution_type": "solved",
+        "states_searched": 91,
+        "unique_states": 74,
+        "backtracks": 17,
+        "max_depth": 74,
+        "game_type": "klondike",
+        "streamliner": "both"
+    },
+    "klondike_seed_400012.json": {
+        "instance_name": "level1/instances/klondike_seed_400012.json",
+        "solution_type": "solved",
+        "states_searched": 484,
+        "unique_states": 153,
+        "backtracks": 398,
+        "max_depth": 86,
+        "game_type": "klondike",
+        "streamliner": "both"
+    },
+    "klondike_seed_400014.json": {
+        "instance_name": "level1/instances/klondike_seed_400014.json",
+        "solution_type": "solved",
+        "states_searched": 135,
+        "unique_states": 90,
+        "backtracks": 45,
+        "max_depth": 90,
+        "game_type": "klondike",
+        "streamliner": "both"
+    },
+    "klondike_seed_400021.json": {
+        "instance_name": "level1/instances/klondike_seed_400021.json",
+        "solution_type": "unsolvable",
+        "states_searched": 316,
+        "unique_states": 204,
+        "backtracks": 315,
+        "max_depth": 11,
+        "game_type": "klondike",
+        "streamliner": "none"
+    },
+    "klondike_seed_400024.json": {
+        "instance_name": "level1/instances/klondike_seed_400024.json",
+        "solution_type": "unsolvable",
+        "states_searched": 310,
+        "unique_states": 159,
+        "backtracks": 309,
+        "max_depth": 11,
+        "game_type": "klondike",
+        "streamliner": "none"
+    },
+    "klondike_seed_400045.json": {
+        "instance_name": "level1/instances/klondike_seed_400045.json",
+        "solution_type": "unsolvable",
+        "states_searched": 111,
+        "unique_states": 77,
+        "backtracks": 110,
+        "max_depth": 7,
+        "game_type": "klondike",
+        "streamliner": "none"
+    },
+    "klondike_seed_400091.json": {
+        "instance_name": "level1/instances/klondike_seed_400091.json",
+        "solution_type": "unsolvable",
+        "states_searched": 395,
+        "unique_states": 269,
+        "backtracks": 394,
+        "max_depth": 11,
+        "game_type": "klondike",
+        "streamliner": "none"
+    },
+    "spanish-patience_seed_1373.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_1373.json",
+        "solution_type": "unsolvable",
+        "states_searched": 2287,
+        "unique_states": 642,
+        "backtracks": 2286,
+        "max_depth": 26,
+        "game_type": "spanish-patience",
+        "streamliner": "none"
+    },
+    "spanish-patience_seed_21.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_21.json",
+        "solution_type": "solved",
+        "states_searched": 2591,
+        "unique_states": 522,
+        "backtracks": 2070,
+        "max_depth": 521,
+        "game_type": "spanish-patience",
+        "streamliner": "both"
+    },
+    "spanish-patience_seed_24.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_24.json",
+        "solution_type": "solved",
+        "states_searched": 180816,
+        "unique_states": 41278,
+        "backtracks": 139571,
+        "max_depth": 41245,
+        "game_type": "spanish-patience",
+        "streamliner": "both"
+    },
+    "spanish-patience_seed_45.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_45.json",
+        "solution_type": "solved",
+        "states_searched": 9316,
+        "unique_states": 2615,
+        "backtracks": 6711,
+        "max_depth": 2605,
+        "game_type": "spanish-patience",
+        "streamliner": "both"
+    },
+    "spanish-patience_seed_49.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_49.json",
+        "solution_type": "unsolvable",
+        "states_searched": 41,
+        "unique_states": 15,
+        "backtracks": 40,
+        "max_depth": 9,
+        "game_type": "spanish-patience",
+        "streamliner": "none"
+    },
+    "spanish-patience_seed_5599.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_5599.json",
+        "solution_type": "unsolvable",
+        "states_searched": 6,
+        "unique_states": 4,
+        "backtracks": 5,
+        "max_depth": 4,
+        "game_type": "spanish-patience",
+        "streamliner": "none"
+    },
+    "spanish-patience_seed_5780.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_5780.json",
+        "solution_type": "unsolvable",
+        "states_searched": 433,
+        "unique_states": 64,
+        "backtracks": 432,
+        "max_depth": 43,
+        "game_type": "spanish-patience",
+        "streamliner": "none"
+    },
+    "spanish-patience_seed_6.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_6.json",
+        "solution_type": "solved",
+        "states_searched": 235971,
+        "unique_states": 49659,
+        "backtracks": 186390,
+        "max_depth": 49581,
+        "game_type": "spanish-patience",
+        "streamliner": "both"
+    },
+    "spanish-patience_seed_6389.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_6389.json",
+        "solution_type": "unsolvable",
+        "states_searched": 168,
+        "unique_states": 54,
+        "backtracks": 167,
+        "max_depth": 12,
+        "game_type": "spanish-patience",
+        "streamliner": "none"
+    },
+    "spanish-patience_seed_8.json": {
+        "instance_name": "level1/instances/spanish-patience_seed_8.json",
+        "solution_type": "solved",
+        "states_searched": 169456,
+        "unique_states": 30180,
+        "backtracks": 139304,
+        "max_depth": 30152,
+        "game_type": "spanish-patience",
+        "streamliner": "both"
+    },
+    "trigon_seed_1.json": {
+        "instance_name": "level1/instances/trigon_seed_1.json",
+        "solution_type": "unsolvable",
+        "states_searched": 27,
+        "unique_states": 21,
+        "backtracks": 26,
+        "max_depth": 14,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_13.json": {
+        "instance_name": "level1/instances/trigon_seed_13.json",
+        "solution_type": "solved",
+        "states_searched": 64,
+        "unique_states": 64,
+        "backtracks": 0,
+        "max_depth": 64,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_15.json": {
+        "instance_name": "level1/instances/trigon_seed_15.json",
+        "solution_type": "unsolvable",
+        "states_searched": 6,
+        "unique_states": 6,
+        "backtracks": 5,
+        "max_depth": 5,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_2.json": {
+        "instance_name": "level1/instances/trigon_seed_2.json",
+        "solution_type": "unsolvable",
+        "states_searched": 48,
+        "unique_states": 25,
+        "backtracks": 47,
+        "max_depth": 7,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_22.json": {
+        "instance_name": "level1/instances/trigon_seed_22.json",
+        "solution_type": "solved",
+        "states_searched": 92,
+        "unique_states": 77,
+        "backtracks": 15,
+        "max_depth": 77,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_23.json": {
+        "instance_name": "level1/instances/trigon_seed_23.json",
+        "solution_type": "solved",
+        "states_searched": 111,
+        "unique_states": 73,
+        "backtracks": 38,
+        "max_depth": 73,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_29.json": {
+        "instance_name": "level1/instances/trigon_seed_29.json",
+        "solution_type": "unsolvable",
+        "states_searched": 56,
+        "unique_states": 27,
+        "backtracks": 55,
+        "max_depth": 8,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_3.json": {
+        "instance_name": "level1/instances/trigon_seed_3.json",
+        "solution_type": "solved",
+        "states_searched": 86,
+        "unique_states": 75,
+        "backtracks": 11,
+        "max_depth": 75,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_4.json": {
+        "instance_name": "level1/instances/trigon_seed_4.json",
+        "solution_type": "unsolvable",
+        "states_searched": 118,
+        "unique_states": 49,
+        "backtracks": 117,
+        "max_depth": 8,
+        "game_type": "trigon",
+        "streamliner": "none"
+    },
+    "trigon_seed_8.json": {
+        "instance_name": "level1/instances/trigon_seed_8.json",
+        "solution_type": "solved",
+        "states_searched": 78,
+        "unique_states": 74,
+        "backtracks": 4,
+        "max_depth": 74,
+        "game_type": "trigon",
+        "streamliner": "none"
+    }
+}

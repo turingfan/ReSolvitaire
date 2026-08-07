@@ -1819,9 +1819,11 @@ template class game_state_impl<HashOnlyPolicy>;
 template class game_state_impl<PredecessorPolicy>;
 template class game_state_impl<LRUPolicy>;
 template class game_state_impl<MultiplicityPolicy>;
+template class game_state_impl<BitmapPolicy>;
 template ostream& operator<<(ostream&, const game_state_impl<FlatPolicy>&);
 template ostream& operator<<(ostream&, const game_state_impl<HashOnlyPolicy>&);
 template ostream& operator<<(ostream&, const game_state_impl<PredecessorPolicy>&);
 template ostream& operator<<(ostream&, const game_state_impl<LRUPolicy>&);
 template ostream& operator<<(ostream&, const game_state_impl<MultiplicityPolicy>&);
+template ostream& operator<<(ostream&, const game_state_impl<BitmapPolicy>&);
 #endif

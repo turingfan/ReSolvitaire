@@ -39,6 +39,7 @@
 #include "../game/search-state/game_state.h" // Keep this for game_state
 #include "../game/cache_interface.h"
 #include "../game/cache_policy.h"
+#include "../game/bitmap_cache.h"
 #include "../game/generic_flat_cache.h"
 #include "../game/global_cache.h"
 #include "../solver/solver.h"
@@ -160,9 +161,16 @@ static solver::result dispatch_run_seed(const sol_rules& rules, int seed,
 #elif defined(SOLVITAIRE_HASH_ONLY)
     (void)force_lru; (void)cache_type; (void)suit_sym;
     return run_seed_impl<HashOnlyPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+#elif defined(SOLVITAIRE_BITMAP_ONLY)
+    (void)force_lru; (void)cache_type; (void)suit_sym;
+    if (!use_bitmap_cache(rules))
+        throw std::runtime_error("bitmap-only binary: game not eligible for bitmap cache");
+    return run_seed_impl<BitmapPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
 #else
     if (force_lru) {
         return run_seed_impl<LRUPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
+    } else if (cache_type == "bitmap" && use_bitmap_cache(rules)) {
+        return run_seed_impl<BitmapPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
     } else if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
         return run_seed_impl<MultiplicityPolicy>(rules, seed, str_opts, cache_capacity, timeout_ms);
     } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
@@ -199,8 +207,15 @@ static solver::result dispatch_run_deal(const sol_rules& rules,
 #elif defined(SOLVITAIRE_HASH_ONLY)
     (void)cache_type; (void)suit_sym;
     return run_deal_impl<HashOnlyPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+#elif defined(SOLVITAIRE_BITMAP_ONLY)
+    (void)cache_type; (void)suit_sym;
+    if (!use_bitmap_cache(rules))
+        throw std::runtime_error("bitmap-only binary: game not eligible for bitmap cache");
+    return run_deal_impl<BitmapPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
 #else
-    if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
+    if (cache_type == "bitmap" && use_bitmap_cache(rules)) {
+        return run_deal_impl<BitmapPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
+    } else if (cache_type == "multiplicity" && use_multiplicity_cache(rules, suit_sym)) {
         return run_deal_impl<MultiplicityPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);
     } else if (cache_type == "hash-only" && use_new_cache(rules, suit_sym)) {
         return run_deal_impl<HashOnlyPolicy>(rules, deal_doc, str_opts, cache_capacity, timeout_ms);

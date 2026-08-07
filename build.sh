@@ -28,7 +28,7 @@ if [ "$error" = true ]; then
     echo "--trace:      build trace-variant binaries into cmake-build-trace"
     echo "              (Release + SOLVITAIRE_TRACE=ON; also builds unit_tests)"
     echo "--unit-tests: build unit_tests binary (also builds regular variants)"
-    echo "--variants:   build solvitaire-flat, solvitaire-hash-only, solvitaire-lru"
+    echo "--variants:   build solvitaire-flat, solvitaire-hash-only, solvitaire-lru, solvitaire-bitmap"
     echo "--clean:      wipe cmake-build-<cfg>/ first for a guaranteed-fresh build"
     echo "              (use when incremental detection may be stale, e.g. after"
     echo "               copying sources between trees)"
@@ -57,6 +57,7 @@ if [ "$build_variants" = true ]; then
     cmake --build "cmake-build-$build" --target solvitaire-flat
     cmake --build "cmake-build-$build" --target solvitaire-hash-only
     cmake --build "cmake-build-$build" --target solvitaire-lru
+    cmake --build "cmake-build-$build" --target solvitaire-bitmap
 fi
 
 if [ "$build_trace_variants" = true ]; then

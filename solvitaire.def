@@ -37,7 +37,7 @@ From: ubuntu:22.04
     # Release build (default + variant binaries + unit tests).
     # --parallel uses all available cores (compile); -flto=auto (CMakeLists) parallelises LTO.
     cmake -DCMAKE_BUILD_TYPE=Release -Bcmake-build-release -H.
-    cmake --build cmake-build-release --parallel --target solvitaire solvitaire-flat solvitaire-hash-only solvitaire-lru unit_tests
+    cmake --build cmake-build-release --parallel --target solvitaire solvitaire-flat solvitaire-hash-only solvitaire-lru solvitaire-bitmap unit_tests
     # Trace build (Release + SOLVITAIRE_TRACE=ON) — for trace tests / reference binaries
     cmake -DCMAKE_BUILD_TYPE=Release -DSOLVITAIRE_TRACE=ON -Bcmake-build-trace -H.
     cmake --build cmake-build-trace --parallel --target solvitaire solvitaire-trace solvitaire-flat-trace solvitaire-hash-only-trace solvitaire-lru-trace unit_tests

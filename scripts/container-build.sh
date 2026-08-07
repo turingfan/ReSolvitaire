@@ -60,8 +60,8 @@ Usage: ./scripts/container-build.sh [OPTIONS]
 Options:
   --test                 Run unit tests after build (cmake-build-release)
   --regression           Run regression_level1 tests after build (main binary only)
-  --variants             Run regression_level1 tests for all three variant binaries
-                         (solvitaire-flat, solvitaire-hash-only, solvitaire-lru)
+  --variants             Run regression_level1 tests for all four variant binaries
+                         (solvitaire-flat, solvitaire-hash-only, solvitaire-lru, solvitaire-bitmap)
   --trace-test           Run unit_tests + trace_identity + trace_until_timeout from cmake-build-trace
   --trace-regression     Run trace_regression_level1 using the Linux reference binary
                          from 05-Executables/reference/ (run --extract-trace-binary first to create it)
@@ -194,7 +194,7 @@ fi
 
 if [ -n "$VARIANTS_FLAG" ]; then
     echo ""; echo "Running regression_level1 for variant binaries..."
-    run_in "cd cmake-build-release && ctest -R 'regression_level1_(flat|hash_only|lru)' --output-on-failure"
+    run_in "cd cmake-build-release && ctest -R 'regression_level1_(flat|hash_only|lru|bitmap)' --output-on-failure"
 fi
 
 if [ -n "$TRACE_TEST_FLAG" ]; then

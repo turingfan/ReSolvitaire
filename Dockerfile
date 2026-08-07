@@ -31,6 +31,7 @@ RUN cmake --build cmake-build-release --parallel --target solvitaire \
  && cmake --build cmake-build-release --parallel --target solvitaire-flat \
  && cmake --build cmake-build-release --parallel --target solvitaire-hash-only \
  && cmake --build cmake-build-release --parallel --target solvitaire-lru \
+ && cmake --build cmake-build-release --parallel --target solvitaire-bitmap \
  && cmake --build cmake-build-release --parallel --target unit_tests
 
 # Build trace variant (for pre-merge validation against feature/search-trace reference binary).

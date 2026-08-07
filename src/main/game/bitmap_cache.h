@@ -1,0 +1,108 @@
+#ifndef SOLVITAIRE_BITMAP_CACHE_H
+#define SOLVITAIRE_BITMAP_CACHE_H
+
+#include "cache_interface.h"
+#include "platform_memory.h"
+#include <cstdint>
+
+class bitmap_cache : public cache_interface {
+    platform::lazy_buffer buffer;
+    uint64_t num_bits;
+    uint64_t mask;
+
+    // mutable: probe() is const but updates these for read-side accounting
+    mutable uint64_t total_probes = 0;
+    mutable uint64_t hit_count    = 0;
+    uint64_t         insert_count = 0;
+
+    // Compute the largest power-of-2 bit count that fits in max_entries.
+    // The argument is a number of entries (bits), NOT bytes.
+    static uint64_t compute_num_bits(uint64_t max_entries) {
+        if (max_entries == 0) return 0;
+        return 1ULL << (63 - __builtin_clzll(max_entries));
+    }
+
+public:
+    explicit bitmap_cache(uint64_t max_entries)
+        : buffer(compute_num_bits(max_entries) == 0 ? 1 : compute_num_bits(max_entries) / 8),
+          num_bits(compute_num_bits(max_entries)),
+          mask(num_bits == 0 ? 0 : compute_num_bits(max_entries) - 1)
+    {
+    }
+
+    // Test-and-set. Returns true if bit was ALREADY set (hit), false if newly set (miss).
+    bool probe_and_insert(uint64_t hash) {
+        if (num_bits == 0) return false;
+        uint64_t index    = hash & mask;
+        uint64_t byte_idx = index >> 3;
+        uint8_t  bit_mask = uint8_t(1) << (index & 7);
+
+        uint8_t* bytes = buffer.as<uint8_t>();
+        bool was_set = (bytes[byte_idx] & bit_mask) != 0;
+
+        ++total_probes;
+        if (was_set) {
+            ++hit_count;
+        } else {
+            bytes[byte_idx] |= bit_mask;
+            ++insert_count;
+        }
+        return was_set;
+    }
+
+    // Read-only containment check. Returns true if bit is set.
+    bool probe(uint64_t hash) const {
+        if (num_bits == 0) return false;
+        uint64_t index    = hash & mask;
+        uint64_t byte_idx = index >> 3;
+        uint8_t  bit_mask = uint8_t(1) << (index & 7);
+
+        const uint8_t* bytes = buffer.as<uint8_t>();
+        bool is_set = (bytes[byte_idx] & bit_mask) != 0;
+
+        ++total_probes;
+        if (is_set) ++hit_count;
+        return is_set;
+    }
+
+    // Template insert/contains — called directly by solver_impl<BitmapPolicy>
+    // (zero virtual dispatch in the DFS hot path).
+    template <typename GS>
+    bool insert_t(const GS& gs) {
+        return !probe_and_insert(gs.get_zobrist_hash());
+    }
+
+    template <typename GS>
+    bool contains_t(const GS& gs) const {
+        return probe(gs.get_zobrist_hash());
+    }
+
+    // cache_interface overrides
+    // Returns true if newly inserted (cache_interface convention: true = newly inserted)
+    bool insert(const game_state& gs) override {
+        return !probe_and_insert(gs.get_zobrist_hash());
+    }
+
+    bool contains(const game_state& gs) const override {
+        return probe(gs.get_zobrist_hash());
+    }
+
+    void clear() override {
+        buffer.reset();
+        total_probes = 0;
+        hit_count    = 0;
+        insert_count = 0;
+    }
+
+    // Logical size: number of unique insertions
+    uint64_t size() const override { return insert_count; }
+    uint64_t get_states_removed_from_cache() const override { return 0; }
+    uint64_t bucket_count() const override { return num_bits; }
+
+    uint64_t get_num_bits()     const { return num_bits; }
+    uint64_t get_total_probes() const { return total_probes; }
+    uint64_t get_hit_count()    const { return hit_count; }
+    uint64_t get_insert_count() const { return insert_count; }
+};
+
+#endif // SOLVITAIRE_BITMAP_CACHE_H

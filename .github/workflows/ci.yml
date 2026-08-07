@@ -73,6 +73,7 @@ jobs:
           cmake --build cmake-build-release --target solvitaire-flat
           cmake --build cmake-build-release --target solvitaire-hash-only
           cmake --build cmake-build-release --target solvitaire-lru
+          cmake --build cmake-build-release --target solvitaire-bitmap
           cmake --build cmake-build-release --target unit_tests
 
       - name: Unit tests (release)

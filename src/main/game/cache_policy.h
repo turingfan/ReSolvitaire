@@ -39,6 +39,7 @@ struct HashOnlyClusterPolicy;
 struct PredecessorClusterPolicy;
 struct MultiplicityClusterPolicy;
 class lru_cache;
+class bitmap_cache;
 
 // ─── FlatPolicy ──────────────────────────────────────────────────────────────
 // Used by generic_flat_cache<CompactStatePolicy>.  Maintains both the Zobrist
@@ -112,6 +113,22 @@ struct MultiplicityPolicy {
     typedef multiplicity_descriptor_store descriptor_store_type;
     typedef multiplicity_descriptor_engine descriptor_engine;
     typedef generic_flat_cache<MultiplicityClusterPolicy> cache_type;
+};
+
+// ─── BitmapPolicy ────────────────────────────────────────────────────────────
+// 1-bit-per-entry transposition table.  Eligible for single-deck, non-accordion
+// games (no payload stored; only the suit-canonical Zobrist hash is used).
+// Uses multiplicity descriptor engine for suit-symmetry deduplication — same
+// hash quality as MultiplicityPolicy but without the 64-byte payload storage.
+
+struct BitmapPolicy {
+    static constexpr bool computes_hash                    = true;
+    static constexpr bool computes_payload                 = true;
+    static constexpr bool skip_pile_ordering               = true;
+    static constexpr bool computes_multiplicity_descriptor = true;
+    using descriptor_store_type = multiplicity_descriptor_store;
+    using descriptor_engine    = multiplicity_descriptor_engine;
+    using cache_type           = bitmap_cache;
 };
 
 #endif // SOLVITAIRE_CACHE_POLICY_H

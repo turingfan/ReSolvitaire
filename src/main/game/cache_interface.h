@@ -60,4 +60,14 @@ inline bool use_multiplicity_cache(const sol_rules& rules,
         && rules.accordion_size == 0;
 }
 
+// Helper function to determine if a game can use the bitmap cache.
+// Eligibility: single-deck, no sequences, no accordion.
+// No stock_deal_type restriction and no suit-symmetry restriction — the bitmap
+// cache stores only a hash bit and doesn't need pile ordering or suit canonicalisation.
+inline bool use_bitmap_cache(const sol_rules& rules) {
+    return !rules.two_decks
+        && rules.sequence_count == 0
+        && rules.accordion_size == 0;
+}
+
 #endif
