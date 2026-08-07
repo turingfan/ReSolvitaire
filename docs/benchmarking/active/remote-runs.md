@@ -54,6 +54,11 @@ container/docker/podman, build a self-contained image from `solvitaire.def` (the
 companion to the Dockerfile) and run the benchmark **inside** it — binaries, GNU
 `parallel`, and libs are all baked in.
 
+> **Running an actual experiment?** The full loop — design, bench-wrapped run,
+> retrieval, lodging into 04-Results, analysis — is
+> `ReSolvitaire-bench/docs/running-experiments.md`. This page is the
+> cluster-mechanics reference underneath it.
+
 ### The sturm runbook (whole process verified end-to-end 2026-08-04)
 
 The complete working process on the sturm cluster, as actually run — not
