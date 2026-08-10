@@ -59,20 +59,35 @@ def get_solver_commit() -> str:
         return "unknown"
 
 def parse_seed_range(seed_spec: str) -> List[int]:
-    """Parse seed specification like '1-10' or single '42' into a list of ints."""
-    parts = seed_spec.split('-')
-    if len(parts) == 1:
-        try:
-            return [int(parts[0])]
-        except ValueError:
-            raise ValueError(f"Invalid seed: {seed_spec}")
-    if len(parts) != 2:
-        raise ValueError(f"Invalid seed range: {seed_spec}")
-    try:
-        start, end = int(parts[0]), int(parts[1])
-        return list(range(start, end + 1))
-    except ValueError:
-        raise ValueError(f"Invalid seed range: {seed_spec}")
+    """Parse a seed specification into a list of ints.
+
+    Accepts a single seed ('42'), an inclusive range ('1-10'), or a
+    comma-separated mixture of the two ('3,7,10-12').  The comma form lets
+    callers target scattered seeds — e.g. re-running only the instances that
+    were killed in an earlier run (bench_multiplicity.sh --rerun-failures).
+    """
+    seeds: List[int] = []
+    for part in seed_spec.split(','):
+        part = part.strip()
+        if not part:
+            continue
+        if '-' in part:
+            bounds = part.split('-')
+            if len(bounds) != 2:
+                raise ValueError(f"Invalid seed range: {part}")
+            try:
+                start, end = int(bounds[0]), int(bounds[1])
+            except ValueError:
+                raise ValueError(f"Invalid seed range: {part}")
+            seeds.extend(range(start, end + 1))
+        else:
+            try:
+                seeds.append(int(part))
+            except ValueError:
+                raise ValueError(f"Invalid seed: {part}")
+    if not seeds:
+        raise ValueError(f"Invalid seed specification: {seed_spec}")
+    return seeds
 
 def glob_expand(patterns: List[str]) -> List[str]:
     """Expand glob patterns into sorted list of file paths."""

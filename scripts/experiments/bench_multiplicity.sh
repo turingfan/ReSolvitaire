@@ -48,7 +48,21 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 #
 #   --phase XY        Which comparisons to run (required; e.g. D or ABCD)
-#   --seeds N-M       Seed range (required; e.g. 1-500)
+#   --seeds N-M       Seed range (required unless --rerun-failures; e.g. 1-500)
+#   --rerun-failures DIR
+#                     Re-run only the instances that produced no usable result
+#                     in an earlier run — by default the KILLED/ERROR rows,
+#                     i.e. externally killed (OOM, see KI-28), not TIMEOUT and
+#                     not the solver's own FAILED/MEM_LIMIT. DIR is that run's
+#                     directory or its data/ subdir. Mutually exclusive with
+#                     --seeds; defaults to --chunk-size 1. Pair with a low
+#                     --workers so the memory-hungry instances get room, then
+#                     analyse the original and rerun CSVs together (rerun rows
+#                     supersede the failed ones).
+#   --rerun-outcomes L Comma-separated solution_type values that --rerun-failures
+#                     should re-run (default: KILLED,ERROR). Use e.g.
+#                     'KILLED,ERROR,FAILED' together with a larger
+#                     --cache-capacity to also redo MEM_LIMIT instances.
 #   --workers N       Parallel workers (default: memory-aware safe value;
 #                     see banner output for the computed cap)
 #   --chunk-size N    Seeds per chunk for parallelism (default: 25)
@@ -131,11 +145,13 @@ set -euo pipefail
 PHASES=""
 SEEDS=""
 WORKERS=""          # empty = auto-compute below
-CHUNK_SIZE=25
+CHUNK_SIZE=""       # empty = 25 normally, 1 in --rerun-failures mode
 GAMES_OVERRIDE=""
 TIMEOUT=120000
 RESULTS_DIR=""
 DRY_RUN=false
+RERUN_FROM=""       # run dir (or its data/) whose failed rows to redo
+RERUN_OUTCOMES="KILLED,ERROR"   # which solution_type values count as re-runnable
 
 show_help() {
     awk '/^set -euo pipefail/{exit} NR>1{sub(/^# ?/,""); print}' "$0"
@@ -155,6 +171,8 @@ while [[ $# -gt 0 ]]; do
         --games)      GAMES_OVERRIDE="$2"; shift 2 ;;
         --timeout)    TIMEOUT="$2"; shift 2 ;;
         --outdir)     RESULTS_DIR="$2"; shift 2 ;;
+        --rerun-failures) RERUN_FROM="$2"; shift 2 ;;
+        --rerun-outcomes) RERUN_OUTCOMES="$2"; shift 2 ;;
         --dry-run)    DRY_RUN=true; shift ;;
         --help|-h)    show_help; exit 0 ;;
         *)
@@ -168,16 +186,30 @@ if [[ -z "$PHASES" ]]; then
     echo "Error: --phase is required (e.g. --phase D or --phase ABCD)" >&2
     exit 1
 fi
-if [[ -z "$SEEDS" ]]; then
+if [[ -n "$RERUN_FROM" ]]; then
+    # Seeds come from the earlier run's failures, not from --seeds.
+    if [[ -n "$SEEDS" ]]; then
+        echo "Error: --seeds and --rerun-failures are mutually exclusive" >&2
+        exit 1
+    fi
+    if [[ ! -d "$RERUN_FROM" ]]; then
+        echo "Error: --rerun-failures: no such directory: $RERUN_FROM" >&2
+        exit 1
+    fi
+    # Failures are the hardest instances in the run — one per command by
+    # default, so a slow instance can't hold up a chunk of its neighbours.
+    CHUNK_SIZE="${CHUNK_SIZE:-1}"
+elif [[ -z "$SEEDS" ]]; then
     echo "Error: --seeds is required (e.g. --seeds 1-50)" >&2
     exit 1
-fi
-
-SEED_LO="${SEEDS%-*}"
-SEED_HI="${SEEDS#*-}"
-if ! [[ "$SEED_LO" =~ ^[0-9]+$ ]] || ! [[ "$SEED_HI" =~ ^[0-9]+$ ]]; then
-    echo "Error: --seeds must be N-M (e.g. 1-500)" >&2
-    exit 1
+else
+    CHUNK_SIZE="${CHUNK_SIZE:-25}"
+    SEED_LO="${SEEDS%-*}"
+    SEED_HI="${SEEDS#*-}"
+    if ! [[ "$SEED_LO" =~ ^[0-9]+$ ]] || ! [[ "$SEED_HI" =~ ^[0-9]+$ ]]; then
+        echo "Error: --seeds must be N-M (e.g. 1-500)" >&2
+        exit 1
+    fi
 fi
 
 # --workers is resolved after cd to REPO_ROOT (needs bench_lib on the path).
@@ -307,7 +339,11 @@ echo " Multiplicity Cache Benchmark"
 $DRY_RUN && echo " (DRY RUN — commands printed, nothing executed)"
 echo "═══════════════════════════════════════════════════════════════"
 echo "  Phases:     $PHASES"
-echo "  Seeds:      $SEEDS"
+if [[ -n "$RERUN_FROM" ]]; then
+    echo "  Seeds:      failures from $RERUN_FROM (KILLED/FAILED/ERROR)"
+else
+    echo "  Seeds:      $SEEDS"
+fi
 echo "  Workers:    $WORKERS  ($WORKERS_SOURCE)"
 echo "  Memory:     limit ${_LIMIT_GB} GB (${_MEM_SOURCE}); ~${_PERWORKER_GB} GB/worker (${_CACHE_TYPES}); max_safe=${_MAXSAFE}"
 echo "  Engine:     GNU parallel (--jobs $WORKERS${BENCH_MEMFREE:+ --memfree $BENCH_MEMFREE})"
@@ -331,8 +367,70 @@ echo ""
 # ---------------------------------------------------------------------------
 
 CMDDIR=$(mktemp -d)
-trap 'rm -rf "$CMDDIR"' EXIT
+RERUN_SEEDDIR=$(mktemp -d)
+trap 'rm -rf "$CMDDIR" "$RERUN_SEEDDIR"' EXIT
 CMD_COUNT=0
+
+# ---------------------------------------------------------------------------
+# --rerun-failures: collect the seeds that did not produce a usable result
+#
+# Default set is KILLED and ERROR: runs whose result is *missing* because
+# something outside the solver killed them (typically the cgroup OOM killer
+# when workers are over-subscribed — KI-28). Re-running those with a lower
+# --workers can genuinely produce a result.
+#
+# Deliberately NOT re-run by default:
+#   TIMEOUT  — a legitimate decisive outcome (ran out of its CPU budget).
+#   FAILED   — the solver's own MEM_LIMIT: it filled --cache-capacity
+#              (default 100,000,000 entries) and stopped cleanly. This is
+#              deterministic per instance, so a re-run at the same capacity
+#              reproduces it exactly; only raising --cache-capacity changes
+#              it, which changes what is being measured.
+# Override with --rerun-outcomes if you do want those (e.g. re-running FAILED
+# rows alongside a larger --cache-capacity).
+#
+# Seeds are bucketed per label+game into $RERUN_SEEDDIR/<label>_<game>.seeds.
+# ---------------------------------------------------------------------------
+
+if [[ -n "$RERUN_FROM" ]]; then
+    rerun_src="$RERUN_FROM"
+    [[ -d "$RERUN_FROM/data" ]] && rerun_src="$RERUN_FROM/data"
+
+    shopt -s nullglob
+    rerun_files=("$rerun_src"/combined_*.csv)
+    [[ ${#rerun_files[@]} -eq 0 ]] && rerun_files=("$rerun_src"/*.csv)
+    shopt -u nullglob
+
+    if [[ ${#rerun_files[@]} -eq 0 ]]; then
+        echo "Error: --rerun-failures: no CSVs found in $rerun_src" >&2
+        exit 1
+    fi
+
+    for f in "${rerun_files[@]}"; do
+        [[ "$(basename "$f")" == combined_* ]] || [[ ${#rerun_files[@]} -gt 0 ]] || continue
+        awk -F, -v outdir="$RERUN_SEEDDIR" -v outcomes="$RERUN_OUTCOMES" '
+            NR == 1 {
+                for (i = 1; i <= NF; i++) col[$i] = i
+                next
+            }
+            {
+                st = $(col["solution_type"])
+                if (index("," outcomes ",", "," st ",") == 0) next
+                lab = $(col["label"]); seed = $(col["seed"])
+                game = $(col["instance"]); sub(/_[0-9]+$/, "", game)
+                if (lab == "" || seed == "" || game == "") next
+                print seed >> (outdir "/" lab "_" game ".seeds")
+            }' "$f"
+    done
+
+    shopt -s nullglob
+    rerun_buckets=("$RERUN_SEEDDIR"/*.seeds)
+    shopt -u nullglob
+    if [[ ${#rerun_buckets[@]} -eq 0 ]]; then
+        echo "No KILLED/FAILED/ERROR rows found in $rerun_src — nothing to re-run."
+        exit 0
+    fi
+fi
 
 # emit_chunks LABEL SOLVER GAME STREAMLINER [EXTRA_SOLVER_ARGS...]
 #
@@ -342,14 +440,39 @@ emit_chunks() {
     shift 4
     local extra_args=("$@")
 
-    local lo=$SEED_LO
-    while [[ $lo -le $SEED_HI ]]; do
-        local hi=$((lo + CHUNK_SIZE - 1))
-        [[ $hi -gt $SEED_HI ]] && hi=$SEED_HI
+    # Chunks are (lo, hi, seed-spec) triples: contiguous ranges normally, and
+    # in --rerun-failures mode the scattered seeds that failed last time.
+    local chunk_specs=()
+    if [[ -n "$RERUN_FROM" ]]; then
+        local seedfile="$RERUN_SEEDDIR/${label}_${game}.seeds"
+        [[ -f "$seedfile" ]] || return 0
+        local seeds=()
+        while read -r s; do [[ -n "$s" ]] && seeds+=("$s"); done < <(sort -n -u "$seedfile")
+        local i=0
+        while [[ $i -lt ${#seeds[@]} ]]; do
+            local group=("${seeds[@]:i:CHUNK_SIZE}")
+            local spec
+            spec=$(IFS=,; echo "${group[*]}")
+            chunk_specs+=("${group[0]} ${group[$((${#group[@]} - 1))]} $spec")
+            i=$((i + CHUNK_SIZE))
+        done
+    else
+        local lo=$SEED_LO
+        while [[ $lo -le $SEED_HI ]]; do
+            local hi=$((lo + CHUNK_SIZE - 1))
+            [[ $hi -gt $SEED_HI ]] && hi=$SEED_HI
+            chunk_specs+=("$lo $hi ${lo}-${hi}")
+            lo=$((hi + 1))
+        done
+    fi
+
+    local chunk
+    for chunk in "${chunk_specs[@]}"; do
+        read -r lo hi seed_spec <<< "$chunk"
 
         local outfile="$RESULTS_DIR/${label}_${game}_${lo}_${hi}.csv"
         local cmd="python3 '$RUN_BENCH' --solver '$solver' --type '$game'"
-        cmd+=" --seeds ${lo}-${hi} --timeout $TIMEOUT"
+        cmd+=" --seeds ${seed_spec} --timeout $TIMEOUT"
         cmd+=" --output '$outfile' --label '$label' --no-summary"
 
         if [[ "$streamliner" != "none" ]]; then
@@ -365,7 +488,6 @@ emit_chunks() {
 
         printf '%s\n' "$cmd" > "$CMDDIR/$CMD_COUNT.sh"
         CMD_COUNT=$((CMD_COUNT + 1))
-        lo=$((hi + 1))
     done
 }
 
