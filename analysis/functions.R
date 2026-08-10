@@ -19,11 +19,21 @@ geometric_mean <- function(x, na.rm = TRUE) {
   exp(mean(log(x)))
 }
 
-# PAR2 score: timeout/unwinnable penalised at 2 * timeout_ms * 1000 us
-par2_score <- function(times_us, solution_types, timeout_ms) {
+# PAR2 score: instances the solver did not decide are penalised at
+# 2 * timeout_ms * 1000 us.
+#
+# UNWINNABLE is deliberately NOT penalised: proving an instance unwinnable is a
+# decisive answer, as much a success as finding a solution. (Before 2026-08-10
+# it was penalised, which made PAR2 meaningless on games with a large
+# unwinnable fraction — e.g. klondike at ~19% unwinnable, where the penalty
+# alone dominated the score.) FAILED is the solver's own MEM_LIMIT and KILLED
+# is an external kill: neither decided the instance, so both are penalised.
+PAR2_UNSOLVED <- c("TIMEOUT", "FAILED", "KILLED", "ERROR", "UNKNOWN")
+
+par2_score <- function(times_us, solution_types, timeout_ms,
+                       unsolved_types = PAR2_UNSOLVED) {
   penalty <- 2 * timeout_ms * 1000
-  adjusted <- ifelse(solution_types %in% c("TIMEOUT", "UNWINNABLE", "ERROR"),
-                     penalty, times_us)
+  adjusted <- ifelse(solution_types %in% unsolved_types, penalty, times_us)
   mean(adjusted, na.rm = TRUE)
 }
 

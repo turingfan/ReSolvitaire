@@ -62,12 +62,18 @@ for (g in games) {
         n_solved  <- sum(sub$outcome == "SOLVED", na.rm = TRUE)
         n_unwin   <- sum(sub$outcome == "UNWINNABLE", na.rm = TRUE)
         n_timeout <- sum(sub$outcome == "TIMEOUT", na.rm = TRUE)
-        
+        # Anything else is an instance the solver never decided: FAILED
+        # (its own MEM_LIMIT), KILLED (external SIGKILL, e.g. the cgroup OOM
+        # killer — KI-28), ERROR/UNKNOWN. Counted explicitly so a run that
+        # lost instances cannot look complete.
+        n_undecided <- n_total - n_solved - n_unwin - n_timeout
+
         rows[[length(rows)+1]] <- data.frame(
-            game=g, label=l, n=n_total, 
+            game=g, label=l, n=n_total,
             solved=sprintf("%d (%.1f%%)", n_solved, 100*n_solved/n_total),
             unwin=sprintf("%d (%.1f%%)", n_unwin, 100*n_unwin/n_total),
             timeout=sprintf("%d (%.1f%%)", n_timeout, 100*n_timeout/n_total),
+            undecided=sprintf("%d (%.1f%%)", n_undecided, 100*n_undecided/n_total),
             stringsAsFactors=FALSE)
     }
 }
