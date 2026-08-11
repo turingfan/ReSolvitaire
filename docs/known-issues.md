@@ -442,3 +442,46 @@ authoritative record of which copy on which machine is canonical.
 **Proposed fix:** bring `05-Executables/` under DataLad/git-annex, like the results repo
 (04-Results) — binaries are exactly the large-immutable-artifact case annex is for. Could
 be done together with the planned DataLad adoption for `03-Large-Datasets/` (TODO M7).
+
+---
+
+### 31. Cluster Cannot Push to GitHub Unattended (batch jobs cannot lodge their own results)
+
+**Affected:** lodging experiment results directly from a cluster
+(`bench-lodge` on drang, and any future in-job lodging). Not the solver.
+**Status:** Open; **worked around by design decision** (Ian, 2026-08-11) —
+lodging is done by a human from an interactive session, not by the batch job.
+
+A cluster clone of `04-Results` can commit a lodged run locally, but pushing it
+to `origin` on GitHub needs credentials the cluster does not have of its own.
+Cloning under `ssh -A` works because agent forwarding lends the laptop's key for
+the life of that connection; a later plain `ssh` session, and a `sbatch` job in
+particular, has no agent and no key. The push then fails.
+
+Two things made this hard to see and are now fixed:
+- `bench-lodge` discarded its push output, so a failed push looked like a
+  successful lodge minus one line (fixed 2026-08-11: the error, the retry
+  command, and the likely cause are printed).
+- A cluster clone inherits every special remote from the `git-annex` branch,
+  including `st-andrews` (rsync on `ipg1.teaching.cs.st-andrews.ac.uk`, machine
+  `trenco`), which the cluster cannot authenticate to; git-annex prompted for a
+  password mid-push. `setup-remote.sh` now sets `annex-ignore` on inherited
+  remotes it will not use.
+
+**Current practice (works, verified 2026-08-11):** the batch job produces a
+bundle; afterwards a human lodges from an `ssh -A` session with
+`bench-lodge <bundle>`, then pulls the content to the Mac. Content moves
+drang -> Mac by pull ("topology B"), because drang cannot reach code-2, so the
+cluster holds the only copy until the Mac has fetched it.
+
+**Proposed fix, if in-job lodging is ever wanted:** give the cluster its own
+credential rather than borrowing the laptop's — a GitHub **deploy key**
+restricted to `ReSolvitaire-04-Results` (write access), stored as an SSH key on
+the cluster with a passphrase-free private half, or a fine-grained personal
+access token in a `~/.git-credentials` file readable only by the user. Deploy
+key is preferable: it is scoped to the one repository, so a compromised cluster
+account cannot touch the code repos. With that in place, a batch job could end
+in `bench-lodge` and the run would publish itself; the topology-B content pull
+to the Mac would still be a separate manual step.
+
+Full setup and troubleshooting: `ReSolvitaire-bench/docs/cluster-lodging-setup.md`.
