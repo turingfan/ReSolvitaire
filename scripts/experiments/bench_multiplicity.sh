@@ -63,6 +63,13 @@
 #                     should re-run (default: KILLED,ERROR). Use e.g.
 #                     'KILLED,ERROR,FAILED' together with a larger
 #                     --cache-capacity to also redo MEM_LIMIT instances.
+#   --auto-rerun      When the run ends, immediately re-run any killed
+#                     instances into <outdir>-rerun/ at fewer workers. Without
+#                     this, every run still SCANS for kills, writes a
+#                     ready-to-run <outdir>/RERUN-NEEDED.sh, and says so loudly
+#                     at the end of the log — the check is never manual.
+#   --rerun-workers N Workers for that rerun (default: a third of --workers,
+#                     since kills mean memory pressure).
 #   --workers N       Parallel workers (default: memory-aware safe value;
 #                     see banner output for the computed cap)
 #   --chunk-size N    Seeds per chunk for parallelism (default: 25)
@@ -152,6 +159,8 @@ RESULTS_DIR=""
 DRY_RUN=false
 RERUN_FROM=""       # run dir (or its data/) whose failed rows to redo
 RERUN_OUTCOMES="KILLED,ERROR"   # which solution_type values count as re-runnable
+AUTO_RERUN=false    # re-run killed instances immediately when the run ends
+RERUN_WORKERS=""    # workers for that rerun (default: a third of --workers)
 
 show_help() {
     awk '/^set -euo pipefail/{exit} NR>1{sub(/^# ?/,""); print}' "$0"
@@ -173,6 +182,8 @@ while [[ $# -gt 0 ]]; do
         --outdir)     RESULTS_DIR="$2"; shift 2 ;;
         --rerun-failures) RERUN_FROM="$2"; shift 2 ;;
         --rerun-outcomes) RERUN_OUTCOMES="$2"; shift 2 ;;
+        --auto-rerun)     AUTO_RERUN=true; shift ;;
+        --rerun-workers)  RERUN_WORKERS="$2"; shift 2 ;;
         --dry-run)    DRY_RUN=true; shift ;;
         --help|-h)    show_help; exit 0 ;;
         *)
@@ -219,6 +230,7 @@ WORKERS_REQUESTED="${WORKERS:-}"
 # Configuration
 # ---------------------------------------------------------------------------
 
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$REPO_ROOT"
 
@@ -340,7 +352,7 @@ $DRY_RUN && echo " (DRY RUN — commands printed, nothing executed)"
 echo "═══════════════════════════════════════════════════════════════"
 echo "  Phases:     $PHASES"
 if [[ -n "$RERUN_FROM" ]]; then
-    echo "  Seeds:      failures from $RERUN_FROM (KILLED/FAILED/ERROR)"
+    echo "  Seeds:      failures from $RERUN_FROM ($RERUN_OUTCOMES)"
 else
     echo "  Seeds:      $SEEDS"
 fi
@@ -674,6 +686,93 @@ for label in $LABELS; do
 done
 
 # ---------------------------------------------------------------------------
+# Failure scan — never leave "some instances died" for a human to notice
+#
+# Counts instances with no usable result and, if there are any, writes a
+# ready-to-run rerun script next to the data (so it travels in the bundle) and
+# says so loudly at the very end of the log. With --auto-rerun it just does it.
+# ---------------------------------------------------------------------------
+
+RERUN_SCRIPT="$RESULTS_DIR/RERUN-NEEDED.sh"
+rerun_killed=0
+rerun_failed=0
+
+if compgen -G "$RESULTS_DIR/combined_*.csv" >/dev/null 2>&1; then
+    read -r rerun_killed rerun_failed < <(awk -F, '
+        FNR == 1 { for (i = 1; i <= NF; i++) col[$i] = i; next }
+        {
+            st = $(col["solution_type"])
+            if (st == "KILLED" || st == "ERROR")  k++
+            else if (st == "FAILED")              f++
+        }
+        END { print k+0, f+0 }' "$RESULTS_DIR"/combined_*.csv)
+fi
+
+if [[ "$rerun_killed" -gt 0 ]]; then
+    # Kills mean memory pressure, so the rerun gets a smaller worker count.
+    rerun_workers="$RERUN_WORKERS"
+    if [[ -z "$rerun_workers" ]]; then
+        rerun_workers=$(( WORKERS / 3 ))
+        [[ "$rerun_workers" -lt 1 ]] && rerun_workers=1
+    fi
+
+    rerun_cmd="$SCRIPT_PATH --phase '$PHASES'"
+    [[ -n "$GAMES_OVERRIDE" ]] && rerun_cmd+=" --games '$GAMES_OVERRIDE'"
+    rerun_cmd+=" --timeout $TIMEOUT --workers $rerun_workers"
+    rerun_cmd+=" --rerun-failures '$RESULTS_DIR'"
+
+    cat > "$RERUN_SCRIPT" <<EOF
+#!/bin/bash
+# Generated $(date -u +%Y-%m-%dT%H:%MZ) by bench_multiplicity.sh.
+#
+# The run in $RESULTS_DIR lost $rerun_killed instance(s) to external kills
+# (KILLED/ERROR — typically the cgroup OOM killer, KI-28). They produced no
+# result and are excluded from any paired analysis until re-run.
+#
+# This re-runs exactly those instances at $rerun_workers workers (down from
+# $WORKERS) so each gets more memory. Run it inside the same container/
+# allocation you used for the main run, wrapped in bench so the output is
+# archived:
+#
+#   bench --detached --bundle-format=tar -m "rerun of killed instances" \\
+#       <run-name>-rerun -- apptainer exec "\$PWD/solvitaire.sif" bash -c \\
+#       'cd /workspace && <the command below>'
+#
+# Then analyse the two together, newest last — the recovered rows supersede
+# the killed ones:
+#
+#   bench-analyse <original-run> <this-rerun>
+#
+# Arguments given to this script are passed through, so you can preview with:
+#
+#   ./RERUN-NEEDED.sh --dry-run
+#
+$rerun_cmd "\$@"
+EOF
+    chmod +x "$RERUN_SCRIPT"
+fi
+
+# ---------------------------------------------------------------------------
+# Auto-rerun (opt-in)
+# ---------------------------------------------------------------------------
+
+if [[ "$AUTO_RERUN" == true ]] && [[ "$rerun_killed" -gt 0 ]] && [[ "$DRY_RUN" == false ]]; then
+    echo ""
+    echo "═══════════════════════════════════════════════════════════════"
+    echo " --auto-rerun: $rerun_killed killed instance(s) — re-running now"
+    echo " at $rerun_workers workers, into ${RESULTS_DIR}-rerun/"
+    echo "═══════════════════════════════════════════════════════════════"
+    # Separate output dir keeps one row per seed per file; bench-analyse
+    # merges the two and prefers the decisive result.
+    "$SCRIPT_PATH" --phase "$PHASES" \
+        ${GAMES_OVERRIDE:+--games "$GAMES_OVERRIDE"} \
+        --timeout "$TIMEOUT" --workers "$rerun_workers" \
+        --rerun-failures "$RESULTS_DIR" \
+        --outdir "${RESULTS_DIR}-rerun" \
+        || echo "[rerun] FAILED — run $RERUN_SCRIPT by hand" >&2
+fi
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
@@ -700,5 +799,49 @@ if [[ "$PHASES" == *A* ]]; then
     echo "  # Validate Comparison A (states_searched must match):"
     echo "  diff <(cut -d, -f1,6 $RESULTS_DIR/combined_A_incr.csv | sort) \\"
     echo "       <(cut -d, -f1,6 $RESULTS_DIR/combined_A_scratch.csv | sort)"
+fi
+echo ""
+
+# ---------------------------------------------------------------------------
+# Data-integrity notice — deliberately the LAST thing printed
+# ---------------------------------------------------------------------------
+
+if [[ "$rerun_failed" -gt 0 ]]; then
+    echo "NOTE: $rerun_failed instance(s) ended in FAILED (the solver's own"
+    echo "      MEM_LIMIT — it filled --cache-capacity). That is a decisive"
+    echo "      result, not missing data, and is NOT re-run by default."
+    echo ""
+fi
+
+if [[ "$rerun_killed" -gt 0 ]]; then
+    if [[ "$AUTO_RERUN" == true ]] && [[ "$DRY_RUN" == false ]]; then
+        echo "═══════════════════════════════════════════════════════════════"
+        echo " $rerun_killed instance(s) were killed and re-run automatically."
+        echo " Analyse both together (recovered rows supersede killed ones):"
+        echo "   bench-analyse '$RESULTS_DIR' '${RESULTS_DIR}-rerun'"
+        echo "═══════════════════════════════════════════════════════════════"
+    else
+        echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        echo "!!  ACTION NEEDED — RERUN REQUIRED                            !!"
+        echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        echo ""
+        echo "  $rerun_killed instance(s) produced NO result: killed from"
+        echo "  outside, almost always the cgroup OOM killer (KI-28). They are"
+        echo "  excluded from paired analysis until re-run, so this run is"
+        echo "  INCOMPLETE."
+        echo ""
+        echo "  A ready-to-run script has been written to:"
+        echo "    $RERUN_SCRIPT"
+        echo ""
+        echo "  It re-runs only those instances, at fewer workers so each gets"
+        echo "  more memory. Wrap it in bench (see the header of that file),"
+        echo "  then: bench-analyse <this-run> <the-rerun>"
+        echo ""
+        echo "  Add --auto-rerun to have this happen inside the job next time."
+        echo ""
+        echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    fi
+elif [[ "$DRY_RUN" == false ]]; then
+    echo "Data integrity: no killed instances — every seed produced a result."
 fi
 echo ""
