@@ -447,10 +447,61 @@ fi
 # emit_chunks LABEL SOLVER GAME STREAMLINER [EXTRA_SOLVER_ARGS...]
 #
 # Emits one run_benchmark.py command per seed chunk.
+# probe_eligible SOLVER GAME STREAMLINER [EXTRA_SOLVER_ARGS...]
+#
+# Returns 0 if this binary can actually run this game/config. Some
+# combinations are impossible by construction — solvitaire-flat cannot run a
+# game with inherent suit symmetry (black-hole), because the flat cache has no
+# suit-canonical dedup, and refuses with "game requires LRU cache". Without
+# this probe every seed is launched and fails, which cost a 10,000-instance
+# arm of the 2026-08-13 black-hole run.
+#
+# The probe costs one solver start with a 1 ms budget: eligibility is decided
+# at dispatch, before any search, so an eligible game just reports a timeout.
+# Results are cached — the same pair recurs across phases.
+declare -a PROBE_KEYS=()
+declare -a PROBE_VALS=()
+
+probe_eligible() {
+    local solver="$1" game="$2" streamliner="$3"
+    shift 3
+    local extra_args=("$@")
+    local key="$solver|$game|$streamliner|${extra_args[*]:-}"
+
+    local i
+    for i in "${!PROBE_KEYS[@]}"; do
+        if [[ "${PROBE_KEYS[$i]}" == "$key" ]]; then
+            return "${PROBE_VALS[$i]}"
+        fi
+    done
+
+    local verdict=0
+    if [[ -x "$solver" ]]; then
+        local probe_args=(--type "$game" --random 1 --timeout 1)
+        [[ "$streamliner" != "none" ]] && probe_args+=(--streamliners "$streamliner")
+        [[ ${#extra_args[@]} -gt 0 ]] && probe_args+=("${extra_args[@]}")
+        local out
+        out=$("$solver" "${probe_args[@]}" 2>&1) || true
+        if grep -qiE "requires|not eligible|not supported" <<< "$out"; then
+            verdict=1
+        fi
+    fi   # binary absent (e.g. dry-run elsewhere): assume eligible, don't block
+
+    PROBE_KEYS+=("$key")
+    PROBE_VALS+=("$verdict")
+    return "$verdict"
+}
+
 emit_chunks() {
     local label="$1" solver="$2" game="$3" streamliner="$4"
     shift 4
     local extra_args=("$@")
+
+    if ! probe_eligible "$solver" "$game" "$streamliner" "${extra_args[@]}"; then
+        echo "  [skip] $label / $game — $(basename "$solver") cannot run this game"
+        echo "         (ineligible by construction, not a failure; no commands emitted)"
+        return 0
+    fi
 
     # Chunks are (lo, hi, seed-spec) triples: contiguous ranges normally, and
     # in --rerun-failures mode the scattered seeds that failed last time.
@@ -485,7 +536,10 @@ emit_chunks() {
         local outfile="$RESULTS_DIR/${label}_${game}_${lo}_${hi}.csv"
         local cmd="python3 '$RUN_BENCH' --solver '$solver' --type '$game'"
         cmd+=" --seeds ${seed_spec} --timeout $TIMEOUT"
-        cmd+=" --output '$outfile' --label '$label' --no-summary"
+        # --skip-ineligible backs up probe_eligible: if a binary turns out to
+        # reject the game anyway, the chunk stops after the first seed instead
+        # of failing all 1000 of them.
+        cmd+=" --output '$outfile' --label '$label' --no-summary --skip-ineligible"
 
         if [[ "$streamliner" != "none" ]]; then
             cmd+=" --streamliner '$streamliner'"
@@ -708,6 +762,47 @@ if compgen -G "$RESULTS_DIR/combined_*.csv" >/dev/null 2>&1; then
         END { print k+0, f+0 }' "$RESULTS_DIR"/combined_*.csv)
 fi
 
+# A label that failed on (almost) every instance did not run out of memory —
+# it could never have worked: wrong binary for the game, missing dependency,
+# bad arguments. Re-running it just burns the same time again, which is what
+# happened to the black-hole run (10,000 ineligible instances re-run one by
+# one). Detect that and refuse.
+systematic_labels=""
+if [[ "$rerun_killed" -gt 0 ]] && compgen -G "$RESULTS_DIR/combined_*.csv" >/dev/null 2>&1; then
+    systematic_labels=$(awk -F, '
+        FNR == 1 { for (i = 1; i <= NF; i++) col[$i] = i; next }
+        {
+            lab = $(col["label"]); total[lab]++
+            st = $(col["solution_type"])
+            if (st == "KILLED" || st == "ERROR") bad[lab]++
+        }
+        END {
+            for (l in total)
+                if (total[l] >= 10 && bad[l] / total[l] >= 0.95)
+                    printf "%s ", l
+        }' "$RESULTS_DIR"/combined_*.csv)
+fi
+
+if [[ -n "$systematic_labels" ]]; then
+    echo ""
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo "!!  CONFIGURATION ERROR — NOT a memory problem                !!"
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo ""
+    echo "  These labels failed on ~every instance: $systematic_labels"
+    echo ""
+    echo "  A near-total failure rate means the configuration could never"
+    echo "  have worked (wrong binary for the game, missing dependency, bad"
+    echo "  arguments) — re-running would fail identically, so NO rerun"
+    echo "  script has been written and --auto-rerun is disabled for this run."
+    echo ""
+    echo "  Check one command by hand, e.g.:"
+    echo "    <solver> --type <game> --random 1 --timeout 1000"
+    echo ""
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    rerun_killed=0        # suppress the rerun script and --auto-rerun
+fi
+
 if [[ "$rerun_killed" -gt 0 ]]; then
     # Kills mean memory pressure, so the rerun gets a smaller worker count.
     rerun_workers="$RERUN_WORKERS"
@@ -841,6 +936,10 @@ if [[ "$rerun_killed" -gt 0 ]]; then
         echo ""
         echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     fi
+elif [[ -n "$systematic_labels" ]]; then
+    echo "Data integrity: run INCOMPLETE — label(s) $systematic_labels could not"
+    echo "run at all (see the CONFIGURATION ERROR above). Fix the configuration"
+    echo "and re-run those arms; nothing here is recoverable by a rerun."
 elif [[ "$DRY_RUN" == false ]]; then
     echo "Data integrity: no killed instances — every seed produced a result."
 fi
