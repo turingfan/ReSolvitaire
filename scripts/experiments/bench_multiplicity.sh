@@ -94,11 +94,17 @@
 #     states_searched MUST be identical — any mismatch is a bug.
 #
 # B — Flat vs multiplicity (no symmetry)
-#     Games: klondike-deal-1, free-cell, bakers-game, canfield, somerset, black-hole
+#     Games: klondike-deal-1, free-cell, bakers-game, canfield, somerset
 #     Flat has 32B entries, multiplicity has 64B. Flat should win slightly.
+#     black-hole is excluded: its symmetry is inherent, so the flat binary
+#     cannot run it at all (KI-32).
 #
 # C — LRU vs multiplicity (no symmetry)
-#     Same games as B. Multiplicity should beat LRU comfortably.
+#     Same games as B, plus black-hole. Multiplicity should beat LRU comfortably.
+#     NOTE: for black-hole, C and D have so far produced identical results
+#     (inherent symmetry means the phase-D streamliner adds nothing). That is an
+#     EXPERIMENTAL observation, not a theoretical guarantee — both phases keep
+#     running so the equivalence is re-tested, not assumed.
 #
 # D — LRU vs multiplicity WITH SUIT-SYMMETRY (critical test)
 #     Games: klondike (COLOUR), klondike-deal-1 (COLOUR), free-cell (SI),
@@ -594,8 +600,11 @@ fi
 if [[ "$PHASES" == *B* ]]; then
     echo "Phase B: Flat vs Multiplicity (No Symmetry)"
 
+    # black-hole is deliberately absent: its suit symmetry is inherent, so the
+    # flat cache cannot serve it at all (KI-32) and "flat vs multiplicity" has
+    # no meaning for that game. Phases C and D still cover it.
     for pair in klondike-deal-1:none free-cell:none bakers-game:none \
-                canfield:none somerset:none black-hole:suit-symmetry; do
+                canfield:none somerset:none; do
         game="${pair%%:*}"; str="${pair##*:}"
         game_matches "$game" || continue
         emit_chunks "B_flat" "$SOLVER_FLAT" "$game" "$str"

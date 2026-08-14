@@ -518,14 +518,17 @@ failing identically.
 failing ≥95% of ≥10 instances is reported as a CONFIGURATION ERROR with the
 rerun machinery disabled.
 
-**Still open, for Ian:** what phase B *should* mean for such games. Options:
-drop `black-hole` from B's list entirely (B is "flat vs multiplicity", which is
-meaningless if flat cannot run); or keep it and let the skip stand, accepting
-that B reports only the multiplicity arm. Note that for black-hole, phases B, C
-and D collapse to nearly the same experiment anyway — the 2026-08-13 run gives
-identical outcome counts (8725 SOLVED / 1275 UNWINNABLE) across all three, and
-identical node counts for mult in each, because the symmetry is inherent rather
-than streamliner-induced.
+**Resolved 2026-08-14 (Ian):** `black-hole` is dropped from phase B's game
+list — "flat vs multiplicity" has no meaning for a game the flat binary cannot
+run. Phases C and D still cover it.
+
+**Phases C and D both keep running for black-hole**, even though the
+2026-08-13 run gave identical results from each (same outcome counts, same node
+totals — the symmetry is inherent, so phase D's streamliner adds nothing).
+Ian's reasoning: that equivalence is an *experimental* observation about the
+current code, not a theoretical guarantee, so collapsing the two conditions
+would mean never detecting if it stopped holding. C-vs-D agreement on
+black-hole now serves as a standing consistency check.
 
 **Also:** `run_benchmark.py` should not classify an ineligibility error as
 KILLED. A distinct `INELIGIBLE` (or `ERROR`) value would keep "no result
