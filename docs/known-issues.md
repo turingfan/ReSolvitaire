@@ -449,8 +449,12 @@ be done together with the planned DataLad adoption for `03-Large-Datasets/` (TOD
 
 **Affected:** lodging experiment results directly from a cluster
 (`bench-lodge` on drang, and any future in-job lodging). Not the solver.
-**Status:** Open; **worked around by design decision** (Ian, 2026-08-11) —
-lodging is done by a human from an interactive session, not by the batch job.
+**Status:** Open; **fix chosen 2026-08-14** — Ian now wants jobs to lodge
+themselves, so the cluster gets a write-scoped GitHub **deploy key**. Setup
+procedure: `ReSolvitaire-bench/docs/deploy-key-setup.md`; `LODGE=1` in
+`templates/slurm-batch/bench-batch.sbatch` then lodges after a successful run.
+(Supersedes the 2026-08-11 decision to lodge by hand, which stands as the
+fallback until the key is in place.)
 
 A cluster clone of `04-Results` can commit a lodged run locally, but pushing it
 to `origin` on GitHub needs credentials the cluster does not have of its own.
@@ -485,3 +489,44 @@ in `bench-lodge` and the run would publish itself; the topology-B content pull
 to the Mac would still be a separate manual step.
 
 Full setup and troubleshooting: `ReSolvitaire-bench/docs/cluster-lodging-setup.md`.
+
+---
+
+### 32. `solvitaire-flat` Cannot Run Inherently Suit-Symmetric Games (phase B's black-hole arm is impossible)
+
+**Affected:** `bench_multiplicity.sh` phase B, game `black-hole`; more generally
+any (variant binary, game) pair the binary cannot serve.
+**Status:** Guarded 2026-08-14 (the arm is now skipped, not attempted); the
+underlying game-list mismatch is still worth a decision.
+
+`black-hole` has `inherent_suit_symmetry()`, and the flat cache cannot provide
+suit-canonical deduplication (issues #3/#4), so `solvitaire-flat` refuses:
+
+    $ solvitaire-flat --type black-hole --random 1
+    [error] flat-only binary: game requires LRU cache
+
+Phase B's game list nevertheless pairs `black-hole:suit-symmetry` with the flat
+binary, so that arm could never work. In the 2026-08-13 10k run all 10,000
+instances failed; `run_benchmark.py` recorded them as **KILLED** — the label
+otherwise reserved for external OOM kills — which made a configuration error
+look like a memory problem. `--auto-rerun` then re-ran all 10,000 individually,
+failing identically.
+
+**Guards added** (commit on dev, 2026-08-14): `probe_eligible()` tests each
+(binary, game, args) once with a 1 ms budget and skips arms the binary rejects;
+`--skip-ineligible` is passed to `run_benchmark.py` as a backstop; and a label
+failing ≥95% of ≥10 instances is reported as a CONFIGURATION ERROR with the
+rerun machinery disabled.
+
+**Still open, for Ian:** what phase B *should* mean for such games. Options:
+drop `black-hole` from B's list entirely (B is "flat vs multiplicity", which is
+meaningless if flat cannot run); or keep it and let the skip stand, accepting
+that B reports only the multiplicity arm. Note that for black-hole, phases B, C
+and D collapse to nearly the same experiment anyway — the 2026-08-13 run gives
+identical outcome counts (8725 SOLVED / 1275 UNWINNABLE) across all three, and
+identical node counts for mult in each, because the symmetry is inherent rather
+than streamliner-induced.
+
+**Also:** `run_benchmark.py` should not classify an ineligibility error as
+KILLED. A distinct `INELIGIBLE` (or `ERROR`) value would keep "no result
+because the run was killed" separate from "this configuration is impossible".
